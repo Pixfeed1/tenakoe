@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
-  Calendar, UserCircle, Zap,
+  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -35,6 +35,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [sendStatus, setSendStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [smsOpen, setSmsOpen] = useState(false);
   const [smsBody, setSmsBody] = useState("");
+  const [notes, setNotes] = useState<Array<{
+    id: string; contenu: string; epinglee: boolean; createdAt: string;
+    auteur: { id: string; prenom: string; nom: string };
+  }>>([]);
+  const [newNote, setNewNote] = useState("");
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
 
   // Fetch real data if client has an ID
   useEffect(() => {
@@ -82,6 +89,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           miseEnRelation: data.miseEnRelation || "SANS_OBJET",
         });
       })
+      .catch(() => {});
+
+    // Fetch notes
+    fetch(`/api/notes?entrepriseId=${client.id}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setNotes(data))
       .catch(() => {});
   }, [client?.id]);
   const [dragFile, setDragFile] = useState(false);
@@ -337,6 +350,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           { id: "docs", label: `Documents (${docsRecu}/${docs.length})`, Icon: FileText },
           { id: "track", label: "Feuille de route", Icon: ClipboardList },
           { id: "historique", label: "Historique", Icon: RefreshCw },
+          { id: "notes", label: `Notes (${notes.length})`, Icon: StickyNote },
         ].map((t) => (
           <button
             key={t.id}
@@ -558,6 +572,205 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Tab: Notes */}
+      {tab === "notes" && (
+        <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Notes internes</h3>
+
+          {/* New note form */}
+          <div style={{ marginBottom: 20 }}>
+            <textarea
+              placeholder="Ajouter une note..."
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              rows={3}
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: 10,
+                border: `1px solid ${C.border}`, background: C.bg, color: C.text,
+                fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box",
+              }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+              <button
+                disabled={!newNote.trim()}
+                onClick={async () => {
+                  if (!newNote.trim() || !client?.id) return;
+                  const res = await fetch("/api/notes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contenu: newNote, entrepriseId: client.id }),
+                  });
+                  if (res.ok) {
+                    const note = await res.json();
+                    setNotes((prev) => [note, ...prev]);
+                    setNewNote("");
+                  }
+                }}
+                style={{
+                  padding: "8px 18px", borderRadius: 8, border: "none",
+                  background: newNote.trim() ? "linear-gradient(135deg, #16a34a, #15803d)" : "#94a3b8",
+                  color: "#fff", fontSize: 13, fontWeight: 600,
+                  cursor: newNote.trim() ? "pointer" : "not-allowed",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}
+              >
+                <StickyNote size={13} /> Ajouter
+              </button>
+            </div>
+          </div>
+
+          {/* Notes list */}
+          {notes.length === 0 ? (
+            <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>
+              Aucune note pour cette entreprise
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {notes.map((note) => (
+                <div
+                  key={note.id}
+                  style={{
+                    padding: "14px 16px", borderRadius: 10,
+                    background: note.epinglee ? C.warningDim : C.bg,
+                    border: `1px solid ${note.epinglee ? "rgba(217,119,6,0.2)" : C.border}`,
+                    position: "relative",
+                  }}
+                >
+                  {/* Header */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      {note.epinglee && <Pin size={12} color={C.warning} />}
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>
+                        {note.auteur.prenom} {note.auteur.nom}
+                      </span>
+                      <span style={{ fontSize: 11, color: C.textDim }}>
+                        · {new Date(note.createdAt).toLocaleDateString("fr-FR")}{" "}
+                        {new Date(note.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {/* Pin toggle */}
+                      <button
+                        onClick={async () => {
+                          const res = await fetch("/api/notes", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id: note.id, epinglee: !note.epinglee }),
+                          });
+                          if (res.ok) {
+                            const updated = await res.json();
+                            setNotes((prev) =>
+                              prev.map((n) => (n.id === updated.id ? updated : n))
+                                .sort((a, b) => (a.epinglee === b.epinglee ? 0 : a.epinglee ? -1 : 1))
+                            );
+                          }
+                        }}
+                        style={{
+                          width: 26, height: 26, borderRadius: 6, border: "none",
+                          background: "transparent", cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}
+                        title={note.epinglee ? "Désépingler" : "Épingler"}
+                      >
+                        <Pin size={13} color={note.epinglee ? C.warning : C.textDim} />
+                      </button>
+                      {/* Edit */}
+                      <button
+                        onClick={() => {
+                          if (editingNote === note.id) {
+                            setEditingNote(null);
+                          } else {
+                            setEditingNote(note.id);
+                            setEditContent(note.contenu);
+                          }
+                        }}
+                        style={{
+                          width: 26, height: 26, borderRadius: 6, border: "none",
+                          background: "transparent", cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}
+                        title="Modifier"
+                      >
+                        <Edit3 size={13} color={C.textDim} />
+                      </button>
+                      {/* Delete */}
+                      <button
+                        onClick={async () => {
+                          const res = await fetch(`/api/notes?id=${note.id}`, { method: "DELETE" });
+                          if (res.ok) {
+                            setNotes((prev) => prev.filter((n) => n.id !== note.id));
+                          }
+                        }}
+                        style={{
+                          width: 26, height: 26, borderRadius: 6, border: "none",
+                          background: "transparent", cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}
+                        title="Supprimer"
+                      >
+                        <Trash2 size={13} color={C.textDim} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  {editingNote === note.id ? (
+                    <div>
+                      <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        rows={3}
+                        style={{
+                          width: "100%", padding: "8px 12px", borderRadius: 8,
+                          border: `1px solid ${C.border}`, background: C.surface, color: C.text,
+                          fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box",
+                        }}
+                      />
+                      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                        <button
+                          onClick={async () => {
+                            const res = await fetch("/api/notes", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ id: note.id, contenu: editContent }),
+                            });
+                            if (res.ok) {
+                              const updated = await res.json();
+                              setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+                              setEditingNote(null);
+                            }
+                          }}
+                          style={{
+                            padding: "5px 12px", borderRadius: 6, border: "none",
+                            background: C.accent, color: "#fff", fontSize: 12,
+                            fontWeight: 600, cursor: "pointer",
+                          }}
+                        >
+                          Enregistrer
+                        </button>
+                        <button
+                          onClick={() => setEditingNote(null)}
+                          style={{
+                            padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border}`,
+                            background: "transparent", color: C.textMuted, fontSize: 12, cursor: "pointer",
+                          }}
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                      {note.contenu}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </>
