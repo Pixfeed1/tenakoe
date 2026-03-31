@@ -2,21 +2,16 @@
 
 import { useState } from "react";
 import {
-  Zap, Target, ClipboardList, Clock, Mail, MessageSquare,
-  FileText, RefreshCw, TrendingUp, TrendingDown, Minus,
-  AlertTriangle, CheckCircle2, Circle, GripVertical, Filter,
+  Zap, Target, ClipboardList, Clock,
+  TrendingUp, TrendingDown, Minus,
+  AlertTriangle, CheckCircle2, Circle, GripVertical,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { ActivityFeed } from "@/components/ActivityFeed";
 import type { PipelineColumn, PipelineItem, Client } from "@/lib/data";
 
-const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
-  EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
-};
-const ACTIVITY_COLORS: Record<string, string> = {
-  EMAIL: "blue", SMS: "purple", DOC: "accent", STATUT: "warning", LEAD: "blue",
-};
 interface ServerStats {
   nouveaux: number;
   prospects: number;
@@ -52,7 +47,6 @@ export function DashboardView({
   serverAlertes,
 }: DashboardViewProps) {
   const clientsData = serverClients || [];
-  const activitesData = serverActivites || [];
 
   const STATS = [
     { label: "Nouveaux leads", value: String(serverStats?.nouveaux ?? 0), change: "", up: null as boolean | null, Icon: Zap, colorKey: "blue" },
@@ -334,61 +328,7 @@ export function DashboardView({
         </div>
 
         {/* Activity */}
-        <div
-          style={{
-            background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-            padding: "20px 24px", boxShadow: C.shadow,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: C.text }}>Historique</h2>
-            <button
-              style={{
-                padding: "5px 12px", borderRadius: 8, border: `1px solid ${C.border}`,
-                background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 4, fontWeight: 500,
-              }}
-            >
-              <Filter size={12} /> Filtrer
-            </button>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {activitesData.length === 0 && (
-              <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>
-                Aucune activité récente
-              </div>
-            )}
-            {activitesData.map((a, i) => {
-              const ActIcon = ACTIVITY_ICONS[a.type];
-              const actColor = ACTIVITY_COLORS[a.type];
-              return (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex", alignItems: "flex-start", gap: 10, padding: "9px 8px",
-                    borderRadius: 10, cursor: "pointer", transition: "background 0.15s",
-                  }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                >
-                  <div
-                    style={{
-                      width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-                      backgroundColor: C[(actColor + "Dim") as keyof Theme] as string,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}
-                  >
-                    <ActIcon size={13} color={C[actColor as keyof Theme] as string} strokeWidth={2} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: C.text, lineHeight: 1.5 }}>{a.message}</div>
-                    <div style={{ fontSize: 11, color: C.textDim, marginTop: 1 }}>{a.chargee} · {a.time}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <ActivityFeed C={C} compact />
       </div>
     </>
   );
