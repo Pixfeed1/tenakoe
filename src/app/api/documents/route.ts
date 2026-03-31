@@ -11,6 +11,10 @@ export async function GET(request: NextRequest) {
       ...(entrepriseId && { entrepriseId }),
       ...(projetId && { projetId }),
     },
+    include: {
+      entreprise: { select: { id: true, nom: true } },
+      projet: { select: { nom: true } },
+    },
     orderBy: [{ recu: "asc" }, { nom: "asc" }],
   });
 

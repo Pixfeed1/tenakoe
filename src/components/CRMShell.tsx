@@ -7,7 +7,37 @@ import { LIGHT, DARK } from "@/lib/theme";
 import { Sidebar } from "@/components/Sidebar";
 import { DashboardView } from "@/components/DashboardView";
 import { ClientDetailView } from "@/components/ClientDetailView";
+import { LeadsView } from "@/components/views/LeadsView";
+import { ProspectsView } from "@/components/views/ProspectsView";
+import { ClientsView } from "@/components/views/ClientsView";
+import { DossiersView } from "@/components/views/DossiersView";
+import { TransmissionsView } from "@/components/views/TransmissionsView";
+import { DocumentsView } from "@/components/views/DocumentsView";
+import { FacturationView } from "@/components/views/FacturationView";
 import type { PipelineColumn, Client, Activite } from "@/lib/data";
+
+type View =
+  | "Dashboard"
+  | "Leads"
+  | "Prospects"
+  | "Clients"
+  | "Dossiers"
+  | "Transmissions"
+  | "Documents"
+  | "Facturation"
+  | "ClientDetail";
+
+const VIEW_TITLES: Record<View, string> = {
+  Dashboard: "Tableau de bord",
+  Leads: "Leads entrants",
+  Prospects: "Prospects",
+  Clients: "Clients",
+  Dossiers: "Dossiers",
+  Transmissions: "Transmissions",
+  Documents: "Documents",
+  Facturation: "Facturation",
+  ClientDetail: "Fiche client",
+};
 
 interface UserInfo {
   name: string;
@@ -41,7 +71,7 @@ export function CRMShell({
 }: CRMShellProps) {
   const [dark, setDark] = useState(false);
   const [activeNav, setActiveNav] = useState("Dashboard");
-  const [view, setView] = useState<"Dashboard" | "ClientDetail">("Dashboard");
+  const [view, setView] = useState<View>("Dashboard");
   const [selectedClient, setSelectedClient] = useState<{
     id?: string;
     nom: string;
@@ -49,8 +79,17 @@ export function CRMShell({
     prescripteur?: string;
   } | null>(null);
   const C = dark ? DARK : LIGHT;
-
   const firstName = user.name.split(" ")[0];
+
+  const navigateTo = (v: View) => {
+    setView(v);
+    setActiveNav(v === "ClientDetail" ? activeNav : v);
+  };
+
+  const openClient = (client: { id?: string; nom: string; siret?: string; prescripteur?: string }) => {
+    setSelectedClient(client);
+    setView("ClientDetail");
+  };
 
   return (
     <div
@@ -67,10 +106,7 @@ export function CRMShell({
       <Sidebar
         C={C}
         activeNav={activeNav}
-        onNav={(label) => {
-          setActiveNav(label);
-          setView("Dashboard");
-        }}
+        onNav={(label) => navigateTo(label as View)}
         dark={dark}
         onToggleDark={() => setDark(!dark)}
         user={user}
@@ -97,7 +133,7 @@ export function CRMShell({
                 color: C.text,
               }}
             >
-              {view === "Dashboard" ? "Tableau de bord" : "Fiche client"}
+              {VIEW_TITLES[view]}
             </h1>
             <p style={{ fontSize: 13, color: C.textMuted, margin: "4px 0 0" }}>
               {new Date().toLocaleDateString("fr-FR", {
@@ -138,6 +174,7 @@ export function CRMShell({
               />
             </button>
             <button
+              onClick={() => navigateTo("Leads")}
               style={{
                 padding: "9px 20px",
                 borderRadius: 10,
@@ -161,17 +198,7 @@ export function CRMShell({
         {view === "Dashboard" && (
           <DashboardView
             C={C}
-            onSelectClient={(client) => {
-              setSelectedClient(
-                client as {
-                  id?: string;
-                  nom: string;
-                  siret?: string;
-                  prescripteur?: string;
-                }
-              );
-              setView("ClientDetail");
-            }}
+            onSelectClient={(client) => openClient(client as typeof selectedClient & object)}
             serverStats={initialStats}
             serverPipeline={initialPipeline}
             serverClients={initialClients}
@@ -182,9 +209,16 @@ export function CRMShell({
           <ClientDetailView
             C={C}
             client={selectedClient}
-            onBack={() => setView("Dashboard")}
+            onBack={() => navigateTo(activeNav as View)}
           />
         )}
+        {view === "Leads" && <LeadsView C={C} />}
+        {view === "Prospects" && <ProspectsView C={C} onSelectClient={openClient} />}
+        {view === "Clients" && <ClientsView C={C} onSelectClient={openClient} />}
+        {view === "Dossiers" && <DossiersView C={C} onSelectClient={openClient} />}
+        {view === "Transmissions" && <TransmissionsView C={C} />}
+        {view === "Documents" && <DocumentsView C={C} />}
+        {view === "Facturation" && <FacturationView C={C} onSelectClient={openClient} />}
       </main>
     </div>
   );
