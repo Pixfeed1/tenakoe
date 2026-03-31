@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
-  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus,
+  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -104,13 +104,15 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         // Load real documents
         if (data.documents?.length > 0) {
           setDocs(
-            data.documents.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null }) => ({
+            data.documents.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; fichierUrl: string | null; fichierNom: string | null }) => ({
               id: d.id,
               nom: d.nom,
               recu: d.recu,
               date: d.dateReception
                 ? new Date(d.dateReception).toLocaleDateString("fr-FR")
                 : null,
+              fichierUrl: d.fichierUrl,
+              fichierNom: d.fichierNom,
             }))
           );
         }
@@ -780,6 +782,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 {d.nom}
               </span>
               {d.date && <span style={{ fontSize: 11, color: C.textDim }}>Reçu le {d.date}</span>}
+              {d.fichierUrl && (
+                <a href={d.fichierUrl} download={d.fichierNom || d.nom} onClick={(e) => e.stopPropagation()}
+                  style={{ padding: "3px 8px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 11, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>
+                  <Download size={11} /> Fichier
+                </a>
+              )}
               {!d.recu && <Badge color={C.warning} bg={C.warningDim}>En attente</Badge>}
             </div>
           ))}
