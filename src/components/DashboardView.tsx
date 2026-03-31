@@ -52,19 +52,18 @@ export function DashboardView({
   serverActivites,
   serverAlertes,
 }: DashboardViewProps) {
-  const hasServerData = !!(serverStats && serverPipeline);
-  const clientsData = serverClients && serverClients.length > 0 ? serverClients : CLIENTS;
-  const activitesData = serverActivites && serverActivites.length > 0 ? serverActivites : ACTIVITES;
+  const clientsData = serverClients || [];
+  const activitesData = serverActivites || [];
 
   const STATS = [
-    { label: "Nouveaux leads", value: hasServerData ? String(serverStats.nouveaux) : "24", change: "", up: null as boolean | null, Icon: Zap, colorKey: "blue" },
-    { label: "Prospects actifs", value: hasServerData ? String(serverStats.prospects) : "18", change: "", up: null as boolean | null, Icon: Target, colorKey: "accent" },
-    { label: "Dossiers en cours", value: hasServerData ? String(serverStats.dossiers) : "7", change: "", up: null as boolean | null, Icon: ClipboardList, colorKey: "purple" },
-    { label: "En retard", value: hasServerData ? String(serverStats.enRetard) : "3", change: "", up: null as boolean | null, Icon: Clock, colorKey: "danger" },
+    { label: "Nouveaux leads", value: String(serverStats?.nouveaux ?? 0), change: "", up: null as boolean | null, Icon: Zap, colorKey: "blue" },
+    { label: "Prospects actifs", value: String(serverStats?.prospects ?? 0), change: "", up: null as boolean | null, Icon: Target, colorKey: "accent" },
+    { label: "Dossiers en cours", value: String(serverStats?.dossiers ?? 0), change: "", up: null as boolean | null, Icon: ClipboardList, colorKey: "purple" },
+    { label: "En retard", value: String(serverStats?.enRetard ?? 0), change: "", up: null as boolean | null, Icon: Clock, colorKey: "danger" },
   ];
 
   const [pipeline, setPipeline] = useState<PipelineColumn[]>(
-    serverPipeline && serverPipeline.some((c) => c.items.length > 0) ? serverPipeline : initPipeline
+    serverPipeline || []
   );
   const [dragging, setDragging] = useState<{ itemId: string; colId: string } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
@@ -163,10 +162,7 @@ export function DashboardView({
 
       {/* Alert Banner */}
       {(() => {
-        const alertes = serverAlertes && serverAlertes.length > 0 ? serverAlertes : [
-          { id: "mock1", type: "DOCUMENT_MANQUANT", message: "ELECLIM — 4 documents en attente depuis 15 jours", entreprise: null },
-          { id: "mock2", type: "RELANCE_48H", message: "DC EUROPE — Relance à faire > 48h", entreprise: null },
-        ];
+        const alertes = serverAlertes || [];
         return alertes.length > 0 ? (
           <div style={{
             background: C.dangerDim, border: "1px solid rgba(220,38,38,0.12)",

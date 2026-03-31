@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
-  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3,
+  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -26,8 +26,8 @@ interface ClientDetailViewProps {
 }
 
 export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
-  const [docs, setDocs] = useState<DocCheck[]>(DOCS_CHECKLIST);
-  const [tracks, setTracks] = useState<TrackStep[]>(TRACK_STEPS);
+  const [docs, setDocs] = useState<(DocCheck & { id?: string })[]>([]);
+  const [tracks, setTracks] = useState<TrackStep[]>([]);
   const [entrepriseData, setEntrepriseData] = useState<Record<string, string> | null>(null);
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
@@ -45,6 +45,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mailTemplates, setMailTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string }>>([]);
+  const [contacts, setContacts] = useState<Array<{ id: string; nom: string; prenom: string; email: string | null; telephone: string | null; fonction: string | null }>>([]);
+  const [taches, setTaches] = useState<Array<{ id: string; titre: string; statut: string; type: string; dateEcheance: string | null; enRetard: boolean }>>([]);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [newContact, setNewContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
+  const [showAddTache, setShowAddTache] = useState(false);
+  const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
 
   const handleFileUpload = async (file: File) => {
     if (!client?.id) return;
@@ -60,6 +67,16 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       if (res.ok) {
         const data = await res.json();
         setUploadMsg({ type: "success", msg: `${data.nom} uploadé avec succès` });
+        // Refresh docs list
+        if (client?.id) {
+          fetch(`/api/documents?entrepriseId=${client.id}`)
+            .then((r) => r.ok ? r.json() : [])
+            .then((freshDocs) => setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null }) => ({
+              id: d.id, nom: d.nom, recu: d.recu,
+              date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null,
+            }))))
+            .catch(() => {});
+        }
       } else {
         const err = await res.json();
         setUploadMsg({ type: "error", msg: err.error || "Erreur d'upload" });
@@ -79,10 +96,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       .then((data) => {
         if (!data) return;
 
-        // Load real documents if available
+        // Load real documents
         if (data.documents?.length > 0) {
           setDocs(
-            data.documents.map((d: { nom: string; recu: boolean; dateReception: string | null }) => ({
+            data.documents.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null }) => ({
+              id: d.id,
               nom: d.nom,
               recu: d.recu,
               date: d.dateReception
@@ -90,6 +108,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 : null,
             }))
           );
+        }
+
+        // Load contacts
+        if (data.contacts?.length > 0) {
+          setContacts(data.contacts);
         }
 
         // Load real etapes if available
@@ -118,20 +141,41 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       })
       .catch(() => {});
 
-    // Fetch notes
+    // Fetch notes, tasks, mail templates
     fetch(`/api/notes?entrepriseId=${client.id}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setNotes(data))
+      .catch(() => {});
+
+    fetch(`/api/taches?entrepriseId=${client.id}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setTaches(data))
+      .catch(() => {});
+
+    fetch("/api/mail-templates")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setMailTemplates(data))
       .catch(() => {});
   }, [client?.id]);
   const [dragFile, setDragFile] = useState(false);
   const [tab, setTab] = useState("dossier");
   const [mailOpen, setMailOpen] = useState(false);
 
-  const toggleDoc = (i: number) => {
+  const toggleDoc = async (i: number) => {
+    const doc = docs[i];
+    const newRecu = !doc.recu;
     const n = [...docs];
-    n[i] = { ...n[i], recu: !n[i].recu, date: n[i].recu ? null : new Date().toLocaleDateString("fr-FR") };
+    n[i] = { ...n[i], recu: newRecu, date: newRecu ? new Date().toLocaleDateString("fr-FR") : null };
     setDocs(n);
+
+    // Persist to DB
+    if (doc.id) {
+      fetch("/api/documents", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: doc.id, recu: newRecu }),
+      }).catch(() => {});
+    }
   };
   const docsRecu = docs.filter((d) => d.recu).length;
 
@@ -242,11 +286,18 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`,
                 background: C.bg, color: C.textMuted, fontSize: 12,
               }}
+              onChange={(e) => {
+                const tpl = mailTemplates.find((t) => t.id === e.target.value);
+                if (tpl) {
+                  setMailSubject(tpl.objet);
+                  setMailBody(tpl.contenu.replace(/<[^>]*>/g, ""));
+                }
+              }}
             >
               <option value="">Modèle...</option>
-              <option value="mail-relance-docs">Relance documents</option>
-              <option value="mail-bienvenue">Bienvenue client</option>
-              <option value="mail-suivi-dossier">Suivi dossier</option>
+              {mailTemplates.map((t) => (
+                <option key={t.id} value={t.id}>{t.nom}</option>
+              ))}
             </select>
             <button
               disabled={sending || !mailSubject}
@@ -377,6 +428,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           { id: "docs", label: `Documents (${docsRecu}/${docs.length})`, Icon: FileText },
           { id: "track", label: "Feuille de route", Icon: ClipboardList },
           { id: "historique", label: "Historique", Icon: RefreshCw },
+          { id: "contacts", label: `Contacts (${contacts.length})`, Icon: UserCircle },
+          { id: "taches", label: `Tâches (${taches.length})`, Icon: ClipboardList },
           { id: "notes", label: `Notes (${notes.length})`, Icon: StickyNote },
         ].map((t) => (
           <button
@@ -630,6 +683,162 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Tab: Contacts */}
+      {tab === "contacts" && (
+        <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Contacts</h3>
+            <button onClick={() => setShowAddContact(!showAddContact)} style={{
+              padding: "6px 14px", borderRadius: 8, border: "none",
+              background: C.accentDim, color: C.accentText, fontSize: 12,
+              fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+            }}>
+              <Plus size={12} /> Ajouter
+            </button>
+          </div>
+
+          {showAddContact && (
+            <div style={{ padding: 16, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <input placeholder="Nom *" value={newContact.nom} onChange={(e) => setNewContact({ ...newContact, nom: e.target.value })}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
+                <input placeholder="Prénom *" value={newContact.prenom} onChange={(e) => setNewContact({ ...newContact, prenom: e.target.value })}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
+                <input placeholder="Email" value={newContact.email} onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
+                <input placeholder="Téléphone" value={newContact.telephone} onChange={(e) => setNewContact({ ...newContact, telephone: e.target.value })}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
+                <input placeholder="Fonction (ex: Gérant)" value={newContact.fonction} onChange={(e) => setNewContact({ ...newContact, fonction: e.target.value })}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", gridColumn: "1 / -1" }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
+                <button onClick={() => setShowAddContact(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
+                <button onClick={async () => {
+                  if (!newContact.nom || !newContact.prenom || !client?.id) return;
+                  const res = await fetch("/api/contacts", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...newContact, entrepriseId: client.id }),
+                  });
+                  if (res.ok) {
+                    const c = await res.json();
+                    setContacts((prev) => [...prev, c]);
+                    setNewContact({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
+                    setShowAddContact(false);
+                  }
+                }} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                  Créer
+                </button>
+              </div>
+            </div>
+          )}
+
+          {contacts.length === 0 ? (
+            <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun contact</div>
+          ) : contacts.map((c) => (
+            <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
+              <UserCircle size={16} color={C.purple} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{c.prenom} {c.nom}</div>
+                <div style={{ fontSize: 11, color: C.textDim }}>
+                  {c.fonction || ""}{c.email ? ` · ${c.email}` : ""}{c.telephone ? ` · ${c.telephone}` : ""}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tab: Tâches */}
+      {tab === "taches" && (
+        <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Tâches</h3>
+            <button onClick={() => setShowAddTache(!showAddTache)} style={{
+              padding: "6px 14px", borderRadius: 8, border: "none",
+              background: C.accentDim, color: C.accentText, fontSize: 12,
+              fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+            }}>
+              <Plus size={12} /> Ajouter
+            </button>
+          </div>
+
+          {showAddTache && (
+            <div style={{ padding: 16, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 10 }}>
+                <input placeholder="Titre de la tâche *" value={newTache.titre} onChange={(e) => setNewTache({ ...newTache, titre: e.target.value })}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
+                <select value={newTache.type} onChange={(e) => setNewTache({ ...newTache, type: e.target.value })}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
+                  <option value="APPEL">Appel</option>
+                  <option value="EMAIL">Email</option>
+                  <option value="REUNION">Réunion</option>
+                  <option value="RELANCE">Relance</option>
+                  <option value="SUIVI">Suivi</option>
+                  <option value="AUTRE">Autre</option>
+                </select>
+                <input type="date" value={newTache.dateEcheance} onChange={(e) => setNewTache({ ...newTache, dateEcheance: e.target.value })}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
+                <button onClick={() => setShowAddTache(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
+                <button onClick={async () => {
+                  if (!newTache.titre || !client?.id) return;
+                  const res = await fetch("/api/taches", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...newTache, entrepriseId: client.id, dateEcheance: newTache.dateEcheance || null }),
+                  });
+                  if (res.ok) {
+                    const t = await res.json();
+                    setTaches((prev) => [...prev, t]);
+                    setNewTache({ titre: "", type: "AUTRE", dateEcheance: "" });
+                    setShowAddTache(false);
+                  }
+                }} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                  Créer
+                </button>
+              </div>
+            </div>
+          )}
+
+          {taches.length === 0 ? (
+            <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucune tâche</div>
+          ) : taches.map((t) => (
+            <div key={t.id} style={{
+              display: "flex", alignItems: "center", gap: 12, padding: "12px 8px",
+              borderBottom: `1px solid ${C.border}`,
+            }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: 6,
+                border: `2px solid ${t.statut === "TERMINEE" ? C.accent : t.enRetard ? C.danger : C.border}`,
+                background: t.statut === "TERMINEE" ? C.accent : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                cursor: "pointer",
+              }}
+                onClick={async () => {
+                  const newStatut = t.statut === "TERMINEE" ? "A_FAIRE" : "TERMINEE";
+                  setTaches((prev) => prev.map((task) => task.id === t.id ? { ...task, statut: newStatut } : task));
+                  // TODO: persist task status change
+                }}
+              >
+                {t.statut === "TERMINEE" && <Check size={13} color="#fff" strokeWidth={3} />}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: 500, color: t.statut === "TERMINEE" ? C.textDim : C.text,
+                  textDecoration: t.statut === "TERMINEE" ? "line-through" : "none",
+                }}>
+                  {t.titre}
+                </div>
+                <div style={{ fontSize: 11, color: C.textDim }}>
+                  {t.type}{t.dateEcheance ? ` · Échéance : ${new Date(t.dateEcheance).toLocaleDateString("fr-FR")}` : ""}
+                  {t.enRetard && <span style={{ color: C.danger, fontWeight: 600 }}> · En retard</span>}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

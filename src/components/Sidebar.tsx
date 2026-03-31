@@ -113,21 +113,26 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
         >
           Système
         </div>
-        {NAV_BOTTOM.map((item) => (
+        {NAV_BOTTOM.map((item) => {
+          const isActive = activeNav === item.label;
+          return (
           <button
             key={item.label}
+            onClick={() => onNav(item.label)}
             style={{
               width: "100%", display: "flex", alignItems: "center", gap: 10,
               padding: "9px 12px", borderRadius: 10, border: "none", cursor: "pointer",
-              background: "transparent", color: C.textDim, fontSize: 13,
-              fontWeight: 500, marginBottom: 1, textAlign: "left",
+              background: isActive ? C.accentDim : "transparent",
+              color: isActive ? C.accentText : C.textDim, fontSize: 13,
+              fontWeight: isActive ? 600 : 500, marginBottom: 1, textAlign: "left",
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+            onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
           >
-            <item.Icon size={17} strokeWidth={1.8} /> {item.label}
+            <item.Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} /> {item.label}
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* User */}

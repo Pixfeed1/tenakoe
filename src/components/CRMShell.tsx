@@ -14,6 +14,8 @@ import { DossiersView } from "@/components/views/DossiersView";
 import { TransmissionsView } from "@/components/views/TransmissionsView";
 import { DocumentsView } from "@/components/views/DocumentsView";
 import { FacturationView } from "@/components/views/FacturationView";
+import { ParametresView } from "@/components/views/ParametresView";
+import { IntegrationsView } from "@/components/views/IntegrationsView";
 import { AlertesDropdown } from "@/components/AlertesDropdown";
 import type { PipelineColumn, Client, Activite } from "@/lib/data";
 
@@ -26,6 +28,8 @@ type View =
   | "Transmissions"
   | "Documents"
   | "Facturation"
+  | "Intégrations"
+  | "Paramètres"
   | "ClientDetail";
 
 const VIEW_TITLES: Record<View, string> = {
@@ -37,6 +41,8 @@ const VIEW_TITLES: Record<View, string> = {
   Transmissions: "Transmissions",
   Documents: "Documents",
   Facturation: "Facturation",
+  "Intégrations": "Intégrations",
+  "Paramètres": "Paramètres",
   ClientDetail: "Fiche client",
 };
 
@@ -205,6 +211,8 @@ export function CRMShell({
         {view === "Transmissions" && <TransmissionsView C={C} />}
         {view === "Documents" && <DocumentsView C={C} />}
         {view === "Facturation" && <FacturationView C={C} onSelectClient={openClient} />}
+        {view === "Intégrations" && <IntegrationsView C={C} />}
+        {view === "Paramètres" && <ParametresView C={C} />}
       </main>
     </div>
   );
