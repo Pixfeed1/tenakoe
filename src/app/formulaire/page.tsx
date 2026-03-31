@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Send, Building2, CheckCircle2, UserCircle, Phone, Mail, MapPin, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Send, Building2, CheckCircle2, UserCircle, Phone, Mail, MapPin, FileText, ChevronRight } from "lucide-react";
 
 const C = {
   bg: "#f8f9fb", surface: "#ffffff", surfaceHover: "#f1f5f9",
@@ -26,10 +26,79 @@ const labelStyle: React.CSSProperties = {
   display: "block", fontSize: 13, fontWeight: 500, color: C.textMuted, marginBottom: 6,
 };
 
-export default function FormulairePrescripteur() {
+const PRESCRIPTEUR_MAP: Record<string, string> = {
+  pdb: "PDB",
+  "point-p": "POINT_P",
+  bigmat: "BIGMAT",
+};
+const PRESCRIPTEUR_NAMES: Record<string, string> = {
+  PDB: "La Plateforme du Bâtiment",
+  POINT_P: "Point P",
+  BIGMAT: "Big Mat Girardon",
+};
+
+export default function FormulairePrescripteur({ paramsPromise }: { paramsPromise?: Promise<{ prescripteur: string }> }) {
+  const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
+  const [choosingPrescripteur, setChoosingPrescripteur] = useState(false);
+
+  useEffect(() => {
+    if (paramsPromise) {
+      paramsPromise.then((p) => {
+        const mapped = PRESCRIPTEUR_MAP[p.prescripteur];
+        if (mapped) setResolvedPrescripteur(mapped);
+        else setChoosingPrescripteur(true);
+      });
+    } else {
+      setChoosingPrescripteur(true);
+    }
+  }, [paramsPromise]);
+
+  if (choosingPrescripteur && !resolvedPrescripteur) {
+    return (
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif", padding: "40px 16px",
+      }}>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet" />
+        <div style={{ width: 480, maxWidth: "100%" }}>
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <img src="/logo.png" alt="Tenakoe" style={{ width: 44, height: 44, objectFit: "contain" }} />
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
+                <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>Qualification RGE</div>
+              </div>
+            </div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 6px" }}>Transmission d&apos;un artisan</h1>
+            <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>Sélectionnez votre enseigne pour commencer</p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {Object.entries(PRESCRIPTEUR_NAMES).map(([key, name]) => (
+              <button key={key} onClick={() => setResolvedPrescripteur(key)} style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "18px 22px", borderRadius: 14, border: `1px solid ${C.border}`,
+                background: C.surface, cursor: "pointer", boxShadow: C.shadow,
+                transition: "all 0.15s", textAlign: "left",
+              }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadowHover; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadow; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+              >
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: C.text }}>{name}</div>
+                  <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>{key}</div>
+                </div>
+                <ChevronRight size={18} color={C.textDim} />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [form, setForm] = useState({
     nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
-    email: "", telephone: "", adresse: "", prescripteur: "PDB",
+    email: "", telephone: "", adresse: "", prescripteur: resolvedPrescripteur || "PDB",
     depot: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false,
   });
@@ -157,17 +226,21 @@ export default function FormulairePrescripteur() {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <Building2 size={16} color={C.blue} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Votre enseigne</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
+                {resolvedPrescripteur ? PRESCRIPTEUR_NAMES[resolvedPrescripteur] || "Votre enseigne" : "Votre enseigne"}
+              </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-              <div>
-                <label style={labelStyle}>Prescripteur *</label>
-                <select style={inputStyle} value={form.prescripteur} onChange={(e) => set("prescripteur", e.target.value)}>
-                  <option value="PDB">La Plateforme du Bâtiment</option>
-                  <option value="POINT_P">Point P</option>
-                  <option value="BIGMAT">Big Mat Girardon</option>
-                </select>
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: resolvedPrescripteur ? "1fr 1fr" : "1fr 1fr 1fr", gap: 12 }}>
+              {!resolvedPrescripteur && (
+                <div>
+                  <label style={labelStyle}>Prescripteur *</label>
+                  <select style={inputStyle} value={form.prescripteur} onChange={(e) => set("prescripteur", e.target.value)}>
+                    <option value="PDB">La Plateforme du Bâtiment</option>
+                    <option value="POINT_P">Point P</option>
+                    <option value="BIGMAT">Big Mat Girardon</option>
+                  </select>
+                </div>
+              )}
               <div>
                 <label style={labelStyle}>Dépôt</label>
                 <input style={inputStyle} placeholder="Ex: Paris 15" value={form.depot} onChange={(e) => set("depot", e.target.value)} />

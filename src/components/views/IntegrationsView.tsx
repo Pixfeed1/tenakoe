@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plug, ExternalLink, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { Plug, ExternalLink, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 
@@ -13,6 +13,7 @@ interface IntegrationConfig {
   logo: string;
   color: string;
   url?: string;
+  oauth?: boolean;
   fields: Array<{ key: string; label: string; type: string; placeholder: string }>;
 }
 
@@ -20,15 +21,15 @@ const INTEGRATIONS: IntegrationConfig[] = [
   {
     key: "gmail",
     nom: "Gmail",
-    description: "Envoi et réception d'emails via SMTP Gmail",
+    description: "Envoi et r\u00E9ception d'emails — OAuth2 + sync entrante/sortante",
     type: "email",
     logo: "/logos/gmail.svg",
     color: "#EA4335",
+    oauth: true,
     fields: [
-      { key: "smtp_host", label: "Serveur SMTP", type: "text", placeholder: "smtp.gmail.com" },
-      { key: "smtp_port", label: "Port", type: "text", placeholder: "587" },
-      { key: "smtp_user", label: "Email", type: "email", placeholder: "vous@gmail.com" },
-      { key: "smtp_pass", label: "App Password", type: "password", placeholder: "xxxx xxxx xxxx xxxx" },
+      { key: "smtp_host", label: "Serveur SMTP (fallback)", type: "text", placeholder: "smtp.gmail.com" },
+      { key: "smtp_user", label: "Email (fallback)", type: "email", placeholder: "vous@gmail.com" },
+      { key: "smtp_pass", label: "App Password (fallback)", type: "password", placeholder: "xxxx xxxx xxxx xxxx" },
     ],
   },
   {
@@ -309,6 +310,11 @@ export function IntegrationsView({ C }: { C: Theme }) {
               {/* Expanded config */}
               {isExpanded && (
                 <div style={{ padding: "0 22px 20px", borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                  {/* Gmail OAuth */}
+                  {integ.oauth && (
+                    <GmailOAuthSection C={C} />
+                  )}
+
                   {/* External link for Abby-type integrations */}
                   {integ.url && (
                     <a href={integ.url} target="_blank" rel="noopener noreferrer" style={{
@@ -412,5 +418,79 @@ export function IntegrationsView({ C }: { C: Theme }) {
         })}
       </div>
     </>
+  );
+}
+
+// ===================== GMAIL OAUTH SECTION =====================
+function GmailOAuthSection({ C }: { C: Theme }) {
+  const [status, setStatus] = useState<{ connected: boolean; email?: string; syncEntrant?: boolean; syncSortant?: boolean; dernierSync?: string } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then(setStatus).catch(() => {});
+  }, []);
+
+  const connect = async () => {
+    const res = await fetch("/api/auth/gmail", { method: "POST" });
+    if (res.ok) {
+      const { url } = await res.json();
+      window.location.href = url;
+    }
+  };
+
+  const disconnect = async () => {
+    await fetch("/api/auth/gmail", { method: "DELETE" });
+    setStatus({ connected: false });
+  };
+
+  const syncNow = async () => {
+    setSyncing(true);
+    await fetch("/api/cron/sync-gmail", { method: "POST" });
+    setSyncing(false);
+    // Refresh status
+    fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then(setStatus).catch(() => {});
+  };
+
+  return (
+    <div style={{ marginBottom: 14, padding: "14px 16px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Connexion OAuth2 Google</div>
+
+      {status?.connected ? (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <CheckCircle2 size={14} color={C.accent} />
+            <span style={{ fontSize: 13, color: C.accentText, fontWeight: 600 }}>Connecté — {status.email}</span>
+          </div>
+          {status.dernierSync && (
+            <div style={{ fontSize: 11, color: C.textDim, marginBottom: 10 }}>
+              Dernière sync : {new Date(status.dernierSync).toLocaleString("fr-FR")}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={syncNow} disabled={syncing} style={{
+              padding: "6px 14px", borderRadius: 6, border: `1px solid ${C.border}`,
+              background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 4,
+            }}>
+              <RefreshCw size={12} /> {syncing ? "Sync..." : "Synchroniser maintenant"}
+            </button>
+            <button onClick={disconnect} style={{
+              padding: "6px 14px", borderRadius: 6, border: "none",
+              background: C.dangerDim, color: C.danger, fontSize: 12, fontWeight: 600, cursor: "pointer",
+            }}>
+              Déconnecter
+            </button>
+          </div>
+        </>
+      ) : (
+        <button onClick={connect} style={{
+          padding: "8px 18px", borderRadius: 8, border: "none",
+          background: "#EA4335", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 6,
+        }}>
+          <Mail size={14} /> Connecter mon compte Gmail
+        </button>
+      )}
+    </div>
   );
 }

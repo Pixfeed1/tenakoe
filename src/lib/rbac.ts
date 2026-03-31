@@ -1,39 +1,55 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export interface CurrentUser {
   id: string;
   email: string;
   name: string;
   role: "ADMIN" | "CHARGEE" | "PRESCRIPTEUR";
+  prescripteurType?: string | null;
 }
 
 /**
  * Récupère l'utilisateur courant depuis la session NextAuth.
- * Retourne null si pas connecté.
  */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
+
+  // Fetch prescripteurType from DB for PRESCRIPTEUR role
+  let prescripteurType: string | null = null;
+  if (session.user.role === "PRESCRIPTEUR") {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { prescripteurType: true },
+    });
+    prescripteurType = dbUser?.prescripteurType || null;
+  }
 
   return {
     id: session.user.id,
     email: session.user.email || "",
     name: session.user.name || "",
     role: session.user.role as CurrentUser["role"],
+    prescripteurType,
   };
 }
 
 /**
- * Génère le filtre Prisma pour cloisonner les données par chargée.
- * - ADMIN : voit tout → pas de filtre
+ * Filtre Prisma pour les entreprises.
+ * - ADMIN : voit tout
  * - CHARGEE : voit uniquement ses projets/entreprises
- * - PRESCRIPTEUR : accès lecture limité
+ * - PRESCRIPTEUR : voit uniquement les entreprises de son enseigne
  */
 export function getEntrepriseFilter(user: CurrentUser) {
   if (user.role === "ADMIN") return {};
 
-  // CHARGEE : ne voit que les entreprises liées à ses projets
+  if (user.role === "PRESCRIPTEUR" && user.prescripteurType) {
+    return { prescripteur: user.prescripteurType as never };
+  }
+
+  // CHARGEE
   return {
     projets: {
       some: { chargeeId: user.id },
@@ -43,6 +59,9 @@ export function getEntrepriseFilter(user: CurrentUser) {
 
 export function getProjetFilter(user: CurrentUser) {
   if (user.role === "ADMIN") return {};
+  if (user.role === "PRESCRIPTEUR" && user.prescripteurType) {
+    return { entreprise: { prescripteur: user.prescripteurType as never } };
+  }
   return { chargeeId: user.id };
 }
 

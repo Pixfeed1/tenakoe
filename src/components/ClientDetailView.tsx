@@ -50,6 +50,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [showAddContact, setShowAddContact] = useState(false);
   const [newContact, setNewContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [showAddTache, setShowAddTache] = useState(false);
+  const [showAddProjet, setShowAddProjet] = useState(false);
+  const [newProjetForm, setNewProjetForm] = useState({ nom: "", qualification: "" });
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }> }>>([]);
   const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
   const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
 
@@ -113,6 +116,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         // Load contacts
         if (data.contacts?.length > 0) {
           setContacts(data.contacts);
+        }
+
+        // Load projets
+        if (data.projets?.length > 0) {
+          setProjets(data.projets);
         }
 
         // Load real etapes if available
@@ -525,6 +533,77 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
               </div>
             ))}
+          </div>
+
+          {/* Projets */}
+          <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Projets / Dossiers</h3>
+              <button onClick={() => setShowAddProjet(!showAddProjet)} style={{
+                padding: "6px 14px", borderRadius: 8, border: "none",
+                background: C.accentDim, color: C.accentText, fontSize: 12,
+                fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+              }}>
+                <Plus size={12} /> Nouveau projet
+              </button>
+            </div>
+
+            {showAddProjet && (
+              <div style={{ padding: 14, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <input placeholder="Nom du projet *" value={newProjetForm.nom} onChange={(e) => setNewProjetForm({ ...newProjetForm, nom: e.target.value })}
+                    style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
+                  <select value={newProjetForm.qualification} onChange={(e) => setNewProjetForm({ ...newProjetForm, qualification: e.target.value })}
+                    style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
+                    <option value="">Qualification...</option>
+                    <option value="QUALIBAT_RGE">Qualibat RGE</option>
+                    <option value="CERTIBAT">Certibat</option>
+                    <option value="QUALIFELEC">Qualifelec</option>
+                    <option value="QUALIPAC">QualiPAC</option>
+                  </select>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
+                  <button onClick={() => setShowAddProjet(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
+                  <button onClick={async () => {
+                    if (!newProjetForm.nom || !client?.id) return;
+                    const payload: Record<string, unknown> = { nom: newProjetForm.nom, entrepriseId: client.id };
+                    if (newProjetForm.qualification) payload.qualifications = [{ type: newProjetForm.qualification }];
+                    const res = await fetch("/api/projets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                    if (res.ok) {
+                      setShowAddProjet(false);
+                      setNewProjetForm({ nom: "", qualification: "" });
+                      // Refresh data
+                      fetch(`/api/entreprises/${client.id}`).then((r) => r.ok ? r.json() : null).then((data) => {
+                        if (data?.projets) setProjets(data.projets);
+                      }).catch(() => {});
+                    }
+                  }} disabled={!newProjetForm.nom} style={{
+                    padding: "6px 14px", borderRadius: 6, border: "none",
+                    background: newProjetForm.nom ? C.accent : "#94a3b8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: newProjetForm.nom ? "pointer" : "not-allowed",
+                  }}>Créer</button>
+                </div>
+              </div>
+            )}
+
+            {projets.length === 0 ? (
+              <div style={{ padding: 16, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun projet</div>
+            ) : projets.map((p: { id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }> }) => {
+              const etapesDone = p.etapes?.filter((e) => e.terminee).length || 0;
+              const etapesTotal = p.etapes?.length || 0;
+              const qualif = p.qualifications?.[0]?.type;
+              const qualifLabel: Record<string, string> = { QUALIBAT_RGE: "Qualibat RGE", CERTIBAT: "Certibat", QUALIFELEC: "Qualifelec", QUALIPAC: "QualiPAC" };
+              return (
+                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
+                  <FolderOpen size={16} color={C.purple} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
+                    <div style={{ fontSize: 11, color: C.textDim }}>
+                      {qualif ? qualifLabel[qualif] || qualif : "—"} · {etapesDone}/{etapesTotal} étapes
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

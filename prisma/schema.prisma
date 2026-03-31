@@ -23,17 +23,18 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  nom       String
-  prenom    String
-  telephone String?
-  role      Role     @default(CHARGEE)
-  password  String
-  avatarUrl String?
-  actif     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String        @id @default(cuid())
+  email            String        @unique
+  nom              String
+  prenom           String
+  telephone        String?
+  role             Role          @default(CHARGEE)
+  password         String
+  avatarUrl        String?
+  actif            Boolean       @default(true)
+  prescripteurType Prescripteur? // Pour le rôle PRESCRIPTEUR: quel prescripteur il représente
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   projets       Projet[]       @relation("ChargeeProjet")
   transmissions Transmission[]
@@ -79,6 +80,7 @@ model Entreprise {
   statutPrise        StatutPrise        @default(NOUVEAU)
   statutFacturation  StatutFacturation? @default(DEVIS_A_FAIRE)
   dejaReferentRGE    Boolean            @default(false)
+  estClient          Boolean            @default(false)
   sourceImport       SourceImport?      @default(MANUEL)
   sourceId           String?
 
