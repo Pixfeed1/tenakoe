@@ -207,16 +207,18 @@ export function IntegrationsView({ C }: { C: Theme }) {
 
   const testConnection = async (integ: IntegrationConfig) => {
     setTesting(integ.key);
-    // Simulate test — in production, would actually test SMTP/Twilio/etc.
-    await new Promise((r) => setTimeout(r, 1500));
     const config = configs[integ.key] || {};
-    const hasConfig = integ.fields.length === 0 || Object.values(config).some((v) => v);
-    setTestResult((prev) => ({
-      ...prev,
-      [integ.key]: hasConfig
-        ? { ok: true, msg: "Connexion réussie" }
-        : { ok: false, msg: "Configuration incomplète" },
-    }));
+    try {
+      const res = await fetch("/api/test-integration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: integ.key, config }),
+      });
+      const result = await res.json();
+      setTestResult((prev) => ({ ...prev, [integ.key]: result }));
+    } catch {
+      setTestResult((prev) => ({ ...prev, [integ.key]: { ok: false, msg: "Erreur réseau" } }));
+    }
     setTesting(null);
   };
 
