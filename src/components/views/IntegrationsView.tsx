@@ -79,7 +79,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     url: "https://app.abby.fr",
     fields: [
       { key: "api_key", label: "Cl\u00E9 API Abby", type: "password", placeholder: "Votre cl\u00E9 API Abby" },
-      { key: "auto_sync", label: "Sync auto clients (quand Facture pay\u00E9e)", type: "text", placeholder: "oui / non" },
+      { key: "auto_sync", label: "Sync auto quand Facture pay\u00E9e", type: "toggle", placeholder: "" },
     ],
   },
   {
@@ -327,18 +327,35 @@ export function IntegrationsView({ C }: { C: Theme }) {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                       {integ.fields.map((f) => (
                         <div key={f.key} style={{ gridColumn: f.type === "url" ? "1 / -1" : undefined }}>
-                          <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>{f.label}</label>
-                          <input
-                            type={f.type}
-                            placeholder={f.placeholder}
-                            value={config[f.key] || ""}
-                            onChange={(e) => updateConfig(integ.key, f.key, e.target.value)}
-                            style={{
-                              width: "100%", padding: "8px 12px", borderRadius: 8,
-                              border: `1px solid ${C.border}`, background: C.bg, color: C.text,
-                              fontSize: 13, outline: "none", boxSizing: "border-box",
-                            }}
-                          />
+                          {f.type === "toggle" ? (
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
+                              <span style={{ fontSize: 13, color: C.text }}>{f.label}</span>
+                              <button onClick={() => updateConfig(integ.key, f.key, config[f.key] === "true" ? "false" : "true")} style={{
+                                width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+                                background: config[f.key] === "true" ? C.accent : C.border, position: "relative", transition: "background 0.2s",
+                              }}>
+                                <div style={{
+                                  width: 18, height: 18, borderRadius: "50%", background: "#fff", position: "absolute", top: 3,
+                                  left: config[f.key] === "true" ? 23 : 3, transition: "left 0.2s",
+                                }} />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>{f.label}</label>
+                              <input
+                                type={f.type}
+                                placeholder={f.placeholder}
+                                value={config[f.key] || ""}
+                                onChange={(e) => updateConfig(integ.key, f.key, e.target.value)}
+                                style={{
+                                  width: "100%", padding: "8px 12px", borderRadius: 8,
+                                  border: `1px solid ${C.border}`, background: C.bg, color: C.text,
+                                  fontSize: 13, outline: "none", boxSizing: "border-box",
+                                }}
+                              />
+                            </>
+                          )}
                         </div>
                       ))}
                     </div>

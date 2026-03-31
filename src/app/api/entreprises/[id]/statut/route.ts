@@ -53,5 +53,23 @@ export async function PATCH(
     });
   }
 
+  // Auto-sync vers Abby si statutFacturation passe à FACTURE_PAYEE
+  if (statutFacturation === "FACTURE_PAYEE" && oldFacturation !== "FACTURE_PAYEE") {
+    try {
+      const abbyIntegration = await prisma.integration.findFirst({
+        where: { nom: "Abby", actif: true },
+      });
+      if (abbyIntegration?.config) {
+        const config = JSON.parse(abbyIntegration.config);
+        if (config.auto_sync === "true" && config.api_key) {
+          const { syncEntrepriseToAbby } = await import("@/lib/abby");
+          await syncEntrepriseToAbby(id);
+        }
+      }
+    } catch {
+      // Sync Abby silencieuse — ne bloque pas le changement de statut
+    }
+  }
+
   return NextResponse.json(updated);
 }
