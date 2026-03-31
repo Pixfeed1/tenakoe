@@ -26,6 +26,13 @@ interface ServerStats {
   clients: number;
 }
 
+interface AlerteData {
+  id: string;
+  type: string;
+  message: string;
+  entreprise: { id: string; nom: string } | null;
+}
+
 interface DashboardViewProps {
   C: Theme;
   onSelectClient: (client: PipelineItem | Client) => void;
@@ -33,6 +40,7 @@ interface DashboardViewProps {
   serverPipeline?: PipelineColumn[] | null;
   serverClients?: Client[] | null;
   serverActivites?: Array<{ type: string; message: string; chargee: string; time: string }> | null;
+  serverAlertes?: AlerteData[] | null;
 }
 
 export function DashboardView({
@@ -42,6 +50,7 @@ export function DashboardView({
   serverPipeline,
   serverClients,
   serverActivites,
+  serverAlertes,
 }: DashboardViewProps) {
   const hasServerData = !!(serverStats && serverPipeline);
   const clientsData = serverClients && serverClients.length > 0 ? serverClients : CLIENTS;
@@ -152,22 +161,36 @@ export function DashboardView({
         ))}
       </div>
 
-      {/* Alert */}
-      <div
-        style={{
-          background: C.dangerDim, border: "1px solid rgba(220,38,38,0.12)",
-          borderRadius: 12, padding: "12px 20px", marginBottom: 24,
-          display: "flex", alignItems: "center", gap: 14,
-        }}
-      >
-        <AlertTriangle size={16} color={C.danger} />
-        <span style={{ fontSize: 12, color: C.danger, fontWeight: 500 }}>
-          <strong>ELECLIM</strong> — 4 documents en attente depuis 15 jours
-        </span>
-        <span style={{ fontSize: 12, color: C.warning, fontWeight: 500, marginLeft: 16 }}>
-          <strong>DC EUROPE</strong> — Relance à faire &gt; 48h
-        </span>
-      </div>
+      {/* Alert Banner */}
+      {(() => {
+        const alertes = serverAlertes && serverAlertes.length > 0 ? serverAlertes : [
+          { id: "mock1", type: "DOCUMENT_MANQUANT", message: "ELECLIM — 4 documents en attente depuis 15 jours", entreprise: null },
+          { id: "mock2", type: "RELANCE_48H", message: "DC EUROPE — Relance à faire > 48h", entreprise: null },
+        ];
+        return alertes.length > 0 ? (
+          <div style={{
+            background: C.dangerDim, border: "1px solid rgba(220,38,38,0.12)",
+            borderRadius: 12, padding: "12px 20px", marginBottom: 24,
+            display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
+          }}>
+            <AlertTriangle size={16} color={C.danger} />
+            {alertes.slice(0, 3).map((a, i) => (
+              <span key={a.id} style={{
+                fontSize: 12, fontWeight: 500,
+                color: a.type === "RELANCE_48H" ? C.warning : a.type === "RETARD_TACHE" || a.type === "RETARD_ETAPE" ? C.danger : C.warning,
+                marginLeft: i > 0 ? 8 : 0,
+              }}>
+                {a.message}
+              </span>
+            ))}
+            {alertes.length > 3 && (
+              <span style={{ fontSize: 11, color: C.textDim, marginLeft: 8 }}>
+                +{alertes.length - 3} autres
+              </span>
+            )}
+          </div>
+        ) : null;
+      })()}
 
       {/* Pipeline */}
       <div style={{ marginBottom: 28 }}>

@@ -7,18 +7,21 @@ import {
   getClientsWithProgress,
   getRecentActivity,
 } from "@/lib/queries";
+import { getDashboardAlertes } from "@/lib/alertes";
 import { CRMShell } from "@/components/CRMShell";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
-  const [stats, pipeline, clients, activites] = await Promise.all([
+  const isAdmin = session.user?.role === "ADMIN";
+  const [stats, pipeline, clients, activites, alertes] = await Promise.all([
     getDashboardStats(),
     getPipelineData(),
     getClientsWithProgress(),
     getRecentActivity(),
-  ]).catch(() => [null, null, null, null]);
+    getDashboardAlertes(session.user?.id, isAdmin),
+  ]).catch(() => [null, null, null, null, null]);
 
   return (
     <CRMShell
@@ -32,6 +35,7 @@ export default async function DashboardPage() {
       initialPipeline={pipeline}
       initialClients={clients}
       initialActivites={activites}
+      initialAlertes={alertes}
     />
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { LIGHT, DARK } from "@/lib/theme";
 import { Sidebar } from "@/components/Sidebar";
@@ -14,6 +14,7 @@ import { DossiersView } from "@/components/views/DossiersView";
 import { TransmissionsView } from "@/components/views/TransmissionsView";
 import { DocumentsView } from "@/components/views/DocumentsView";
 import { FacturationView } from "@/components/views/FacturationView";
+import { AlertesDropdown } from "@/components/AlertesDropdown";
 import type { PipelineColumn, Client, Activite } from "@/lib/data";
 
 type View =
@@ -54,12 +55,20 @@ interface DashboardStats {
   clients: number;
 }
 
+interface AlerteData {
+  id: string;
+  type: string;
+  message: string;
+  entreprise: { id: string; nom: string } | null;
+}
+
 interface CRMShellProps {
   user: UserInfo;
   initialStats: DashboardStats | null;
   initialPipeline: PipelineColumn[] | null;
   initialClients: Client[] | null;
   initialActivites: Activite[] | null;
+  initialAlertes?: AlerteData[] | null;
 }
 
 export function CRMShell({
@@ -68,6 +77,7 @@ export function CRMShell({
   initialPipeline,
   initialClients,
   initialActivites,
+  initialAlertes,
 }: CRMShellProps) {
   const [dark, setDark] = useState(false);
   const [activeNav, setActiveNav] = useState("Dashboard");
@@ -146,33 +156,7 @@ export function CRMShell({
             </p>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <button
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                border: `1px solid ${C.border}`,
-                background: C.surface,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-              }}
-            >
-              <Bell size={16} color={C.textMuted} />
-              <div
-                style={{
-                  position: "absolute",
-                  top: 6,
-                  right: 6,
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: C.danger,
-                }}
-              />
-            </button>
+            <AlertesDropdown C={C} />
             <button
               onClick={() => navigateTo("Leads")}
               style={{
@@ -203,6 +187,7 @@ export function CRMShell({
             serverPipeline={initialPipeline}
             serverClients={initialClients}
             serverActivites={initialActivites}
+            serverAlertes={initialAlertes}
           />
         )}
         {view === "ClientDetail" && (
