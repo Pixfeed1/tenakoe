@@ -51,16 +51,11 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
       {/* Logo */}
       <div style={{ padding: "0 20px 24px", borderBottom: `1px solid ${C.border}`, marginBottom: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              width: 38, height: 38, borderRadius: 10,
-              background: "linear-gradient(135deg, #16a34a, #22c55e)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 17, fontWeight: 800, color: "#fff",
-            }}
-          >
-            T
-          </div>
+          <img
+            src="/logo.png"
+            alt="Tenakoe"
+            style={{ width: 38, height: 38, objectFit: "contain" }}
+          />
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
             <div style={{ fontSize: 11, color: C.textDim, fontWeight: 500 }}>CRM · Qualification RGE</div>

@@ -54,22 +54,11 @@ export default function LoginPage() {
       >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              background: "linear-gradient(135deg, #16a34a, #22c55e)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 20,
-              fontWeight: 800,
-              color: "#fff",
-            }}
-          >
-            T
-          </div>
+          <img
+            src="/logo.png"
+            alt="Tenakoe"
+            style={{ width: 44, height: 44, objectFit: "contain" }}
+          />
           <div>
             <div style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.03em" }}>
               Tenakoe

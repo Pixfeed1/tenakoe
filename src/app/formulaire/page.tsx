@@ -131,14 +131,11 @@ export default function FormulairePrescripteur() {
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16,
           }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 12,
-              background: "linear-gradient(135deg, #16a34a, #22c55e)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 20, fontWeight: 800, color: "#fff",
-            }}>
-              T
-            </div>
+            <img
+              src="/logo.png"
+              alt="Tenakoe"
+              style={{ width: 44, height: 44, objectFit: "contain" }}
+            />
             <div style={{ textAlign: "left" }}>
               <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
               <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>Qualification RGE</div>
