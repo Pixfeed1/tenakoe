@@ -23,15 +23,19 @@ interface SendMailOptions {
   subject: string;
   html: string;
   from?: string;
+  cc?: string;
+  bcc?: string;
 }
 
-export async function sendMail({ to, subject, html, from }: SendMailOptions) {
+export async function sendMail({ to, subject, html, from, cc, bcc }: SendMailOptions) {
   const transport = getTransporter();
   const fromAddress = from || process.env.SMTP_FROM || process.env.SMTP_USER;
 
   const info = await transport.sendMail({
     from: `"Tenakoe" <${fromAddress}>`,
     to,
+    cc: cc || undefined,
+    bcc: bcc || undefined,
     subject,
     html,
   });

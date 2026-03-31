@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { to, subject, html, entrepriseId, templateId } = body;
+  const { to, cc, bcc, subject, html, entrepriseId, templateId } = body;
 
   if (!to || !subject) {
     return NextResponse.json({ error: "Destinataire et objet requis" }, { status: 400 });
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await sendMail({ to, subject, html: content || "" });
+    const result = await sendMail({ to, subject, html: content || "", cc, bcc });
 
     // Enregistrer la transmission
     await prisma.transmission.create({

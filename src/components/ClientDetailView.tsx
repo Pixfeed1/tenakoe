@@ -290,7 +290,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </div>
           <div style={{ marginBottom: 8 }}>
             <span style={{ fontSize: 12, color: C.textDim }}>À : </span>
-            <span style={{ fontSize: 12, color: C.text }}>{entrepriseData?.email || client?.nom || "—"}</span>
+            <span style={{ fontSize: 12, color: C.text }}>{entrepriseData?.email || "—"}</span>
+          </div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <input placeholder="CC (séparés par des virgules)" id="mail-cc"
+              style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+            <input placeholder="CCi" id="mail-bcc"
+              style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
           </div>
           {sendStatus && (
             <div style={{
@@ -347,11 +353,15 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 setSending(true);
                 setSendStatus(null);
                 try {
+                  const cc = (document.getElementById("mail-cc") as HTMLInputElement)?.value || "";
+                  const bcc = (document.getElementById("mail-bcc") as HTMLInputElement)?.value || "";
                   const res = await fetch("/api/send-mail", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       to: entrepriseData?.email || "",
+                      cc: cc || undefined,
+                      bcc: bcc || undefined,
                       subject: mailSubject,
                       html: `<p>${mailBody.replace(/\n/g, "<br>")}</p>`,
                       entrepriseId: client?.id,
