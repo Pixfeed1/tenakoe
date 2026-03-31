@@ -10,10 +10,23 @@ import {
 import { getDashboardAlertes } from "@/lib/alertes";
 import type { CurrentUser } from "@/lib/rbac";
 import { CRMShell } from "@/components/CRMShell";
+import { PrescripteurView } from "@/components/PrescripteurView";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
+
+  // Prescripteur gets a dedicated simple view
+  if (session.user?.role === "PRESCRIPTEUR") {
+    return (
+      <PrescripteurView
+        user={{
+          name: session.user?.name || "Prescripteur",
+          initials: getInitials(session.user?.name || "P"),
+        }}
+      />
+    );
+  }
 
   const isAdmin = session.user?.role === "ADMIN";
   const currentUser: CurrentUser = {

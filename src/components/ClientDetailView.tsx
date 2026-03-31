@@ -494,35 +494,76 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
           padding: 20, marginBottom: 20, boxShadow: C.shadowHover,
         }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Loguer un appel</span>
             <X size={16} color={C.textDim} style={{ cursor: "pointer" }} onClick={() => setShowCallLog(false)} />
           </div>
-          <div style={{ marginBottom: 8, fontSize: 12, color: C.textDim }}>
-            Téléphone : {entrepriseData?.telephone || "—"}
-            {entrepriseData?.telephone && (
-              <a href={`tel:${entrepriseData.telephone}`} style={{ marginLeft: 8, color: C.blue, textDecoration: "none" }}>
-                Appeler maintenant
-              </a>
-            )}
+
+          <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}` }}>
+            <span style={{ fontSize: 12, color: C.textDim }}>Numéro : </span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{entrepriseData?.telephone || "—"}</span>
           </div>
-          <textarea
-            placeholder="Résumé de l'appel..."
-            value={callNote}
-            onChange={(e) => setCallNote(e.target.value)}
-            rows={4}
-            style={{
-              width: "100%", padding: "10px 14px", borderRadius: 8,
-              border: `1px solid ${C.border}`, background: C.bg, color: C.text,
-              fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box",
-            }}
-          />
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Date et heure</label>
+              <input type="datetime-local" defaultValue={new Date().toISOString().slice(0, 16)}
+                id="call-datetime"
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Durée</label>
+              <select id="call-duration" style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12 }}>
+                <option value="5 min">5 min</option>
+                <option value="10 min">10 min</option>
+                <option value="15 min" selected>15 min</option>
+                <option value="30 min">30 min</option>
+                <option value="45 min">45 min</option>
+                <option value="1h">1h</option>
+                <option value="1h+">1h+</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Résultat</label>
+              <select id="call-result" style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12 }}>
+                <option value="Répondu — échange positif">Répondu — échange positif</option>
+                <option value="Répondu — rappeler plus tard">Répondu — rappeler plus tard</option>
+                <option value="Répondu — pas intéressé">Répondu — pas intéressé</option>
+                <option value="Pas de réponse">Pas de réponse</option>
+                <option value="Messagerie">Messagerie</option>
+                <option value="Numéro invalide">Numéro invalide</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Notes de l&apos;appel</label>
+            <textarea
+              placeholder="Résumé de la conversation..."
+              value={callNote}
+              onChange={(e) => setCallNote(e.target.value)}
+              rows={3}
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: 8,
+                border: `1px solid ${C.border}`, background: C.bg, color: C.text,
+                fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <button onClick={() => { setShowCallLog(false); setCallNote(""); }} style={{
+              padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.border}`,
+              background: "transparent", color: C.textDim, fontSize: 13, cursor: "pointer",
+            }}>Annuler</button>
             <button
-              disabled={!callNote.trim()}
               onClick={async () => {
-                if (!callNote.trim() || !client?.id) return;
-                // Create transmission for the call
+                if (!client?.id) return;
+                const datetime = (document.getElementById("call-datetime") as HTMLInputElement)?.value;
+                const duration = (document.getElementById("call-duration") as HTMLSelectElement)?.value;
+                const result = (document.getElementById("call-result") as HTMLSelectElement)?.value;
+                const contenu = `[${duration}] ${result}\n${callNote}`.trim();
+
                 await fetch("/api/transmissions", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -530,8 +571,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     canal: "TELEPHONE",
                     direction: "SORTANT",
                     destinataire: entrepriseData?.telephone || "—",
-                    objet: "Appel téléphonique",
-                    contenu: callNote,
+                    objet: result,
+                    contenu,
                     entrepriseId: client.id,
                   }),
                 });
@@ -541,9 +582,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               }}
               style={{
                 padding: "8px 20px", borderRadius: 10, border: "none",
-                background: callNote.trim() ? C.accent : "#94a3b8",
-                color: "#fff", fontSize: 13, fontWeight: 600,
-                cursor: callNote.trim() ? "pointer" : "not-allowed",
+                background: "linear-gradient(135deg, #16a34a, #15803d)",
+                color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >
