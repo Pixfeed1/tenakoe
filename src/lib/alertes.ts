@@ -1,9 +1,52 @@
 import { prisma } from "@/lib/prisma";
+import { sendMail } from "@/lib/mail";
+
+const ALERTE_SUBJECTS: Record<string, string> = {
+  RETARD_TACHE: "Rappel — Tâche en retard",
+  RETARD_ETAPE: "Rappel — Étape feuille de route en retard",
+  DOCUMENT_MANQUANT: "Rappel — Documents en attente",
+  RELANCE_48H: "Rappel — Prospect à contacter sous 48h",
+  RAPPEL_ECHEANCE: "Rappel — Échéance proche",
+};
+
+/**
+ * Envoie un email de rappel à la chargée concernée par l'alerte.
+ */
+async function sendAlertEmail(userId: string, type: string, message: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, prenom: true, actif: true },
+    });
+    if (!user || !user.actif) return;
+
+    const subject = ALERTE_SUBJECTS[type] || "Notification Tenakoe";
+    const html = `
+      <div style="font-family: 'DM Sans', Arial, sans-serif; max-width: 500px;">
+        <div style="background: #16a34a; padding: 16px 24px; border-radius: 12px 12px 0 0;">
+          <h2 style="color: white; margin: 0; font-size: 16px;">Tenakoe CRM</h2>
+        </div>
+        <div style="padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+          <p style="margin: 0 0 8px; color: #475569; font-size: 14px;">Bonjour ${user.prenom},</p>
+          <div style="padding: 14px 18px; background: #fef2f2; border-left: 3px solid #dc2626; border-radius: 8px; margin: 16px 0; font-size: 14px; color: #0f172a;">
+            ${message}
+          </div>
+          <p style="margin: 16px 0 0; color: #94a3b8; font-size: 12px;">
+            Connectez-vous au CRM pour traiter cette alerte.
+          </p>
+        </div>
+      </div>`;
+
+    await sendMail({ to: user.email, subject, html });
+  } catch {
+    // Email non-bloquant
+  }
+}
 
 /**
  * Moteur de calcul des alertes automatiques.
  * Vérifie les retards tâches, étapes, documents manquants et relances 48h.
- * Crée les alertes en BDD et marque les entités en retard.
+ * Crée les alertes en BDD, marque les entités en retard, et envoie des emails.
  */
 export async function checkAndCreateAlertes() {
   const now = new Date();
@@ -38,14 +81,11 @@ export async function checkAndCreateAlertes() {
 
     // Créer l'alerte pour l'assignée
     if (tache.assigneeId) {
+      const msgTache = `Tâche en retard : "${tache.titre}"${tache.entreprise ? ` — ${tache.entreprise.nom}` : ""}`;
       await prisma.alerte.create({
-        data: {
-          type: "RETARD_TACHE",
-          message: `Tâche en retard : "${tache.titre}"${tache.entreprise ? ` — ${tache.entreprise.nom}` : ""}`,
-          userId: tache.assigneeId,
-          entrepriseId: tache.entrepriseId,
-        },
+        data: { type: "RETARD_TACHE", message: msgTache, userId: tache.assigneeId, entrepriseId: tache.entrepriseId },
       });
+      await sendAlertEmail(tache.assigneeId, "RETARD_TACHE", msgTache);
       results.retardTaches++;
     }
   }
@@ -77,14 +117,11 @@ export async function checkAndCreateAlertes() {
     });
 
     if (etape.projet.chargeeId) {
+      const msgEtape = `Étape en retard : "${etape.nom}" — ${etape.projet.entreprise.nom}`;
       await prisma.alerte.create({
-        data: {
-          type: "RETARD_ETAPE",
-          message: `Étape en retard : "${etape.nom}" — ${etape.projet.entreprise.nom}`,
-          userId: etape.projet.chargeeId,
-          entrepriseId: etape.projet.entreprise.id,
-        },
+        data: { type: "RETARD_ETAPE", message: msgEtape, userId: etape.projet.chargeeId, entrepriseId: etape.projet.entreprise.id },
       });
+      await sendAlertEmail(etape.projet.chargeeId, "RETARD_ETAPE", msgEtape);
       results.retardEtapes++;
     }
   }
@@ -140,14 +177,11 @@ export async function checkAndCreateAlertes() {
     });
 
     if (!existingAlerte) {
+      const msgDoc = `${count} document${count > 1 ? "s" : ""} en attente depuis +15 jours — ${nom}`;
       await prisma.alerte.create({
-        data: {
-          type: "DOCUMENT_MANQUANT",
-          message: `${count} document${count > 1 ? "s" : ""} en attente depuis +15 jours — ${nom}`,
-          userId: chargeeId,
-          entrepriseId: entId,
-        },
+        data: { type: "DOCUMENT_MANQUANT", message: msgDoc, userId: chargeeId, entrepriseId: entId },
       });
+      await sendAlertEmail(chargeeId, "DOCUMENT_MANQUANT", msgDoc);
       results.documentsManquants++;
     }
   }
@@ -190,14 +224,11 @@ export async function checkAndCreateAlertes() {
       });
 
       if (!existingAlerte) {
+        const msgRelance = `Relance à faire > 48h — ${prospect.nom}`;
         await prisma.alerte.create({
-          data: {
-            type: "RELANCE_48H",
-            message: `Relance à faire > 48h — ${prospect.nom}`,
-            userId: chargeeId,
-            entrepriseId: prospect.id,
-          },
+          data: { type: "RELANCE_48H", message: msgRelance, userId: chargeeId, entrepriseId: prospect.id },
         });
+        await sendAlertEmail(chargeeId, "RELANCE_48H", msgRelance);
         results.relances48h++;
       }
     }
