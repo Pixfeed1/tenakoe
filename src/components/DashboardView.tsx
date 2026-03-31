@@ -75,15 +75,34 @@ export function DashboardView({
       setDragging(null);
       return;
     }
+    const itemId = dragging.itemId;
     setPipeline((prev) => {
       const next = prev.map((col) => ({ ...col, items: [...col.items] }));
       const srcCol = next.find((c) => c.id === dragging.colId)!;
       const dstCol = next.find((c) => c.id === targetColId)!;
-      const idx = srcCol.items.findIndex((i) => i.id === dragging.itemId);
+      const idx = srcCol.items.findIndex((i) => i.id === itemId);
       const [item] = srcCol.items.splice(idx, 1);
       dstCol.items.push(item);
       return next;
     });
+
+    // Persist status change via API
+    const colToStatut: Record<string, { statutPrise?: string; statutFacturation?: string }> = {
+      nouveau: { statutPrise: "NOUVEAU" },
+      prise_en_charge: { statutPrise: "PRISE_EN_CHARGE" },
+      a_relancer: { statutPrise: "PRISE_EN_CHARGE_A_RELANCER" },
+      devis_envoye: { statutFacturation: "DEVIS_ENVOYE" },
+      facture_payee: { statutFacturation: "FACTURE_PAYEE" },
+    };
+    const statut = colToStatut[targetColId];
+    if (statut) {
+      fetch(`/api/entreprises/${itemId}/statut`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(statut),
+      }).catch(() => {});
+    }
+
     setDragOver(null);
     setDragging(null);
   };

@@ -29,6 +29,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [docs, setDocs] = useState<DocCheck[]>(DOCS_CHECKLIST);
   const [tracks, setTracks] = useState<TrackStep[]>(TRACK_STEPS);
   const [entrepriseData, setEntrepriseData] = useState<Record<string, string> | null>(null);
+  const [mailSubject, setMailSubject] = useState("");
+  const [mailBody, setMailBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [smsOpen, setSmsOpen] = useState(false);
+  const [smsBody, setSmsBody] = useState("");
 
   // Fetch real data if client has an ID
   useEffect(() => {
@@ -125,9 +131,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {[
-            { Icon: Mail, label: "Envoyer mail", onClick: () => setMailOpen(!mailOpen) },
-            { Icon: MessageSquare, label: "SMS", onClick: () => {} },
-            { Icon: Phone, label: "Appeler", onClick: () => {} },
+            { Icon: Mail, label: "Envoyer mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); } },
+            { Icon: MessageSquare, label: "SMS", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
+            { Icon: Phone, label: "Appeler", onClick: () => { if (entrepriseData?.telephone) window.open(`tel:${entrepriseData.telephone}`); } },
           ].map((btn, i) => (
             <button
               key={i}
@@ -158,23 +164,36 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </div>
           <div style={{ marginBottom: 8 }}>
             <span style={{ fontSize: 12, color: C.textDim }}>À : </span>
-            <span style={{ fontSize: 12, color: C.text }}>{client?.nom || "gr24@email.com"}</span>
+            <span style={{ fontSize: 12, color: C.text }}>{entrepriseData?.email || client?.nom || "—"}</span>
           </div>
+          {sendStatus && (
+            <div style={{
+              padding: "8px 12px", borderRadius: 8, marginBottom: 8, fontSize: 12, fontWeight: 500,
+              background: sendStatus.type === "success" ? C.accentDim : C.dangerDim,
+              color: sendStatus.type === "success" ? C.accentText : C.danger,
+            }}>
+              {sendStatus.msg}
+            </div>
+          )}
           <input
             placeholder="Objet"
+            value={mailSubject}
+            onChange={(e) => setMailSubject(e.target.value)}
             style={{
               width: "100%", padding: "8px 12px", borderRadius: 8,
               border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13,
-              marginBottom: 8, outline: "none",
+              marginBottom: 8, outline: "none", boxSizing: "border-box",
             }}
           />
           <textarea
             placeholder="Votre message..."
+            value={mailBody}
+            onChange={(e) => setMailBody(e.target.value)}
             rows={4}
             style={{
               width: "100%", padding: "8px 12px", borderRadius: 8,
               border: `1px solid ${C.border}`, background: C.bg, color: C.text,
-              fontSize: 13, marginBottom: 8, outline: "none", resize: "vertical",
+              fontSize: 13, marginBottom: 8, outline: "none", resize: "vertical", boxSizing: "border-box",
             }}
           />
           <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -184,19 +203,128 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 background: C.bg, color: C.textMuted, fontSize: 12,
               }}
             >
-              <option>Modèle : relance documents</option>
-              <option>Modèle : bienvenue client</option>
-              <option>Modèle : suivi dossier</option>
+              <option value="">Modèle...</option>
+              <option value="mail-relance-docs">Relance documents</option>
+              <option value="mail-bienvenue">Bienvenue client</option>
+              <option value="mail-suivi-dossier">Suivi dossier</option>
             </select>
             <button
+              disabled={sending || !mailSubject}
+              onClick={async () => {
+                setSending(true);
+                setSendStatus(null);
+                try {
+                  const res = await fetch("/api/send-mail", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      to: entrepriseData?.email || "",
+                      subject: mailSubject,
+                      html: `<p>${mailBody.replace(/\n/g, "<br>")}</p>`,
+                      entrepriseId: client?.id,
+                    }),
+                  });
+                  if (res.ok) {
+                    setSendStatus({ type: "success", msg: "Mail envoyé avec succès" });
+                    setMailSubject("");
+                    setMailBody("");
+                  } else {
+                    const err = await res.json();
+                    setSendStatus({ type: "error", msg: err.error || "Erreur d'envoi" });
+                  }
+                } catch {
+                  setSendStatus({ type: "error", msg: "Erreur réseau" });
+                }
+                setSending(false);
+              }}
               style={{
                 padding: "8px 20px", borderRadius: 10, border: "none",
-                background: "linear-gradient(135deg, #16a34a, #15803d)", color: "#fff",
-                fontSize: 13, fontWeight: 600, cursor: "pointer",
+                background: sending ? "#94a3b8" : "linear-gradient(135deg, #16a34a, #15803d)",
+                color: "#fff", fontSize: 13, fontWeight: 600,
+                cursor: sending ? "not-allowed" : "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}
             >
-              <Send size={13} /> Envoyer
+              <Send size={13} /> {sending ? "Envoi..." : "Envoyer"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SMS Composer */}
+      {smsOpen && (
+        <div
+          style={{
+            background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
+            padding: 20, marginBottom: 20, boxShadow: C.shadowHover,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Envoyer un SMS</span>
+            <X size={16} color={C.textDim} style={{ cursor: "pointer" }} onClick={() => setSmsOpen(false)} />
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: C.textDim }}>À : </span>
+            <span style={{ fontSize: 12, color: C.text }}>{entrepriseData?.telephone || "—"}</span>
+          </div>
+          {sendStatus && (
+            <div style={{
+              padding: "8px 12px", borderRadius: 8, marginBottom: 8, fontSize: 12, fontWeight: 500,
+              background: sendStatus.type === "success" ? C.accentDim : C.dangerDim,
+              color: sendStatus.type === "success" ? C.accentText : C.danger,
+            }}>
+              {sendStatus.msg}
+            </div>
+          )}
+          <textarea
+            placeholder="Votre message SMS..."
+            value={smsBody}
+            onChange={(e) => setSmsBody(e.target.value)}
+            rows={3}
+            style={{
+              width: "100%", padding: "8px 12px", borderRadius: 8,
+              border: `1px solid ${C.border}`, background: C.bg, color: C.text,
+              fontSize: 13, marginBottom: 8, outline: "none", resize: "vertical", boxSizing: "border-box",
+            }}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 11, color: C.textDim }}>{smsBody.length}/160 caractères</span>
+            <button
+              disabled={sending || !smsBody}
+              onClick={async () => {
+                setSending(true);
+                setSendStatus(null);
+                try {
+                  const res = await fetch("/api/send-sms", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      to: entrepriseData?.telephone || "",
+                      message: smsBody,
+                      entrepriseId: client?.id,
+                    }),
+                  });
+                  if (res.ok) {
+                    setSendStatus({ type: "success", msg: "SMS envoyé avec succès" });
+                    setSmsBody("");
+                  } else {
+                    const err = await res.json();
+                    setSendStatus({ type: "error", msg: err.error || "Erreur d'envoi" });
+                  }
+                } catch {
+                  setSendStatus({ type: "error", msg: "Erreur réseau" });
+                }
+                setSending(false);
+              }}
+              style={{
+                padding: "8px 20px", borderRadius: 10, border: "none",
+                background: sending ? "#94a3b8" : "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                color: "#fff", fontSize: 13, fontWeight: 600,
+                cursor: sending ? "not-allowed" : "pointer",
+                display: "flex", alignItems: "center", gap: 6,
+              }}
+            >
+              <MessageSquare size={13} /> {sending ? "Envoi..." : "Envoyer SMS"}
             </button>
           </div>
         </div>
