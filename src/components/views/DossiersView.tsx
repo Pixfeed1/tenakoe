@@ -54,14 +54,6 @@ export function DossiersView({ C, onSelectClient }: { C: Theme; onSelectClient: 
           <input placeholder="Rechercher un dossier..." value={search} onChange={(e) => setSearch(e.target.value)}
             style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
         </div>
-        <button onClick={() => setShowAdd(!showAdd)} style={{
-          padding: "8px 16px", borderRadius: 10, border: "none",
-          background: "linear-gradient(135deg, #16a34a, #15803d)",
-          color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 6,
-        }}>
-          <Plus size={14} /> Nouveau dossier
-        </button>
       </div>
 
       {showAdd && (

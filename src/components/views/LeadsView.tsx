@@ -119,17 +119,6 @@ export function LeadsView({ C }: { C: Theme }) {
           <Zap size={18} color={C.blue} />
           <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{leads.length} leads</span>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          style={{
-            padding: "8px 16px", borderRadius: 10, border: "none",
-            background: "linear-gradient(135deg, #16a34a, #15803d)",
-            color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            display: "flex", alignItems: "center", gap: 6,
-          }}
-        >
-          <Plus size={14} /> Nouveau lead
-        </button>
       </div>
 
       {/* New lead form */}

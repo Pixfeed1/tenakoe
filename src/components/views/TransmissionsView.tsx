@@ -181,14 +181,6 @@ export function TransmissionsView({ C }: { C: Theme }) {
         }}>
           <Archive size={12} /> {showArchived ? "Archives" : "Voir archives"}
         </button>
-        <button onClick={() => setShowCompose(!showCompose)} style={{
-          padding: "8px 16px", borderRadius: 10, border: "none",
-          background: "linear-gradient(135deg, #16a34a, #15803d)",
-          color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 6,
-        }}>
-          <Plus size={13} /> Nouveau
-        </button>
       </div>
 
       {/* Compose */}

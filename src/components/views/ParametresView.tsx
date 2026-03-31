@@ -460,6 +460,7 @@ function NotificationsTab({ C }: { C: Theme }) {
 function ImportExportTab({ C }: { C: Theme }) {
   const [stats, setStats] = useState<{ entreprises: number; contacts: number; projets: number; leads: number } | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportFormat, setExportFormat] = useState<"csv" | "xls">("csv");
 
   useEffect(() => { fetch("/api/import-export").then((r) => r.ok ? r.json() : null).then(setStats).catch(() => {}); }, []);
 
@@ -468,10 +469,27 @@ function ImportExportTab({ C }: { C: Theme }) {
     const res = await fetch("/api/import-export", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type }) });
     if (res.ok) {
       const data = await res.json();
-      const csv = data.length > 0 ? [Object.keys(data[0]).join(";"), ...data.map((r: Record<string, unknown>) => Object.values(r).map((v) => typeof v === "object" ? JSON.stringify(v) : v).join(";"))].join("\n") : "";
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = `${type}-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+      if (data.length === 0) { setExporting(false); return; }
+
+      const headers = Object.keys(data[0]);
+      const rows = data.map((r: Record<string, unknown>) => Object.values(r).map((v) => typeof v === "object" ? JSON.stringify(v) : String(v ?? "")));
+
+      if (exportFormat === "csv") {
+        const csv = [headers.join(";"), ...rows.map((r: string[]) => r.join(";"))].join("\n");
+        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = `${type}-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+      } else {
+        // XLS (HTML table format, compatible Excel)
+        let html = "<html><head><meta charset='utf-8'></head><body><table border='1'><tr>";
+        html += headers.map((h) => `<th>${h}</th>`).join("");
+        html += "</tr>";
+        rows.forEach((r: string[]) => { html += "<tr>" + r.map((c: string) => `<td>${c}</td>`).join("") + "</tr>"; });
+        html += "</table></body></html>";
+        const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = `${type}-${new Date().toISOString().slice(0, 10)}.xls`; a.click();
+      }
     }
     setExporting(false);
   };
@@ -494,7 +512,21 @@ function ImportExportTab({ C }: { C: Theme }) {
           ))}
         </div>
       )}
-      <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 10 }}>Exporter en CSV</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Exporter</span>
+        <div style={{ display: "flex", gap: 4 }}>
+          <button onClick={() => setExportFormat("csv")} style={{
+            padding: "5px 12px", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer",
+            background: exportFormat === "csv" ? C.accentDim : C.surfaceHover,
+            color: exportFormat === "csv" ? C.accentText : C.textDim,
+          }}>CSV</button>
+          <button onClick={() => setExportFormat("xls")} style={{
+            padding: "5px 12px", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer",
+            background: exportFormat === "xls" ? C.blueDim : C.surfaceHover,
+            color: exportFormat === "xls" ? C.blue : C.textDim,
+          }}>XLS</button>
+        </div>
+      </div>
       <div style={{ display: "flex", gap: 8 }}>
         {["entreprises", "contacts", "projets"].map((type) => (
           <button key={type} onClick={() => exportData(type)} disabled={exporting} style={{
