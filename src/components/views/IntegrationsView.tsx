@@ -57,6 +57,19 @@ const INTEGRATIONS: IntegrationConfig[] = [
     ],
   },
   {
+    key: "brevo",
+    nom: "Brevo",
+    description: "Email marketing, SMS et automatisation — ex-Sendinblue",
+    type: "email & sms",
+    logo: "https://www.brevo.com/favicon.ico",
+    color: "#0B996E",
+    fields: [
+      { key: "api_key", label: "Cl\u00E9 API Brevo", type: "password", placeholder: "xkeysib-xxxxxxxxxxxx" },
+      { key: "sender_email", label: "Email exp\u00E9diteur", type: "email", placeholder: "contact@tenakoe.fr" },
+      { key: "sender_name", label: "Nom exp\u00E9diteur", type: "text", placeholder: "Tenakoe" },
+    ],
+  },
+  {
     key: "abby",
     nom: "Abby",
     description: "Facturation \u00E9lectronique — devis, factures, conformit\u00E9 2026",
