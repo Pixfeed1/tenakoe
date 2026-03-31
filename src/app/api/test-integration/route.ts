@@ -108,7 +108,17 @@ export async function POST(request: NextRequest) {
       }
 
       case "abby": {
-        return NextResponse.json({ ok: true, msg: "Abby n'a pas d'API — utilisez le lien direct" });
+        if (!config.api_key) {
+          return NextResponse.json({ ok: false, msg: "Clé API Abby requise" });
+        }
+        const res = await fetch("https://docs.abby.fr/mcp/facturation/customers", {
+          headers: { Authorization: `Bearer ${config.api_key}`, "Content-Type": "application/json" },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return NextResponse.json({ ok: true, msg: `Connexion Abby réussie — ${data.total || 0} clients` });
+        }
+        return NextResponse.json({ ok: false, msg: "Clé API Abby invalide" });
       }
 
       case "google_sheets": {

@@ -72,12 +72,15 @@ const INTEGRATIONS: IntegrationConfig[] = [
   {
     key: "abby",
     nom: "Abby",
-    description: "Facturation \u00E9lectronique — devis, factures, conformit\u00E9 2026",
+    description: "Facturation \u00E9lectronique — devis, factures, acomptes, avoirs, sync clients",
     type: "facturation",
     logo: "/logos/abby.svg",
     color: "#6C5CE7",
     url: "https://app.abby.fr",
-    fields: [],
+    fields: [
+      { key: "api_key", label: "Cl\u00E9 API Abby", type: "password", placeholder: "Votre cl\u00E9 API Abby" },
+      { key: "auto_sync", label: "Sync auto clients (quand Facture pay\u00E9e)", type: "text", placeholder: "oui / non" },
+    ],
   },
   {
     key: "make",

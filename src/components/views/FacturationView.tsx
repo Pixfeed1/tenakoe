@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, Search, FileText, Check, Clock, AlertTriangle } from "lucide-react";
+import { CreditCard, Search, FileText, Check, Clock, AlertTriangle, ExternalLink, Send, Plus, X } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 
@@ -45,6 +45,9 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
   const [entreprises, setEntreprises] = useState<Entreprise[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatut, setFilterStatut] = useState("");
+  const [showAbby, setShowAbby] = useState(false);
+  const [abbyAction, setAbbyAction] = useState<string | null>(null);
+  const [abbyMsg, setAbbyMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/entreprises")
@@ -67,6 +70,65 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
 
   return (
     <>
+      {/* Abby bar */}
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
+        padding: "14px 22px", marginBottom: 16, boxShadow: C.shadow,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <img src="/logos/abby.svg" alt="Abby" style={{ width: 32, height: 32 }} />
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Facturation Abby</div>
+            <div style={{ fontSize: 11, color: C.textDim }}>Créer devis, factures, sync clients</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={async () => {
+            setAbbyAction("sync"); setAbbyMsg(null);
+            const payees = entreprises.filter((e) => e.statutFacturation === "FACTURE_PAYEE");
+            let synced = 0;
+            for (const ent of payees) {
+              try {
+                await fetch("/api/abby", {
+                  method: "POST", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "sync-client", entrepriseId: ent.id }),
+                });
+                synced++;
+              } catch {}
+            }
+            setAbbyMsg({ type: "success", msg: `${synced} client${synced > 1 ? "s" : ""} synchronisé${synced > 1 ? "s" : ""} vers Abby` });
+            setAbbyAction(null);
+          }} disabled={abbyAction === "sync"} style={{
+            padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
+            background: C.surface, color: C.textMuted, fontSize: 12, fontWeight: 500, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 5,
+          }}>
+            <Send size={12} /> {abbyAction === "sync" ? "Sync..." : "Sync clients"}
+          </button>
+          <a href="https://app.abby.fr" target="_blank" rel="noopener noreferrer" style={{
+            padding: "7px 14px", borderRadius: 8, border: "none",
+            background: "linear-gradient(135deg, #6C5CE7, #5a4bd1)",
+            color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 5, textDecoration: "none",
+          }}>
+            <ExternalLink size={12} /> Ouvrir Abby
+          </a>
+        </div>
+      </div>
+
+      {abbyMsg && (
+        <div style={{
+          padding: "10px 16px", borderRadius: 10, marginBottom: 16, fontSize: 12, fontWeight: 500,
+          background: abbyMsg.type === "success" ? C.accentDim : C.dangerDim,
+          color: abbyMsg.type === "success" ? C.accentText : C.danger,
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+        }}>
+          {abbyMsg.msg}
+          <X size={14} style={{ cursor: "pointer" }} onClick={() => setAbbyMsg(null)} />
+        </div>
+      )}
+
       {/* Stats */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         {[
@@ -107,7 +169,7 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                {["Entreprise", "SIRET", "Chargée", "Statut facturation", "Dernière MAJ"].map((h) => (
+                {["Entreprise", "SIRET", "Chargée", "Statut facturation", "Dernière MAJ", "Abby"].map((h) => (
                   <th key={h} style={{
                     textAlign: "left", padding: "12px 14px", fontSize: 11, fontWeight: 600,
                     color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em",
@@ -137,6 +199,25 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
                     </td>
                     <td style={{ padding: "12px 14px", fontSize: 12, color: C.textDim }}>
                       {new Date(e.updatedAt).toLocaleDateString("fr-FR")}
+                    </td>
+                    <td style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
+                      <button onClick={async () => {
+                        setAbbyMsg(null);
+                        try {
+                          const res = await fetch("/api/abby", {
+                            method: "POST", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ action: "sync-client", entrepriseId: e.id }),
+                          });
+                          if (res.ok) setAbbyMsg({ type: "success", msg: `${e.nom} synchronisé vers Abby` });
+                          else { const err = await res.json(); setAbbyMsg({ type: "error", msg: err.error }); }
+                        } catch { setAbbyMsg({ type: "error", msg: "Erreur réseau" }); }
+                      }} style={{
+                        padding: "4px 10px", borderRadius: 6, border: "none",
+                        background: C.purpleDim, color: C.purple, fontSize: 11,
+                        fontWeight: 600, cursor: "pointer",
+                      }}>
+                        Sync
+                      </button>
                     </td>
                   </tr>
                 );
