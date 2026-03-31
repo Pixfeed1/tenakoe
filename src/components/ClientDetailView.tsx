@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
@@ -42,6 +42,33 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newNote, setNewNote] = useState("");
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (file: File) => {
+    if (!client?.id) return;
+    setUploading(true);
+    setUploadMsg(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("entrepriseId", client.id);
+
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setUploadMsg({ type: "success", msg: `${data.nom} uploadé avec succès` });
+      } else {
+        const err = await res.json();
+        setUploadMsg({ type: "error", msg: err.error || "Erreur d'upload" });
+      }
+    } catch {
+      setUploadMsg({ type: "error", msg: "Erreur réseau" });
+    }
+    setUploading(false);
+  };
 
   // Fetch real data if client has an ID
   useEffect(() => {
@@ -459,23 +486,54 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             </div>
           ))}
 
-          {/* Upload */}
+          {/* Upload status */}
+          {uploadMsg && (
+            <div style={{
+              padding: "10px 14px", borderRadius: 8, marginTop: 12, fontSize: 12, fontWeight: 500,
+              background: uploadMsg.type === "success" ? C.accentDim : C.dangerDim,
+              color: uploadMsg.type === "success" ? C.accentText : C.danger,
+            }}>
+              {uploadMsg.msg}
+            </div>
+          )}
+
+          {/* Upload zone */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFileUpload(file);
+              e.target.value = "";
+            }}
+          />
           <div
             style={{
               marginTop: 16, padding: 24, borderRadius: 12,
               border: `2px dashed ${dragFile ? C.accent : C.border}`,
               background: dragFile ? C.accentDim : C.bg, textAlign: "center",
-              transition: "all 0.2s", cursor: "pointer",
+              transition: "all 0.2s", cursor: uploading ? "wait" : "pointer",
+              opacity: uploading ? 0.6 : 1,
             }}
+            onClick={() => !uploading && fileInputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragFile(true); }}
             onDragLeave={() => setDragFile(false)}
-            onDrop={(e) => { e.preventDefault(); setDragFile(false); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragFile(false);
+              const file = e.dataTransfer.files[0];
+              if (file && !uploading) handleFileUpload(file);
+            }}
           >
             <Upload size={20} color={dragFile ? C.accent : C.textDim} style={{ marginBottom: 8 }} />
             <div style={{ fontSize: 13, color: dragFile ? C.accentText : C.textMuted, fontWeight: 500 }}>
-              Glisser-déposer un fichier ici
+              {uploading ? "Upload en cours..." : "Glisser-déposer un fichier ici"}
             </div>
-            <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>ou cliquer pour parcourir</div>
+            <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>
+              {uploading ? "" : "ou cliquer pour parcourir — PDF, images, Word, Excel (max 10 Mo)"}
+            </div>
           </div>
         </div>
       )}
