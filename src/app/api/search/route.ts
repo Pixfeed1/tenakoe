@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const entFilter = getEntrepriseFilter(user);
   const projFilter = getProjetFilter(user);
 
-  const [entreprises, contacts, projets] = await Promise.all([
+  const [entreprises, contacts, projets, leads, transmissions] = await Promise.all([
     prisma.entreprise.findMany({
       where: {
         ...entFilter,
@@ -60,7 +60,34 @@ export async function GET(request: NextRequest) {
       },
       take: 5,
     }),
+    prisma.leadFormulaire.findMany({
+      where: {
+        converti: false,
+        OR: [
+          { nomArtisan: { contains: q, mode: "insensitive" } },
+          { prenomArtisan: { contains: q, mode: "insensitive" } },
+          { nomEntreprise: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      select: { id: true, nomArtisan: true, prenomArtisan: true, nomEntreprise: true, prescripteur: true },
+      take: 5,
+    }),
+    prisma.transmission.findMany({
+      where: {
+        OR: [
+          { objet: { contains: q, mode: "insensitive" } },
+          { destinataire: { contains: q, mode: "insensitive" } },
+          { contenu: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        id: true, canal: true, objet: true, destinataire: true, dateEnvoi: true,
+        entreprise: { select: { id: true, nom: true } },
+      },
+      take: 5,
+    }),
   ]);
 
-  return NextResponse.json({ entreprises, contacts, projets });
+  return NextResponse.json({ entreprises, contacts, projets, leads, transmissions });
 }

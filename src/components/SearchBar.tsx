@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Building2, UserCircle, FolderOpen, X } from "lucide-react";
+import { Search, Building2, UserCircle, FolderOpen, X, Zap, Mail } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 
@@ -9,6 +9,8 @@ interface SearchResult {
   entreprises: Array<{ id: string; nom: string; siret: string | null; statutPrise: string; prescripteur: string | null }>;
   contacts: Array<{ id: string; nom: string; prenom: string; email: string | null; entreprise: { id: string; nom: string } | null }>;
   projets: Array<{ id: string; nom: string; entreprise: { id: string; nom: string }; chargee: { prenom: string } | null }>;
+  leads: Array<{ id: string; nomArtisan: string; prenomArtisan: string; nomEntreprise: string | null; prescripteur: string }>;
+  transmissions: Array<{ id: string; canal: string; objet: string | null; destinataire: string; dateEnvoi: string; entreprise: { id: string; nom: string } | null }>;
 }
 
 interface SearchBarProps {
@@ -59,7 +61,7 @@ export function SearchBar({ C, onSelectClient }: SearchBarProps) {
   }, [query]);
 
   const totalResults = results
-    ? results.entreprises.length + results.contacts.length + results.projets.length
+    ? results.entreprises.length + results.contacts.length + results.projets.length + (results.leads?.length || 0) + (results.transmissions?.length || 0)
     : 0;
 
   const select = (client: { id: string; nom: string; siret?: string; prescripteur?: string }) => {
@@ -174,6 +176,64 @@ export function SearchBar({ C, onSelectClient }: SearchBarProps) {
                         <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{c.prenom} {c.nom}</div>
                         <div style={{ fontSize: 11, color: C.textDim }}>
                           {c.entreprise?.nom || ""}{c.email ? ` · ${c.email}` : ""}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Leads */}
+              {results.leads?.length > 0 && (
+                <div>
+                  <div style={{
+                    padding: "8px 14px", fontSize: 10, fontWeight: 700, color: C.textDim,
+                    textTransform: "uppercase", letterSpacing: "0.08em",
+                    borderBottom: `1px solid ${C.border}`,
+                  }}>
+                    Leads ({results.leads.length})
+                  </div>
+                  {results.leads.map((l) => (
+                    <div key={l.id} style={{
+                      display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                      borderBottom: `1px solid ${C.border}`,
+                    }}>
+                      <Zap size={14} color={C.warning} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{l.prenomArtisan} {l.nomArtisan}</div>
+                        <div style={{ fontSize: 11, color: C.textDim }}>{l.nomEntreprise || ""} · {l.prescripteur}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Transmissions */}
+              {results.transmissions?.length > 0 && (
+                <div>
+                  <div style={{
+                    padding: "8px 14px", fontSize: 10, fontWeight: 700, color: C.textDim,
+                    textTransform: "uppercase", letterSpacing: "0.08em",
+                    borderBottom: `1px solid ${C.border}`,
+                  }}>
+                    Transmissions ({results.transmissions.length})
+                  </div>
+                  {results.transmissions.map((t) => (
+                    <div key={t.id}
+                      onClick={() => { if (t.entreprise) select({ id: t.entreprise.id, nom: t.entreprise.nom }); }}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                        cursor: t.entreprise ? "pointer" : "default", borderBottom: `1px solid ${C.border}`,
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={(ev) => { if (t.entreprise) (ev.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                      onMouseLeave={(ev) => { (ev.currentTarget as HTMLElement).style.background = "transparent"; }}
+                    >
+                      <Mail size={14} color={C.blue} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{t.objet || t.canal}</div>
+                        <div style={{ fontSize: 11, color: C.textDim }}>
+                          {t.destinataire}{t.entreprise ? ` · ${t.entreprise.nom}` : ""} · {new Date(t.dateEnvoi).toLocaleDateString("fr-FR")}
                         </div>
                       </div>
                     </div>
