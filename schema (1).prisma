@@ -1,0 +1,576 @@
+// ============================================================
+// schema.prisma — CRM Tenakoe v2 (complet)
+// Stack: Next.js + PostgreSQL + Prisma
+// Basé sur le cahier des charges d'Elise (mail ANNULE ET REMPLACE)
+// + fonctionnalités Capsule CRM à reproduire/améliorer
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 1. UTILISATEURS & RÔLES (cloisonnement par chargée)
+// ============================================================
+
+enum Role {
+  ADMIN           // Elise - direction, voit tout, gère les paramètres
+  CHARGEE         // Chargée de projet, voit uniquement ses dossiers
+  PRESCRIPTEUR    // Accès limité : statut + dernier suivi uniquement
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  nom           String
+  prenom        String
+  telephone     String?
+  role          Role      @default(CHARGEE)
+  password      String
+  avatarUrl     String?
+  actif         Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  projets           Projet[]        @relation("ChargeeProjet")
+  transmissions     Transmission[]
+  taches            Tache[]         @relation("TacheAssignee")
+  tachesCreees      Tache[]         @relation("TacheCreateur")
+  notes             Note[]
+  alertes           Alerte[]
+}
+
+// ============================================================
+// 2. CONTACTS & ENTREPRISES (fiche unifiée)
+// ============================================================
+
+model Contact {
+  id            String    @id @default(cuid())
+  nom           String
+  prenom        String
+  email         String?
+  telephone     String?
+  fonction      String?   // Ex: "Gérant", "Responsable technique"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Un contact appartient à une entreprise
+  entrepriseId  String?
+  entreprise    Entreprise? @relation(fields: [entrepriseId], references: [id], onDelete: SetNull)
+}
+
+model Entreprise {
+  id            String    @id @default(cuid())
+  nom           String
+  siret         String?
+  adresse       String?
+  codePostal    String?
+  ville         String?
+  email         String?
+  telephone     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Prescripteur (PDB, Point P, Big Mat)
+  prescripteur      Prescripteur?     @default(PDB)
+  numeroCarte       String?
+  depot             String?
+
+  // Cases à cocher métier
+  interesseTNK      InteretTNK?       @default(NSP)
+  miseEnRelation    MiseEnRelation?   @default(SANS_OBJET)
+
+  // Statut prospect/client
+  statutPrise       StatutPrise       @default(NOUVEAU)
+  statutFacturation StatutFacturation? @default(DEVIS_A_FAIRE)
+
+  // Champs Capsule à reproduire
+  dejaReferentRGE   Boolean           @default(false)
+
+  // Relations
+  contacts          Contact[]
+  projets           Projet[]
+  documents         Document[]
+  transmissions     Transmission[]
+  taches            Tache[]
+  notes             Note[]
+  alertes           Alerte[]
+
+  // Source d'import
+  sourceImport      SourceImport?     @default(MANUEL)
+  sourceId          String?           // ID dans Capsule ou Notion pour la migration
+}
+
+// ============================================================
+// 3. ENUMS MÉTIER (basés sur le mail d'Elise)
+// ============================================================
+
+enum Prescripteur {
+  PDB           // La Plateforme du Bâtiment
+  POINT_P       // Point P
+  BIGMAT        // Big Mat Girardon
+}
+
+// Statuts de prise en charge (mail Elise)
+enum StatutPrise {
+  NOUVEAU                     // Le prospect arrive, à relancer sous 48h
+  PRISE_EN_CHARGE             // Prise en charge faite
+  PRISE_EN_CHARGE_A_RELANCER  // Prise en charge faite - à relancer
+}
+
+// Statuts de facturation et traitement du dossier (mail Elise)
+enum StatutFacturation {
+  DEVIS_A_FAIRE
+  DEVIS_ENVOYE
+  DEVIS_SIGNE
+  FACTURE_ENVOYEE
+  FACTURE_PAYEE               // = collecte en cours = devient CLIENT
+  DOSSIER_DEPOSE
+  DOSSIER_COMPLEMENT          // Dossier déposé - demande de complément
+  QUALIFIE
+  REFUSE
+  DOSSIER_EN_APPEL
+}
+
+// Intérêt TNK (mail Elise)
+enum InteretTNK {
+  OUI
+  NON
+  NSP
+}
+
+// Mise en relation RENOPERF (mail Elise - ANNULE ET REMPLACE)
+enum MiseEnRelation {
+  SANS_OBJET
+  APEE
+  CEEF
+  HORMEE
+}
+
+// Source d'import pour la migration
+enum SourceImport {
+  MANUEL
+  CAPSULE
+  NOTION
+  CSV
+  FORMULAIRE
+}
+
+// ============================================================
+// 4. PROJETS & QUALIFICATIONS (plusieurs projets par entreprise)
+// ============================================================
+
+enum TypeQualification {
+  QUALIBAT_RGE
+  CERTIBAT
+  QUALIFELEC
+  QUALIT_ENR
+  QUALIPAC
+  QUALIPV
+  QUALIBOIS
+  QUALISOL
+}
+
+model Projet {
+  id              String    @id @default(cuid())
+  nom             String
+  description     String?
+  actif           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Lié à une entreprise (une entreprise peut avoir plusieurs projets)
+  entrepriseId    String
+  entreprise      Entreprise @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
+
+  // Chargée de projet affectée (cloisonnement)
+  chargeeId       String?
+  chargee         User?     @relation("ChargeeProjet", fields: [chargeeId], references: [id])
+
+  // Qualifications choisies pour ce projet
+  qualifications  ProjetQualification[]
+
+  // Suivi / feuille de route (Tracks Capsule)
+  etapes          Etape[]
+
+  // Documents liés au projet
+  documents       Document[]
+
+  // Tâches liées au projet
+  taches          Tache[]
+}
+
+model ProjetQualification {
+  id              String    @id @default(cuid())
+  projetId        String
+  projet          Projet    @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  type            TypeQualification
+
+  // Formations complémentaires (cases à cocher - mail Elise)
+  formationITI        Boolean   @default(false)
+  formationITE        Boolean   @default(false)
+  formationMenuiserie Boolean   @default(false)
+  formationQUALIPAC   Boolean   @default(false)
+  formationAutre      String?
+
+  @@unique([projetId, type])
+}
+
+// ============================================================
+// 5. SUIVI / FEUILLE DE ROUTE / TRACKS
+//    Séquences de tâches chaînées (feature Capsule)
+//    Quand tâche 1 terminée → tâche 2 s'active
+//    Avec délais qui se transforment en dates réelles
+//    + alertes si date dépassée
+// ============================================================
+
+// Modèles de feuille de route réutilisables (comme les Tracks Capsule)
+model TrackTemplate {
+  id            String    @id @default(cuid())
+  nom           String    // Ex: "Feuille de route Qualibat RGE"
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  etapes        TrackTemplateEtape[]
+}
+
+model TrackTemplateEtape {
+  id            String    @id @default(cuid())
+  nom           String
+  description   String?
+  ordre         Int       // Ordre dans la séquence
+  delaiJours    Int       // Délai prévu en jours par rapport à l'étape précédente
+
+  trackTemplateId String
+  trackTemplate   TrackTemplate @relation(fields: [trackTemplateId], references: [id], onDelete: Cascade)
+
+  @@unique([trackTemplateId, ordre])
+}
+
+// Étapes réelles affectées à un projet
+model Etape {
+  id              String    @id @default(cuid())
+  nom             String
+  description     String?
+  ordre           Int       // Ordre dans la feuille de route
+  delaiJours      Int?      // Délai prévu en jours
+  dateObjectif    DateTime? // Date calculée à partir du délai (se calcule auto)
+  dateRealisee    DateTime? // Date effective de réalisation
+  active          Boolean   @default(false) // Étape en cours
+  terminee        Boolean   @default(false)
+  enRetard        Boolean   @default(false) // Calculé auto si dateObjectif < now et pas terminée
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Lié à un projet
+  projetId        String
+  projet          Projet    @relation(fields: [projetId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// 6. DOCUMENTS (checklist avec mapping auto qualif → docs)
+//    Tronc commun + docs spécifiques selon la qualification
+//    Avec date de réception (demande Elise)
+// ============================================================
+
+enum TypeDocument {
+  TRONC_COMMUN    // Docs communs à toutes les qualifications
+  SPECIFIQUE      // Docs spécifiques selon la qualification
+}
+
+model Document {
+  id              String    @id @default(cuid())
+  nom             String    // Ex: "EXTRAIT KBIS", "ATTESTATION DECENNALE"
+  type            TypeDocument @default(TRONC_COMMUN)
+  recu            Boolean   @default(false)
+  dateReception   DateTime? // Date de réception du document (demande Elise)
+  dateDemande     DateTime? // Date de demande du document
+  fichierUrl      String?   // URL du fichier uploadé
+  fichierNom      String?   // Nom du fichier original
+  fichierTaille   Int?      // Taille en octets
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Lié à une entreprise (client)
+  entrepriseId    String
+  entreprise      Entreprise @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
+
+  // Optionnel : lié à un projet spécifique
+  projetId        String?
+  projet          Projet?   @relation(fields: [projetId], references: [id], onDelete: SetNull)
+
+  // Qualification associée (pour les docs spécifiques)
+  qualificationAssociee TypeQualification?
+}
+
+// Mapping auto : quelle qualification nécessite quels docs
+// Quand on choisit une qualif, les docs se génèrent automatiquement
+model DocumentTemplate {
+  id              String    @id @default(cuid())
+  nom             String    // Ex: "ATTESTATION DECENNALE"
+  type            TypeDocument @default(TRONC_COMMUN)
+  qualification   TypeQualification? // null = tronc commun, sinon = spécifique à cette qualif
+  obligatoire     Boolean   @default(true)
+  ordre           Int       @default(0)
+}
+
+// ============================================================
+// 7. TRANSMISSIONS (traçabilité mails/SMS/appels)
+//    Historique exhaustif demandé par Elise
+//    Inclut les mails envoyés ET reçus (sync Gmail)
+// ============================================================
+
+enum CanalTransmission {
+  EMAIL
+  SMS
+  TELEPHONE
+}
+
+enum DirectionTransmission {
+  SORTANT   // Envoyé depuis l'outil
+  ENTRANT   // Reçu (sync Gmail)
+}
+
+model Transmission {
+  id              String    @id @default(cuid())
+  canal           CanalTransmission
+  direction       DirectionTransmission @default(SORTANT)
+  destinataire    String    // Email ou téléphone du destinataire
+  expediteurEmail String?   // Email de l'expéditeur (pour les entrants)
+  objet           String?   // Objet du mail
+  contenu         String?   // Corps du message
+  dateEnvoi       DateTime  @default(now())
+  lu              Boolean   @default(false)
+  archive         Boolean   @default(false)
+
+  // Référence Gmail pour la sync
+  gmailMessageId  String?   // ID du message Gmail
+  gmailThreadId   String?   // ID du thread Gmail
+
+  // Qui a envoyé (pour les sortants)
+  expediteurId    String?
+  expediteur      User?     @relation(fields: [expediteurId], references: [id])
+
+  // Lié à quelle entreprise
+  entrepriseId    String?
+  entreprise      Entreprise? @relation(fields: [entrepriseId], references: [id])
+}
+
+// Templates de mails réutilisables (comme Capsule)
+model MailTemplate {
+  id            String    @id @default(cuid())
+  nom           String    // Ex: "Relance documents", "Bienvenue client"
+  objet         String
+  contenu       String    // Corps du mail (HTML)
+  actif         Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ============================================================
+// 8. TÂCHES (programmables, affectables, avec deadlines)
+//    Rappels automatiques par email si retard
+//    Feature Capsule : créer, affecter, deadline, catégories
+// ============================================================
+
+enum TypeTache {
+  APPEL
+  EMAIL
+  REUNION
+  ENVOI
+  RELANCE
+  SUIVI
+  AUTRE
+}
+
+enum StatutTache {
+  A_FAIRE
+  EN_COURS
+  TERMINEE
+  ANNULEE
+}
+
+model Tache {
+  id              String      @id @default(cuid())
+  titre           String
+  description     String?
+  type            TypeTache   @default(AUTRE)
+  statut          StatutTache @default(A_FAIRE)
+  priorite        Int         @default(0) // 0=normale, 1=haute, 2=urgente
+  dateEcheance    DateTime?
+  dateRealisee    DateTime?
+  recurrente      Boolean     @default(false) // Tâche répétitive
+  recurrenceJours Int?        // Intervalle de récurrence en jours
+  enRetard        Boolean     @default(false)
+  rappelEnvoye    Boolean     @default(false) // Rappel email envoyé
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Assignée à une chargée
+  assigneeId      String?
+  assignee        User?       @relation("TacheAssignee", fields: [assigneeId], references: [id])
+
+  // Créée par
+  createurId      String?
+  createur        User?       @relation("TacheCreateur", fields: [createurId], references: [id])
+
+  // Liée à une entreprise et/ou un projet
+  entrepriseId    String?
+  entreprise      Entreprise? @relation(fields: [entrepriseId], references: [id])
+
+  projetId        String?
+  projet          Projet?     @relation(fields: [projetId], references: [id])
+}
+
+// ============================================================
+// 9. NOTES INTERNES (visibles uniquement en interne)
+// ============================================================
+
+model Note {
+  id            String    @id @default(cuid())
+  contenu       String
+  epinglee      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auteur
+  auteurId      String
+  auteur        User      @relation(fields: [auteurId], references: [id])
+
+  // Liée à une entreprise
+  entrepriseId  String
+  entreprise    Entreprise @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// 10. ALERTES & RAPPELS AUTOMATIQUES
+//     Alertes retard, rappels email, notifications
+// ============================================================
+
+enum TypeAlerte {
+  RETARD_TACHE         // Tâche en retard
+  RETARD_ETAPE         // Étape feuille de route en retard
+  DOCUMENT_MANQUANT    // Document non reçu après X jours
+  RELANCE_48H          // Prospect non contacté sous 48h
+  RAPPEL_ECHEANCE      // Rappel avant une échéance
+}
+
+model Alerte {
+  id            String      @id @default(cuid())
+  type          TypeAlerte
+  message       String
+  lue           Boolean     @default(false)
+  emailEnvoye   Boolean     @default(false) // Rappel envoyé par email
+  createdAt     DateTime    @default(now())
+
+  // Destinataire de l'alerte
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+
+  // Liée à une entreprise
+  entrepriseId  String?
+  entreprise    Entreprise? @relation(fields: [entrepriseId], references: [id])
+}
+
+// ============================================================
+// 11. FORMULAIRE PRESCRIPTEUR (leads entrants)
+//     Formulaire public qui injecte dans les prospects
+// ============================================================
+
+model LeadFormulaire {
+  id              String    @id @default(cuid())
+  nomArtisan      String
+  prenomArtisan   String
+  nomEntreprise   String?
+  siret           String?
+  email           String?
+  telephone       String?
+  adresse         String?
+  prescripteur    Prescripteur
+  depot           String?
+  numeroCarte     String?
+  dejaReferentRGE Boolean   @default(false)
+  commentaires    String?
+  acceptePartage  Boolean   @default(false) // L'artisan accepte le partage de coordonnées
+  dateTransmission DateTime @default(now())
+  createdAt       DateTime  @default(now())
+
+  // Statut du lead
+  statut          StatutPrise @default(NOUVEAU)
+
+  // Converti en entreprise ?
+  converti        Boolean   @default(false)
+  entrepriseId    String?   // L'entreprise créée à partir de ce lead
+}
+
+// ============================================================
+// 12. INTÉGRATIONS EXTERNES
+//     Config stockée en BDD pour les API tierces
+// ============================================================
+
+model Integration {
+  id            String    @id @default(cuid())
+  nom           String    // Ex: "Gmail", "Twilio", "Abby"
+  type          String    // Ex: "email", "sms", "facturation"
+  actif         Boolean   @default(false)
+  config        String?   // JSON config (clés API, tokens) — chiffré
+  dernierSync   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ============================================================
+// 13. PARAMÈTRES DE L'APPLICATION
+//     Config globale, personnalisation
+// ============================================================
+
+model Parametre {
+  id            String    @id @default(cuid())
+  cle           String    @unique // Ex: "smtp_host", "twilio_sid", "abby_api_key"
+  valeur        String
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ============================================================
+// 14. LOGS D'ACTIVITÉ (recherche globale, audit trail)
+//     Trace de toutes les actions pour l'historique
+// ============================================================
+
+enum TypeActivite {
+  CREATION
+  MODIFICATION
+  SUPPRESSION
+  CHANGEMENT_STATUT
+  ENVOI_EMAIL
+  ENVOI_SMS
+  APPEL
+  UPLOAD_DOCUMENT
+  RECEPTION_DOCUMENT
+  AFFECTATION
+  CONNEXION
+}
+
+model LogActivite {
+  id            String        @id @default(cuid())
+  type          TypeActivite
+  description   String
+  entite        String        // Ex: "Entreprise", "Projet", "Document"
+  entiteId      String        // ID de l'entité concernée
+  userId        String?       // Qui a fait l'action
+  metadata      String?       // JSON avec les détails (ancien/nouveau statut, etc.)
+  createdAt     DateTime      @default(now())
+
+  @@index([entite, entiteId])
+  @@index([userId])
+  @@index([createdAt])
+}
