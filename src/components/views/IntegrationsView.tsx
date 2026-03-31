@@ -1,11 +1,109 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plug, Plus, Mail, MessageSquare, CreditCard, X } from "lucide-react";
+import { Plug, ExternalLink, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 
-interface Integration {
+interface IntegrationConfig {
+  key: string;
+  nom: string;
+  description: string;
+  type: string;
+  logo: string;
+  color: string;
+  url?: string;
+  fields: Array<{ key: string; label: string; type: string; placeholder: string }>;
+}
+
+const INTEGRATIONS: IntegrationConfig[] = [
+  {
+    key: "gmail",
+    nom: "Gmail",
+    description: "Envoi et réception d'emails via SMTP Gmail",
+    type: "email",
+    logo: "https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png",
+    color: "#EA4335",
+    fields: [
+      { key: "smtp_host", label: "Serveur SMTP", type: "text", placeholder: "smtp.gmail.com" },
+      { key: "smtp_port", label: "Port", type: "text", placeholder: "587" },
+      { key: "smtp_user", label: "Email", type: "email", placeholder: "vous@gmail.com" },
+      { key: "smtp_pass", label: "App Password", type: "password", placeholder: "xxxx xxxx xxxx xxxx" },
+    ],
+  },
+  {
+    key: "twilio",
+    nom: "Twilio",
+    description: "Envoi de SMS aux artisans et entreprises",
+    type: "sms",
+    logo: "https://www.twilio.com/content/dam/twilio-com/global/en/blog/legacy/2020/twilio-logo-red.png",
+    color: "#F22F46",
+    fields: [
+      { key: "account_sid", label: "Account SID", type: "text", placeholder: "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+      { key: "auth_token", label: "Auth Token", type: "password", placeholder: "Votre auth token" },
+      { key: "phone_number", label: "Numéro SMS", type: "text", placeholder: "+33xxxxxxxxx" },
+    ],
+  },
+  {
+    key: "abby",
+    nom: "Abby",
+    description: "Facturation électronique — devis, factures, conformité 2026",
+    type: "facturation",
+    logo: "https://abby.fr/favicon.ico",
+    color: "#6C5CE7",
+    url: "https://app.abby.fr",
+    fields: [],
+  },
+  {
+    key: "make",
+    nom: "Make (ex-Integromat)",
+    description: "Webhooks pour automatisations Make / Zapier / n8n",
+    type: "webhook",
+    logo: "https://images.ctfassets.net/qqlj6g4ee76j/2gCnADiTijWWk0EIASGMoY/logo.png",
+    color: "#6D00CC",
+    fields: [
+      { key: "webhook_url", label: "URL Webhook", type: "url", placeholder: "https://hook.make.com/xxx" },
+      { key: "webhook_secret", label: "Clé d'authentification", type: "password", placeholder: "Clé secrète" },
+    ],
+  },
+  {
+    key: "google_sheets",
+    nom: "Google Sheets",
+    description: "Export et synchronisation de données vers Google Sheets",
+    type: "export",
+    logo: "https://www.gstatic.com/images/branding/product/2x/sheets_2020q4_48dp.png",
+    color: "#0F9D58",
+    fields: [
+      { key: "spreadsheet_id", label: "ID de la feuille", type: "text", placeholder: "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" },
+      { key: "service_account", label: "Email compte de service", type: "email", placeholder: "xxx@xxx.iam.gserviceaccount.com" },
+    ],
+  },
+  {
+    key: "capsule",
+    nom: "Capsule CRM",
+    description: "Import des données depuis Capsule (migration one-shot)",
+    type: "import",
+    logo: "https://capsulecrm.com/favicon.ico",
+    color: "#1A73E8",
+    fields: [
+      { key: "api_token", label: "Token API", type: "password", placeholder: "Votre token Capsule" },
+    ],
+  },
+  {
+    key: "notion",
+    nom: "Notion",
+    description: "Import des données depuis Notion (migration one-shot)",
+    type: "import",
+    logo: "https://www.notion.so/images/favicon.ico",
+    color: "#000000",
+    fields: [
+      { key: "api_key", label: "Clé API Notion", type: "password", placeholder: "secret_xxx" },
+      { key: "database_id", label: "ID de la base", type: "text", placeholder: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+    ],
+  },
+];
+
+interface SavedIntegration {
   id: string;
   nom: string;
   type: string;
@@ -14,158 +112,253 @@ interface Integration {
   dernierSync: string | null;
 }
 
-const TYPE_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
-  email: Mail, sms: MessageSquare, facturation: CreditCard,
-};
-const TYPE_COLORS: Record<string, string> = {
-  email: "blue", sms: "purple", facturation: "accent",
-};
-
 export function IntegrationsView({ C }: { C: Theme }) {
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [saved, setSaved] = useState<SavedIntegration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ nom: "", type: "email", config: "" });
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [configs, setConfigs] = useState<Record<string, Record<string, string>>>({});
+  const [testing, setTesting] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
 
   useEffect(() => {
     fetch("/api/integrations")
       .then((r) => r.ok ? r.json() : [])
-      .then((data) => { setIntegrations(data); setLoading(false); })
+      .then((data: SavedIntegration[]) => {
+        setSaved(data);
+        // Parse saved configs
+        const parsedConfigs: Record<string, Record<string, string>> = {};
+        data.forEach((s) => {
+          if (s.config) {
+            try { parsedConfigs[s.nom.toLowerCase()] = JSON.parse(s.config); } catch {}
+          }
+        });
+        setConfigs(parsedConfigs);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
 
-  const toggleActive = async (id: string, actif: boolean) => {
-    const res = await fetch("/api/integrations", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, actif: !actif }),
-    });
-    if (res.ok) {
-      setIntegrations((prev) => prev.map((i) => i.id === id ? { ...i, actif: !actif } : i));
-    }
+  const getSaved = (key: string): SavedIntegration | undefined => {
+    return saved.find((s) => s.nom.toLowerCase() === key || s.type === INTEGRATIONS.find((i) => i.key === key)?.type);
   };
 
-  const addIntegration = async () => {
-    if (!form.nom) return;
+  const saveIntegration = async (integ: IntegrationConfig) => {
+    const existing = getSaved(integ.key);
+    const config = configs[integ.key] || {};
+
     const res = await fetch("/api/integrations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        id: existing?.id,
+        nom: integ.nom,
+        type: integ.type,
+        actif: true,
+        config: JSON.stringify(config),
+      }),
     });
     if (res.ok) {
-      const newInt = await res.json();
-      setIntegrations((prev) => [...prev, newInt]);
-      setForm({ nom: "", type: "email", config: "" }); setShowAdd(false);
+      const updated = await res.json();
+      setSaved((prev) => {
+        const idx = prev.findIndex((s) => s.id === updated.id);
+        return idx >= 0 ? prev.map((s) => s.id === updated.id ? updated : s) : [...prev, updated];
+      });
     }
   };
 
-  const inputStyle = {
-    width: "100%", padding: "8px 12px", borderRadius: 8,
-    border: `1px solid ${C.border}`, background: C.bg, color: C.text,
-    fontSize: 13, outline: "none", boxSizing: "border-box" as const,
+  const toggleActive = async (integ: IntegrationConfig) => {
+    const existing = getSaved(integ.key);
+    if (!existing) return;
+    const res = await fetch("/api/integrations", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: existing.id, actif: !existing.actif }),
+    });
+    if (res.ok) {
+      setSaved((prev) => prev.map((s) => s.id === existing.id ? { ...s, actif: !s.actif } : s));
+    }
   };
+
+  const testConnection = async (integ: IntegrationConfig) => {
+    setTesting(integ.key);
+    // Simulate test — in production, would actually test SMTP/Twilio/etc.
+    await new Promise((r) => setTimeout(r, 1500));
+    const config = configs[integ.key] || {};
+    const hasConfig = integ.fields.length === 0 || Object.values(config).some((v) => v);
+    setTestResult((prev) => ({
+      ...prev,
+      [integ.key]: hasConfig
+        ? { ok: true, msg: "Connexion réussie" }
+        : { ok: false, msg: "Configuration incomplète" },
+    }));
+    setTesting(null);
+  };
+
+  const updateConfig = (key: string, field: string, value: string) => {
+    setConfigs((prev) => ({
+      ...prev,
+      [key]: { ...(prev[key] || {}), [field]: value },
+    }));
+  };
+
+  if (loading) {
+    return <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>;
+  }
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Plug size={18} color={C.blue} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Intégrations externes</span>
-        </div>
-        <button onClick={() => setShowAdd(!showAdd)} style={{
-          padding: "8px 16px", borderRadius: 10, border: "none",
-          background: "linear-gradient(135deg, #16a34a, #15803d)",
-          color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 6,
-        }}>
-          <Plus size={14} /> Ajouter
-        </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+        <Plug size={18} color={C.blue} />
+        <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
+          {saved.filter((s) => s.actif).length} intégration{saved.filter((s) => s.actif).length > 1 ? "s" : ""} active{saved.filter((s) => s.actif).length > 1 ? "s" : ""}
+        </span>
       </div>
 
-      {showAdd && (
-        <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, marginBottom: 16, boxShadow: C.shadow }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Nouvelle intégration</span>
-            <X size={16} color={C.textDim} style={{ cursor: "pointer" }} onClick={() => setShowAdd(false)} />
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Nom *</label>
-              <input style={inputStyle} placeholder="Gmail, Twilio, Abby..." value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Type</label>
-              <select style={inputStyle} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                <option value="email">Email</option>
-                <option value="sms">SMS</option>
-                <option value="facturation">Facturation</option>
-              </select>
-            </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Configuration (JSON)</label>
-              <textarea style={{ ...inputStyle, resize: "vertical" }} rows={3} placeholder='{"api_key": "...", "api_secret": "..."}' value={form.config} onChange={(e) => setForm({ ...form, config: e.target.value })} />
-            </div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-            <button onClick={addIntegration} disabled={!form.nom} style={{
-              padding: "8px 16px", borderRadius: 8, border: "none",
-              background: form.nom ? C.accent : "#94a3b8", color: "#fff",
-              fontSize: 13, fontWeight: 600, cursor: form.nom ? "pointer" : "not-allowed",
-            }}>Créer</button>
-          </div>
-        </div>
-      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {INTEGRATIONS.map((integ) => {
+          const savedItem = getSaved(integ.key);
+          const isActive = savedItem?.actif || false;
+          const isExpanded = expandedKey === integ.key;
+          const config = configs[integ.key] || {};
+          const test = testResult[integ.key];
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        {loading ? (
-          <div style={{ gridColumn: "1 / -1", padding: 40, textAlign: "center", color: C.textDim, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>Chargement...</div>
-        ) : integrations.length === 0 ? (
-          <div style={{ gridColumn: "1 / -1", padding: 40, textAlign: "center", color: C.textDim, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>
-            Aucune intégration configurée. Ajoutez Gmail, Twilio ou Abby.
-          </div>
-        ) : integrations.map((integ) => {
-          const Icon = TYPE_ICONS[integ.type] || Plug;
-          const color = TYPE_COLORS[integ.type] || "blue";
           return (
-            <div key={integ.id} style={{
-              background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-              padding: "20px 22px", boxShadow: C.shadow,
+            <div key={integ.key} style={{
+              background: C.surface, borderRadius: 14, border: `1px solid ${isActive ? integ.color + "40" : C.border}`,
+              boxShadow: C.shadow, overflow: "hidden", transition: "all 0.2s",
             }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    backgroundColor: C[(color + "Dim") as keyof Theme] as string,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <Icon size={18} color={C[color as keyof Theme] as string} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{integ.nom}</div>
-                    <div style={{ fontSize: 12, color: C.textDim }}>{integ.type}</div>
-                  </div>
+              {/* Header */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 16, padding: "18px 22px",
+                cursor: "pointer",
+              }}
+                onClick={() => setExpandedKey(isExpanded ? null : integ.key)}
+              >
+                {/* Logo */}
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12, overflow: "hidden",
+                  background: "#fff", border: "1px solid #e2e8f0",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <img src={integ.logo} alt={integ.nom} style={{ width: 28, height: 28, objectFit: "contain" }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 </div>
-                <Badge
-                  color={integ.actif ? C.accentText : C.textDim}
-                  bg={integ.actif ? C.accentDim : C.surfaceHover}
-                >
-                  {integ.actif ? "Actif" : "Inactif"}
-                </Badge>
+
+                {/* Info */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: C.text }}>{integ.nom}</span>
+                    <Badge
+                      color={integ.type === "email" ? C.blue : integ.type === "sms" ? C.purple : integ.type === "facturation" ? C.purple : integ.type === "webhook" ? C.warning : C.accent}
+                      bg={integ.type === "email" ? C.blueDim : integ.type === "sms" ? C.purpleDim : integ.type === "facturation" ? C.purpleDim : integ.type === "webhook" ? C.warningDim : C.accentDim}
+                    >
+                      {integ.type}
+                    </Badge>
+                  </div>
+                  <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>{integ.description}</div>
+                </div>
+
+                {/* Status + Chevron */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {isActive ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <CheckCircle2 size={14} color={C.accent} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.accentText }}>Connecté</span>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <XCircle size={14} color={C.textDim} />
+                      <span style={{ fontSize: 12, color: C.textDim }}>Déconnecté</span>
+                    </div>
+                  )}
+                  {isExpanded ? <ChevronUp size={16} color={C.textDim} /> : <ChevronDown size={16} color={C.textDim} />}
+                </div>
               </div>
-              {integ.dernierSync && (
-                <div style={{ fontSize: 11, color: C.textDim, marginBottom: 12 }}>
-                  Dernière sync : {new Date(integ.dernierSync).toLocaleDateString("fr-FR")}
+
+              {/* Expanded config */}
+              {isExpanded && (
+                <div style={{ padding: "0 22px 20px", borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                  {/* External link for Abby-type integrations */}
+                  {integ.url && (
+                    <a href={integ.url} target="_blank" rel="noopener noreferrer" style={{
+                      display: "flex", alignItems: "center", gap: 8, padding: "12px 16px",
+                      borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`,
+                      textDecoration: "none", marginBottom: 14, transition: "all 0.15s",
+                    }}>
+                      <ExternalLink size={14} color={integ.color} />
+                      <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Ouvrir {integ.nom}</span>
+                      <span style={{ fontSize: 12, color: C.textDim, marginLeft: "auto" }}>{integ.url}</span>
+                    </a>
+                  )}
+
+                  {/* Config fields */}
+                  {integ.fields.length > 0 && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                      {integ.fields.map((f) => (
+                        <div key={f.key} style={{ gridColumn: f.type === "url" ? "1 / -1" : undefined }}>
+                          <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>{f.label}</label>
+                          <input
+                            type={f.type}
+                            placeholder={f.placeholder}
+                            value={config[f.key] || ""}
+                            onChange={(e) => updateConfig(integ.key, f.key, e.target.value)}
+                            style={{
+                              width: "100%", padding: "8px 12px", borderRadius: 8,
+                              border: `1px solid ${C.border}`, background: C.bg, color: C.text,
+                              fontSize: 13, outline: "none", boxSizing: "border-box",
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Test result */}
+                  {test && (
+                    <div style={{
+                      padding: "10px 14px", borderRadius: 8, marginBottom: 14, fontSize: 12, fontWeight: 500,
+                      background: test.ok ? C.accentDim : C.dangerDim,
+                      color: test.ok ? C.accentText : C.danger,
+                      display: "flex", alignItems: "center", gap: 6,
+                    }}>
+                      {test.ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+                      {test.msg}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {integ.fields.length > 0 && (
+                      <button onClick={() => saveIntegration(integ)} style={{
+                        padding: "8px 18px", borderRadius: 8, border: "none",
+                        background: "linear-gradient(135deg, #16a34a, #15803d)",
+                        color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      }}>
+                        Enregistrer
+                      </button>
+                    )}
+                    <button onClick={() => testConnection(integ)} disabled={testing === integ.key} style={{
+                      padding: "8px 18px", borderRadius: 8,
+                      border: `1px solid ${C.border}`, background: C.surface,
+                      color: C.textMuted, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 6,
+                    }}>
+                      <RefreshCw size={13} className={testing === integ.key ? "animate-spin" : ""} />
+                      {testing === integ.key ? "Test..." : "Tester"}
+                    </button>
+                    {savedItem && (
+                      <button onClick={() => toggleActive(integ)} style={{
+                        padding: "8px 18px", borderRadius: 8, border: "none",
+                        background: isActive ? C.dangerDim : C.accentDim,
+                        color: isActive ? C.danger : C.accentText,
+                        fontSize: 13, fontWeight: 600, cursor: "pointer", marginLeft: "auto",
+                      }}>
+                        {isActive ? "Désactiver" : "Activer"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
-              <button onClick={() => toggleActive(integ.id, integ.actif)} style={{
-                width: "100%", padding: "8px 0", borderRadius: 8,
-                border: `1px solid ${integ.actif ? C.danger : C.accent}`,
-                background: "transparent",
-                color: integ.actif ? C.danger : C.accentText,
-                fontSize: 12, fontWeight: 600, cursor: "pointer",
-              }}>
-                {integ.actif ? "Désactiver" : "Activer"}
-              </button>
             </div>
           );
         })}

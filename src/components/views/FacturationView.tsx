@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, Search, FileText, Check, Clock, AlertTriangle, ExternalLink } from "lucide-react";
+import { CreditCard, Search, FileText, Check, Clock, AlertTriangle } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 
@@ -67,39 +67,6 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
 
   return (
     <>
-      {/* Abby link */}
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-        padding: "16px 22px", marginBottom: 20, boxShadow: C.shadow,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10, backgroundColor: C.purpleDim,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <CreditCard size={18} color={C.purple} />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Facturation Abby</div>
-            <div style={{ fontSize: 12, color: C.textDim }}>Créer et gérer vos devis et factures sur Abby</div>
-          </div>
-        </div>
-        <a
-          href="https://app.abby.fr"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            padding: "9px 18px", borderRadius: 10, border: "none",
-            background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-            color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            display: "flex", alignItems: "center", gap: 6, textDecoration: "none",
-          }}
-        >
-          <ExternalLink size={14} /> Ouvrir Abby
-        </a>
-      </div>
-
       {/* Stats */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         {[
