@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Zap, Target, ClipboardList, Clock,
   TrendingUp, TrendingDown, Minus,
@@ -60,6 +60,19 @@ export function DashboardView({
   );
   const [dragging, setDragging] = useState<{ itemId: string; colId: string } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+
+  // Poll pipeline every 30s for new leads / status changes
+  const refreshPipeline = useCallback(() => {
+    fetch("/api/pipeline-data")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setPipeline(data); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(refreshPipeline, 30000);
+    return () => clearInterval(interval);
+  }, [refreshPipeline]);
 
   const onDragStart = (e: React.DragEvent, itemId: string, colId: string) => {
     setDragging({ itemId, colId });
