@@ -2,9 +2,10 @@
 
 import {
   LayoutDashboard, Zap, Target, Users, FolderOpen,
-  Send, File, CreditCard, Plug, Settings, Search, Sun, Moon, LogOut,
+  Send, File, CreditCard, Plug, Settings, Sun, Moon, LogOut,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
+import { SearchBar } from "@/components/SearchBar";
 
 const NAV_ITEMS = [
   { Icon: LayoutDashboard, label: "Dashboard" },
@@ -30,9 +31,10 @@ interface SidebarProps {
   onToggleDark: () => void;
   user?: { name: string; email: string; role: string; initials: string };
   onSignOut?: () => void;
+  onSelectClient?: (client: { id: string; nom: string; siret?: string; prescripteur?: string }) => void;
 }
 
-export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignOut }: SidebarProps) {
+export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignOut, onSelectClient }: SidebarProps) {
   return (
     <aside
       style={{
@@ -67,17 +69,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
       </div>
 
       {/* Search */}
-      <div style={{ padding: "8px 16px 4px" }}>
-        <div
-          style={{
-            display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
-            borderRadius: 10, border: `1px solid ${C.border}`, background: C.bg,
-          }}
-        >
-          <Search size={14} color={C.textDim} />
-          <span style={{ fontSize: 13, color: C.textDim }}>Rechercher...</span>
-        </div>
-      </div>
+      <SearchBar C={C} onSelectClient={onSelectClient || (() => {})} />
 
       {/* Main Nav */}
       <nav style={{ flex: 1, padding: "12px 12px" }}>

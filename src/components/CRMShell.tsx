@@ -121,6 +121,7 @@ export function CRMShell({
         onToggleDark={() => setDark(!dark)}
         user={user}
         onSignOut={() => signOut({ callbackUrl: "/login" })}
+        onSelectClient={openClient}
       />
 
       <main style={{ flex: 1, overflow: "auto", padding: "28px 36px" }}>
