@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { LIGHT, DARK } from "@/lib/theme";
@@ -86,8 +86,20 @@ export function CRMShell({
   initialAlertes,
 }: CRMShellProps) {
   const [dark, setDark] = useState(false);
-  const [activeNav, setActiveNav] = useState("Dashboard");
-  const [view, setView] = useState<View>("Dashboard");
+
+  // Read initial view from URL
+  const getViewFromURL = (): View => {
+    if (typeof window === "undefined") return "Dashboard";
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("view");
+    if (v && ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Facturation", "Intégrations", "Paramètres"].includes(v)) {
+      return v as View;
+    }
+    return "Dashboard";
+  };
+
+  const [view, setView] = useState<View>(getViewFromURL);
+  const [activeNav, setActiveNav] = useState<string>(getViewFromURL);
   const [selectedClient, setSelectedClient] = useState<{
     id?: string;
     nom: string;
@@ -97,14 +109,38 @@ export function CRMShell({
   const C = dark ? DARK : LIGHT;
   const firstName = user.name.split(" ")[0];
 
+  // Sync URL with view
   const navigateTo = (v: View) => {
     setView(v);
     setActiveNav(v === "ClientDetail" ? activeNav : v);
+    const url = new URL(window.location.href);
+    if (v === "ClientDetail") {
+      url.searchParams.set("view", "ClientDetail");
+      if (selectedClient?.id) url.searchParams.set("clientId", selectedClient.id);
+    } else {
+      url.searchParams.set("view", v);
+      url.searchParams.delete("clientId");
+    }
+    window.history.pushState({}, "", url.toString());
   };
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const handlePop = () => {
+      setView(getViewFromURL());
+      setActiveNav(getViewFromURL());
+    };
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, []);
 
   const openClient = (client: { id?: string; nom: string; siret?: string; prescripteur?: string }) => {
     setSelectedClient(client);
     setView("ClientDetail");
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", "ClientDetail");
+    if (client.id) url.searchParams.set("clientId", client.id);
+    window.history.pushState({}, "", url.toString());
   };
 
   return (

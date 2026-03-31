@@ -128,7 +128,21 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           );
         }
 
-        // Store entreprise info
+        // Qualification and formation from first project
+        const qualifMap: Record<string, string> = {
+          QUALIBAT_RGE: "Qualibat RGE", CERTIBAT: "Certibat", QUALIFELEC: "Qualifelec",
+          QUALIT_ENR: "Qualit'ENR", QUALIPAC: "QualiPAC", QUALIPV: "QualiPV",
+          QUALIBOIS: "Qualibois", QUALISOL: "Qualisol",
+        };
+        const firstProjet = data.projets?.[0];
+        const firstQualif = firstProjet?.qualifications?.[0];
+        const formations: string[] = [];
+        if (firstQualif?.formationITI) formations.push("ITI");
+        if (firstQualif?.formationITE) formations.push("ITE");
+        if (firstQualif?.formationMenuiserie) formations.push("Menuiserie");
+        if (firstQualif?.formationQUALIPAC) formations.push("QUALIPAC");
+        if (firstQualif?.formationAutre) formations.push(firstQualif.formationAutre);
+
         setEntrepriseData({
           email: data.email || "",
           telephone: data.telephone || "",
@@ -137,6 +151,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           interesseTNK: data.interesseTNK || "NSP",
           statutFacturation: data.statutFacturation || "",
           miseEnRelation: data.miseEnRelation || "SANS_OBJET",
+          qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
+          formation: formations.length > 0 ? formations.join(", ") : "",
+          chargee: firstProjet?.chargee?.prenom || "",
         });
       })
       .catch(() => {});
@@ -187,7 +204,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <ChevronRight size={13} />
         <span style={{ cursor: "pointer", color: C.blue }} onClick={onBack}>Prospects</span>
         <ChevronRight size={13} />
-        <span style={{ color: C.text, fontWeight: 600 }}>{client?.nom || "GR 24 COUVERTURE"}</span>
+        <span style={{ color: C.text, fontWeight: 600 }}>{client?.nom || "—"}</span>
       </div>
 
       {/* Header */}
@@ -204,12 +221,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </div>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: C.text }}>
-              {client?.nom || "GR 24 COUVERTURE"}
+              {client?.nom || "—"}
             </h1>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4 }}>
-              <span style={{ fontSize: 12, color: C.textMuted }}>SIRET: {client?.siret || "82383359500031"}</span>
-              <Badge color={C.blue} bg={C.blueDim}>Qualibat RGE</Badge>
-              <Badge color={C.accentText} bg={C.accentDim}>Kelly</Badge>
+              <span style={{ fontSize: 12, color: C.textMuted }}>SIRET: {client?.siret || "—"}</span>
+              {entrepriseData?.qualification && <Badge color={C.blue} bg={C.blueDim}>{entrepriseData.qualification}</Badge>}
+              {entrepriseData?.chargee && <Badge color={C.accentText} bg={C.accentDim}>{entrepriseData.chargee}</Badge>}
             </div>
           </div>
         </div>
@@ -456,9 +473,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             {[
               { label: "Entreprise", value: client?.nom || "GR 24 COUVERTURE", Icon: Building2 },
               { label: "SIRET", value: client?.siret || "82383359500031", Icon: FileText },
-              { label: "Contact", value: entrepriseData?.contact || "Gabriel Ciprian", Icon: UserCircle },
-              { label: "Email", value: entrepriseData?.email || "gr24couverture@email.com", Icon: Mail },
-              { label: "Téléphone", value: entrepriseData?.telephone || "06 12 34 56 78", Icon: Phone },
+              { label: "Contact", value: entrepriseData?.contact || "—", Icon: UserCircle },
+              { label: "Email", value: entrepriseData?.email || "—", Icon: Mail },
+              { label: "Téléphone", value: entrepriseData?.telephone || "—", Icon: Phone },
               { label: "Prescripteur", value: client?.prescripteur || "PDB", Icon: Building2 },
             ].map((f, i) => (
               <div
@@ -480,9 +497,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Statut prise en charge", value: formatStatutPrise(entrepriseData?.statutPrise) },
               { label: "Intéressé TNK", value: formatInteretTNK(entrepriseData?.interesseTNK) },
               { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation) },
-              { label: "Qualification", value: "Qualibat RGE" },
-              { label: "Formation", value: "ITI, ITE" },
-              { label: "Mise en relation", value: entrepriseData?.miseEnRelation || "HORMEE" },
+              { label: "Qualification", value: entrepriseData?.qualification || "—" },
+              { label: "Formation", value: entrepriseData?.formation || "—" },
+              { label: "Mise en relation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation) },
             ].map((f, i) => (
               <div
                 key={i}
@@ -595,7 +612,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       {tab === "track" && (
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>
-            Feuille de route — Qualibat RGE
+            Feuille de route{entrepriseData?.qualification ? ` — ${entrepriseData.qualification}` : ""}
           </h3>
           <div style={{ position: "relative" }}>
             {tracks.map((t, i) => (
@@ -1075,5 +1092,15 @@ function formatStatutFacturation(statut?: string): string {
     REFUSE: "Refusé",
     DOSSIER_EN_APPEL: "En appel",
   };
-  return map[statut || ""] || "Facture payée";
+  return map[statut || ""] || "—";
+}
+
+function formatMiseEnRelation(val?: string): string {
+  const map: Record<string, string> = {
+    SANS_OBJET: "Sans objet",
+    APEE: "APEE",
+    CEEF: "CEEF",
+    HORMEE: "HORMEE",
+  };
+  return map[val || ""] || "—";
 }

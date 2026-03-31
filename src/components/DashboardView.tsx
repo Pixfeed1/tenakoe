@@ -298,6 +298,9 @@ export function DashboardView({
               </tr>
             </thead>
             <tbody>
+              {clientsData.length === 0 && (
+                <tr><td colSpan={5} style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun client pour le moment</td></tr>
+              )}
               {clientsData.map((c, i) => (
                 <tr
                   key={i}
@@ -351,6 +354,11 @@ export function DashboardView({
             </button>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {activitesData.length === 0 && (
+              <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>
+                Aucune activité récente
+              </div>
+            )}
             {activitesData.map((a, i) => {
               const ActIcon = ACTIVITY_ICONS[a.type];
               const actColor = ACTIVITY_COLORS[a.type];
