@@ -101,6 +101,41 @@ async function main() {
   });
   console.log("PrescripteurConfig created");
 
+  // ========================
+  // STATUTS PIPELINE
+  // ========================
+  const statutsPrise = [
+    { code: "NOUVEAU", nom: "Nouveau", couleur: "#ef4444", ordre: 1, parDefaut: true },
+    { code: "PRISE_EN_CHARGE", nom: "Prise en charge", couleur: "#16a34a", ordre: 2 },
+    { code: "PRISE_EN_CHARGE_A_RELANCER", nom: "À relancer", couleur: "#d97706", ordre: 3 },
+  ];
+  for (const s of statutsPrise) {
+    await prisma.statutPriseConfig.upsert({
+      where: { code: s.code }, update: {},
+      create: { code: s.code, nom: s.nom, couleur: s.couleur, ordre: s.ordre, parDefaut: s.parDefaut || false },
+    });
+  }
+
+  const statutsFacturation = [
+    { code: "DEVIS_A_FAIRE", nom: "Devis à faire", couleur: "#94a3b8", ordre: 1 },
+    { code: "DEVIS_ENVOYE", nom: "Devis envoyé", couleur: "#7c3aed", ordre: 2 },
+    { code: "DEVIS_SIGNE", nom: "Devis signé", couleur: "#3b82f6", ordre: 3 },
+    { code: "FACTURE_ENVOYEE", nom: "Facture envoyée", couleur: "#2563eb", ordre: 4 },
+    { code: "FACTURE_PAYEE", nom: "Facture payée", couleur: "#16a34a", ordre: 5, declencheConversion: true },
+    { code: "DOSSIER_DEPOSE", nom: "Dossier déposé", couleur: "#0ea5e9", ordre: 6 },
+    { code: "DOSSIER_COMPLEMENT", nom: "Demande de complément", couleur: "#d97706", ordre: 7 },
+    { code: "QUALIFIE", nom: "Qualifié", couleur: "#16a34a", ordre: 8 },
+    { code: "REFUSE", nom: "Refusé", couleur: "#dc2626", ordre: 9 },
+    { code: "DOSSIER_EN_APPEL", nom: "En appel", couleur: "#f59e0b", ordre: 10 },
+  ];
+  for (const s of statutsFacturation) {
+    await prisma.statutFacturationConfig.upsert({
+      where: { code: s.code }, update: {},
+      create: { code: s.code, nom: s.nom, couleur: s.couleur, ordre: s.ordre, parDefaut: (s as Record<string, unknown>).parDefaut ? true : false, declencheConversion: (s as Record<string, unknown>).declencheConversion ? true : false },
+    });
+  }
+  console.log("Pipeline statuts created");
+
   for (let i = 0; i < docsCommuns.length; i++) {
     await prisma.documentTemplate.upsert({
       where: { id: `dt-commun-${i}` },

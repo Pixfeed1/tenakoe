@@ -55,28 +55,18 @@ export async function getPipelineData(user?: CurrentUser | null) {
     BIGMAT: "Big Mat",
   };
 
-  const columns = [
-    { id: "nouveau", status: "Nouveau", colorKey: "blue", statutPrise: "NOUVEAU" },
-    { id: "prise_en_charge", status: "Prise en charge", colorKey: "accent", statutPrise: "PRISE_EN_CHARGE" },
-    { id: "a_relancer", status: "À relancer", colorKey: "warning", statutPrise: "PRISE_EN_CHARGE_A_RELANCER" },
-    { id: "devis_envoye", status: "Devis envoyé", colorKey: "purple", statutFacturation: ["DEVIS_A_FAIRE", "DEVIS_ENVOYE", "DEVIS_SIGNE"] },
-    { id: "facture_payee", status: "Facture payée", colorKey: "accent", statutFacturation: ["FACTURE_ENVOYEE", "FACTURE_PAYEE"] },
-  ];
+  // Load pipeline columns from config tables
+  const statutsPriseConfig = await prisma.statutPriseConfig.findMany({
+    where: { actif: true },
+    orderBy: { ordre: "asc" },
+  });
 
-  return columns.map((col) => ({
-    id: col.id,
-    status: col.status,
-    colorKey: col.colorKey,
+  return statutsPriseConfig.map((col) => ({
+    id: col.code.toLowerCase(),
+    status: col.nom,
+    colorKey: col.couleur, // Now stores hex color directly
     items: entreprises
-      .filter((e) => {
-        if ("statutPrise" in col && col.statutPrise) {
-          return e.statutPrise === col.statutPrise;
-        }
-        if ("statutFacturation" in col && col.statutFacturation) {
-          return col.statutFacturation.includes(e.statutFacturation || "");
-        }
-        return false;
-      })
+      .filter((e) => e.statutPrise === col.code)
       .map((e) => ({
         id: e.id,
         nom: e.nom,

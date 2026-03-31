@@ -206,13 +206,13 @@ export function DashboardView({
               onDragLeave={() => setDragOver(null)}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "0 4px" }}>
-                <Circle size={8} fill={C[col.colorKey as keyof Theme] as string} color={C[col.colorKey as keyof Theme] as string} />
+                <Circle size={8} fill={col.colorKey} color={col.colorKey} />
                 <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{col.status}</span>
                 <span
                   style={{
                     fontSize: 11, fontWeight: 700,
-                    color: C[col.colorKey as keyof Theme] as string,
-                    backgroundColor: C[(col.colorKey + "Dim") as keyof Theme] as string,
+                    color: col.colorKey,
+                    backgroundColor: col.colorKey + "18",
                     padding: "1px 8px", borderRadius: 6,
                   }}
                 >
@@ -228,7 +228,7 @@ export function DashboardView({
                     style={{
                       background: C.surface, borderRadius: 10, padding: "12px 14px",
                       border: `1px solid ${C.border}`, cursor: "grab",
-                      borderLeft: `3px solid ${C[col.colorKey as keyof Theme] as string}`,
+                      borderLeft: `3px solid ${col.colorKey}`,
                       boxShadow: C.shadow, transition: "all 0.15s", userSelect: "none",
                     }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadowHover; }}

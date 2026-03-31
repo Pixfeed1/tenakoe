@@ -171,33 +171,96 @@ function UsersTab({ C }: { C: Theme }) {
 
 // ===================== PIPELINE =====================
 function PipelineTab({ C }: { C: Theme }) {
-  const statuts = [
-    { key: "NOUVEAU", label: "Nouveau", color: C.blue },
-    { key: "PRISE_EN_CHARGE", label: "Prise en charge", color: C.accent },
-    { key: "PRISE_EN_CHARGE_A_RELANCER", label: "À relancer", color: C.warning },
-    { key: "DEVIS_A_FAIRE", label: "Devis à faire", color: C.warning },
-    { key: "DEVIS_ENVOYE", label: "Devis envoyé", color: C.blue },
-    { key: "DEVIS_SIGNE", label: "Devis signé", color: C.blue },
-    { key: "FACTURE_ENVOYEE", label: "Facture envoyée", color: C.purple },
-    { key: "FACTURE_PAYEE", label: "Facture payée", color: C.accent },
-    { key: "DOSSIER_DEPOSE", label: "Dossier déposé", color: C.purple },
-    { key: "QUALIFIE", label: "Qualifié", color: C.accent },
-    { key: "REFUSE", label: "Refusé", color: C.danger },
-  ];
+  const [statutsPrise, setStatutsPrise] = useState<Array<{ id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean }>>([]);
+  const [statutsFacturation, setStatutsFacturation] = useState<Array<{ id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean; declencheConversion: boolean }>>([]);
+  const [newPrise, setNewPrise] = useState({ nom: "", couleur: "#3b82f6" });
+  const [newFact, setNewFact] = useState({ nom: "", couleur: "#7c3aed", declencheConversion: false });
+
+  useEffect(() => {
+    fetch("/api/pipeline-config").then((r) => r.ok ? r.json() : { statutsPrise: [], statutsFacturation: [] }).then((data) => {
+      setStatutsPrise(data.statutsPrise);
+      setStatutsFacturation(data.statutsFacturation);
+    }).catch(() => {});
+  }, []);
+
+  const updatePrise = async (id: string, data: Record<string, unknown>) => {
+    const res = await fetch("/api/pipeline-config", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, type: "prise", ...data }) });
+    if (res.ok) { const u = await res.json(); setStatutsPrise((p) => p.map((s) => s.id === id ? { ...s, ...u } : s)); }
+  };
+
+  const updateFact = async (id: string, data: Record<string, unknown>) => {
+    const res = await fetch("/api/pipeline-config", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, type: "facturation", ...data }) });
+    if (res.ok) { const u = await res.json(); setStatutsFacturation((p) => p.map((s) => s.id === id ? { ...s, ...u } : s)); }
+  };
+
+  const addPrise = async () => {
+    if (!newPrise.nom) return;
+    const res = await fetch("/api/pipeline-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "prise", nom: newPrise.nom, couleur: newPrise.couleur, ordre: statutsPrise.length + 1 }) });
+    if (res.ok) { const s = await res.json(); setStatutsPrise((p) => [...p, s]); setNewPrise({ nom: "", couleur: "#3b82f6" }); }
+  };
+
+  const addFact = async () => {
+    if (!newFact.nom) return;
+    const res = await fetch("/api/pipeline-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "facturation", nom: newFact.nom, couleur: newFact.couleur, ordre: statutsFacturation.length + 1, declencheConversion: newFact.declencheConversion }) });
+    if (res.ok) { const s = await res.json(); setStatutsFacturation((p) => [...p, s]); setNewFact({ nom: "", couleur: "#7c3aed", declencheConversion: false }); }
+  };
+
+  const renderStatut = (s: { id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean }, type: "prise" | "facturation", declencheConversion?: boolean) => (
+    <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, background: C.bg, opacity: s.actif ? 1 : 0.5 }}>
+      <span style={{ fontSize: 12, fontWeight: 700, color: C.textDim, width: 20 }}>{s.ordre}</span>
+      <input type="color" value={s.couleur} onChange={(e) => type === "prise" ? updatePrise(s.id, { couleur: e.target.value }) : updateFact(s.id, { couleur: e.target.value })}
+        style={{ width: 24, height: 24, border: "none", borderRadius: 4, cursor: "pointer", padding: 0 }} />
+      <input value={s.nom} onChange={(e) => {
+        if (type === "prise") setStatutsPrise((p) => p.map((x) => x.id === s.id ? { ...x, nom: e.target.value } : x));
+        else setStatutsFacturation((p) => p.map((x) => x.id === s.id ? { ...x, nom: e.target.value } : x));
+      }}
+        onBlur={() => type === "prise" ? updatePrise(s.id, { nom: s.nom }) : updateFact(s.id, { nom: s.nom })}
+        style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 500, outline: "none" }} />
+      <Badge color={C.textDim} bg={C.surfaceHover}>{s.code}</Badge>
+      {s.parDefaut && <Badge color={C.accentText} bg={C.accentDim}>Défaut</Badge>}
+      {declencheConversion && <Badge color={C.blue} bg={C.blueDim}>→ Client</Badge>}
+      <button onClick={() => type === "prise" ? updatePrise(s.id, { actif: !s.actif }) : updateFact(s.id, { actif: !s.actif })} style={{
+        padding: "3px 8px", borderRadius: 4, border: "none", fontSize: 10, fontWeight: 600, cursor: "pointer",
+        background: s.actif ? C.dangerDim : C.accentDim, color: s.actif ? C.danger : C.accentText,
+      }}>{s.actif ? "Archiver" : "Réactiver"}</button>
+    </div>
+  );
 
   return (
-    <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-      <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Statuts du pipeline</h3>
-      <p style={{ fontSize: 12, color: C.textDim, marginBottom: 16 }}>Les statuts sont définis dans le schéma de données. Voici l&apos;ordre actuel :</p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {statuts.map((s, i) => (
-          <div key={s.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, background: C.bg }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: C.textDim, width: 20 }}>{i + 1}</span>
-            <div style={{ width: 10, height: 10, borderRadius: "50%", background: s.color }} />
-            <span style={{ fontSize: 13, fontWeight: 500, color: C.text, flex: 1 }}>{s.label}</span>
-            <Badge color={C.textDim} bg={C.surfaceHover}>{s.key}</Badge>
-          </div>
-        ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Prise en charge */}
+      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statuts de prise en charge</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+          {statutsPrise.map((s) => renderStatut(s, "prise"))}
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input placeholder="Nouveau statut..." value={newPrise.nom} onChange={(e) => setNewPrise({ ...newPrise, nom: e.target.value })}
+            style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }} />
+          <input type="color" value={newPrise.couleur} onChange={(e) => setNewPrise({ ...newPrise, couleur: e.target.value })} style={{ width: 24, height: 24, border: "none", borderRadius: 4, cursor: "pointer" }} />
+          <button onClick={addPrise} disabled={!newPrise.nom} style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: newPrise.nom ? C.accent : "#94a3b8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: newPrise.nom ? "pointer" : "not-allowed" }}>
+            <Plus size={12} /> Ajouter
+          </button>
+        </div>
+      </div>
+
+      {/* Facturation */}
+      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statuts de facturation</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+          {statutsFacturation.map((s) => renderStatut(s, "facturation", s.declencheConversion))}
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input placeholder="Nouveau statut..." value={newFact.nom} onChange={(e) => setNewFact({ ...newFact, nom: e.target.value })}
+            style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }} />
+          <input type="color" value={newFact.couleur} onChange={(e) => setNewFact({ ...newFact, couleur: e.target.value })} style={{ width: 24, height: 24, border: "none", borderRadius: 4, cursor: "pointer" }} />
+          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textDim }}>
+            <input type="checkbox" checked={newFact.declencheConversion} onChange={(e) => setNewFact({ ...newFact, declencheConversion: e.target.checked })} /> → Client
+          </label>
+          <button onClick={addFact} disabled={!newFact.nom} style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: newFact.nom ? C.accent : "#94a3b8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: newFact.nom ? "pointer" : "not-allowed" }}>
+            <Plus size={12} /> Ajouter
+          </button>
+        </div>
       </div>
     </div>
   );
