@@ -34,6 +34,9 @@ export function DossiersView({ C, onSelectClient }: { C: Theme; onSelectClient: 
       .then((r) => r.json())
       .then((data) => { setProjets(data); setLoading(false); })
       .catch(() => setLoading(false));
+    const handler = () => setShowAdd(true);
+    window.addEventListener("tenakoe:new-dossier", handler);
+    return () => window.removeEventListener("tenakoe:new-dossier", handler);
   }, []);
 
   const filtered = projets.filter((p) =>

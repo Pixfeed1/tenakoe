@@ -47,6 +47,9 @@ export function LeadsView({ C }: { C: Theme }) {
 
   useEffect(() => {
     fetchLeads();
+    const handler = () => setShowForm(true);
+    window.addEventListener("tenakoe:new-lead", handler);
+    return () => window.removeEventListener("tenakoe:new-lead", handler);
   }, []);
 
   const fetchLeads = () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Zap, FolderOpen, Mail, Upload, FileText } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { LIGHT, DARK } from "@/lib/theme";
 import { Sidebar } from "@/components/Sidebar";
@@ -211,25 +211,50 @@ export function CRMShell({
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <AlertesDropdown C={C} />
-            <button
-              onClick={() => navigateTo("Leads")}
-              style={{
-                padding: "9px 20px",
-                borderRadius: 10,
-                border: "none",
-                background: "linear-gradient(135deg, #16a34a, #15803d)",
-                color: "#fff",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                boxShadow: "0 2px 8px rgba(22,163,74,0.25)",
-              }}
-            >
-              <Plus size={15} strokeWidth={2.5} /> Nouveau lead
-            </button>
+            {(() => {
+              const actions: Partial<Record<View, { label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; action: () => void }>> = {
+                Dashboard: { label: "Nouveau lead", Icon: Zap, action: () => navigateTo("Leads") },
+                Leads: { label: "Nouveau lead", Icon: Plus, action: () => {
+                  // Scroll to top to show the form — handled by LeadsView
+                  const event = new CustomEvent("tenakoe:new-lead");
+                  window.dispatchEvent(event);
+                }},
+                Prospects: { label: "Nouveau prospect", Icon: Plus, action: () => navigateTo("Leads") },
+                Dossiers: { label: "Nouveau dossier", Icon: FolderOpen, action: () => {
+                  const event = new CustomEvent("tenakoe:new-dossier");
+                  window.dispatchEvent(event);
+                }},
+                Transmissions: { label: "Nouveau message", Icon: Mail, action: () => {
+                  const event = new CustomEvent("tenakoe:new-transmission");
+                  window.dispatchEvent(event);
+                }},
+                Documents: { label: "Uploader", Icon: Upload, action: () => navigateTo("Documents") },
+                Facturation: { label: "Nouveau devis", Icon: FileText, action: () => navigateTo("Facturation") },
+              };
+              const action = actions[view];
+              if (!action) return null;
+              return (
+                <button
+                  onClick={action.action}
+                  style={{
+                    padding: "9px 20px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: "linear-gradient(135deg, #16a34a, #15803d)",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    boxShadow: "0 2px 8px rgba(22,163,74,0.25)",
+                  }}
+                >
+                  <action.Icon size={15} strokeWidth={2.5} /> {action.label}
+                </button>
+              );
+            })()}
           </div>
         </div>
 

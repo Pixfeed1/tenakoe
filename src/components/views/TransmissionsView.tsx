@@ -63,6 +63,12 @@ export function TransmissionsView({ C }: { C: Theme }) {
 
   useEffect(() => { fetchData(); }, [filterCanal, showArchived]);
 
+  useEffect(() => {
+    const handler = () => setShowCompose(true);
+    window.addEventListener("tenakoe:new-transmission", handler);
+    return () => window.removeEventListener("tenakoe:new-transmission", handler);
+  }, []);
+
   const searchNow = () => fetchData();
 
   const toggleLu = async (id: string, lu: boolean) => {
