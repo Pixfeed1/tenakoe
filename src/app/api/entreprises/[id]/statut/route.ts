@@ -42,6 +42,12 @@ export async function PATCH(
   }
 
   if (changes.length > 0) {
+    // Webhooks
+    import("@/lib/webhooks").then(({ triggerWebhook }) => {
+      if (statutPrise) triggerWebhook("CHANGEMENT_STATUT_PROSPECT", { entrepriseId: id, nom: entreprise.nom, ancienStatut: oldStatut, nouveauStatut: statutPrise });
+      if (statutFacturation) triggerWebhook("CHANGEMENT_STATUT_FACTURATION", { entrepriseId: id, nom: entreprise.nom, ancienStatut: oldFacturation, nouveauStatut: statutFacturation });
+    }).catch(() => {});
+
     await prisma.logActivite.create({
       data: {
         type: "CHANGEMENT_STATUT",

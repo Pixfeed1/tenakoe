@@ -55,6 +55,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }> }>>([]);
   const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
   const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
+  const [showCallLog, setShowCallLog] = useState(false);
+  const [callNote, setCallNote] = useState("");
 
   const handleFileUpload = async (file: File) => {
     if (!client?.id) return;
@@ -255,7 +257,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           {[
             { Icon: Mail, label: "Envoyer mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); } },
             { Icon: MessageSquare, label: "SMS", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
-            { Icon: Phone, label: "Appeler", onClick: () => { if (entrepriseData?.telephone) window.open(`tel:${entrepriseData.telephone}`); } },
+            { Icon: Phone, label: "Appeler", onClick: () => { setShowCallLog(true); setMailOpen(false); setSmsOpen(false); } },
           ].map((btn, i) => (
             <button
               key={i}
@@ -485,6 +487,71 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </button>
         ))}
       </div>
+
+      {/* Call Log */}
+      {showCallLog && (
+        <div style={{
+          background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
+          padding: 20, marginBottom: 20, boxShadow: C.shadowHover,
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Loguer un appel</span>
+            <X size={16} color={C.textDim} style={{ cursor: "pointer" }} onClick={() => setShowCallLog(false)} />
+          </div>
+          <div style={{ marginBottom: 8, fontSize: 12, color: C.textDim }}>
+            Téléphone : {entrepriseData?.telephone || "—"}
+            {entrepriseData?.telephone && (
+              <a href={`tel:${entrepriseData.telephone}`} style={{ marginLeft: 8, color: C.blue, textDecoration: "none" }}>
+                Appeler maintenant
+              </a>
+            )}
+          </div>
+          <textarea
+            placeholder="Résumé de l'appel..."
+            value={callNote}
+            onChange={(e) => setCallNote(e.target.value)}
+            rows={4}
+            style={{
+              width: "100%", padding: "10px 14px", borderRadius: 8,
+              border: `1px solid ${C.border}`, background: C.bg, color: C.text,
+              fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box",
+            }}
+          />
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+            <button
+              disabled={!callNote.trim()}
+              onClick={async () => {
+                if (!callNote.trim() || !client?.id) return;
+                // Create transmission for the call
+                await fetch("/api/transmissions", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    canal: "TELEPHONE",
+                    direction: "SORTANT",
+                    destinataire: entrepriseData?.telephone || "—",
+                    objet: "Appel téléphonique",
+                    contenu: callNote,
+                    entrepriseId: client.id,
+                  }),
+                });
+                setShowCallLog(false);
+                setCallNote("");
+                setSendStatus({ type: "success", msg: "Appel logué dans l'historique" });
+              }}
+              style={{
+                padding: "8px 20px", borderRadius: 10, border: "none",
+                background: callNote.trim() ? C.accent : "#94a3b8",
+                color: "#fff", fontSize: 13, fontWeight: 600,
+                cursor: callNote.trim() ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", gap: 6,
+              }}
+            >
+              <Phone size={13} /> Enregistrer l&apos;appel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tab: Dossier */}
       {tab === "dossier" && (

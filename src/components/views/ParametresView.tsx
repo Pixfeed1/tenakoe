@@ -70,13 +70,13 @@ export function ParametresView({ C }: { C: Theme }) {
 function UsersTab({ C }: { C: Theme }) {
   const [users, setUsers] = useState<Array<{ id: string; email: string; nom: string; prenom: string; telephone: string | null; role: string; actif: boolean }>>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ email: "", nom: "", prenom: "", telephone: "", role: "CHARGEE", password: "" });
+  const [form, setForm] = useState({ email: "", nom: "", prenom: "", telephone: "", role: "CHARGEE", password: "", prescripteurType: "" });
 
   useEffect(() => { fetch("/api/users").then((r) => r.ok ? r.json() : []).then(setUsers).catch(() => {}); }, []);
 
   const addUser = async () => {
     const res = await fetch("/api/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    if (res.ok) { const u = await res.json(); setUsers((p) => [...p, u]); setShowAdd(false); setForm({ email: "", nom: "", prenom: "", telephone: "", role: "CHARGEE", password: "" }); }
+    if (res.ok) { const u = await res.json(); setUsers((p) => [...p, u]); setShowAdd(false); setForm({ email: "", nom: "", prenom: "", telephone: "", role: "CHARGEE", password: "", prescripteurType: "" }); }
   };
 
   const toggleActif = async (id: string, actif: boolean) => {
@@ -111,6 +111,14 @@ function UsersTab({ C }: { C: Theme }) {
               <option value="PRESCRIPTEUR">Prescripteur</option>
             </select>
             <input placeholder="Mot de passe" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} style={inputStyle(C)} />
+            {form.role === "PRESCRIPTEUR" && (
+              <select value={form.prescripteurType} onChange={(e) => setForm({ ...form, prescripteurType: e.target.value })} style={inputStyle(C)}>
+                <option value="">Enseigne...</option>
+                <option value="PDB">PDB</option>
+                <option value="POINT_P">Point P</option>
+                <option value="BIGMAT">Big Mat</option>
+              </select>
+            )}
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
             <button onClick={() => setShowAdd(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>

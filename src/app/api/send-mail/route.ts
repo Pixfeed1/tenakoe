@@ -54,6 +54,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    import("@/lib/webhooks").then(({ triggerWebhook }) => {
+      triggerWebhook("MAIL_ENVOYE", { entrepriseId, objet: subject, destinataire: to });
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, messageId: result.messageId });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erreur inconnue";

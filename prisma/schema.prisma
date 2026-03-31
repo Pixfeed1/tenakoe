@@ -476,6 +476,30 @@ enum TypeActivite {
 }
 
 // ============================================================
+// WEBHOOKS
+// ============================================================
+
+model Webhook {
+  id         String             @id @default(cuid())
+  nom        String
+  url        String
+  secret     String?
+  actif      Boolean            @default(true)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  evenements WebhookEvenement[]
+}
+
+model WebhookEvenement {
+  id        String  @id @default(cuid())
+  webhookId String
+  webhook   Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  type      String
+
+  @@unique([webhookId, type])
+}
+
+// ============================================================
 // PRESCRIPTEURS CONFIG (dynamique, archivable)
 // ============================================================
 

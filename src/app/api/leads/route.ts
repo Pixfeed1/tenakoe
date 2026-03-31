@@ -54,6 +54,11 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  // Webhook
+  import("@/lib/webhooks").then(({ triggerWebhook }) => {
+    triggerWebhook("NOUVEAU_LEAD", { id: lead.id, nom: body.nomEntreprise || `${body.prenomArtisan} ${body.nomArtisan}`, prescripteur: body.prescripteur, email: body.email });
+  }).catch(() => {});
+
   return NextResponse.json(lead, { status: 201 });
 }
 
