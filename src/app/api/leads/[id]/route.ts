@@ -13,20 +13,16 @@ export async function PATCH(
   const body = await request.json();
 
   const data: Record<string, unknown> = {};
+  if (body.nomArtisan !== undefined) data.nomArtisan = body.nomArtisan;
+  if (body.prenomArtisan !== undefined) data.prenomArtisan = body.prenomArtisan;
+  if (body.nomEntreprise !== undefined) data.nomEntreprise = body.nomEntreprise;
+  if (body.email !== undefined) data.email = body.email;
+  if (body.telephone !== undefined) data.telephone = body.telephone;
+  if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
   if (body.statut !== undefined) data.statut = body.statut;
-  if (body.titre !== undefined) data.titre = body.titre;
-  if (body.type !== undefined) data.type = body.type;
-  if (body.priorite !== undefined) data.priorite = body.priorite;
-  if (body.dateEcheance !== undefined) data.dateEcheance = body.dateEcheance ? new Date(body.dateEcheance) : null;
-  if (body.statut === "TERMINEE") data.dateRealisee = new Date();
-  if (body.statut === "A_FAIRE") data.dateRealisee = null;
 
-  const tache = await prisma.tache.update({
-    where: { id },
-    data,
-  });
-
-  return NextResponse.json(tache);
+  const lead = await prisma.leadFormulaire.update({ where: { id }, data });
+  return NextResponse.json(lead);
 }
 
 export async function DELETE(
@@ -37,6 +33,6 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const { id } = await params;
-  await prisma.tache.delete({ where: { id } });
+  await prisma.leadFormulaire.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

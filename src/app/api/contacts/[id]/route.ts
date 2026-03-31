@@ -13,20 +13,14 @@ export async function PATCH(
   const body = await request.json();
 
   const data: Record<string, unknown> = {};
-  if (body.statut !== undefined) data.statut = body.statut;
-  if (body.titre !== undefined) data.titre = body.titre;
-  if (body.type !== undefined) data.type = body.type;
-  if (body.priorite !== undefined) data.priorite = body.priorite;
-  if (body.dateEcheance !== undefined) data.dateEcheance = body.dateEcheance ? new Date(body.dateEcheance) : null;
-  if (body.statut === "TERMINEE") data.dateRealisee = new Date();
-  if (body.statut === "A_FAIRE") data.dateRealisee = null;
+  if (body.nom !== undefined) data.nom = body.nom;
+  if (body.prenom !== undefined) data.prenom = body.prenom;
+  if (body.email !== undefined) data.email = body.email;
+  if (body.telephone !== undefined) data.telephone = body.telephone;
+  if (body.fonction !== undefined) data.fonction = body.fonction;
 
-  const tache = await prisma.tache.update({
-    where: { id },
-    data,
-  });
-
-  return NextResponse.json(tache);
+  const contact = await prisma.contact.update({ where: { id }, data });
+  return NextResponse.json(contact);
 }
 
 export async function DELETE(
@@ -37,6 +31,6 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const { id } = await params;
-  await prisma.tache.delete({ where: { id } });
+  await prisma.contact.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

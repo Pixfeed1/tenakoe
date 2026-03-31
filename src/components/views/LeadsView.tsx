@@ -274,6 +274,19 @@ export function LeadsView({ C }: { C: Theme }) {
                     >
                       <Building2 size={12} /> {converting === lead.id ? "..." : "Convertir"}
                     </button>
+                    <button
+                      onClick={async () => {
+                        await fetch(`/api/leads/${lead.id}`, { method: "DELETE" });
+                        fetchLeads();
+                      }}
+                      style={{
+                        padding: "5px 10px", borderRadius: 8, border: "none",
+                        background: C.dangerDim, color: C.danger, fontSize: 12,
+                        fontWeight: 600, cursor: "pointer", marginLeft: 4,
+                      }}
+                    >
+                      Suppr.
+                    </button>
                   </td>
                 </tr>
               ))}

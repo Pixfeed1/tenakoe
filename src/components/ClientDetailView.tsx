@@ -632,12 +632,24 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 32 }}>
                   <div
+                    onClick={async () => {
+                      if (!t.active && !t.done) return;
+                      const newDone = !t.done;
+                      setTracks((prev) => prev.map((step) =>
+                        step.id === t.id ? { ...step, done: newDone, active: !newDone } : step
+                      ));
+                      fetch(`/api/etapes/${t.id}`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ terminee: newDone }),
+                      }).catch(() => {});
+                    }}
                     style={{
                       width: 28, height: 28, borderRadius: "50%",
                       background: t.done ? C.accent : t.active ? C.blue : C.border,
                       display: "flex", alignItems: "center", justifyContent: "center",
                       boxShadow: t.active ? `0 0 0 4px ${C.blueDim}` : "none",
                       transition: "all 0.3s",
+                      cursor: t.active || t.done ? "pointer" : "default",
                     }}
                   >
                     {t.done ? (
@@ -779,6 +791,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   {c.fonction || ""}{c.email ? ` · ${c.email}` : ""}{c.telephone ? ` · ${c.telephone}` : ""}
                 </div>
               </div>
+              <button onClick={async () => {
+                await fetch(`/api/contacts/${c.id}`, { method: "DELETE" });
+                setContacts((prev) => prev.filter((x) => x.id !== c.id));
+              }} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
+                <Trash2 size={13} />
+              </button>
             </div>
           ))}
         </div>
@@ -873,6 +891,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   {t.enRetard && <span style={{ color: C.danger, fontWeight: 600 }}> · En retard</span>}
                 </div>
               </div>
+              <button onClick={async (e) => {
+                e.stopPropagation();
+                await fetch(`/api/taches/${t.id}`, { method: "DELETE" });
+                setTaches((prev) => prev.filter((x) => x.id !== t.id));
+              }} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
+                <Trash2 size={13} />
+              </button>
             </div>
           ))}
         </div>

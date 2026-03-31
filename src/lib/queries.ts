@@ -165,18 +165,21 @@ export async function getRecentActivity(limit = 10) {
     message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoyé à" : "reçu de"} ${t.entreprise?.nom || t.destinataire}${t.objet ? ` — ${t.objet}` : ""}`,
     chargee: t.expediteur?.prenom || "—",
     time: formatRelativeTime(t.dateEnvoi),
+    _ts: t.dateEnvoi.getTime(),
   }));
 
   const logActivities = logs.map((l) => ({
-    type: l.type === "ENVOI_EMAIL" ? "EMAIL" : l.type === "ENVOI_SMS" ? "SMS" : l.type === "CHANGEMENT_STATUT" ? "STATUT" : l.type === "RECEPTION_DOCUMENT" ? "DOC" : "LEAD",
+    type: l.type === "ENVOI_EMAIL" ? "EMAIL" : l.type === "ENVOI_SMS" ? "SMS" : l.type === "CHANGEMENT_STATUT" ? "STATUT" : l.type === "RECEPTION_DOCUMENT" || l.type === "UPLOAD_DOCUMENT" ? "DOC" : "LEAD",
     message: l.description,
     chargee: "—",
     time: formatRelativeTime(l.createdAt),
+    _ts: l.createdAt.getTime(),
   }));
 
   return [...activities, ...logActivities]
-    .sort((a, b) => 0) // already sorted individually
-    .slice(0, limit);
+    .sort((a, b) => b._ts - a._ts)
+    .slice(0, limit)
+    .map(({ _ts, ...rest }) => rest);
 }
 
 // ========================

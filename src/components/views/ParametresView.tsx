@@ -202,21 +202,62 @@ function PrescripteursTab({ C }: { C: Theme }) {
 // ===================== TEMPLATES MAILS =====================
 function MailTemplatesTab({ C }: { C: Theme }) {
   const [templates, setTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string; actif: boolean }>>([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ nom: "", objet: "", contenu: "" });
+
   useEffect(() => { fetch("/api/mail-templates").then((r) => r.ok ? r.json() : []).then(setTemplates).catch(() => {}); }, []);
+
+  const add = async () => {
+    if (!form.nom || !form.objet) return;
+    const res = await fetch("/api/mail-templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    if (res.ok) { const t = await res.json(); setTemplates((p) => [...p, t]); setShowAdd(false); setForm({ nom: "", objet: "", contenu: "" }); }
+  };
+
+  const toggleActif = async (id: string, actif: boolean) => {
+    const res = await fetch(`/api/mail-templates/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actif: !actif }) });
+    if (res.ok) setTemplates((p) => p.map((t) => t.id === id ? { ...t, actif: !actif } : t));
+  };
+
+  const remove = async (id: string) => {
+    await fetch(`/api/mail-templates/${id}`, { method: "DELETE" });
+    setTemplates((p) => p.filter((t) => t.id !== id));
+  };
 
   return (
     <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-      <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Templates de mails</h3>
-      {templates.length === 0 ? (
-        <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun template. Lancez le seed pour en créer.</div>
-      ) : templates.map((t) => (
-        <div key={t.id} style={{ padding: "14px 12px", borderBottom: `1px solid ${C.border}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <Mail size={14} color={C.blue} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{t.nom}</span>
-            <Badge color={t.actif ? C.accentText : C.textDim} bg={t.actif ? C.accentDim : C.surfaceHover}>{t.actif ? "Actif" : "Inactif"}</Badge>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Templates de mails</h3>
+        <button onClick={() => setShowAdd(!showAdd)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+          <Plus size={12} /> Créer
+        </button>
+      </div>
+
+      {showAdd && (
+        <div style={{ padding: 16, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 16 }}>
+          <input placeholder="Nom du template *" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} style={{ ...inputStyle(C), marginBottom: 8 }} />
+          <input placeholder="Objet du mail *" value={form.objet} onChange={(e) => setForm({ ...form, objet: e.target.value })} style={{ ...inputStyle(C), marginBottom: 8 }} />
+          <textarea placeholder="Corps du mail (HTML)" value={form.contenu} onChange={(e) => setForm({ ...form, contenu: e.target.value })} rows={4} style={{ ...inputStyle(C), resize: "vertical", marginBottom: 8 }} />
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <button onClick={() => setShowAdd(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
+            <button onClick={add} disabled={!form.nom || !form.objet} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Enregistrer</button>
           </div>
-          <div style={{ fontSize: 12, color: C.textMuted }}>Objet : {t.objet}</div>
+        </div>
+      )}
+
+      {templates.length === 0 ? (
+        <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun template.</div>
+      ) : templates.map((t) => (
+        <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 12px", borderBottom: `1px solid ${C.border}` }}>
+          <Mail size={14} color={C.blue} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{t.nom}</div>
+            <div style={{ fontSize: 12, color: C.textMuted }}>Objet : {t.objet}</div>
+          </div>
+          <button onClick={() => toggleActif(t.id, t.actif)} style={{
+            padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
+            background: t.actif ? C.accentDim : C.surfaceHover, color: t.actif ? C.accentText : C.textDim,
+          }}>{t.actif ? "Actif" : "Inactif"}</button>
+          <button onClick={() => remove(t.id)} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}><Trash2 size={12} /></button>
         </div>
       ))}
     </div>
