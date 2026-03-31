@@ -484,12 +484,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Informations entreprise</h3>
             {[
-              { label: "Entreprise", value: client?.nom || "GR 24 COUVERTURE", Icon: Building2 },
-              { label: "SIRET", value: client?.siret || "82383359500031", Icon: FileText },
+              { label: "Entreprise", value: client?.nom || "—", Icon: Building2 },
+              { label: "SIRET", value: client?.siret || "—", Icon: FileText },
               { label: "Contact", value: entrepriseData?.contact || "—", Icon: UserCircle },
               { label: "Email", value: entrepriseData?.email || "—", Icon: Mail },
               { label: "Téléphone", value: entrepriseData?.telephone || "—", Icon: Phone },
-              { label: "Prescripteur", value: client?.prescripteur || "PDB", Icon: Building2 },
+              { label: "Prescripteur", value: client?.prescripteur || "—", Icon: Building2 },
             ].map((f, i) => (
               <div
                 key={i}

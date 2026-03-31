@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
+import DOMPurify from "dompurify";
 
 interface Transmission {
   id: string;
@@ -313,7 +314,7 @@ export function TransmissionsView({ C }: { C: Theme }) {
                     border: `1px solid ${C.border}`, fontSize: 13, color: C.text,
                     lineHeight: 1.7, whiteSpace: "pre-wrap", marginBottom: 12,
                   }}
-                    dangerouslySetInnerHTML={{ __html: t.contenu || "<em style='color: #94a3b8'>Pas de contenu</em>" }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t.contenu || "<em style='color: #94a3b8'>Pas de contenu</em>") }}
                   />
 
                   {/* Actions */}

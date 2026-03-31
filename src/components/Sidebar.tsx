@@ -151,7 +151,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
               fontSize: 12, fontWeight: 700, color: "#fff",
             }}
           >
-            {user?.initials || "EL"}
+            {user?.initials || "?"}
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{user?.name || "Elise Leal"}</div>
