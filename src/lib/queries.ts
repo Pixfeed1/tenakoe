@@ -76,6 +76,8 @@ export async function getPipelineData(user?: CurrentUser | null) {
     id: col.code.toLowerCase(),
     status: col.nom,
     colorKey: col.couleur,
+    pipelineType: "prise" as const,
+    statutCode: col.code,
     items: mapItems((e) => e.statutPrise === col.code),
   }));
 
@@ -86,6 +88,8 @@ export async function getPipelineData(user?: CurrentUser | null) {
       id: col.code.toLowerCase(),
       status: col.nom,
       colorKey: col.couleur,
+      pipelineType: "facturation" as const,
+      statutCode: col.code,
       items: mapItems((e) => e.statutFacturation === col.code),
     }));
 

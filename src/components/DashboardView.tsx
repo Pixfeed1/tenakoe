@@ -87,15 +87,14 @@ export function DashboardView({
       return next;
     });
 
-    // Persist status change via API
-    const colToStatut: Record<string, { statutPrise?: string; statutFacturation?: string }> = {
-      nouveau: { statutPrise: "NOUVEAU" },
-      prise_en_charge: { statutPrise: "PRISE_EN_CHARGE" },
-      a_relancer: { statutPrise: "PRISE_EN_CHARGE_A_RELANCER" },
-      devis_envoye: { statutFacturation: "DEVIS_ENVOYE" },
-      facture_payee: { statutFacturation: "FACTURE_PAYEE" },
-    };
-    const statut = colToStatut[targetColId];
+    // Persist status change via API — use pipelineType from column data
+    const targetCol = pipeline.find((c) => c.id === targetColId);
+    const isPrise = targetCol?.pipelineType === "prise" || !targetCol?.pipelineType;
+    const targetCode = targetCol?.statutCode || targetColId.toUpperCase();
+    const statut = isPrise
+      ? { statutPrise: targetCode }
+      : { statutFacturation: targetCode };
+
     if (statut) {
       fetch(`/api/entreprises/${itemId}/statut`, {
         method: "PATCH",
