@@ -45,9 +45,7 @@ export function ClientsView({ C, onSelectClient }: { C: Theme; onSelectClient: (
     fetch(`/api/entreprises?${params}`)
       .then((r) => r.json())
       .then((data) => {
-        const filtered = data.filter((e: ClientRow) =>
-          ["FACTURE_PAYEE", "DOSSIER_DEPOSE", "DOSSIER_COMPLEMENT", "QUALIFIE"].includes(e.statutFacturation || "")
-        );
+        const filtered = data.filter((e: ClientRow & { estClient?: boolean }) => e.estClient === true);
         setClients(filtered);
         setLoading(false);
       })

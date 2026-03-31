@@ -48,6 +48,7 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
   }, [search, filterStatut, showArchived]);
 
   const prospects = entreprises.filter((e) =>
+    !((e as Entreprise & { estClient?: boolean }).estClient) &&
     ["NOUVEAU", "PRISE_EN_CHARGE", "PRISE_EN_CHARGE_A_RELANCER"].includes(e.statutPrise)
   );
 
