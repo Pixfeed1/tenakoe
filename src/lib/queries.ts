@@ -55,27 +55,41 @@ export async function getPipelineData(user?: CurrentUser | null) {
     BIGMAT: "Big Mat",
   };
 
-  // Load pipeline columns from config tables
-  const statutsPriseConfig = await prisma.statutPriseConfig.findMany({
-    where: { actif: true },
-    orderBy: { ordre: "asc" },
-  });
+  // Load pipeline columns from BOTH config tables
+  const [statutsPriseConfig, statutsFactConfig] = await Promise.all([
+    prisma.statutPriseConfig.findMany({ where: { actif: true }, orderBy: { ordre: "asc" } }),
+    prisma.statutFacturationConfig.findMany({ where: { actif: true }, orderBy: { ordre: "asc" } }),
+  ]);
 
-  return statutsPriseConfig.map((col) => ({
+  const mapItems = (filterFn: (e: typeof entreprises[0]) => boolean) =>
+    entreprises.filter(filterFn).map((e) => ({
+      id: e.id,
+      nom: e.nom,
+      chargee: e.projets[0]?.chargee?.prenom || "—",
+      prescripteur: prescripteurLabel[e.prescripteur || "PDB"] || "PDB",
+      date: e.updatedAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+      siret: e.siret || "",
+    }));
+
+  // Prise en charge columns
+  const priseColumns = statutsPriseConfig.map((col) => ({
     id: col.code.toLowerCase(),
     status: col.nom,
-    colorKey: col.couleur, // Now stores hex color directly
-    items: entreprises
-      .filter((e) => e.statutPrise === col.code)
-      .map((e) => ({
-        id: e.id,
-        nom: e.nom,
-        chargee: e.projets[0]?.chargee?.prenom || "—",
-        prescripteur: prescripteurLabel[e.prescripteur || "PDB"] || "PDB",
-        date: e.updatedAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
-        siret: e.siret || "",
-      })),
+    colorKey: col.couleur,
+    items: mapItems((e) => e.statutPrise === col.code),
   }));
+
+  // Facturation columns (only show main ones in pipeline)
+  const factColumns = statutsFactConfig
+    .filter((col) => ["DEVIS_ENVOYE", "DEVIS_SIGNE", "FACTURE_ENVOYEE", "FACTURE_PAYEE"].includes(col.code))
+    .map((col) => ({
+      id: col.code.toLowerCase(),
+      status: col.nom,
+      colorKey: col.couleur,
+      items: mapItems((e) => e.statutFacturation === col.code),
+    }));
+
+  return [...priseColumns, ...factColumns];
 }
 
 export async function getClientsWithProgress(user?: CurrentUser | null) {
