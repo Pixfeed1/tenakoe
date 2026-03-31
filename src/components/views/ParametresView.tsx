@@ -175,6 +175,7 @@ function PipelineTab({ C }: { C: Theme }) {
   const [statutsFacturation, setStatutsFacturation] = useState<Array<{ id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean; declencheConversion: boolean }>>([]);
   const [newPrise, setNewPrise] = useState({ nom: "", couleur: "#3b82f6" });
   const [newFact, setNewFact] = useState({ nom: "", couleur: "#7c3aed", declencheConversion: false });
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/pipeline-config").then((r) => r.ok ? r.json() : { statutsPrise: [], statutsFacturation: [] }).then((data) => {
@@ -183,14 +184,31 @@ function PipelineTab({ C }: { C: Theme }) {
     }).catch(() => {});
   }, []);
 
-  const updatePrise = async (id: string, data: Record<string, unknown>) => {
-    const res = await fetch("/api/pipeline-config", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, type: "prise", ...data }) });
-    if (res.ok) { const u = await res.json(); setStatutsPrise((p) => p.map((s) => s.id === id ? { ...s, ...u } : s)); }
+  const updateStatut = async (id: string, type: "prise" | "facturation", data: Record<string, unknown>) => {
+    const res = await fetch("/api/pipeline-config", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, type, ...data }) });
+    if (res.ok) {
+      const u = await res.json();
+      if (type === "prise") setStatutsPrise((p) => p.map((s) => s.id === id ? { ...s, ...u } : s));
+      else setStatutsFacturation((p) => p.map((s) => s.id === id ? { ...s, ...u } : s));
+    }
   };
 
-  const updateFact = async (id: string, data: Record<string, unknown>) => {
-    const res = await fetch("/api/pipeline-config", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, type: "facturation", ...data }) });
-    if (res.ok) { const u = await res.json(); setStatutsFacturation((p) => p.map((s) => s.id === id ? { ...s, ...u } : s)); }
+  const handleDrop = async (targetId: string, type: "prise" | "facturation") => {
+    if (!draggingId || draggingId === targetId) { setDraggingId(null); return; }
+    const list = type === "prise" ? [...statutsPrise] : [...statutsFacturation];
+    const dragIdx = list.findIndex((s) => s.id === draggingId);
+    const dropIdx = list.findIndex((s) => s.id === targetId);
+    if (dragIdx < 0 || dropIdx < 0) { setDraggingId(null); return; }
+    const [moved] = list.splice(dragIdx, 1);
+    list.splice(dropIdx, 0, moved);
+    const reordered = list.map((s, i) => ({ ...s, ordre: i + 1 }));
+    if (type === "prise") setStatutsPrise(reordered);
+    else setStatutsFacturation(reordered as typeof statutsFacturation);
+    // Persist all orders
+    for (const s of reordered) {
+      fetch("/api/pipeline-config", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: s.id, type, ordre: s.ordre }) }).catch(() => {});
+    }
+    setDraggingId(null);
   };
 
   const addPrise = async () => {
@@ -205,62 +223,160 @@ function PipelineTab({ C }: { C: Theme }) {
     if (res.ok) { const s = await res.json(); setStatutsFacturation((p) => [...p, s]); setNewFact({ nom: "", couleur: "#7c3aed", declencheConversion: false }); }
   };
 
-  const renderStatut = (s: { id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean }, type: "prise" | "facturation", declencheConversion?: boolean) => (
-    <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, background: C.bg, opacity: s.actif ? 1 : 0.5 }}>
-      <span style={{ fontSize: 12, fontWeight: 700, color: C.textDim, width: 20 }}>{s.ordre}</span>
-      <input type="color" value={s.couleur} onChange={(e) => type === "prise" ? updatePrise(s.id, { couleur: e.target.value }) : updateFact(s.id, { couleur: e.target.value })}
-        style={{ width: 24, height: 24, border: "none", borderRadius: 4, cursor: "pointer", padding: 0 }} />
-      <input value={s.nom} onChange={(e) => {
-        if (type === "prise") setStatutsPrise((p) => p.map((x) => x.id === s.id ? { ...x, nom: e.target.value } : x));
-        else setStatutsFacturation((p) => p.map((x) => x.id === s.id ? { ...x, nom: e.target.value } : x));
+  const renderStatutRow = (s: { id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean }, type: "prise" | "facturation", declencheConversion?: boolean) => (
+    <div
+      key={s.id}
+      draggable
+      onDragStart={() => setDraggingId(s.id)}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={() => handleDrop(s.id, type)}
+      style={{
+        display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
+        borderRadius: 10, background: draggingId === s.id ? C.accentDim : C.bg,
+        border: `1px solid ${draggingId === s.id ? C.accent : "transparent"}`,
+        opacity: s.actif ? 1 : 0.5, cursor: "grab", transition: "all 0.15s",
+        userSelect: "none",
       }}
-        onBlur={() => type === "prise" ? updatePrise(s.id, { nom: s.nom }) : updateFact(s.id, { nom: s.nom })}
-        style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, fontWeight: 500, outline: "none" }} />
-      <Badge color={C.textDim} bg={C.surfaceHover}>{s.code}</Badge>
-      {s.parDefaut && <Badge color={C.accentText} bg={C.accentDim}>Défaut</Badge>}
-      {declencheConversion && <Badge color={C.blue} bg={C.blueDim}>→ Client</Badge>}
-      <button onClick={() => type === "prise" ? updatePrise(s.id, { actif: !s.actif }) : updateFact(s.id, { actif: !s.actif })} style={{
-        padding: "3px 8px", borderRadius: 4, border: "none", fontSize: 10, fontWeight: 600, cursor: "pointer",
-        background: s.actif ? C.dangerDim : C.accentDim, color: s.actif ? C.danger : C.accentText,
-      }}>{s.actif ? "Archiver" : "Réactiver"}</button>
+    >
+      {/* Drag handle */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, cursor: "grab" }}>
+        <div style={{ width: 12, height: 2, background: C.textDim, borderRadius: 1 }} />
+        <div style={{ width: 12, height: 2, background: C.textDim, borderRadius: 1 }} />
+        <div style={{ width: 12, height: 2, background: C.textDim, borderRadius: 1 }} />
+      </div>
+
+      {/* Ordre */}
+      <span style={{ fontSize: 11, fontWeight: 700, color: C.textDim, width: 18, textAlign: "center" }}>{s.ordre}</span>
+
+      {/* Couleur */}
+      <div style={{ position: "relative" }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: s.couleur, border: `2px solid ${C.border}`, cursor: "pointer" }}
+          onClick={() => (document.getElementById(`color-${s.id}`) as HTMLInputElement)?.click()} />
+        <input id={`color-${s.id}`} type="color" value={s.couleur}
+          onChange={(e) => updateStatut(s.id, type, { couleur: e.target.value })}
+          style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0, opacity: 0 }} />
+      </div>
+
+      {/* Nom */}
+      <input value={s.nom}
+        onChange={(e) => {
+          if (type === "prise") setStatutsPrise((p) => p.map((x) => x.id === s.id ? { ...x, nom: e.target.value } : x));
+          else setStatutsFacturation((p) => p.map((x) => x.id === s.id ? { ...x, nom: e.target.value } : x));
+        }}
+        onBlur={() => updateStatut(s.id, type, { nom: s.nom })}
+        style={{
+          flex: 1, padding: "6px 10px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+          border: `1px solid ${C.border}`, background: C.surface, color: C.text, outline: "none",
+        }}
+      />
+
+      {/* Badges */}
+      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+        {s.parDefaut && (
+          <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, background: C.accentDim, color: C.accentText }}>
+            Défaut
+          </span>
+        )}
+        {declencheConversion && (
+          <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, background: C.blueDim, color: C.blue }}>
+            → Client
+          </span>
+        )}
+        {!s.actif && (
+          <span style={{ padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, background: C.surfaceHover, color: C.textDim }}>
+            Archivé
+          </span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <button
+        onClick={() => updateStatut(s.id, type, { actif: !s.actif })}
+        style={{
+          padding: "5px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
+          background: s.actif ? C.dangerDim : C.accentDim, color: s.actif ? C.danger : C.accentText,
+        }}
+      >
+        {s.actif ? "Archiver" : "Réactiver"}
+      </button>
+    </div>
+  );
+
+  const renderAddForm = (
+    type: "prise" | "facturation",
+    form: { nom: string; couleur: string; declencheConversion?: boolean },
+    setForm: (v: typeof form) => void,
+    onAdd: () => void,
+  ) => (
+    <div style={{
+      display: "flex", gap: 10, alignItems: "center", padding: "10px 16px",
+      borderRadius: 10, border: `2px dashed ${C.border}`, marginTop: 8,
+    }}>
+      <Plus size={14} color={C.textDim} />
+      <input placeholder="Nom du nouveau statut..." value={form.nom}
+        onChange={(e) => setForm({ ...form, nom: e.target.value })}
+        style={{
+          flex: 1, padding: "6px 10px", borderRadius: 8, fontSize: 13,
+          border: `1px solid ${C.border}`, background: C.surface, color: C.text, outline: "none",
+        }}
+      />
+      <div style={{ position: "relative" }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: form.couleur, border: `2px solid ${C.border}`, cursor: "pointer" }}
+          onClick={() => (document.getElementById(`color-new-${type}`) as HTMLInputElement)?.click()} />
+        <input id={`color-new-${type}`} type="color" value={form.couleur}
+          onChange={(e) => setForm({ ...form, couleur: e.target.value })}
+          style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0, opacity: 0 }} />
+      </div>
+      {type === "facturation" && (
+        <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textDim, whiteSpace: "nowrap" }}>
+          <input type="checkbox" checked={form.declencheConversion || false}
+            onChange={(e) => setForm({ ...form, declencheConversion: e.target.checked })}
+            style={{ accentColor: C.blue }} />
+          → Client
+        </label>
+      )}
+      <button onClick={onAdd} disabled={!form.nom}
+        style={{
+          padding: "6px 16px", borderRadius: 8, border: "none",
+          background: form.nom ? C.accent : "#94a3b8", color: "#fff",
+          fontSize: 12, fontWeight: 600, cursor: form.nom ? "pointer" : "not-allowed",
+        }}
+      >
+        Ajouter
+      </button>
     </div>
   );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Prise en charge */}
-      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-        <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statuts de prise en charge</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
-          {statutsPrise.map((s) => renderStatut(s, "prise"))}
+      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 24, boxShadow: C.shadow }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: C.blue }} />
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: C.text }}>Statuts de prise en charge</h3>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input placeholder="Nouveau statut..." value={newPrise.nom} onChange={(e) => setNewPrise({ ...newPrise, nom: e.target.value })}
-            style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }} />
-          <input type="color" value={newPrise.couleur} onChange={(e) => setNewPrise({ ...newPrise, couleur: e.target.value })} style={{ width: 24, height: 24, border: "none", borderRadius: 4, cursor: "pointer" }} />
-          <button onClick={addPrise} disabled={!newPrise.nom} style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: newPrise.nom ? C.accent : "#94a3b8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: newPrise.nom ? "pointer" : "not-allowed" }}>
-            <Plus size={12} /> Ajouter
-          </button>
+        <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 16px" }}>
+          Glissez-déposez pour réorganiser l&apos;ordre des colonnes du pipeline
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {statutsPrise.map((s) => renderStatutRow(s, "prise"))}
         </div>
+        {renderAddForm("prise", newPrise, setNewPrise as (v: typeof newPrise) => void, addPrise)}
       </div>
 
       {/* Facturation */}
-      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-        <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statuts de facturation</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
-          {statutsFacturation.map((s) => renderStatut(s, "facturation", s.declencheConversion))}
+      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 24, boxShadow: C.shadow }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: C.purple }} />
+          <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: C.text }}>Statuts de facturation</h3>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input placeholder="Nouveau statut..." value={newFact.nom} onChange={(e) => setNewFact({ ...newFact, nom: e.target.value })}
-            style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }} />
-          <input type="color" value={newFact.couleur} onChange={(e) => setNewFact({ ...newFact, couleur: e.target.value })} style={{ width: 24, height: 24, border: "none", borderRadius: 4, cursor: "pointer" }} />
-          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textDim }}>
-            <input type="checkbox" checked={newFact.declencheConversion} onChange={(e) => setNewFact({ ...newFact, declencheConversion: e.target.checked })} /> → Client
-          </label>
-          <button onClick={addFact} disabled={!newFact.nom} style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: newFact.nom ? C.accent : "#94a3b8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: newFact.nom ? "pointer" : "not-allowed" }}>
-            <Plus size={12} /> Ajouter
-          </button>
+        <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 16px" }}>
+          Le statut avec le badge &quot;→ Client&quot; déclenche automatiquement la conversion prospect → client
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {statutsFacturation.map((s) => renderStatutRow(s, "facturation", s.declencheConversion))}
         </div>
+        {renderAddForm("facturation", newFact as { nom: string; couleur: string; declencheConversion?: boolean }, setNewFact as (v: { nom: string; couleur: string; declencheConversion?: boolean }) => void, addFact)}
       </div>
     </div>
   );
@@ -402,6 +518,7 @@ function TracksTab({ C }: { C: Theme }) {
   const [tracks, setTracks] = useState<Array<{ id: string; nom: string; description: string | null; etapes: Array<{ nom: string; delaiJours: number; ordre: number }> }>>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ nom: "", description: "", etapes: [{ nom: "", delaiJours: 0, ordre: 1 }] });
+  const [dragEtapeIdx, setDragEtapeIdx] = useState<number | null>(null);
 
   useEffect(() => { fetch("/api/track-templates").then((r) => r.ok ? r.json() : []).then(setTracks).catch(() => {}); }, []);
 
@@ -430,12 +547,35 @@ function TracksTab({ C }: { C: Theme }) {
         <div style={{ padding: 16, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 16 }}>
           <input placeholder="Nom du template *" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} style={{ ...inputStyle(C), marginBottom: 8 }} />
           <input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle(C), marginBottom: 12 }} />
-          <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 8 }}>Étapes :</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 8 }}>Étapes (glissez pour réordonner) :</div>
           {form.etapes.map((e, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+            <div key={i} draggable
+              onDragStart={() => setDragEtapeIdx(i)}
+              onDragOver={(ev) => ev.preventDefault()}
+              onDrop={() => {
+                if (dragEtapeIdx === null || dragEtapeIdx === i) return;
+                const newEtapes = [...form.etapes];
+                const [moved] = newEtapes.splice(dragEtapeIdx, 1);
+                newEtapes.splice(i, 0, moved);
+                setForm({ ...form, etapes: newEtapes.map((et, idx) => ({ ...et, ordre: idx + 1 })) });
+                setDragEtapeIdx(null);
+              }}
+              style={{
+                display: "flex", gap: 8, marginBottom: 6, padding: "4px 0",
+                background: dragEtapeIdx === i ? C.accentDim : "transparent",
+                borderRadius: 6, cursor: "grab",
+              }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 1, paddingTop: 10, cursor: "grab" }}>
+                <div style={{ width: 10, height: 2, background: C.textDim, borderRadius: 1 }} />
+                <div style={{ width: 10, height: 2, background: C.textDim, borderRadius: 1 }} />
+              </div>
               <span style={{ fontSize: 12, color: C.textDim, width: 20, paddingTop: 10 }}>{i + 1}.</span>
               <input placeholder="Nom de l'étape" value={e.nom} onChange={(ev) => updateEtape(i, "nom", ev.target.value)} style={{ ...inputStyle(C), flex: 2 }} />
               <input type="number" placeholder="Délai (jours)" value={e.delaiJours || ""} onChange={(ev) => updateEtape(i, "delaiJours", parseInt(ev.target.value) || 0)} style={{ ...inputStyle(C), flex: 1 }} />
+              <button onClick={() => setForm({ ...form, etapes: form.etapes.filter((_, idx) => idx !== i).map((et, idx) => ({ ...et, ordre: idx + 1 })) })}
+                style={{ padding: "4px 6px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
+                <Trash2 size={12} />
+              </button>
             </div>
           ))}
           <button onClick={addEtape} style={{ padding: "4px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer", marginBottom: 10 }}>+ Ajouter une étape</button>
