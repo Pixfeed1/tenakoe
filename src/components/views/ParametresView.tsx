@@ -141,7 +141,26 @@ function UsersTab({ C }: { C: Theme }) {
             <option value="CHARGEE">Chargée</option>
             <option value="PRESCRIPTEUR">Prescripteur</option>
           </select>
-          <button onClick={() => toggleActif(u.id, u.actif)} style={{ padding: "4px 10px", borderRadius: 6, border: "none", background: u.actif ? C.dangerDim : C.accentDim, color: u.actif ? C.danger : C.accentText, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={async () => {
+            if (u.actif) {
+              // When deactivating, ask who to reassign to
+              const others = users.filter((x) => x.id !== u.id && x.actif && x.role === "CHARGEE");
+              if (others.length > 0) {
+                const names = others.map((o, i) => `${i + 1}. ${o.prenom} ${o.nom}`).join("\n");
+                const choice = prompt(`Réaffecter les dossiers de ${u.prenom} à :\n${names}\n\nEntrez le numéro (ou annulez pour ne pas réaffecter) :`);
+                if (choice) {
+                  const idx = parseInt(choice) - 1;
+                  if (idx >= 0 && idx < others.length) {
+                    await fetch("/api/users", {
+                      method: "PATCH", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ id: u.id, reassignTo: others[idx].id }),
+                    });
+                  }
+                }
+              }
+            }
+            toggleActif(u.id, u.actif);
+          }} style={{ padding: "4px 10px", borderRadius: 6, border: "none", background: u.actif ? C.dangerDim : C.accentDim, color: u.actif ? C.danger : C.accentText, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
             {u.actif ? "Désactiver" : "Activer"}
           </button>
         </div>
@@ -245,6 +264,7 @@ function MailTemplatesTab({ C }: { C: Theme }) {
   const [templates, setTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string; actif: boolean }>>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ nom: "", objet: "", contenu: "" });
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   useEffect(() => { fetch("/api/mail-templates").then((r) => r.ok ? r.json() : []).then(setTemplates).catch(() => {}); }, []);
 
@@ -288,17 +308,26 @@ function MailTemplatesTab({ C }: { C: Theme }) {
       {templates.length === 0 ? (
         <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun template.</div>
       ) : templates.map((t) => (
-        <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 12px", borderBottom: `1px solid ${C.border}` }}>
-          <Mail size={14} color={C.blue} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{t.nom}</div>
-            <div style={{ fontSize: 12, color: C.textMuted }}>Objet : {t.objet}</div>
+        <div key={t.id} style={{ padding: "14px 12px", borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Mail size={14} color={C.blue} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{t.nom}</div>
+              <div style={{ fontSize: 12, color: C.textMuted }}>Objet : {t.objet}</div>
+            </div>
+            <button onClick={() => setPreviewId(previewId === t.id ? null : t.id)} style={{
+              padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer",
+            }}>Aperçu</button>
+            <button onClick={() => toggleActif(t.id, t.actif)} style={{
+              padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
+              background: t.actif ? C.accentDim : C.surfaceHover, color: t.actif ? C.accentText : C.textDim,
+            }}>{t.actif ? "Actif" : "Inactif"}</button>
+            <button onClick={() => remove(t.id)} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}><Trash2 size={12} /></button>
           </div>
-          <button onClick={() => toggleActif(t.id, t.actif)} style={{
-            padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
-            background: t.actif ? C.accentDim : C.surfaceHover, color: t.actif ? C.accentText : C.textDim,
-          }}>{t.actif ? "Actif" : "Inactif"}</button>
-          <button onClick={() => remove(t.id)} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}><Trash2 size={12} /></button>
+          {previewId === t.id && (
+            <div style={{ marginTop: 10, padding: "14px 16px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, fontSize: 13, color: C.text, lineHeight: 1.6 }}
+              dangerouslySetInnerHTML={{ __html: t.contenu }} />
+          )}
         </div>
       ))}
     </div>

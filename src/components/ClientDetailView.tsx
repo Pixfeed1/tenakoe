@@ -559,43 +559,72 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Informations entreprise</h3>
             {[
-              { label: "Entreprise", value: client?.nom || "—", Icon: Building2 },
-              { label: "SIRET", value: client?.siret || "—", Icon: FileText },
-              { label: "Contact", value: entrepriseData?.contact || "—", Icon: UserCircle },
-              { label: "Email", value: entrepriseData?.email || "—", Icon: Mail },
-              { label: "Téléphone", value: entrepriseData?.telephone || "—", Icon: Phone },
-              { label: "Prescripteur", value: client?.prescripteur || "—", Icon: Building2 },
+              { label: "Entreprise", key: "nom", value: client?.nom || "—", Icon: Building2 },
+              { label: "SIRET", key: "siret", value: client?.siret || "—", Icon: FileText },
+              { label: "Contact", key: "", value: entrepriseData?.contact || "—", Icon: UserCircle },
+              { label: "Email", key: "email", value: entrepriseData?.email || "—", Icon: Mail },
+              { label: "Téléphone", key: "telephone", value: entrepriseData?.telephone || "—", Icon: Phone },
+              { label: "Prescripteur", key: "", value: client?.prescripteur || "—", Icon: Building2 },
             ].map((f, i) => (
               <div
                 key={i}
                 style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "8px 0",
                   borderBottom: i < 5 ? `1px solid ${C.border}` : "none",
+                  cursor: f.key ? "pointer" : "default",
+                }}
+                onClick={async () => {
+                  if (!f.key || !client?.id) return;
+                  const newVal = prompt(`${f.label} :`, f.value === "—" ? "" : f.value);
+                  if (newVal === null) return;
+                  await fetch(`/api/entreprises/${client.id}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ [f.key]: newVal }),
+                  });
+                  if (f.key === "email" || f.key === "telephone") {
+                    setEntrepriseData((prev) => prev ? { ...prev, [f.key]: newVal } : prev);
+                  }
                 }}
               >
                 <f.Icon size={14} color={C.textDim} />
                 <span style={{ fontSize: 12, color: C.textDim, width: 90 }}>{f.label}</span>
                 <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{f.value}</span>
+                {f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
               </div>
             ))}
           </div>
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>
             {[
-              { label: "Statut prise en charge", value: formatStatutPrise(entrepriseData?.statutPrise) },
-              { label: "Intéressé TNK", value: formatInteretTNK(entrepriseData?.interesseTNK) },
+              { label: "Intéressé TNK", key: "interesseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
+              { label: "Mise en relation", key: "miseEnRelation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation), raw: entrepriseData?.miseEnRelation, options: [{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }] },
+            ].map((f, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+                <span style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
+                <select
+                  value={f.raw || ""}
+                  onChange={async (e) => {
+                    if (!client?.id) return;
+                    const val = e.target.value;
+                    await fetch(`/api/entreprises/${client.id}`, {
+                      method: "PATCH", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ [f.key]: val }),
+                    });
+                    setEntrepriseData((prev) => prev ? { ...prev, [f.key]: val } : prev);
+                  }}
+                  style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
+                >
+                  {f.options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+                </select>
+              </div>
+            ))}
+            {[
+              { label: "Statut", value: formatStatutPrise(entrepriseData?.statutPrise) },
               { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation) },
               { label: "Qualification", value: entrepriseData?.qualification || "—" },
               { label: "Formation", value: entrepriseData?.formation || "—" },
-              { label: "Mise en relation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation) },
             ].map((f, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex", alignItems: "center", gap: 10, padding: "8px 0",
-                  borderBottom: i < 5 ? `1px solid ${C.border}` : "none",
-                }}
-              >
+              <div key={`s${i}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < 3 ? `1px solid ${C.border}` : "none" }}>
                 <span style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
                 <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
               </div>

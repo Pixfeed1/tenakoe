@@ -43,6 +43,15 @@ export async function PATCH(request: NextRequest) {
   if (body.telephone !== undefined) data.telephone = body.telephone;
   if (body.role !== undefined) data.role = body.role;
   if (body.actif !== undefined) data.actif = body.actif;
+  if (body.prescripteurType !== undefined) data.prescripteurType = body.prescripteurType || null;
+
+  // Reassign projects when deactivating
+  if (body.reassignTo) {
+    await prisma.projet.updateMany({
+      where: { chargeeId: body.id },
+      data: { chargeeId: body.reassignTo },
+    });
+  }
   if (body.password) data.password = await bcrypt.hash(body.password, 12);
 
   const updated = await prisma.user.update({
