@@ -18,20 +18,45 @@ const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?
 const ACTIVITY_COLORS: Record<string, string> = {
   EMAIL: "blue", SMS: "purple", DOC: "accent", STATUT: "warning", LEAD: "blue",
 };
-const STATS = [
-  { label: "Nouveaux leads", value: "24", change: "+12%", up: true, Icon: Zap, colorKey: "blue" },
-  { label: "Prospects actifs", value: "18", change: "+5%", up: true, Icon: Target, colorKey: "accent" },
-  { label: "Dossiers en cours", value: "7", change: "0%", up: null, Icon: ClipboardList, colorKey: "purple" },
-  { label: "En retard", value: "3", change: "-2", up: false, Icon: Clock, colorKey: "danger" },
-];
+interface ServerStats {
+  nouveaux: number;
+  prospects: number;
+  dossiers: number;
+  enRetard: number;
+  clients: number;
+}
 
 interface DashboardViewProps {
   C: Theme;
   onSelectClient: (client: PipelineItem | Client) => void;
+  serverStats?: ServerStats | null;
+  serverPipeline?: PipelineColumn[] | null;
+  serverClients?: Client[] | null;
+  serverActivites?: Array<{ type: string; message: string; chargee: string; time: string }> | null;
 }
 
-export function DashboardView({ C, onSelectClient }: DashboardViewProps) {
-  const [pipeline, setPipeline] = useState<PipelineColumn[]>(initPipeline);
+export function DashboardView({
+  C,
+  onSelectClient,
+  serverStats,
+  serverPipeline,
+  serverClients,
+  serverActivites,
+}: DashboardViewProps) {
+  const hasServerData = !!(serverStats && serverPipeline);
+  const clientsData = serverClients && serverClients.length > 0 ? serverClients : CLIENTS;
+  const activitesData = serverActivites && serverActivites.length > 0 ? serverActivites : ACTIVITES;
+
+  const STATS = [
+    { label: "Nouveaux leads", value: hasServerData ? String(serverStats.nouveaux) : "24", change: "", up: null as boolean | null, Icon: Zap, colorKey: "blue" },
+    { label: "Prospects actifs", value: hasServerData ? String(serverStats.prospects) : "18", change: "", up: null as boolean | null, Icon: Target, colorKey: "accent" },
+    { label: "Dossiers en cours", value: hasServerData ? String(serverStats.dossiers) : "7", change: "", up: null as boolean | null, Icon: ClipboardList, colorKey: "purple" },
+    { label: "En retard", value: hasServerData ? String(serverStats.enRetard) : "3", change: "", up: null as boolean | null, Icon: Clock, colorKey: "danger" },
+  ];
+
+  const [pipeline, setPipeline] = useState<PipelineColumn[]>(
+    serverPipeline && serverPipeline.some((c) => c.items.length > 0) ? serverPipeline : initPipeline
+  );
   const [dragging, setDragging] = useState<{ itemId: string; colId: string } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
@@ -216,7 +241,7 @@ export function DashboardView({ C, onSelectClient }: DashboardViewProps) {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: C.text }}>Clients — Suivi dossiers</h2>
-            <Badge color={C.accentText} bg={C.accentDim}>{CLIENTS.length} actifs</Badge>
+            <Badge color={C.accentText} bg={C.accentDim}>{clientsData.length} actifs</Badge>
           </div>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
@@ -235,7 +260,7 @@ export function DashboardView({ C, onSelectClient }: DashboardViewProps) {
               </tr>
             </thead>
             <tbody>
-              {CLIENTS.map((c, i) => (
+              {clientsData.map((c, i) => (
                 <tr
                   key={i}
                   style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.15s" }}
@@ -288,7 +313,7 @@ export function DashboardView({ C, onSelectClient }: DashboardViewProps) {
             </button>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {ACTIVITES.map((a, i) => {
+            {activitesData.map((a, i) => {
               const ActIcon = ACTIVITY_ICONS[a.type];
               const actColor = ACTIVITY_COLORS[a.type];
               return (

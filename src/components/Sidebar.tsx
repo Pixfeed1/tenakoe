@@ -2,7 +2,7 @@
 
 import {
   LayoutDashboard, Zap, Target, Users, FolderOpen,
-  Send, File, CreditCard, Plug, Settings, Search, Sun, Moon,
+  Send, File, CreditCard, Plug, Settings, Search, Sun, Moon, LogOut,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 
@@ -28,9 +28,11 @@ interface SidebarProps {
   onNav: (label: string) => void;
   dark: boolean;
   onToggleDark: () => void;
+  user?: { name: string; email: string; role: string; initials: string };
+  onSignOut?: () => void;
 }
 
-export function Sidebar({ C, activeNav, onNav, dark, onToggleDark }: SidebarProps) {
+export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignOut }: SidebarProps) {
   return (
     <aside
       style={{
@@ -157,24 +159,39 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark }: SidebarProp
               fontSize: 12, fontWeight: 700, color: "#fff",
             }}
           >
-            EL
+            {user?.initials || "EL"}
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Elise Leal</div>
-            <div style={{ fontSize: 11, color: C.textDim }}>Admin</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{user?.name || "Elise Leal"}</div>
+            <div style={{ fontSize: 11, color: C.textDim }}>{user?.role === "ADMIN" ? "Admin" : user?.role === "CHARGEE" ? "Chargée" : "Prescripteur"}</div>
           </div>
         </div>
-        <button
-          onClick={onToggleDark}
-          style={{
-            width: 34, height: 34, borderRadius: 8,
-            border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-          title={dark ? "Mode clair" : "Mode sombre"}
-        >
-          {dark ? <Sun size={15} color={C.textMuted} /> : <Moon size={15} color={C.textMuted} />}
-        </button>
+        <div style={{ display: "flex", gap: 4 }}>
+          <button
+            onClick={onToggleDark}
+            style={{
+              width: 34, height: 34, borderRadius: 8,
+              border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+            title={dark ? "Mode clair" : "Mode sombre"}
+          >
+            {dark ? <Sun size={15} color={C.textMuted} /> : <Moon size={15} color={C.textMuted} />}
+          </button>
+          {onSignOut && (
+            <button
+              onClick={onSignOut}
+              style={{
+                width: 34, height: 34, borderRadius: 8,
+                border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+              title="Déconnexion"
+            >
+              <LogOut size={15} color={C.textMuted} />
+            </button>
+          )}
+        </div>
       </div>
     </aside>
   );

@@ -86,7 +86,7 @@ export const DOCS_CHECKLIST = [
 
 export type PipelineItem = { id: string; nom: string; chargee: string; prescripteur: string; date: string; siret: string };
 export type PipelineColumn = { id: string; status: string; colorKey: string; items: PipelineItem[] };
-export type Client = (typeof CLIENTS)[number];
+export type Client = (typeof CLIENTS)[number] & { id?: string };
 export type Activite = (typeof ACTIVITES)[number];
 export type TrackStep = (typeof TRACK_STEPS)[number];
 export type DocCheck = { nom: string; recu: boolean; date: string | null };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
@@ -21,13 +21,63 @@ const ACTIVITY_COLORS: Record<string, string> = {
 
 interface ClientDetailViewProps {
   C: Theme;
-  client: { nom: string; siret?: string; prescripteur?: string } | null;
+  client: { id?: string; nom: string; siret?: string; prescripteur?: string } | null;
   onBack: () => void;
 }
 
 export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [docs, setDocs] = useState<DocCheck[]>(DOCS_CHECKLIST);
-  const [tracks] = useState<TrackStep[]>(TRACK_STEPS);
+  const [tracks, setTracks] = useState<TrackStep[]>(TRACK_STEPS);
+  const [entrepriseData, setEntrepriseData] = useState<Record<string, string> | null>(null);
+
+  // Fetch real data if client has an ID
+  useEffect(() => {
+    if (!client?.id) return;
+
+    fetch(`/api/entreprises/${client.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+
+        // Load real documents if available
+        if (data.documents?.length > 0) {
+          setDocs(
+            data.documents.map((d: { nom: string; recu: boolean; dateReception: string | null }) => ({
+              nom: d.nom,
+              recu: d.recu,
+              date: d.dateReception
+                ? new Date(d.dateReception).toLocaleDateString("fr-FR")
+                : null,
+            }))
+          );
+        }
+
+        // Load real etapes if available
+        if (data.projets?.[0]?.etapes?.length > 0) {
+          setTracks(
+            data.projets[0].etapes.map((e: { id: string; nom: string; delaiJours: number; terminee: boolean; active: boolean }) => ({
+              id: e.id,
+              nom: e.nom,
+              delai: e.delaiJours || 0,
+              done: e.terminee,
+              active: e.active,
+            }))
+          );
+        }
+
+        // Store entreprise info
+        setEntrepriseData({
+          email: data.email || "",
+          telephone: data.telephone || "",
+          contact: data.contacts?.[0] ? `${data.contacts[0].prenom} ${data.contacts[0].nom}` : "—",
+          statutPrise: data.statutPrise || "",
+          interesseTNK: data.interesseTNK || "NSP",
+          statutFacturation: data.statutFacturation || "",
+          miseEnRelation: data.miseEnRelation || "SANS_OBJET",
+        });
+      })
+      .catch(() => {});
+  }, [client?.id]);
   const [dragFile, setDragFile] = useState(false);
   const [tab, setTab] = useState("dossier");
   const [mailOpen, setMailOpen] = useState(false);
@@ -184,9 +234,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             {[
               { label: "Entreprise", value: client?.nom || "GR 24 COUVERTURE", Icon: Building2 },
               { label: "SIRET", value: client?.siret || "82383359500031", Icon: FileText },
-              { label: "Contact", value: "Gabriel Ciprian", Icon: UserCircle },
-              { label: "Email", value: "gr24couverture@email.com", Icon: Mail },
-              { label: "Téléphone", value: "06 12 34 56 78", Icon: Phone },
+              { label: "Contact", value: entrepriseData?.contact || "Gabriel Ciprian", Icon: UserCircle },
+              { label: "Email", value: entrepriseData?.email || "gr24couverture@email.com", Icon: Mail },
+              { label: "Téléphone", value: entrepriseData?.telephone || "06 12 34 56 78", Icon: Phone },
               { label: "Prescripteur", value: client?.prescripteur || "PDB", Icon: Building2 },
             ].map((f, i) => (
               <div
@@ -205,12 +255,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>
             {[
-              { label: "Statut prise en charge", value: "Prise en charge faite" },
-              { label: "Intéressé TNK", value: "Oui" },
-              { label: "Facturation", value: "Facture payée" },
+              { label: "Statut prise en charge", value: formatStatutPrise(entrepriseData?.statutPrise) },
+              { label: "Intéressé TNK", value: formatInteretTNK(entrepriseData?.interesseTNK) },
+              { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation) },
               { label: "Qualification", value: "Qualibat RGE" },
               { label: "Formation", value: "ITI, ITE" },
-              { label: "Mise en relation", value: "HORMEE" },
+              { label: "Mise en relation", value: entrepriseData?.miseEnRelation || "HORMEE" },
             ].map((f, i) => (
               <div
                 key={i}
@@ -353,7 +403,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       {tab === "historique" && (
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Historique d&apos;activité</h3>
-          {ACTIVITES.slice(0, 4).map((a, i) => {
+          {ACTIVITES.slice(0, 4).map((a: { type: string; message: string; chargee: string; time: string }, i: number) => {
             const ActIcon = ACTIVITY_ICONS[a.type];
             const actColor = ACTIVITY_COLORS[a.type];
             return (
@@ -384,4 +434,38 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       )}
     </>
   );
+}
+
+// ========================
+// FORMAT HELPERS
+// ========================
+
+function formatStatutPrise(statut?: string): string {
+  const map: Record<string, string> = {
+    NOUVEAU: "Nouveau",
+    PRISE_EN_CHARGE: "Prise en charge faite",
+    PRISE_EN_CHARGE_A_RELANCER: "À relancer",
+  };
+  return map[statut || ""] || "Prise en charge faite";
+}
+
+function formatInteretTNK(interet?: string): string {
+  const map: Record<string, string> = { OUI: "Oui", NON: "Non", NSP: "NSP" };
+  return map[interet || ""] || "Oui";
+}
+
+function formatStatutFacturation(statut?: string): string {
+  const map: Record<string, string> = {
+    DEVIS_A_FAIRE: "Devis à faire",
+    DEVIS_ENVOYE: "Devis envoyé",
+    DEVIS_SIGNE: "Devis signé",
+    FACTURE_ENVOYEE: "Facture envoyée",
+    FACTURE_PAYEE: "Facture payée",
+    DOSSIER_DEPOSE: "Dossier déposé",
+    DOSSIER_COMPLEMENT: "Demande complément",
+    QUALIFIE: "Qualifié",
+    REFUSE: "Refusé",
+    DOSSIER_EN_APPEL: "En appel",
+  };
+  return map[statut || ""] || "Facture payée";
 }
