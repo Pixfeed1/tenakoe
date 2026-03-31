@@ -1,18 +1,24 @@
 import { prisma } from "@/lib/prisma";
+import type { CurrentUser } from "@/lib/rbac";
+import { getEntrepriseFilter, getProjetFilter, getTacheFilter } from "@/lib/rbac";
 
 // ========================
 // DASHBOARD DATA
 // ========================
 
-export async function getDashboardStats() {
+export async function getDashboardStats(user?: CurrentUser | null) {
+  const entFilter = user ? getEntrepriseFilter(user) : {};
+  const projFilter = user ? getProjetFilter(user) : {};
+  const tacheFilter = user ? getTacheFilter(user) : {};
+
   const [nouveaux, enCharge, aRelancer, dossiers, enRetard, clients] =
     await Promise.all([
-      prisma.entreprise.count({ where: { statutPrise: "NOUVEAU" } }),
-      prisma.entreprise.count({ where: { statutPrise: "PRISE_EN_CHARGE" } }),
-      prisma.entreprise.count({ where: { statutPrise: "PRISE_EN_CHARGE_A_RELANCER" } }),
-      prisma.projet.count({ where: { actif: true } }),
-      prisma.tache.count({ where: { enRetard: true, statut: { not: "TERMINEE" } } }),
-      prisma.entreprise.count({ where: { statutFacturation: "FACTURE_PAYEE" } }),
+      prisma.entreprise.count({ where: { ...entFilter, statutPrise: "NOUVEAU" } }),
+      prisma.entreprise.count({ where: { ...entFilter, statutPrise: "PRISE_EN_CHARGE" } }),
+      prisma.entreprise.count({ where: { ...entFilter, statutPrise: "PRISE_EN_CHARGE_A_RELANCER" } }),
+      prisma.projet.count({ where: { ...projFilter, actif: true } }),
+      prisma.tache.count({ where: { ...tacheFilter, enRetard: true, statut: { not: "TERMINEE" } } }),
+      prisma.entreprise.count({ where: { ...entFilter, statutFacturation: "FACTURE_PAYEE" } }),
     ]);
 
   return {
@@ -24,9 +30,12 @@ export async function getDashboardStats() {
   };
 }
 
-export async function getPipelineData() {
+export async function getPipelineData(user?: CurrentUser | null) {
+  const entFilter = user ? getEntrepriseFilter(user) : {};
+
   const entreprises = await prisma.entreprise.findMany({
     where: {
+      ...entFilter,
       statutFacturation: { notIn: ["QUALIFIE", "REFUSE"] },
     },
     include: {
@@ -79,9 +88,11 @@ export async function getPipelineData() {
   }));
 }
 
-export async function getClientsWithProgress() {
+export async function getClientsWithProgress(user?: CurrentUser | null) {
+  const entFilter = user ? getEntrepriseFilter(user) : {};
+
   const entreprises = await prisma.entreprise.findMany({
-    where: { statutFacturation: "FACTURE_PAYEE" },
+    where: { ...entFilter, statutFacturation: "FACTURE_PAYEE" },
     include: {
       projets: {
         include: {

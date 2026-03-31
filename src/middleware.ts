@@ -5,18 +5,33 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
+    const method = req.method;
 
     // Routes admin uniquement
-    const adminRoutes = ["/api/users", "/parametres"];
+    const adminRoutes = ["/api/users", "/parametres", "/api/cron"];
     if (adminRoutes.some((r) => path.startsWith(r)) && token?.role !== "ADMIN") {
-      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+      return NextResponse.json({ error: "Accès refusé — admin uniquement" }, { status: 403 });
     }
 
-    // Prescripteurs : accès limité
+    // Prescripteurs : accès lecture limité
     if (token?.role === "PRESCRIPTEUR") {
-      const allowed = ["/dashboard", "/api/entreprises", "/api/projets"];
-      if (!allowed.some((r) => path.startsWith(r)) && path !== "/") {
-        return NextResponse.json({ error: "Accès limité" }, { status: 403 });
+      // Pages autorisées
+      const allowedPages = ["/dashboard"];
+      // API GET uniquement sur certaines routes
+      const allowedAPIs = ["/api/entreprises", "/api/projets", "/api/documents", "/api/alertes"];
+
+      if (path.startsWith("/api/")) {
+        // Prescripteurs ne peuvent que lire (GET)
+        if (method !== "GET") {
+          return NextResponse.json({ error: "Accès en lecture seule" }, { status: 403 });
+        }
+        if (!allowedAPIs.some((r) => path.startsWith(r))) {
+          return NextResponse.json({ error: "Accès limité" }, { status: 403 });
+        }
+      } else {
+        if (!allowedPages.some((r) => path.startsWith(r)) && path !== "/") {
+          return NextResponse.redirect(new URL("/dashboard", req.url));
+        }
       }
     }
 

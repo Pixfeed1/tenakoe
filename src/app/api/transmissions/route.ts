@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser, getTransmissionFilter } from "@/lib/rbac";
 
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
   const { searchParams } = request.nextUrl;
   const entrepriseId = searchParams.get("entrepriseId");
 
+  const rbacFilter = getTransmissionFilter(user);
+
   const transmissions = await prisma.transmission.findMany({
-    where: entrepriseId ? { entrepriseId } : undefined,
+    where: {
+      ...rbacFilter,
+      ...(entrepriseId && { entrepriseId }),
+    },
     include: {
       expediteur: { select: { id: true, nom: true, prenom: true } },
       entreprise: { select: { id: true, nom: true } },
@@ -18,6 +27,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
   const body = await request.json();
 
   const transmission = await prisma.transmission.create({
@@ -27,7 +39,7 @@ export async function POST(request: NextRequest) {
       destinataire: body.destinataire,
       objet: body.objet,
       contenu: body.contenu,
-      expediteurId: body.expediteurId,
+      expediteurId: user.id,
       entrepriseId: body.entrepriseId,
     },
   });

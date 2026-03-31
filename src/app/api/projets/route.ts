@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser, getProjetFilter } from "@/lib/rbac";
 
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
   const { searchParams } = request.nextUrl;
   const entrepriseId = searchParams.get("entrepriseId");
 
+  const rbacFilter = getProjetFilter(user);
+
   const projets = await prisma.projet.findMany({
-    where: entrepriseId ? { entrepriseId } : undefined,
+    where: {
+      ...rbacFilter,
+      ...(entrepriseId && { entrepriseId }),
+    },
     include: {
       entreprise: true,
       chargee: { select: { id: true, nom: true, prenom: true } },
@@ -21,6 +30,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
   const body = await request.json();
 
   const projet = await prisma.projet.create({
@@ -28,7 +40,7 @@ export async function POST(request: NextRequest) {
       nom: body.nom,
       description: body.description,
       entrepriseId: body.entrepriseId,
-      chargeeId: body.chargeeId,
+      chargeeId: body.chargeeId || user.id,
       qualifications: body.qualifications
         ? { createMany: { data: body.qualifications } }
         : undefined,

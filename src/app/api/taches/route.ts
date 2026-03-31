@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser, getTacheFilter } from "@/lib/rbac";
 
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
   const { searchParams } = request.nextUrl;
-  const assigneeId = searchParams.get("assigneeId");
   const entrepriseId = searchParams.get("entrepriseId");
+
+  const rbacFilter = getTacheFilter(user);
 
   const taches = await prisma.tache.findMany({
     where: {
-      ...(assigneeId && { assigneeId }),
+      ...rbacFilter,
       ...(entrepriseId && { entrepriseId }),
     },
     include: {
@@ -23,6 +28,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
   const body = await request.json();
 
   const tache = await prisma.tache.create({
@@ -32,8 +40,8 @@ export async function POST(request: NextRequest) {
       type: body.type ?? "AUTRE",
       priorite: body.priorite ?? 0,
       dateEcheance: body.dateEcheance ? new Date(body.dateEcheance) : null,
-      assigneeId: body.assigneeId,
-      createurId: body.createurId,
+      assigneeId: body.assigneeId || user.id,
+      createurId: user.id,
       entrepriseId: body.entrepriseId,
       projetId: body.projetId,
     },
