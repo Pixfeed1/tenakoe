@@ -12,9 +12,12 @@ export async function GET(request: NextRequest) {
 
   const rbacFilter = getEntrepriseFilter(user);
 
+  const showArchived = searchParams.get("archived") === "true";
+
   const entreprises = await prisma.entreprise.findMany({
     where: {
       ...rbacFilter,
+      archive: showArchived ? true : false,
       ...(search && {
         OR: [
           { nom: { contains: search, mode: "insensitive" } },

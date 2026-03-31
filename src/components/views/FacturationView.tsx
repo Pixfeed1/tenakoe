@@ -201,23 +201,41 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
                       {new Date(e.updatedAt).toLocaleDateString("fr-FR")}
                     </td>
                     <td style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
-                      <button onClick={async () => {
-                        setAbbyMsg(null);
-                        try {
-                          const res = await fetch("/api/abby", {
-                            method: "POST", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ action: "sync-client", entrepriseId: e.id }),
-                          });
-                          if (res.ok) setAbbyMsg({ type: "success", msg: `${e.nom} synchronisé vers Abby` });
-                          else { const err = await res.json(); setAbbyMsg({ type: "error", msg: err.error }); }
-                        } catch { setAbbyMsg({ type: "error", msg: "Erreur réseau" }); }
-                      }} style={{
-                        padding: "4px 10px", borderRadius: 6, border: "none",
-                        background: C.purpleDim, color: C.purple, fontSize: 11,
-                        fontWeight: 600, cursor: "pointer",
-                      }}>
-                        Sync
-                      </button>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        {(e.statutFacturation === "DEVIS_A_FAIRE" || e.statutFacturation === "FACTURE_PAYEE") && (
+                          <button onClick={async () => {
+                            setAbbyMsg(null);
+                            try {
+                              // Sync client first, then create estimate
+                              await fetch("/api/abby", {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ action: "sync-client", entrepriseId: e.id }),
+                              });
+                              const action = e.statutFacturation === "DEVIS_A_FAIRE" ? "create-estimate" : "create-invoice";
+                              const res = await fetch("/api/abby", {
+                                method: "POST", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ action, customerId: e.id, lines: [] }),
+                              });
+                              if (res.ok) setAbbyMsg({ type: "success", msg: `${e.statutFacturation === "DEVIS_A_FAIRE" ? "Devis" : "Facture"} créé(e) dans Abby pour ${e.nom}` });
+                              else { const err = await res.json(); setAbbyMsg({ type: "error", msg: err.error }); }
+                            } catch { setAbbyMsg({ type: "error", msg: "Erreur réseau" }); }
+                          }} style={{
+                            padding: "4px 8px", borderRadius: 6, border: "none",
+                            background: C.accentDim, color: C.accentText, fontSize: 10,
+                            fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                          }}>
+                            {e.statutFacturation === "DEVIS_A_FAIRE" ? "Créer devis" : "Créer facture"}
+                          </button>
+                        )}
+                        <a href="https://app.abby.fr" target="_blank" rel="noopener noreferrer" style={{
+                          padding: "4px 8px", borderRadius: 6, border: "none",
+                          background: C.purpleDim, color: C.purple, fontSize: 10,
+                          fontWeight: 600, cursor: "pointer", textDecoration: "none",
+                          display: "flex", alignItems: "center", gap: 3,
+                        }}>
+                          <ExternalLink size={10} /> Abby
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 );

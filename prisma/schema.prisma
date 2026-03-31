@@ -81,6 +81,7 @@ model Entreprise {
   statutFacturation  StatutFacturation? @default(DEVIS_A_FAIRE)
   dejaReferentRGE    Boolean            @default(false)
   estClient          Boolean            @default(false)
+  archive            Boolean            @default(false)
   sourceImport       SourceImport?      @default(MANUEL)
   sourceId           String?
 
@@ -163,6 +164,7 @@ model Projet {
   nom          String
   description  String?
   actif        Boolean @default(true)
+  archive      Boolean @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   entrepriseId String
@@ -471,6 +473,17 @@ enum TypeActivite {
   RECEPTION_DOCUMENT
   AFFECTATION
   CONNEXION
+}
+
+// ============================================================
+// PRESCRIPTEURS CONFIG (dynamique, archivable)
+// ============================================================
+
+model PrescripteurConfig {
+  id     String       @id @default(cuid())
+  type   Prescripteur @unique
+  nom    String       // Nom complet (ex: "La Plateforme du Bâtiment")
+  actif  Boolean      @default(true)
 }
 
 model LogActivite {

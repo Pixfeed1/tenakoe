@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Search, Download } from "lucide-react";
+import { Users, Search, Download, Archive } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -36,10 +36,12 @@ export function ClientsView({ C, onSelectClient }: { C: Theme; onSelectClient: (
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
+    if (showArchived) params.set("archived", "true");
     fetch(`/api/entreprises?${params}`)
       .then((r) => r.json())
       .then((data) => {
@@ -50,7 +52,7 @@ export function ClientsView({ C, onSelectClient }: { C: Theme; onSelectClient: (
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [search]);
+  }, [search, showArchived]);
 
   const exportCSV = () => {
     const headers = ["Entreprise", "SIRET", "Chargée", "Qualification", "Documents", "Statut"];
@@ -96,6 +98,15 @@ export function ClientsView({ C, onSelectClient }: { C: Theme; onSelectClient: (
           display: "flex", alignItems: "center", gap: 6, fontWeight: 500,
         }}>
           <Download size={14} /> Export CSV
+        </button>
+        <button onClick={() => setShowArchived(!showArchived)} style={{
+          padding: "8px 14px", borderRadius: 10,
+          border: `1px solid ${showArchived ? C.warning : C.border}`,
+          background: showArchived ? C.warningDim : C.surface,
+          color: showArchived ? C.warning : C.textMuted, fontSize: 13, cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 4,
+        }}>
+          <Archive size={13} /> {showArchived ? "Archivés" : "Voir archivés"}
         </button>
       </div>
 

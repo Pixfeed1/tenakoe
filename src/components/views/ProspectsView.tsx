@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Target, Search, Filter } from "lucide-react";
+import { Target, Search, Filter, Archive } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 
@@ -34,16 +34,18 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (filterStatut) params.set("statut", filterStatut);
+    if (showArchived) params.set("archived", "true");
     fetch(`/api/entreprises?${params}`)
       .then((r) => r.json())
       .then((data) => { setEntreprises(data); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [search, filterStatut]);
+  }, [search, filterStatut, showArchived]);
 
   const prospects = entreprises.filter((e) =>
     ["NOUVEAU", "PRISE_EN_CHARGE", "PRISE_EN_CHARGE_A_RELANCER"].includes(e.statutPrise)
@@ -78,6 +80,15 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
           <option value="PRISE_EN_CHARGE">Prise en charge</option>
           <option value="PRISE_EN_CHARGE_A_RELANCER">À relancer</option>
         </select>
+        <button onClick={() => setShowArchived(!showArchived)} style={{
+          padding: "8px 14px", borderRadius: 10,
+          border: `1px solid ${showArchived ? C.warning : C.border}`,
+          background: showArchived ? C.warningDim : C.surface,
+          color: showArchived ? C.warning : C.textMuted, fontSize: 13, cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 4,
+        }}>
+          <Archive size={13} /> {showArchived ? "Archivés" : "Voir archivés"}
+        </button>
       </div>
 
       {/* Stats */}

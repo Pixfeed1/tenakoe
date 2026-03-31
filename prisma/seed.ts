@@ -84,6 +84,23 @@ async function main() {
     "ATTESTATION RÉUSSITE RGE",
   ];
 
+  // ========================
+  // PRESCRIPTEUR CONFIG
+  // ========================
+  await prisma.prescripteurConfig.upsert({
+    where: { type: "PDB" }, update: {},
+    create: { type: "PDB", nom: "La Plateforme du Bâtiment" },
+  });
+  await prisma.prescripteurConfig.upsert({
+    where: { type: "POINT_P" }, update: {},
+    create: { type: "POINT_P", nom: "Point P" },
+  });
+  await prisma.prescripteurConfig.upsert({
+    where: { type: "BIGMAT" }, update: {},
+    create: { type: "BIGMAT", nom: "Big Mat Girardon" },
+  });
+  console.log("PrescripteurConfig created");
+
   for (let i = 0; i < docsCommuns.length; i++) {
     await prisma.documentTemplate.upsert({
       where: { id: `dt-commun-${i}` },

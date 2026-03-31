@@ -178,21 +178,54 @@ function PipelineTab({ C }: { C: Theme }) {
 
 // ===================== PRESCRIPTEURS =====================
 function PrescripteursTab({ C }: { C: Theme }) {
-  const prescripteurs = [
-    { key: "PDB", nom: "La Plateforme du Bâtiment", color: "#E63946" },
-    { key: "POINT_P", nom: "Point P", color: "#457B9D" },
-    { key: "BIGMAT", nom: "Big Mat Girardon", color: "#2A9D8F" },
-  ];
+  const [configs, setConfigs] = useState<Array<{ id: string; type: string; nom: string; actif: boolean }>>([]);
+
+  useEffect(() => {
+    fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then(setConfigs).catch(() => {
+      // Fallback if no PrescripteurConfig in DB yet
+      setConfigs([
+        { id: "pdb", type: "PDB", nom: "La Plateforme du Bâtiment", actif: true },
+        { id: "pointp", type: "POINT_P", nom: "Point P", actif: true },
+        { id: "bigmat", type: "BIGMAT", nom: "Big Mat Girardon", actif: true },
+      ]);
+    });
+  }, []);
+
+  const toggleActif = async (id: string, actif: boolean) => {
+    const res = await fetch("/api/prescripteur-config", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, actif: !actif }),
+    });
+    if (res.ok) setConfigs((p) => p.map((c) => c.id === id ? { ...c, actif: !actif } : c));
+  };
+
+  const URLS: Record<string, string> = {
+    PDB: "/formulaire/pdb",
+    POINT_P: "/formulaire/point-p",
+    BIGMAT: "/formulaire/bigmat",
+  };
 
   return (
     <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
       <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Prescripteurs</h3>
-      <p style={{ fontSize: 12, color: C.textDim, marginBottom: 16 }}>Les prescripteurs ont accès au formulaire public <code>/formulaire</code> et un accès en lecture seule au CRM avec le rôle PRESCRIPTEUR.</p>
-      {prescripteurs.map((p) => (
-        <div key={p.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 12px", borderBottom: `1px solid ${C.border}` }}>
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.color }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: C.text, flex: 1 }}>{p.nom}</span>
-          <Badge color={C.textDim} bg={C.surfaceHover}>{p.key}</Badge>
+      <p style={{ fontSize: 12, color: C.textDim, marginBottom: 16 }}>
+        Chaque prescripteur a un formulaire public dédié et un accès en lecture seule au CRM. Archiver un prescripteur le masque des formulaires et sélecteurs.
+      </p>
+      {configs.map((p) => (
+        <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 12px", borderBottom: `1px solid ${C.border}`, opacity: p.actif ? 1 : 0.5 }}>
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.actif ? C.accent : C.border }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
+            <div style={{ fontSize: 11, color: C.textDim }}>{URLS[p.type] || "/formulaire"}</div>
+          </div>
+          <Badge color={C.textDim} bg={C.surfaceHover}>{p.type}</Badge>
+          <button onClick={() => toggleActif(p.id, p.actif)} style={{
+            padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
+            background: p.actif ? C.dangerDim : C.accentDim,
+            color: p.actif ? C.danger : C.accentText,
+          }}>
+            {p.actif ? "Archiver" : "Réactiver"}
+          </button>
         </div>
       ))}
     </div>

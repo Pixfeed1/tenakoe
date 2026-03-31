@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getEntrepriseDetail } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/rbac";
 
 export async function GET(
   request: NextRequest,
@@ -13,4 +15,24 @@ export async function GET(
   }
 
   return NextResponse.json(entreprise);
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const { id } = await params;
+  const body = await request.json();
+
+  const data: Record<string, unknown> = {};
+  if (body.archive !== undefined) data.archive = body.archive;
+  if (body.nom !== undefined) data.nom = body.nom;
+  if (body.email !== undefined) data.email = body.email;
+  if (body.telephone !== undefined) data.telephone = body.telephone;
+
+  const updated = await prisma.entreprise.update({ where: { id }, data });
+  return NextResponse.json(updated);
 }
