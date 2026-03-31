@@ -85,7 +85,18 @@ export function CRMShell({
   initialActivites,
   initialAlertes,
 }: CRMShellProps) {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("tenakoe-dark") === "true";
+  });
+
+  const toggleDark = () => {
+    setDark((prev) => {
+      const next = !prev;
+      localStorage.setItem("tenakoe-dark", String(next));
+      return next;
+    });
+  };
 
   // Read initial view from URL
   const getViewFromURL = (): View => {
@@ -160,7 +171,7 @@ export function CRMShell({
         activeNav={activeNav}
         onNav={(label) => navigateTo(label as View)}
         dark={dark}
-        onToggleDark={() => setDark(!dark)}
+        onToggleDark={toggleDark}
         user={user}
         onSignOut={() => signOut({ callbackUrl: "/login" })}
         onSelectClient={openClient}

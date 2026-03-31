@@ -9,7 +9,6 @@ import {
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { DOCS_CHECKLIST, TRACK_STEPS, ACTIVITES } from "@/lib/data";
 import type { DocCheck, TrackStep } from "@/lib/data";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
@@ -52,6 +51,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newContact, setNewContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [showAddTache, setShowAddTache] = useState(false);
   const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
+  const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
 
   const handleFileUpload = async (file: File) => {
     if (!client?.id) return;
@@ -172,6 +172,19 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     fetch("/api/mail-templates")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setMailTemplates(data))
+      .catch(() => {});
+
+    // Fetch transmissions as historique
+    fetch(`/api/transmissions?entrepriseId=${client.id}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: Array<{ canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string } | null }>) => {
+        setHistorique(data.map((t) => ({
+          type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
+          message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoyé" : "reçu"} — ${t.objet || t.destinataire}`,
+          chargee: t.expediteur?.prenom || "—",
+          time: formatRelativeTime(new Date(t.dateEnvoi)),
+        })));
+      })
       .catch(() => {});
   }, [client?.id]);
   const [dragFile, setDragFile] = useState(false);
@@ -673,7 +686,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       {tab === "historique" && (
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
           <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Historique d&apos;activité</h3>
-          {ACTIVITES.slice(0, 4).map((a: { type: string; message: string; chargee: string; time: string }, i: number) => {
+          {historique.length === 0 && (
+            <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucune activité pour cette entreprise</div>
+          )}
+          {historique.slice(0, 10).map((a, i) => {
             const ActIcon = ACTIVITY_ICONS[a.type];
             const actColor = ACTIVITY_COLORS[a.type];
             return (
@@ -837,7 +853,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 onClick={async () => {
                   const newStatut = t.statut === "TERMINEE" ? "A_FAIRE" : "TERMINEE";
                   setTaches((prev) => prev.map((task) => task.id === t.id ? { ...task, statut: newStatut } : task));
-                  // TODO: persist task status change
+                  fetch(`/api/taches/${t.id}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ statut: newStatut }),
+                  }).catch(() => {});
                 }}
               >
                 {t.statut === "TERMINEE" && <Check size={13} color="#fff" strokeWidth={3} />}
@@ -1093,6 +1112,20 @@ function formatStatutFacturation(statut?: string): string {
     DOSSIER_EN_APPEL: "En appel",
   };
   return map[statut || ""] || "—";
+}
+
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (minutes < 1) return "À l'instant";
+  if (minutes < 60) return `Il y a ${minutes} min`;
+  if (hours < 24) return `Il y a ${hours}h`;
+  if (days === 1) return "Hier";
+  if (days < 7) return `Il y a ${days}j`;
+  return date.toLocaleDateString("fr-FR");
 }
 
 function formatMiseEnRelation(val?: string): string {

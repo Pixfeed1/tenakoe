@@ -56,3 +56,20 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(lead, { status: 201 });
 }
+
+// PATCH: mark lead as converted
+export async function PATCH(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const body = await request.json();
+  const updated = await prisma.leadFormulaire.update({
+    where: { id: body.id },
+    data: {
+      converti: body.converti ?? true,
+      statut: body.statut || undefined,
+      entrepriseId: body.entrepriseId || undefined,
+    },
+  });
+  return NextResponse.json(updated);
+}

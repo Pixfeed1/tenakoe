@@ -9,7 +9,6 @@ import {
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { initPipeline, CLIENTS, ACTIVITES } from "@/lib/data";
 import type { PipelineColumn, PipelineItem, Client } from "@/lib/data";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {

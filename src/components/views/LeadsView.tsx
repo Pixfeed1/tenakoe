@@ -91,6 +91,12 @@ export function LeadsView({ C }: { C: Theme }) {
       }),
     });
     if (res.ok) {
+      // Marquer le lead comme converti
+      await fetch("/api/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: lead.id, converti: true }),
+      }).catch(() => {});
       fetchLeads();
     }
     setConverting(null);
