@@ -22,7 +22,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     nom: "Gmail",
     description: "Envoi et réception d'emails via SMTP Gmail",
     type: "email",
-    logo: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico",
+    logo: "/logos/gmail.svg",
     color: "#EA4335",
     fields: [
       { key: "smtp_host", label: "Serveur SMTP", type: "text", placeholder: "smtp.gmail.com" },
@@ -36,7 +36,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     nom: "Twilio",
     description: "Envoi de SMS international via API Twilio",
     type: "sms",
-    logo: "https://www.twilio.com/content/dam/twilio-com/global/en/blog/legacy/2020/twilio-mark-red.png",
+    logo: "/logos/twilio.svg",
     color: "#F22F46",
     fields: [
       { key: "account_sid", label: "Account SID", type: "text", placeholder: "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
@@ -49,7 +49,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     nom: "SMS Partner",
     description: "Envoi de SMS en France — solution française, 0.049\u20AC/SMS",
     type: "sms",
-    logo: "https://www.smspartner.fr/favicon.ico",
+    logo: "/logos/smspartner.svg",
     color: "#00B4D8",
     fields: [
       { key: "api_key", label: "Cl\u00E9 API", type: "password", placeholder: "Votre cl\u00E9 API SMS Partner" },
@@ -61,7 +61,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     nom: "Brevo",
     description: "Email marketing, SMS et automatisation — ex-Sendinblue",
     type: "email & sms",
-    logo: "https://www.brevo.com/favicon.ico",
+    logo: "/logos/brevo.svg",
     color: "#0B996E",
     fields: [
       { key: "api_key", label: "Cl\u00E9 API Brevo", type: "password", placeholder: "xkeysib-xxxxxxxxxxxx" },
@@ -74,7 +74,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     nom: "Abby",
     description: "Facturation \u00E9lectronique — devis, factures, conformit\u00E9 2026",
     type: "facturation",
-    logo: "https://abby.fr/favicon.ico",
+    logo: "/logos/abby.svg",
     color: "#6C5CE7",
     url: "https://app.abby.fr",
     fields: [],
@@ -84,7 +84,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     nom: "Make (ex-Integromat)",
     description: "Webhooks pour automatisations Make / Zapier / n8n",
     type: "webhook",
-    logo: "https://www.make.com/en/favicon.ico",
+    logo: "/logos/make.svg",
     color: "#6D00CC",
     fields: [
       { key: "webhook_url", label: "URL Webhook", type: "url", placeholder: "https://hook.make.com/xxx" },
@@ -96,7 +96,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     nom: "Google Sheets",
     description: "Export et synchronisation de donn\u00E9es vers Google Sheets",
     type: "export",
-    logo: "https://ssl.gstatic.com/docs/spreadsheets/favicon3.ico",
+    logo: "/logos/google-sheets.svg",
     color: "#0F9D58",
     fields: [
       { key: "spreadsheet_id", label: "ID de la feuille", type: "text", placeholder: "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" },
@@ -108,7 +108,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     nom: "Capsule CRM",
     description: "Synchronisation des contacts et entreprises depuis Capsule",
     type: "crm",
-    logo: "https://capsulecrm.com/wp-content/uploads/capsule-favicon.png",
+    logo: "/logos/capsule.svg",
     color: "#1A73E8",
     fields: [
       { key: "api_token", label: "Token API", type: "password", placeholder: "Votre token Capsule" },
@@ -120,7 +120,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     nom: "Notion",
     description: "Synchronisation des donn\u00E9es depuis une base Notion",
     type: "base de donn\u00E9es",
-    logo: "https://www.notion.so/images/favicon.ico",
+    logo: "/logos/notion.svg",
     color: "#000000",
     fields: [
       { key: "api_key", label: "Cl\u00E9 API Notion", type: "password", placeholder: "secret_xxx" },
