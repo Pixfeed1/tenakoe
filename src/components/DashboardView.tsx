@@ -125,7 +125,7 @@ export function DashboardView({
     <>
       {/* Stats */}
       <GuideTooltip id="kpi" C={C} style={{ marginBottom: 24 }}>
-      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+      <div className="stats-row" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         {STATS.map((s, i) => (
           <div
             key={i}
