@@ -457,6 +457,8 @@ model LeadFormulaire {
   statut           StatutPrise  @default(NOUVEAU)
   converti         Boolean      @default(false)
   entrepriseId     String?
+  sourceImport     String?
+  sourceId         String?
 }
 
 // ============================================================
