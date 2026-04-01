@@ -10,7 +10,7 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import type { DocCheck, TrackStep } from "@/lib/data";
-import { GuideTooltip } from "@/components/GuideSystem";
+import { GuideTooltip, useGuide } from "@/components/GuideSystem";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -26,6 +26,7 @@ interface ClientDetailViewProps {
 }
 
 export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
+  const guide = useGuide();
   const [docs, setDocs] = useState<(DocCheck & { id?: string })[]>([]);
   const [tracks, setTracks] = useState<TrackStep[]>([]);
   const [entrepriseData, setEntrepriseData] = useState<Record<string, string> | null>(null);
@@ -232,6 +233,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: doc.id, recu: newRecu }),
       }).catch(() => {});
+      if (newRecu) guide.showSuggestion("document-recu");
     }
   };
   const docsRecu = docs.filter((d) => d.recu).length;
@@ -387,6 +389,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   if (res.ok) {
                     setSendStatus({ type: "success", msg: "Mail envoyé avec succès" });
                     fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeMail" }) }).catch(() => {});
+                    guide.showSuggestion("mail-envoye");
                     setMailSubject("");
                     setMailBody("");
                   } else {

@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { GuideTooltip, useGuide } from "@/components/GuideSystem";
-import { isDemo, demoBadgeStyle, demoCardStyle, injectDemoItems, DEMO_PIPELINE_ITEMS, handleDemoAction } from "@/lib/demo";
+import { isDemo, demoBadgeStyle, demoCardStyle, DEMO_PIPELINE_ITEMS, handleDemoAction } from "@/lib/demo";
 import type { PipelineColumn, PipelineItem, Client } from "@/lib/data";
 
 interface ServerStats {
@@ -57,12 +57,24 @@ export function DashboardView({
     { label: "En retard", value: String(serverStats?.enRetard ?? 0), change: "", up: null as boolean | null, Icon: Clock, colorKey: "danger" },
   ];
 
+  const guide = useGuide();
   const [pipeline, setPipeline] = useState<PipelineColumn[]>(
     serverPipeline || []
   );
   const [dragging, setDragging] = useState<{ itemId: string; colId: string } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
+
+  // Inject demo items into first column when guide mode is active
+  const pipelineWithDemo = guide.active ? pipeline.map((col, i) => {
+    if (i === 0) {
+      const demoItems = Object.values(DEMO_PIPELINE_ITEMS).filter(
+        (d) => !col.items.some((item) => item.id === d.id)
+      );
+      return { ...col, items: [...demoItems, ...col.items] };
+    }
+    return col;
+  }) : pipeline;
   const PIPELINE_MAX = 5;
 
   // Poll pipeline every 30s for new leads / status changes
@@ -132,6 +144,9 @@ export function DashboardView({
 
     setDragOver(null);
     setDragging(null);
+
+    // Trigger suggestion toast after drag & drop (guide mode)
+    guide.showSuggestion("lead-pris-en-charge");
   };
 
   return (
@@ -216,7 +231,7 @@ export function DashboardView({
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>
             Pipeline prospects
             <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, marginLeft: 8 }}>
-              {pipeline.reduce((sum, col) => sum + col.items.length, 0)} total
+              {pipelineWithDemo.reduce((sum, col) => sum + col.items.length, 0)} total
             </span>
             <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim, marginLeft: 8 }}>
               Glisser-déposer pour changer le statut
@@ -224,7 +239,7 @@ export function DashboardView({
           </h2>
         </div>
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
-          {pipeline.map((col) => (
+          {pipelineWithDemo.map((col) => (
             <div
               key={col.id}
               style={{
