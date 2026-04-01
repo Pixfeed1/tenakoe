@@ -57,6 +57,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
   const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
   const [showCallLog, setShowCallLog] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editFieldValue, setEditFieldValue] = useState("");
   const [callNote, setCallNote] = useState("");
 
   const handleFileUpload = async (file: File) => {
@@ -640,23 +642,42 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   borderBottom: i < 5 ? `1px solid ${C.border}` : "none",
                   cursor: f.key ? "pointer" : "default",
                 }}
-                onClick={async () => {
-                  if (!f.key || !client?.id) return;
-                  const newVal = prompt(`${f.label} :`, f.value === "—" ? "" : f.value);
-                  if (newVal === null) return;
-                  await fetch(`/api/entreprises/${client.id}`, {
-                    method: "PATCH", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ [f.key]: newVal }),
-                  });
-                  if (f.key === "email" || f.key === "telephone") {
-                    setEntrepriseData((prev) => prev ? { ...prev, [f.key]: newVal } : prev);
-                  }
+                onClick={() => {
+                  if (!f.key || editingField === f.key) return;
+                  setEditingField(f.key);
+                  setEditFieldValue(f.value === "—" ? "" : f.value);
                 }}
               >
                 <f.Icon size={14} color={C.textDim} />
                 <span style={{ fontSize: 12, color: C.textDim, width: 90 }}>{f.label}</span>
-                <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{f.value}</span>
-                {f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
+                {editingField === f.key ? (
+                  <input
+                    autoFocus
+                    value={editFieldValue}
+                    onChange={(e) => setEditFieldValue(e.target.value)}
+                    onBlur={async () => {
+                      if (client?.id) {
+                        await fetch(`/api/entreprises/${client.id}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ [f.key]: editFieldValue }),
+                        });
+                        if (f.key === "email" || f.key === "telephone") {
+                          setEntrepriseData((prev) => prev ? { ...prev, [f.key]: editFieldValue } : prev);
+                        }
+                      }
+                      setEditingField(null);
+                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingField(null); }}
+                    style={{
+                      flex: 1, padding: "4px 8px", borderRadius: 6,
+                      border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
+                      fontSize: 13, fontWeight: 500, outline: "none",
+                    }}
+                  />
+                ) : (
+                  <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{f.value}</span>
+                )}
+                {f.key && editingField !== f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
               </div>
             ))}
           </div>
