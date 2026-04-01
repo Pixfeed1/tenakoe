@@ -346,7 +346,9 @@ export function DashboardView({
         </div>
 
         {/* Activity */}
-        <ActivityFeed C={C} compact />
+        <GuideTooltip id="historique" C={C}>
+          <ActivityFeed C={C} compact />
+        </GuideTooltip>
       </div>
     </>
   );

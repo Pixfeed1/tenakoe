@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Zap, FolderOpen, Mail, Upload, FileText, Menu, X as XIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { LIGHT, DARK, type Theme } from "@/lib/theme";
-import { GuideProvider } from "@/components/GuideSystem";
+import { GuideProvider, GuideTooltip } from "@/components/GuideSystem";
 import { Sidebar } from "@/components/Sidebar";
 import { DashboardView } from "@/components/DashboardView";
 import { ClientDetailView } from "@/components/ClientDetailView";
@@ -229,7 +229,9 @@ export function CRMShell({
           </div>
           <div className="header-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <GuideToggleButton C={C} />
-            <AlertesDropdown C={C} />
+            <GuideTooltip id="notifications" C={C}>
+              <AlertesDropdown C={C} />
+            </GuideTooltip>
             {(() => {
               const actions: Partial<Record<View, { label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; action: () => void }>> = {
                 Dashboard: { label: "Nouveau lead", Icon: Zap, action: () => navigateTo("Leads") },

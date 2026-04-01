@@ -10,6 +10,7 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import type { DocCheck, TrackStep } from "@/lib/data";
+import { GuideTooltip } from "@/components/GuideSystem";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -91,6 +92,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     }
     setUploading(false);
   };
+
+  // Track fiche opened for guide progression
+  useEffect(() => {
+    if (client?.id) {
+      fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aOuvertFiche" }) }).catch(() => {});
+    }
+  }, [client?.id]);
 
   // Fetch real data if client has an ID
   useEffect(() => {
@@ -369,6 +377,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   });
                   if (res.ok) {
                     setSendStatus({ type: "success", msg: "Mail envoyé avec succès" });
+                    fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeMail" }) }).catch(() => {});
                     setMailSubject("");
                     setMailBody("");
                   } else {
@@ -449,6 +458,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   });
                   if (res.ok) {
                     setSendStatus({ type: "success", msg: "SMS envoyé avec succès" });
+                    fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeSms" }) }).catch(() => {});
                     setSmsBody("");
                   } else {
                     const err = await res.json();
@@ -474,7 +484,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       )}
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: `1px solid ${C.border}` }}>
+      <div className="tabs-row" style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: `1px solid ${C.border}` }}>
         {[
           { id: "dossier", label: "Dossier", Icon: FolderOpen },
           { id: "docs", label: `Documents (${docsRecu}/${docs.length})`, Icon: FileText },

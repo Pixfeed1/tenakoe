@@ -13,9 +13,10 @@ interface GuideContextType {
   niveau: number;
   toggle: () => void;
   startTour: () => void;
+  trackAction: (action: string) => void;
 }
 
-const GuideContext = createContext<GuideContextType>({ active: false, niveau: 1, toggle: () => {}, startTour: () => {} });
+const GuideContext = createContext<GuideContextType>({ active: false, niveau: 1, toggle: () => {}, startTour: () => {}, trackAction: () => {} });
 export const useGuide = () => useContext(GuideContext);
 
 // ========================
@@ -110,7 +111,16 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
   if (!loaded) return <>{children}</>;
 
   return (
-    <GuideContext.Provider value={{ active, niveau, toggle, startTour: () => { setShowTour(true); setTourStep(0); } }}>
+    <GuideContext.Provider value={{
+      active, niveau, toggle,
+      startTour: () => { setShowTour(true); setTourStep(0); },
+      trackAction: (action: string) => {
+        fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).then(() => {
+          // Refresh niveau
+          fetch("/api/guide").then((r) => r.ok ? r.json() : null).then((data) => { if (data) setNiveau(data.guideNiveau || 1); });
+        }).catch(() => {});
+      },
+    }}>
       {children}
       {showWelcome && <WelcomeModal C={C} onFinish={finishWelcome} />}
       {showTour && <GuidedTour C={C} step={tourStep} onNext={() => setTourStep((s) => s + 1)} onPrev={() => setTourStep((s) => s - 1)} onFinish={finishTour} />}
