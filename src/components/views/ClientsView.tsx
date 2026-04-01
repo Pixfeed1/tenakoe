@@ -52,7 +52,7 @@ export function ClientsView({ C, onSelectClient }: { C: Theme; onSelectClient: (
       .catch(() => setLoading(false));
   }, [search, showArchived]);
 
-  const exportCSV = () => {
+  const getExportData = () => {
     const headers = ["Entreprise", "SIRET", "Chargée", "Qualification", "Documents", "Statut"];
     const rows = clients.map((c) => {
       const docsTotal = c.documents.length;
@@ -66,13 +66,27 @@ export function ClientsView({ C, onSelectClient }: { C: Theme; onSelectClient: (
         FACTURATION_LABELS[c.statutFacturation || ""] || "",
       ];
     });
+    return { headers, rows };
+  };
+
+  const exportCSV = () => {
+    const { headers, rows } = getExportData();
     const csv = [headers, ...rows].map((r) => r.join(";")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `clients-tenakoe-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
+    const a = document.createElement("a"); a.href = url; a.download = `clients-tenakoe-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+  };
+
+  const exportXLS = async () => {
+    const res = await fetch("/api/import-export", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "entreprises", format: "xlsx" }),
+    });
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = `clients-tenakoe-${new Date().toISOString().slice(0, 10)}.xlsx`; a.click();
+    }
   };
 
   return (
@@ -91,11 +105,18 @@ export function ClientsView({ C, onSelectClient }: { C: Theme; onSelectClient: (
           />
         </div>
         <button onClick={exportCSV} style={{
-          padding: "8px 16px", borderRadius: 10, border: `1px solid ${C.border}`,
-          background: C.surface, color: C.textMuted, fontSize: 13, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 6, fontWeight: 500,
+          padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`,
+          background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 5, fontWeight: 500,
         }}>
-          <Download size={14} /> Export CSV
+          <Download size={13} /> CSV
+        </button>
+        <button onClick={exportXLS} style={{
+          padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`,
+          background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 5, fontWeight: 500,
+        }}>
+          <Download size={13} /> Excel
         </button>
         <button onClick={() => setShowArchived(!showArchived)} style={{
           padding: "8px 14px", borderRadius: 10,
