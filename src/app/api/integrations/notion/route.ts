@@ -73,17 +73,21 @@ export async function POST(request: NextRequest) {
   if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const body = await request.json();
-  const { token, databaseId } = body;
-  if (!token || !databaseId) return NextResponse.json({ error: "Clé API et ID base requis" }, { status: 400 });
+  const { token, databaseLeads, databaseClients } = body;
+  // Backward compat: accept old databaseId param
+  const dbLeads = databaseLeads || body.databaseId || null;
+  const dbClients = databaseClients || null;
+  if (!token) return NextResponse.json({ error: "Clé API requise" }, { status: 400 });
+  if (!dbLeads && !dbClients) return NextResponse.json({ error: "Au moins un ID de base requis" }, { status: 400 });
 
   const headers = {
     Authorization: `Bearer ${token}`,
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
   };
-  const results = { entreprises: 0, leads: 0, skipped: 0 };
+  const results = { entreprises: 0, leads: 0, clients: 0, skipped: 0 };
 
-  try {
+  const importDatabase = async (databaseId: string, asClient: boolean) => {
     let hasMore = true;
     let startCursor: string | undefined;
     let pageCount = 0;
@@ -138,9 +142,11 @@ export async function POST(request: NextRequest) {
             numeroCarte: numeroCarte || null,
             sourceImport: "NOTION",
             sourceId,
+            estClient: asClient,
           },
         });
-        results.entreprises++;
+        if (asClient) results.clients++;
+        else results.entreprises++;
 
         // Create contact if we have artisan info
         if (nomArtisan || prenomArtisan) {
@@ -161,11 +167,24 @@ export async function POST(request: NextRequest) {
       hasMore = data.has_more;
       startCursor = data.next_cursor;
     }
+  };
+
+  try {
+    // Import leads database
+    if (dbLeads) await importDatabase(dbLeads, false);
+
+    // Import clients database
+    if (dbClients) await importDatabase(dbClients, true);
+
+    const parts = [];
+    if (results.entreprises > 0) parts.push(`${results.entreprises} leads`);
+    if (results.clients > 0) parts.push(`${results.clients} clients`);
+    if (results.skipped > 0) parts.push(`${results.skipped} doublons ignorés`);
 
     await prisma.logActivite.create({
       data: {
         type: "CREATION",
-        description: `Import Notion — ${results.entreprises} entreprises importées${results.skipped > 0 ? `, ${results.skipped} doublons ignorés` : ""}`,
+        description: `Import Notion — ${parts.join(", ") || "aucune nouvelle entrée"}`,
         entite: "Import",
         entiteId: "notion",
       },

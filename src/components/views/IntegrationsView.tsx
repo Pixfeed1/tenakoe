@@ -129,8 +129,9 @@ const INTEGRATIONS: IntegrationConfig[] = [
     color: "#000000",
     customPanel: true,
     fields: [
-      { key: "api_key", label: "Cl\u00E9 API Notion", type: "password", placeholder: "secret_xxx" },
-      { key: "database_id", label: "ID de la base", type: "text", placeholder: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+      { key: "api_key", label: "Cl\u00E9 API Notion", type: "password", placeholder: "ntn_xxxxxxxxxxxxx" },
+      { key: "database_leads", label: "ID base Leads / Prospects", type: "text", placeholder: "ID de la base Notion contenant les leads" },
+      { key: "database_clients", label: "ID base Clients", type: "text", placeholder: "ID de la base Notion contenant les clients" },
     ],
   },
 ];
@@ -768,10 +769,11 @@ function ImportPanel({ C, source, config }: { C: Theme; source: "capsule" | "not
       const endpoint = `/api/integrations/${source}`;
       const payload = source === "capsule"
         ? { token: config.api_token }
-        : { token: config.api_key, databaseId: config.database_id };
+        : { token: config.api_key, databaseLeads: config.database_leads || null, databaseClients: config.database_clients || null };
 
       if (source === "capsule" && !config.api_token) { setError("Token API requis"); setImporting(false); setProgress(null); return; }
-      if (source === "notion" && (!config.api_key || !config.database_id)) { setError("Clé API et ID base requis"); setImporting(false); setProgress(null); return; }
+      if (source === "notion" && !config.api_key) { setError("Clé API requise"); setImporting(false); setProgress(null); return; }
+      if (source === "notion" && !config.database_leads && !config.database_clients) { setError("Au moins un ID de base requis (Leads ou Clients)"); setImporting(false); setProgress(null); return; }
 
       setProgress({ step: source === "capsule" ? "Import des entreprises..." : "Connexion à Notion...", percent: 25 });
       await new Promise((r) => setTimeout(r, 300));
