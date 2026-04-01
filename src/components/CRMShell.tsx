@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Zap, FolderOpen, Mail, Upload, FileText } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { LIGHT, DARK } from "@/lib/theme";
+import { LIGHT, DARK, type Theme } from "@/lib/theme";
 import { GuideProvider } from "@/components/GuideSystem";
 import { Sidebar } from "@/components/Sidebar";
 import { DashboardView } from "@/components/DashboardView";
@@ -18,6 +18,8 @@ import { FacturationView } from "@/components/views/FacturationView";
 import { ParametresView } from "@/components/views/ParametresView";
 import { IntegrationsView } from "@/components/views/IntegrationsView";
 import { AlertesDropdown } from "@/components/AlertesDropdown";
+import { useGuide } from "@/components/GuideSystem";
+import { Lightbulb } from "lucide-react";
 import type { PipelineColumn, Client, Activite } from "@/lib/data";
 
 type View =
@@ -212,6 +214,7 @@ export function CRMShell({
             </p>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <GuideToggleButton C={C} />
             <AlertesDropdown C={C} />
             {(() => {
               const actions: Partial<Record<View, { label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; action: () => void }>> = {
@@ -291,5 +294,23 @@ export function CRMShell({
       </main>
     </div>
     </GuideProvider>
+  );
+}
+
+function GuideToggleButton({ C }: { C: Theme }) {
+  const guide = useGuide();
+  return (
+    <button
+      onClick={guide.toggle}
+      style={{
+        width: 38, height: 38, borderRadius: 10,
+        border: `1px solid ${guide.active ? C.accent + "60" : C.border}`,
+        background: guide.active ? C.accentDim : C.surface,
+        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+      title={guide.active ? "Désactiver le mode guidé" : "Activer le mode guidé"}
+    >
+      <Lightbulb size={16} color={guide.active ? C.accent : C.textMuted} fill={guide.active ? C.accent : "none"} />
+    </button>
   );
 }

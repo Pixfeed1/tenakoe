@@ -163,18 +163,6 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
         </div>
         <div style={{ display: "flex", gap: 4 }}>
           <button
-            onClick={guide.toggle}
-            style={{
-              width: 34, height: 34, borderRadius: 8,
-              border: `1px solid ${guide.active ? C.accent + "60" : C.border}`,
-              background: guide.active ? C.accentDim : C.bg, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-            title={guide.active ? "Désactiver le mode guidé" : "Activer le mode guidé"}
-          >
-            <Lightbulb size={15} color={guide.active ? C.accent : C.textDim} fill={guide.active ? C.accent : "none"} />
-          </button>
-          <button
             onClick={onToggleDark}
             style={{
               width: 34, height: 34, borderRadius: 8,
