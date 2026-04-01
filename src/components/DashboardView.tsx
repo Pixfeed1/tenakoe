@@ -61,6 +61,8 @@ export function DashboardView({
   );
   const [dragging, setDragging] = useState<{ itemId: string; colId: string } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
+  const PIPELINE_MAX = 5;
 
   // Poll pipeline every 30s for new leads / status changes
   const refreshPipeline = useCallback(() => {
@@ -205,6 +207,9 @@ export function DashboardView({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>
             Pipeline prospects
+            <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, marginLeft: 8 }}>
+              {pipeline.reduce((sum, col) => sum + col.items.length, 0)} total
+            </span>
             <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim, marginLeft: 8 }}>
               Glisser-déposer pour changer le statut
             </span>
@@ -239,7 +244,7 @@ export function DashboardView({
                 </span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
-                {col.items.map((item) => (
+                {(expandedCols[col.id] ? col.items : col.items.slice(0, PIPELINE_MAX)).map((item) => (
                   <div
                     key={item.id}
                     draggable
@@ -264,6 +269,24 @@ export function DashboardView({
                     </div>
                   </div>
                 ))}
+                {col.items.length > PIPELINE_MAX && !expandedCols[col.id] && (
+                  <button onClick={() => setExpandedCols((p) => ({ ...p, [col.id]: true }))} style={{
+                    padding: "8px 0", borderRadius: 8, border: `1px dashed ${C.border}`,
+                    background: "transparent", color: C.textMuted, fontSize: 11,
+                    fontWeight: 600, cursor: "pointer", textAlign: "center", width: "100%",
+                  }}>
+                    Voir les {col.items.length - PIPELINE_MAX} autres
+                  </button>
+                )}
+                {col.items.length > PIPELINE_MAX && expandedCols[col.id] && (
+                  <button onClick={() => setExpandedCols((p) => ({ ...p, [col.id]: false }))} style={{
+                    padding: "6px 0", borderRadius: 8, border: "none",
+                    background: "transparent", color: C.textDim, fontSize: 11,
+                    cursor: "pointer", textAlign: "center", width: "100%",
+                  }}>
+                    Réduire
+                  </button>
+                )}
                 {col.items.length === 0 && (
                   <div
                     style={{

@@ -4,40 +4,22 @@ import { getCurrentUser } from "@/lib/rbac";
 import { setImportProgress, clearImportProgress } from "@/lib/import-progress";
 
 // ========================
-// PROPERTY FINDER
+// PROPERTY FINDER — case-insensitive includes
 // ========================
 
-function findProperty(properties: Record<string, unknown>, possibleNames: string[]): Record<string, unknown> | null {
+function findProp(properties: Record<string, unknown>, possibleNames: string[]): Record<string, unknown> | null {
   for (const name of possibleNames) {
-    const key = Object.keys(properties).find((k) =>
-      k.toLowerCase().includes(name.toLowerCase())
-    );
+    const key = Object.keys(properties).find((k) => k.toLowerCase().includes(name.toLowerCase()));
     if (key) return properties[key] as Record<string, unknown>;
   }
   return null;
 }
 
 // ========================
-// CHAMPS CONSEILLER À IGNORER
-// Les bases Leads Notion ont des champs pour le conseiller du dépôt.
-// Il faut les identifier pour ne PAS les confondre avec les artisans.
-// ========================
-
-const CONSEILLER_PATTERNS = [
-  /conseiller/i, /nom.*pr[ée]nom.*du.*co/i, /t[ée]l[ée]phone.*du.*co/i,
-  /adresse.*e-?mail.*d/i, /email.*co/i, /mail.*co/i,
-  /t[ée]l.*co/i, /votre.*conseiller/i,
-];
-
-function isConseillerField(key: string): boolean {
-  return CONSEILLER_PATTERNS.some((p) => p.test(key));
-}
-
-// ========================
 // VALUE EXTRACTOR
 // ========================
 
-function extractValue(prop: Record<string, unknown> | null): string | boolean | null {
+function extractVal(prop: Record<string, unknown> | null): string | null {
   if (!prop) return null;
   const type = prop.type as string;
   switch (type) {
@@ -47,35 +29,53 @@ function extractValue(prop: Record<string, unknown> | null): string | boolean | 
     case "phone_number": return (prop.phone_number as string) || null;
     case "number": return prop.number != null ? String(prop.number) : null;
     case "select": return ((prop.select as { name: string })?.name) || null;
-    case "multi_select": return ((prop.multi_select as Array<{ name: string }>)?.map((s) => s.name).join(", ")) || null;
     case "status": return ((prop.status as { name: string })?.name) || null;
     case "date": return ((prop.date as { start: string })?.start) || null;
-    case "checkbox": return (prop.checkbox as boolean) || false;
-    case "url": return (prop.url as string) || null;
+    case "checkbox": return (prop.checkbox as boolean) ? "true" : "false";
     default: return null;
   }
 }
 
-function str(val: string | boolean | null): string {
-  if (val === null || val === false) return "";
-  if (val === true) return "true";
-  return val;
-}
-
 // ========================
-// PRESCRIPTEUR MAPPER
+// CHAMPS ARTISAN vs CONSEILLER
+// On cherche EXPLICITEMENT les champs artisan et on IGNORE tout le reste
 // ========================
 
-const PRESCRIPTEUR_MAP: Record<string, string> = {
-  "la plateforme du bâtiment": "PDB", "plateforme du bâtiment": "PDB", "pdb": "PDB",
-  "point p": "POINT_P", "pointp": "POINT_P",
-  "big mat": "BIGMAT", "bigmat": "BIGMAT", "big mat girardon": "BIGMAT", "bigmat girardon": "BIGMAT",
-};
+function extractArtisanData(props: Record<string, unknown>) {
+  // Titre de la page = souvent le nom de l'entreprise dans la base Clients
+  const titleProp = Object.values(props).find((p) => (p as Record<string, unknown>).type === "title") as Record<string, unknown> | undefined;
+  const pageTitle = extractVal(titleProp || null);
 
-function mapPrescripteur(value: string | null): string | null {
-  if (!value) return null;
-  const normalized = value.toLowerCase().trim();
-  return PRESCRIPTEUR_MAP[normalized] || value.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z_]/g, "");
+  // Champs artisan spécifiques
+  const nomEntreprise = extractVal(findProp(props, ["nom entreprise", "nom de l'entreprise"]));
+  const nomArtisan = extractVal(findProp(props, ["nom de l'artisan", "nom artisan", "nom du lead"]));
+  const prenomArtisan = extractVal(findProp(props, ["prénom de l'artisan", "prénom artisan", "prénom du lead"]));
+  const email = extractVal(findProp(props, ["e-mail artisan", "email artisan", "e-mail", "email"]));
+  const telephone = extractVal(findProp(props, ["téléphone artisan", "téléphone", "tel artisan"]));
+  const siret = extractVal(findProp(props, ["siret"]));
+  const adresse = extractVal(findProp(props, ["adresse"]));
+  const depot = extractVal(findProp(props, ["votre dépôt", "dépôt", "depot"]));
+  const numeroCarte = extractVal(findProp(props, ["numéro de carte", "n° de carte", "n° carte"]));
+  const statut = extractVal(findProp(props, ["statut lead", "statut", "status"]));
+  const referentRGE = extractVal(findProp(props, ["déjà référent rge", "référent rge"]));
+
+  // Détection email conseiller/dépôt (à ignorer)
+  // Les emails @laplateforme.com, @pointp.fr, @bigmat.fr sont des dépôts, pas des artisans
+  const isDepotEmail = email && (
+    email.includes("@laplateforme") || email.includes("@pointp") ||
+    email.includes("@bigmat") || email.includes("clientele.") ||
+    email.includes("depot.") || email.includes("agence.")
+  );
+
+  // Nom final : entreprise > titre page > "prénom nom" > nom artisan
+  const nom = nomEntreprise || pageTitle || (prenomArtisan && nomArtisan ? `${prenomArtisan} ${nomArtisan}` : null) || nomArtisan || null;
+
+  return {
+    nom, nomArtisan, prenomArtisan,
+    email: isDepotEmail ? null : email,
+    telephone, siret, adresse, depot, numeroCarte, statut,
+    referentRGE: referentRGE === "true",
+  };
 }
 
 // ========================
@@ -89,55 +89,46 @@ async function mapStatut(statutName: string | null): Promise<string> {
   });
   if (config) return config.code;
   const manual: Record<string, string> = {
-    "nouveau": "NOUVEAU", "prise en charge": "PRISE_EN_CHARGE",
-    "à relancer": "PRISE_EN_CHARGE_A_RELANCER", "en cours": "PRISE_EN_CHARGE",
-    "contacté": "PRISE_EN_CHARGE", "qualifié": "PRISE_EN_CHARGE",
+    "nouveau": "NOUVEAU", "new": "NOUVEAU",
+    "prise en charge": "PRISE_EN_CHARGE", "en charge": "PRISE_EN_CHARGE",
+    "contacté": "PRISE_EN_CHARGE", "contacted": "PRISE_EN_CHARGE",
+    "à relancer": "PRISE_EN_CHARGE_A_RELANCER", "relance": "PRISE_EN_CHARGE_A_RELANCER",
+    "en cours": "PRISE_EN_CHARGE", "in progress": "PRISE_EN_CHARGE",
+    "qualifié": "PRISE_EN_CHARGE", "qualified": "PRISE_EN_CHARGE",
+    "gagné": "PRISE_EN_CHARGE", "won": "PRISE_EN_CHARGE",
+    "perdu": "PRISE_EN_CHARGE_A_RELANCER", "lost": "PRISE_EN_CHARGE_A_RELANCER",
   };
   return manual[statutName.toLowerCase().trim()] || "NOUVEAU";
-}
-
-// ========================
-// TRIPLE ANTI-DOUBLON (sourceId + SIRET + email)
-// ========================
-
-async function isDuplicate(sourceId: string, siret: string | null, email: string | null): Promise<boolean> {
-  // Check 1 : même page Notion
-  const bySource = await prisma.entreprise.findFirst({
-    where: { sourceImport: "NOTION", sourceId },
-  });
-  if (bySource) return true;
-
-  // Check 2 : même SIRET (si renseigné et > 5 chars pour éviter les faux positifs)
-  if (siret && siret.length > 5) {
-    const bySiret = await prisma.entreprise.findFirst({ where: { siret } });
-    if (bySiret) return true;
-  }
-
-  // Check 3 : même email (si renseigné)
-  if (email && email.includes("@")) {
-    const byEmail = await prisma.entreprise.findFirst({
-      where: { email: { equals: email, mode: "insensitive" } },
-    });
-    if (byEmail) return true;
-  }
-
-  return false;
 }
 
 // ========================
 // MAIN IMPORT
 // ========================
 
+interface DatabaseConfig {
+  id: string;
+  prescripteur: string | null;
+  asClient: boolean;
+}
+
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const body = await request.json();
-  const { token, databaseLeads, databaseClients } = body;
-  const dbLeads = databaseLeads || body.databaseId || null;
-  const dbClients = databaseClients || null;
+  const { token, databases } = body;
+
+  // Backward compat
+  const dbList: DatabaseConfig[] = databases || [];
+  if (dbList.length === 0 && body.databaseId) {
+    dbList.push({ id: body.databaseId, prescripteur: null, asClient: false });
+  }
+  if (dbList.length === 0 && body.databaseLeads) {
+    dbList.push({ id: body.databaseLeads, prescripteur: null, asClient: false });
+  }
+
   if (!token) return NextResponse.json({ error: "Clé API requise" }, { status: 400 });
-  if (!dbLeads && !dbClients) return NextResponse.json({ error: "Au moins un ID de base requis" }, { status: 400 });
+  if (dbList.length === 0) return NextResponse.json({ error: "Au moins une base requise" }, { status: 400 });
 
   const headers = {
     Authorization: `Bearer ${token}`,
@@ -146,17 +137,17 @@ export async function POST(request: NextRequest) {
   };
   const results = { total: 0, leads: 0, clients: 0, contacts: 0, skipped: 0, skippedBySiret: 0, skippedByEmail: 0 };
 
-  const importDatabase = async (databaseId: string, asClient: boolean) => {
+  const importDatabase = async (db: DatabaseConfig) => {
     let hasMore = true;
     let startCursor: string | undefined;
     let pageCount = 0;
 
     while (hasMore && pageCount < 50) {
-      const res = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+      const res = await fetch(`https://api.notion.com/v1/databases/${db.id}/query`, {
         method: "POST", headers,
         body: JSON.stringify(startCursor ? { start_cursor: startCursor } : {}),
       });
-      if (!res.ok) throw new Error(`Notion API ${res.status}`);
+      if (!res.ok) throw new Error(`Notion API ${res.status} pour base ${db.id}`);
       const data = await res.json();
       pageCount++;
 
@@ -164,110 +155,65 @@ export async function POST(request: NextRequest) {
         const props = page.properties || {};
         const sourceId = page.id;
 
-        // ========================
-        // FILTER OUT CONSEILLER FIELDS
-        // Build a clean props object without conseiller data
-        // ========================
-        const cleanProps: Record<string, unknown> = {};
-        for (const [key, val] of Object.entries(props)) {
-          if (!isConseillerField(key)) {
-            cleanProps[key] = val;
-          }
-        }
+        // Extract artisan data (NOT conseiller)
+        const artisan = extractArtisanData(props);
 
-        // ========================
-        // EXTRACT FIELDS (from clean props only)
-        // ========================
+        // Skip if no valid name
+        if (!artisan.nom) { results.skipped++; continue; }
 
-        // Nom entreprise : propriété spécifique, sinon titre de la page
-        const nomEntrepriseProp = findProperty(cleanProps, ["nom entreprise", "nom de l'entreprise", "entreprise", "société", "raison sociale"]);
-        const titleProp = Object.values(cleanProps).find((p) => (p as Record<string, unknown>).type === "title") as Record<string, unknown> | undefined;
-
-        const nomEntreprise = str(extractValue(nomEntrepriseProp)) || str(extractValue(titleProp || null)) || null;
-
-        // Artisan (PAS le conseiller)
-        const nomArtisan = str(extractValue(findProperty(cleanProps, ["nom de l'artisan", "nom artisan", "nom du lead"])));
-        const prenomArtisan = str(extractValue(findProperty(cleanProps, ["prénom de l'artisan", "prénom artisan", "prénom du lead"])));
-
-        // Contact info artisan (PAS du conseiller/dépôt)
-        const email = str(extractValue(findProperty(cleanProps, ["e-mail", "email", "mail"])));
-        const telephone = str(extractValue(findProperty(cleanProps, ["téléphone", "telephone", "tel", "mobile"])));
-        const siret = str(extractValue(findProperty(cleanProps, ["siret", "siren"])));
-        const adresse = str(extractValue(findProperty(cleanProps, ["adresse", "address", "rue"])));
-        const prescripteurRaw = str(extractValue(findProperty(cleanProps, ["prescripteur", "enseigne"])));
-        const depot = str(extractValue(findProperty(cleanProps, ["votre dépôt", "depot", "dépôt", "votre agence"])));
-        const numeroCarte = str(extractValue(findProperty(cleanProps, ["numéro de carte", "numero de carte", "n° de carte", "n° carte"])));
-        const statutRaw = str(extractValue(findProperty(cleanProps, ["statut lead", "statut", "status"])));
-        const referentRGE = extractValue(findProperty(cleanProps, ["déjà référent rge", "deja referent", "référent rge"]));
-
-        // Nom final — JAMAIS vide
-        const nom = nomEntreprise
-          || (prenomArtisan && nomArtisan ? `${prenomArtisan} ${nomArtisan}` : null)
-          || nomArtisan
-          || null;
-
-        // Skip si pas de nom du tout (entrée vide ou juste un conseiller)
-        if (!nom || nom === "Sans nom") { results.skipped++; continue; }
-
-        // ========================
         // TRIPLE ANTI-DOUBLON
-        // ========================
-        const emailClean = email && email.includes("@") ? email : null;
-
-        // Check sourceId
         const bySource = await prisma.entreprise.findFirst({ where: { sourceImport: "NOTION", sourceId } });
         if (bySource) { results.skipped++; continue; }
 
-        // Check SIRET
-        if (siret && siret.length > 5) {
-          const bySiret = await prisma.entreprise.findFirst({ where: { siret } });
+        if (artisan.siret && artisan.siret.length > 5) {
+          const bySiret = await prisma.entreprise.findFirst({ where: { siret: artisan.siret } });
           if (bySiret) { results.skipped++; results.skippedBySiret++; continue; }
         }
 
-        // Check email
-        if (emailClean) {
-          const byEmail = await prisma.entreprise.findFirst({ where: { email: { equals: emailClean, mode: "insensitive" } } });
+        if (artisan.email && artisan.email.includes("@")) {
+          const byEmail = await prisma.entreprise.findFirst({ where: { email: { equals: artisan.email, mode: "insensitive" } } });
           if (byEmail) { results.skipped++; results.skippedByEmail++; continue; }
         }
 
-        // ========================
-        // CREATE
-        // ========================
-        const prescripteur = mapPrescripteur(prescripteurRaw || null);
-        const statutPrise = await mapStatut(statutRaw || null);
+        // Statut
+        const statutPrise = await mapStatut(artisan.statut);
 
+        // Prescripteur : priorité = paramètre de la base > champ Notion
+        const prescripteur = db.prescripteur || null;
+
+        // CREATE
         const entreprise = await prisma.entreprise.create({
           data: {
-            nom,
-            email: emailClean,
-            telephone: telephone || null,
-            siret: siret || null,
-            adresse: adresse || null,
+            nom: artisan.nom,
+            email: artisan.email,
+            telephone: artisan.telephone,
+            siret: artisan.siret,
+            adresse: artisan.adresse,
             prescripteur,
-            depot: depot || null,
-            numeroCarte: numeroCarte || null,
+            depot: artisan.depot,
+            numeroCarte: artisan.numeroCarte,
             statutPrise: statutPrise as never,
-            dejaReferentRGE: referentRGE === true || referentRGE === "true",
+            dejaReferentRGE: artisan.referentRGE,
             sourceImport: "NOTION",
             sourceId,
-            estClient: asClient,
+            estClient: db.asClient,
           },
         });
 
         results.total++;
-        if (asClient) results.clients++;
+        if (db.asClient) results.clients++;
         else results.leads++;
 
-        setImportProgress("notion", asClient ? `Import des clients... (${results.clients})` : `Import des leads... (${results.leads})`, results.total, results.total + 10);
+        setImportProgress("notion", db.asClient ? `Clients... (${results.clients})` : `Leads ${db.prescripteur || ""}... (${results.leads})`, results.total, results.total + 10);
 
         // Contact artisan
-        if (nomArtisan || prenomArtisan) {
+        if (artisan.nomArtisan || artisan.prenomArtisan) {
           await prisma.contact.create({
             data: {
-              nom: nomArtisan || "?",
-              prenom: prenomArtisan || "?",
-              email: emailClean,
-              telephone: telephone || null,
+              nom: artisan.nomArtisan || "?",
+              prenom: artisan.prenomArtisan || "?",
+              email: artisan.email,
+              telephone: artisan.telephone,
               entrepriseId: entreprise.id,
               sourceImport: "NOTION",
               sourceId: sourceId + "-contact",
@@ -283,44 +229,40 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    // ORDRE IMPORTANT : Clients d'abord, puis Leads
-    // Si un artisan est dans les deux bases, la version Client prime
-    if (dbClients) {
-      setImportProgress("notion", "Import des clients...", 0, 1);
-      await importDatabase(dbClients, true);
+    // ORDRE : Clients d'abord, puis Leads (client prime si doublon)
+    const clientDbs = dbList.filter((d) => d.asClient);
+    const leadDbs = dbList.filter((d) => !d.asClient);
+
+    for (const db of clientDbs) {
+      setImportProgress("notion", "Import clients...", 0, 1);
+      await importDatabase(db);
     }
-    if (dbLeads) {
-      setImportProgress("notion", "Import des leads...", 0, 1);
-      await importDatabase(dbLeads, false);
+    for (const db of leadDbs) {
+      setImportProgress("notion", `Import leads ${db.prescripteur || ""}...`, results.total, results.total + 1);
+      await importDatabase(db);
     }
 
-    const parts = [`${results.total} entrées importées`];
+    const parts = [`${results.total} entrées`];
     if (results.clients > 0) parts.push(`${results.clients} clients`);
     if (results.leads > 0) parts.push(`${results.leads} leads`);
     if (results.contacts > 0) parts.push(`${results.contacts} contacts`);
     if (results.skipped > 0) {
-      let skipDetail = `${results.skipped} doublons ignorés`;
-      const details = [];
-      if (results.skippedBySiret > 0) details.push(`${results.skippedBySiret} par SIRET`);
-      if (results.skippedByEmail > 0) details.push(`${results.skippedByEmail} par email`);
-      if (details.length > 0) skipDetail += ` (dont ${details.join(", ")})`;
-      parts.push(skipDetail);
+      let s = `${results.skipped} ignorés`;
+      const d = [];
+      if (results.skippedBySiret > 0) d.push(`${results.skippedBySiret} SIRET`);
+      if (results.skippedByEmail > 0) d.push(`${results.skippedByEmail} email`);
+      if (d.length > 0) s += ` (${d.join(", ")})`;
+      parts.push(s);
     }
 
     await prisma.logActivite.create({
-      data: {
-        type: "CREATION",
-        description: `Import Notion — ${results.total > 0 ? parts.join(", ") : "aucune nouvelle entrée"}`,
-        entite: "Import",
-        entiteId: "notion",
-      },
+      data: { type: "CREATION", description: `Import Notion — ${parts.join(", ")}`, entite: "Import", entiteId: "notion" },
     });
 
     clearImportProgress("notion");
     return NextResponse.json({ success: true, ...results });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Erreur";
     clearImportProgress("notion");
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Erreur" }, { status: 500 });
   }
 }

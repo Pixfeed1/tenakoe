@@ -130,8 +130,10 @@ const INTEGRATIONS: IntegrationConfig[] = [
     customPanel: true,
     fields: [
       { key: "api_key", label: "Cl\u00E9 API Notion", type: "password", placeholder: "ntn_xxxxxxxxxxxxx" },
-      { key: "database_leads", label: "ID base Leads / Prospects", type: "text", placeholder: "ID de la base Notion contenant les leads" },
-      { key: "database_clients", label: "ID base Clients", type: "text", placeholder: "ID de la base Notion contenant les clients" },
+      { key: "db_pdb", label: "ID base Leads PDB", type: "text", placeholder: "ID base PDB" },
+      { key: "db_pointp", label: "ID base Leads Point P", type: "text", placeholder: "ID base Point P" },
+      { key: "db_bigmat", label: "ID base Leads Big Mat", type: "text", placeholder: "ID base Big Mat" },
+      { key: "database_clients", label: "ID base Clients", type: "text", placeholder: "ID base clients" },
     ],
   },
 ];
@@ -769,11 +771,19 @@ function ImportPanel({ C, source, config }: { C: Theme; source: "capsule" | "not
       const endpoint = `/api/integrations/${source}`;
       const payload = source === "capsule"
         ? { token: config.api_token }
-        : { token: config.api_key, databaseLeads: config.database_leads || null, databaseClients: config.database_clients || null };
+        : {
+            token: config.api_key,
+            databases: [
+              config.db_pdb ? { id: config.db_pdb, prescripteur: "PDB", asClient: false } : null,
+              config.db_pointp ? { id: config.db_pointp, prescripteur: "POINT_P", asClient: false } : null,
+              config.db_bigmat ? { id: config.db_bigmat, prescripteur: "BIGMAT", asClient: false } : null,
+              config.database_clients ? { id: config.database_clients, prescripteur: null, asClient: true } : null,
+            ].filter(Boolean),
+          };
 
       if (source === "capsule" && !config.api_token) { setError("Token API requis"); setImporting(false); setProgress(null); return; }
       if (source === "notion" && !config.api_key) { setError("Clé API requise"); setImporting(false); setProgress(null); return; }
-      if (source === "notion" && !config.database_leads && !config.database_clients) { setError("Au moins un ID de base requis (Leads ou Clients)"); setImporting(false); setProgress(null); return; }
+      if (source === "notion" && !config.db_pdb && !config.db_pointp && !config.db_bigmat && !config.database_clients) { setError("Au moins un ID de base requis"); setImporting(false); setProgress(null); return; }
 
       setProgress({ step: "Démarrage...", percent: 5 });
 
