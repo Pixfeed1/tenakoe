@@ -146,16 +146,58 @@ export async function POST(request: NextRequest) {
   const results = { total: 0, leads: 0, clients: 0, contacts: 0, skipped: 0, skippedBySiret: 0, skippedByEmail: 0 };
 
   const importDatabase = async (db: DatabaseConfig) => {
+    let databaseId = db.id;
     let hasMore = true;
     let startCursor: string | undefined;
     let pageCount = 0;
 
+    // Test query — if linked database error, try to find source database
+    const testRes = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+      method: "POST", headers,
+      body: JSON.stringify({ page_size: 1 }),
+    });
+
+    if (!testRes.ok) {
+      const errData = await testRes.json().catch(() => ({}));
+      const errMsg = (errData as { message?: string }).message || "";
+
+      // If linked database, try the search API to find the source
+      if (errMsg.includes("linked database") || testRes.status === 400) {
+        const searchRes = await fetch("https://api.notion.com/v1/search", {
+          method: "POST", headers,
+          body: JSON.stringify({ filter: { property: "object", value: "database" }, page_size: 100 }),
+        });
+
+        if (searchRes.ok) {
+          const searchData = await searchRes.json();
+          // Find a database with similar title that is NOT the linked one
+          const sourceDb = (searchData.results || []).find((d: { id: string; title?: Array<{ plain_text: string }> }) =>
+            d.id.replace(/-/g, "") !== databaseId.replace(/-/g, "") &&
+            d.title?.[0]?.plain_text?.toLowerCase().includes("client")
+          );
+          if (sourceDb) {
+            databaseId = sourceDb.id;
+          } else {
+            // Last resort: query might work on linked db even if retrieve doesn't
+            // Some Notion versions allow querying linked dbs
+          }
+        }
+      } else {
+        throw new Error(`Notion API ${testRes.status} pour base ${databaseId}`);
+      }
+    }
+
     while (hasMore && pageCount < 50) {
-      const res = await fetch(`https://api.notion.com/v1/databases/${db.id}/query`, {
+      const res = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
         method: "POST", headers,
         body: JSON.stringify(startCursor ? { start_cursor: startCursor } : {}),
       });
-      if (!res.ok) throw new Error(`Notion API ${res.status} pour base ${db.id}`);
+      if (!res.ok) {
+        // If still failing, skip this database instead of crashing
+        const errBody = await res.text().catch(() => "");
+        if (errBody.includes("linked database")) break;
+        throw new Error(`Notion API ${res.status} pour base ${databaseId}`);
+      }
       const data = await res.json();
       pageCount++;
 
