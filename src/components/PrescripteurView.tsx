@@ -22,10 +22,11 @@ interface PrescripteurViewProps {
 }
 
 export function PrescripteurView({ user }: PrescripteurViewProps) {
-  const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("tenakoe-dark") === "true";
-  });
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    setDark(localStorage.getItem("tenakoe-dark") === "true");
+  }, []);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const C = dark ? DARK : LIGHT;

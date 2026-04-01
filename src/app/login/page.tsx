@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { LIGHT, DARK } from "@/lib/theme";
@@ -11,10 +11,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [dark] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("tenakoe-dark") === "true";
-  });
+  const [dark, setDark] = useState(false);
+  useEffect(() => { setDark(localStorage.getItem("tenakoe-dark") === "true"); }, []);
   const C = dark ? DARK : LIGHT;
 
   const handleSubmit = async (e: React.FormEvent) => {

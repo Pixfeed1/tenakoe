@@ -88,10 +88,11 @@ export function CRMShell({
   initialActivites,
   initialAlertes,
 }: CRMShellProps) {
-  const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("tenakoe-dark") === "true";
-  });
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    setDark(localStorage.getItem("tenakoe-dark") === "true");
+  }, []);
 
   const toggleDark = () => {
     setDark((prev) => {
@@ -112,8 +113,14 @@ export function CRMShell({
     return "Dashboard";
   };
 
-  const [view, setView] = useState<View>(getViewFromURL);
-  const [activeNav, setActiveNav] = useState<string>(getViewFromURL);
+  const [view, setView] = useState<View>("Dashboard");
+  const [activeNav, setActiveNav] = useState<string>("Dashboard");
+
+  useEffect(() => {
+    const v = getViewFromURL();
+    setView(v);
+    setActiveNav(v);
+  }, []);
   const [selectedClient, setSelectedClient] = useState<{
     id?: string;
     nom: string;

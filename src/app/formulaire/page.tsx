@@ -16,10 +16,8 @@ const getLabelStyle = (C: typeof LIGHT): React.CSSProperties => ({
 });
 
 export default function FormulairePrescripteur({ paramsPromise }: { paramsPromise?: Promise<{ prescripteur: string }> }) {
-  const [dark] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("tenakoe-dark") === "true";
-  });
+  const [dark, setDark] = useState(false);
+  useEffect(() => { setDark(localStorage.getItem("tenakoe-dark") === "true"); }, []);
   const C = dark ? DARK : LIGHT;
   const inputStyle = getInputStyle(C);
   const labelStyle = getLabelStyle(C);
