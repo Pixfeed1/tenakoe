@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
+import { setImportProgress, clearImportProgress } from "@/lib/import-progress";
 
 // Mapping des noms de propriétés Notion (français) vers les champs BDD
 // Flexible : cherche d'abord le nom exact, puis par mots-clés
@@ -147,6 +148,8 @@ export async function POST(request: NextRequest) {
         });
         if (asClient) results.clients++;
         else results.entreprises++;
+        const total = results.entreprises + results.clients;
+        setImportProgress("notion", asClient ? `Import des clients... (${results.clients})` : `Import des leads... (${results.entreprises})`, total, total + 10);
 
         // Create contact if we have artisan info
         if (nomArtisan || prenomArtisan) {
@@ -190,6 +193,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    clearImportProgress("notion");
     return NextResponse.json({ success: true, ...results });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erreur";

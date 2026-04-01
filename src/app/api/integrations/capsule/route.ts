@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
+import { setImportProgress, clearImportProgress } from "@/lib/import-progress";
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
           },
         });
         results.entreprises++;
+        setImportProgress("capsule", `Import des entreprises... (${results.entreprises})`, results.entreprises, results.entreprises + 10);
       }
 
       hasMore = parties.length === 100;
@@ -47,6 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Import contacts (persons)
+    setImportProgress("capsule", "Import des contacts...", 0, 1);
     page = 1;
     hasMore = true;
     while (hasMore) {
@@ -79,6 +82,7 @@ export async function POST(request: NextRequest) {
           },
         });
         results.contacts++;
+        setImportProgress("capsule", `Import des contacts... (${results.contacts})`, results.contacts, results.contacts + 10);
       }
 
       hasMore = parties.length === 100;
@@ -86,6 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Import opportunities
+    setImportProgress("capsule", "Import des projets...", 0, 1);
     page = 1;
     hasMore = true;
     while (hasMore) {
@@ -115,6 +120,7 @@ export async function POST(request: NextRequest) {
           },
         });
         results.projets++;
+        setImportProgress("capsule", `Import des projets... (${results.projets})`, results.projets, results.projets + 5);
       }
 
       hasMore = opps.length === 100;
@@ -131,6 +137,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    clearImportProgress("capsule");
     return NextResponse.json({ success: true, ...results });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erreur";

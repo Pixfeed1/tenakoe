@@ -775,13 +775,22 @@ function ImportPanel({ C, source, config }: { C: Theme; source: "capsule" | "not
       if (source === "notion" && !config.api_key) { setError("Clé API requise"); setImporting(false); setProgress(null); return; }
       if (source === "notion" && !config.database_leads && !config.database_clients) { setError("Au moins un ID de base requis (Leads ou Clients)"); setImporting(false); setProgress(null); return; }
 
-      setProgress({ step: source === "capsule" ? "Import des entreprises..." : "Connexion à Notion...", percent: 25 });
-      await new Promise((r) => setTimeout(r, 300));
+      setProgress({ step: "Démarrage...", percent: 5 });
 
-      setProgress({ step: source === "capsule" ? "Import des contacts..." : "Import des données...", percent: 50 });
+      // Poll real progress every 500ms
+      const pollInterval = setInterval(async () => {
+        try {
+          const pRes = await fetch(`/api/import-progress?source=${source}`);
+          if (pRes.ok) {
+            const pData = await pRes.json();
+            if (pData) setProgress({ step: pData.step, percent: Math.min(pData.percent, 95) });
+          }
+        } catch {}
+      }, 500);
+
       const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-
-      setProgress({ step: "Finalisation...", percent: 90 });
+      clearInterval(pollInterval);
+      setProgress({ step: "Finalisation...", percent: 98 });
       if (res.ok) {
         const data = await res.json();
         setProgress({ step: "Terminé !", percent: 100 });
