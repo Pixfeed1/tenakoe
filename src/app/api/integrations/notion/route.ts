@@ -3,25 +3,68 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
 import { setImportProgress, clearImportProgress } from "@/lib/import-progress";
 
-// Mapping des noms de propriétés Notion (français) vers les champs BDD
-// Flexible : cherche d'abord le nom exact, puis par mots-clés
-const FIELD_MATCHERS: Record<string, RegExp[]> = {
-  nomArtisan: [/^nom$/i, /nom.*artisan/i, /nom.*famille/i, /last.?name/i],
-  prenomArtisan: [/pr[ée]nom/i, /first.?name/i],
-  nomEntreprise: [/entreprise/i, /soci[ée]t[ée]/i, /raison.?sociale/i, /company/i, /nom.*entreprise/i],
-  email: [/^e-?mail$/i, /adresse.*mail/i, /courriel/i],
-  telephone: [/t[ée]l[ée]phone/i, /^t[ée]l$/i, /phone/i, /mobile/i, /portable/i],
-  siret: [/siret/i, /siren/i],
-  prescripteur: [/prescripteur/i, /enseigne/i, /partenaire/i],
-  depot: [/d[ée]p[oô]t/i, /agence/i],
-  numeroCarte: [/num[ée]ro.*carte/i, /n°.*carte/i, /carte/i],
-  statut: [/statut/i, /status/i, /[ée]tat/i],
-  commentaires: [/commentaire/i, /note/i, /remarque/i, /observation/i],
-  adresse: [/adresse/i, /address/i, /rue/i],
-  dateTransmission: [/date.*transmission/i, /date.*envoi/i, /date.*cr[ée]ation/i],
-};
+// ========================
+// PROPERTY FINDER — cherche par noms possibles (case-insensitive, includes)
+// ========================
 
-// Mapper les noms de prescripteurs Notion vers les codes BDD
+function findProperty(properties: Record<string, unknown>, possibleNames: string[]): Record<string, unknown> | null {
+  for (const name of possibleNames) {
+    const key = Object.keys(properties).find((k) =>
+      k.toLowerCase().includes(name.toLowerCase())
+    );
+    if (key) return properties[key] as Record<string, unknown>;
+  }
+  return null;
+}
+
+// ========================
+// VALUE EXTRACTOR — lit la valeur selon le type Notion
+// ========================
+
+function extractValue(prop: Record<string, unknown> | null): string | boolean | null {
+  if (!prop) return null;
+  const type = prop.type as string;
+
+  switch (type) {
+    case "title":
+      return ((prop.title as Array<{ plain_text: string }>)?.[0]?.plain_text) || null;
+    case "rich_text":
+      return ((prop.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text) || null;
+    case "email":
+      return (prop.email as string) || null;
+    case "phone_number":
+      return (prop.phone_number as string) || null;
+    case "number":
+      return prop.number != null ? String(prop.number) : null;
+    case "select":
+      return ((prop.select as { name: string })?.name) || null;
+    case "multi_select":
+      return ((prop.multi_select as Array<{ name: string }>)?.map((s) => s.name).join(", ")) || null;
+    case "status":
+      return ((prop.status as { name: string })?.name) || null;
+    case "date":
+      return ((prop.date as { start: string })?.start) || null;
+    case "checkbox":
+      return (prop.checkbox as boolean) || false;
+    case "url":
+      return (prop.url as string) || null;
+    case "relation":
+      return ((prop.relation as Array<{ id: string }>)?.[0]?.id) || null;
+    default:
+      return null;
+  }
+}
+
+function str(val: string | boolean | null): string {
+  if (val === null || val === false) return "";
+  if (val === true) return "true";
+  return val;
+}
+
+// ========================
+// PRESCRIPTEUR MAPPER
+// ========================
+
 const PRESCRIPTEUR_MAP: Record<string, string> = {
   "la plateforme du bâtiment": "PDB",
   "plateforme du bâtiment": "PDB",
@@ -34,40 +77,41 @@ const PRESCRIPTEUR_MAP: Record<string, string> = {
   "bigmat girardon": "BIGMAT",
 };
 
-function findProperty(props: Record<string, unknown>, field: string): unknown | null {
-  const matchers = FIELD_MATCHERS[field];
-  if (!matchers) return null;
-
-  const keys = Object.keys(props);
-  for (const matcher of matchers) {
-    const key = keys.find((k) => matcher.test(k));
-    if (key) return props[key];
-  }
-  return null;
-}
-
-function extractValue(prop: Record<string, unknown> | null): string {
-  if (!prop) return "";
-  const type = prop.type as string;
-
-  if (type === "title") return ((prop.title as Array<{ plain_text: string }>)?.[0]?.plain_text) || "";
-  if (type === "rich_text") return ((prop.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text) || "";
-  if (type === "email") return (prop.email as string) || "";
-  if (type === "phone_number") return (prop.phone_number as string) || "";
-  if (type === "number") return prop.number != null ? String(prop.number) : "";
-  if (type === "select") return ((prop.select as { name: string })?.name) || "";
-  if (type === "status") return ((prop.status as { name: string })?.name) || "";
-  if (type === "date") return ((prop.date as { start: string })?.start) || "";
-  if (type === "url") return (prop.url as string) || "";
-  if (type === "checkbox") return (prop.checkbox as boolean) ? "true" : "false";
-  return "";
-}
-
-function mapPrescripteur(value: string): string {
-  if (!value) return "PDB";
+function mapPrescripteur(value: string | null): string | null {
+  if (!value) return null;
   const normalized = value.toLowerCase().trim();
   return PRESCRIPTEUR_MAP[normalized] || value.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z_]/g, "");
 }
+
+// ========================
+// STATUT MAPPER — cherche le StatutPrise correspondant en BDD
+// ========================
+
+async function mapStatut(statutName: string | null): Promise<string> {
+  if (!statutName) return "NOUVEAU";
+
+  // Cherche dans StatutPriseConfig par nom (case-insensitive)
+  const config = await prisma.statutPriseConfig.findFirst({
+    where: { nom: { equals: statutName, mode: "insensitive" } },
+  });
+  if (config) return config.code;
+
+  // Mappings manuels courants
+  const manual: Record<string, string> = {
+    "nouveau": "NOUVEAU",
+    "prise en charge": "PRISE_EN_CHARGE",
+    "à relancer": "PRISE_EN_CHARGE_A_RELANCER",
+    "en cours": "PRISE_EN_CHARGE",
+    "contacté": "PRISE_EN_CHARGE",
+    "qualifié": "PRISE_EN_CHARGE",
+  };
+  const normalized = statutName.toLowerCase().trim();
+  return manual[normalized] || "NOUVEAU";
+}
+
+// ========================
+// MAIN IMPORT
+// ========================
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -75,7 +119,6 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const { token, databaseLeads, databaseClients } = body;
-  // Backward compat: accept old databaseId param
   const dbLeads = databaseLeads || body.databaseId || null;
   const dbClients = databaseClients || null;
   if (!token) return NextResponse.json({ error: "Clé API requise" }, { status: 400 });
@@ -86,7 +129,7 @@ export async function POST(request: NextRequest) {
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
   };
-  const results = { entreprises: 0, leads: 0, clients: 0, skipped: 0 };
+  const results = { entreprises: 0, clients: 0, skipped: 0 };
 
   const importDatabase = async (databaseId: string, asClient: boolean) => {
     let hasMore = true;
@@ -113,24 +156,57 @@ export async function POST(request: NextRequest) {
         });
         if (existing) { results.skipped++; continue; }
 
-        // Extract all fields
-        const nomArtisan = extractValue(findProperty(props, "nomArtisan") as Record<string, unknown>);
-        const prenomArtisan = extractValue(findProperty(props, "prenomArtisan") as Record<string, unknown>);
-        const nomEntreprise = extractValue(findProperty(props, "nomEntreprise") as Record<string, unknown>);
-        const email = extractValue(findProperty(props, "email") as Record<string, unknown>);
-        const telephone = extractValue(findProperty(props, "telephone") as Record<string, unknown>);
-        const siret = extractValue(findProperty(props, "siret") as Record<string, unknown>);
-        const prescripteurRaw = extractValue(findProperty(props, "prescripteur") as Record<string, unknown>);
-        const depot = extractValue(findProperty(props, "depot") as Record<string, unknown>);
-        const numeroCarte = extractValue(findProperty(props, "numeroCarte") as Record<string, unknown>);
-        const commentaires = extractValue(findProperty(props, "commentaires") as Record<string, unknown>);
-        const adresse = extractValue(findProperty(props, "adresse") as Record<string, unknown>);
+        // ========================
+        // EXTRACT ALL FIELDS
+        // ========================
 
-        // Fallback nom: entreprise > "prénom nom" > "Import Notion"
-        const nom = nomEntreprise || (prenomArtisan && nomArtisan ? `${prenomArtisan} ${nomArtisan}` : nomArtisan) || "Import Notion";
-        const prescripteur = mapPrescripteur(prescripteurRaw);
+        // Nom d'entreprise : cherche la propriété "nom entreprise", sinon le titre de la page
+        const nomEntrepriseProp = findProperty(props, ["nom entreprise", "nom de l'entreprise", "entreprise", "société", "raison sociale"]);
+        const titleProp = Object.values(props).find((p) => (p as Record<string, unknown>).type === "title") as Record<string, unknown> | undefined;
 
-        // Create entreprise
+        const nomEntreprise = str(extractValue(nomEntrepriseProp))
+          || str(extractValue(titleProp || null))
+          || null;
+
+        // Artisan
+        const nomArtisan = str(extractValue(findProperty(props, ["nom de l'artisan", "nom artisan", "nom du lead", "nom"])));
+        const prenomArtisan = str(extractValue(findProperty(props, ["prénom de l'artisan", "prénom artisan", "prénom", "prenom", "prénom du lead"])));
+
+        // Contact info
+        const email = str(extractValue(findProperty(props, ["e-mail", "email", "mail", "adresse mail"])));
+        const telephone = str(extractValue(findProperty(props, ["téléphone", "telephone", "tel", "mobile", "portable", "phone"])));
+        const siret = str(extractValue(findProperty(props, ["siret", "siren", "n° siret"])));
+        const adresse = str(extractValue(findProperty(props, ["adresse", "address", "rue"])));
+
+        // Prescripteur
+        const prescripteurRaw = str(extractValue(findProperty(props, ["prescripteur", "enseigne", "partenaire"])));
+        const prescripteur = mapPrescripteur(prescripteurRaw || null);
+
+        // Dépôt et carte
+        const depot = str(extractValue(findProperty(props, ["votre dépôt", "depot", "dépôt", "votre agence", "agence"])));
+        const numeroCarte = str(extractValue(findProperty(props, ["numéro de carte", "numero de carte", "n° de carte", "n° carte", "carte"])));
+
+        // Commentaires
+        const commentaires = str(extractValue(findProperty(props, ["commentaires", "commentaire", "notes", "remarque", "observation"])));
+
+        // Statut
+        const statutRaw = str(extractValue(findProperty(props, ["statut lead", "statut", "status", "statut du lead", "état"])));
+        const statutPrise = await mapStatut(statutRaw || null);
+
+        // Référent RGE
+        const referentRGE = extractValue(findProperty(props, ["déjà référent rge", "deja referent", "référent rge", "referent rge"]));
+
+        // ========================
+        // NOM FINAL — JAMAIS "Import Notion"
+        // ========================
+        const nom = nomEntreprise
+          || (prenomArtisan && nomArtisan ? `${prenomArtisan} ${nomArtisan}` : null)
+          || nomArtisan
+          || "Sans nom";
+
+        // ========================
+        // CREATE ENTREPRISE
+        // ========================
         const entreprise = await prisma.entreprise.create({
           data: {
             nom,
@@ -138,20 +214,24 @@ export async function POST(request: NextRequest) {
             telephone: telephone || null,
             siret: siret || null,
             adresse: adresse || null,
-            prescripteur,
+            prescripteur: prescripteur || null,
             depot: depot || null,
             numeroCarte: numeroCarte || null,
+            statutPrise: statutPrise as never,
+            dejaReferentRGE: referentRGE === true || referentRGE === "true",
             sourceImport: "NOTION",
             sourceId,
             estClient: asClient,
           },
         });
+
         if (asClient) results.clients++;
         else results.entreprises++;
+
         const total = results.entreprises + results.clients;
         setImportProgress("notion", asClient ? `Import des clients... (${results.clients})` : `Import des leads... (${results.entreprises})`, total, total + 10);
 
-        // Create contact if we have artisan info
+        // Create contact if artisan info exists
         if (nomArtisan || prenomArtisan) {
           await prisma.contact.create({
             data: {
@@ -173,10 +253,7 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    // Import leads database
     if (dbLeads) await importDatabase(dbLeads, false);
-
-    // Import clients database
     if (dbClients) await importDatabase(dbClients, true);
 
     const parts = [];
@@ -197,6 +274,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, ...results });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erreur";
+    clearImportProgress("notion");
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
