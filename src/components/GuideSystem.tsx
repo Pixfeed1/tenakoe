@@ -14,9 +14,11 @@ interface GuideContextType {
   toggle: () => void;
   startTour: () => void;
   trackAction: (action: string) => void;
+  showSuggestion: (suggestionId: string) => void;
+  startWalkthrough: (walkthroughId: string) => void;
 }
 
-const GuideContext = createContext<GuideContextType>({ active: false, niveau: 1, toggle: () => {}, startTour: () => {}, trackAction: () => {} });
+const GuideContext = createContext<GuideContextType>({ active: false, niveau: 1, toggle: () => {}, startTour: () => {}, trackAction: () => {}, showSuggestion: () => {}, startWalkthrough: () => {} });
 export const useGuide = () => useContext(GuideContext);
 
 // ========================
@@ -77,6 +79,8 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState<string | null>(null);
+  const [activeWalkthrough, setActiveWalkthrough] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/guide")
@@ -115,9 +119,10 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
     <GuideContext.Provider value={{
       active, niveau, toggle,
       startTour: () => { setShowTour(true); setTourStep(0); },
+      showSuggestion: (id: string) => { if (active) setActiveSuggestion(id); },
+      startWalkthrough: (id: string) => { setActiveWalkthrough(id); setActiveSuggestion(null); },
       trackAction: (action: string) => {
         fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).then(() => {
-          // Refresh niveau
           fetch("/api/guide").then((r) => r.ok ? r.json() : null).then((data) => { if (data) setNiveau(data.guideNiveau || 1); });
         }).catch(() => {});
       },
@@ -125,6 +130,16 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
       {children}
       {showWelcome && <WelcomeModal C={C} onFinish={finishWelcome} />}
       {showTour && <GuidedTour C={C} step={tourStep} onNext={() => setTourStep((s) => s + 1)} onPrev={() => setTourStep((s) => s - 1)} onFinish={finishTour} />}
+      {activeSuggestion && (() => {
+        const { GuideToast: GT, ACTION_SUGGESTIONS } = require("@/components/GuideCursorSystem");
+        const suggestion = ACTION_SUGGESTIONS[activeSuggestion];
+        if (!suggestion) return null;
+        return <GT C={C} title={suggestion.title} message={suggestion.message} options={suggestion.options} onClose={() => setActiveSuggestion(null)} onAction={(opt: { action?: () => void }) => { setActiveSuggestion(null); opt.action?.(); }} />;
+      })()}
+      {activeWalkthrough && (() => {
+        const { WalkthroughPlayer } = require("@/components/GuideCursorSystem");
+        return <WalkthroughPlayer C={C} walkthroughId={activeWalkthrough} onFinish={() => setActiveWalkthrough(null)} />;
+      })()}
     </GuideContext.Provider>
   );
 }

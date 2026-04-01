@@ -56,6 +56,48 @@ body {
   to { opacity: 1; }
 }
 
+/* Guide cursor */
+.guide-cursor {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  transition: left 1.2s cubic-bezier(0.4, 0, 0.2, 1), top 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.guide-cursor-tap {
+  animation: cursorTap 0.4s ease-in-out;
+}
+
+@keyframes cursorTap {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.85); }
+  100% { transform: scale(1); }
+}
+
+.guide-target-ring {
+  position: fixed;
+  border-radius: 50%;
+  border: 2px solid #16a34a;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+  z-index: 9998;
+  animation: targetRing 2s ease-in-out infinite;
+}
+
+@keyframes targetRing {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.4); opacity: 0; }
+}
+
+.guide-highlight {
+  outline: 2px solid #16a34a !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.15) !important;
+  transition: outline 0.3s ease, box-shadow 0.3s ease;
+}
+
 /* ========================
    RESPONSIVE
    ======================== */

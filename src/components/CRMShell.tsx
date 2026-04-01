@@ -369,6 +369,28 @@ function GuideToggleButton({ C }: { C: Theme }) {
             <ChevronRight size={14} color={C.blue} />
             Relancer le tour guidé
           </button>
+          <div style={{ borderTop: `1px solid ${C.border}`, padding: "6px 0" }}>
+            <div style={{ padding: "6px 16px", fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Parcours guidés
+            </div>
+            {[
+              { id: "prise-en-charge", label: "Prendre en charge un lead" },
+              { id: "envoyer-mail", label: "Envoyer un mail avec template" },
+              { id: "collecter-docs", label: "Collecter les documents" },
+              { id: "feuille-route", label: "Suivre la feuille de route" },
+            ].map((w) => (
+              <button key={w.id} onClick={() => { guide.startWalkthrough(w.id); setOpen(false); }} style={{
+                width: "100%", padding: "8px 16px", border: "none", background: "transparent",
+                color: C.text, fontSize: 12, cursor: "pointer", textAlign: "left",
+                display: "flex", alignItems: "center", gap: 6, transition: "background 0.15s",
+              }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
+                <span style={{ color: C.accent }}>→</span> {w.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
