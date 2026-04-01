@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   if (!token) return NextResponse.json({ error: "Token API requis" }, { status: 400 });
 
   const headers = { Authorization: `Bearer ${token}`, Accept: "application/json" };
-  const results = { contacts: 0, entreprises: 0, projets: 0 };
+  const results = { contacts: 0, entreprises: 0, projets: 0, skipped: 0 };
 
   try {
     // 1. Import organisations
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
       for (const org of parties) {
         const existing = await prisma.entreprise.findFirst({ where: { sourceId: String(org.id), sourceImport: "CAPSULE" } });
-        if (existing) continue;
+        if (existing) { results.skipped++; continue; }
 
         await prisma.entreprise.create({
           data: {
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         const existingContact = await prisma.contact.findFirst({
           where: { sourceId: String(person.id), sourceImport: "CAPSULE" },
         });
-        if (existingContact) continue;
+        if (existingContact) { results.skipped++; continue; }
 
         let entrepriseId: string | null = null;
         if (person.organisation?.id) {
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
         const existingProjet = await prisma.projet.findFirst({
           where: { sourceId: String(opp.id), sourceImport: "CAPSULE" },
         });
-        if (existingProjet) continue;
+        if (existingProjet) { results.skipped++; continue; }
 
         const ent = await prisma.entreprise.findFirst({ where: { sourceId: String(opp.party.id), sourceImport: "CAPSULE" } });
         if (!ent) continue;
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     await prisma.logActivite.create({
       data: {
         type: "CREATION",
-        description: `Import Capsule — ${results.contacts} contacts, ${results.entreprises} entreprises, ${results.projets} projets`,
+        description: `Import Capsule — ${results.entreprises} entreprises, ${results.contacts} contacts, ${results.projets} projets${results.skipped > 0 ? `, ${results.skipped} doublons ignorés` : ""}`,
         entite: "Import",
         entiteId: "capsule",
       },

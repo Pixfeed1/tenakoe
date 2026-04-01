@@ -855,6 +855,7 @@ function ImportPanel({ C, source, config }: { C: Theme; source: "capsule" | "not
             {result.contacts != null && result.contacts > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.contacts}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>contacts</span></div>}
             {result.projets != null && result.projets > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.projets}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>projets</span></div>}
             {result.leads != null && result.leads > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.leads}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>entrées</span></div>}
+            {(result as Record<string, number>).skipped > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.warning }}>{(result as Record<string, number>).skipped}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>doublons ignorés</span></div>}
           </div>
           <button onClick={() => { setResult(null); setProgress(null); }} style={{
             marginTop: 10, padding: "6px 14px", borderRadius: 6, border: `1px solid ${C.border}`,
