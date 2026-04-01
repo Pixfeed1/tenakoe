@@ -26,32 +26,36 @@ const labelStyle: React.CSSProperties = {
   display: "block", fontSize: 13, fontWeight: 500, color: C.textMuted, marginBottom: 6,
 };
 
-const PRESCRIPTEUR_MAP: Record<string, string> = {
-  pdb: "PDB",
-  "point-p": "POINT_P",
-  bigmat: "BIGMAT",
-};
-const PRESCRIPTEUR_NAMES: Record<string, string> = {
-  PDB: "La Plateforme du Bâtiment",
-  POINT_P: "Point P",
-  BIGMAT: "Big Mat Girardon",
-};
-
 export default function FormulairePrescripteur({ paramsPromise }: { paramsPromise?: Promise<{ prescripteur: string }> }) {
   const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
   const [choosingPrescripteur, setChoosingPrescripteur] = useState(false);
+  const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; actif: boolean }>>([]);
+
+  useEffect(() => {
+    // Load prescripteur configs
+    fetch("/api/prescripteur-config")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => setPrescripteurConfigs(data.filter((c: { actif: boolean }) => c.actif)))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (paramsPromise) {
       paramsPromise.then((p) => {
-        const mapped = PRESCRIPTEUR_MAP[p.prescripteur];
-        if (mapped) setResolvedPrescripteur(mapped);
-        else setChoosingPrescripteur(true);
+        // Convert slug to code: "point-p" → "POINT_P", "leroy-merlin" → "LEROY_MERLIN"
+        const code = p.prescripteur.toUpperCase().replace(/-/g, "_");
+        setResolvedPrescripteur(code);
       });
     } else {
       setChoosingPrescripteur(true);
     }
   }, [paramsPromise]);
+
+  // Helper to get prescripteur name from code
+  const getPrescripteurName = (code: string): string => {
+    const config = prescripteurConfigs.find((c) => c.type === code);
+    return config?.nom || code;
+  };
 
   if (choosingPrescripteur && !resolvedPrescripteur) {
     return (
@@ -73,8 +77,8 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>Sélectionnez votre enseigne pour commencer</p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {Object.entries(PRESCRIPTEUR_NAMES).map(([key, name]) => (
-              <button key={key} onClick={() => setResolvedPrescripteur(key)} style={{
+            {prescripteurConfigs.map((config) => (
+              <button key={config.type} onClick={() => setResolvedPrescripteur(config.type)} style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "18px 22px", borderRadius: 14, border: `1px solid ${C.border}`,
                 background: C.surface, cursor: "pointer", boxShadow: C.shadow,
@@ -84,8 +88,8 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadow; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
               >
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: C.text }}>{name}</div>
-                  <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>{key}</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: C.text }}>{config.nom}</div>
+                  <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>{config.type}</div>
                 </div>
                 <ChevronRight size={18} color={C.textDim} />
               </button>
@@ -227,7 +231,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <Building2 size={16} color={C.blue} />
               <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
-                {resolvedPrescripteur ? PRESCRIPTEUR_NAMES[resolvedPrescripteur] || "Votre enseigne" : "Votre enseigne"}
+                {resolvedPrescripteur ? getPrescripteurName(resolvedPrescripteur) : "Votre enseigne"}
               </span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: resolvedPrescripteur ? "1fr 1fr" : "1fr 1fr 1fr", gap: 12 }}>

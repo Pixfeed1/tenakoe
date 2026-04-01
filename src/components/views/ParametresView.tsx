@@ -72,7 +72,11 @@ function UsersTab({ C }: { C: Theme }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ email: "", nom: "", prenom: "", telephone: "", role: "CHARGEE", password: "", prescripteurType: "" });
 
-  useEffect(() => { fetch("/api/users").then((r) => r.ok ? r.json() : []).then(setUsers).catch(() => {}); }, []);
+  const [prescripteurOptions, setPrescripteurOptions] = useState<Array<{ type: string; nom: string }>>([]);
+  useEffect(() => {
+    fetch("/api/users").then((r) => r.ok ? r.json() : []).then(setUsers).catch(() => {});
+    fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then((data: Array<{ type: string; nom: string; actif: boolean }>) => setPrescripteurOptions(data.filter((c) => c.actif))).catch(() => {});
+  }, []);
 
   const addUser = async () => {
     const res = await fetch("/api/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
@@ -114,9 +118,9 @@ function UsersTab({ C }: { C: Theme }) {
             {form.role === "PRESCRIPTEUR" && (
               <select value={form.prescripteurType} onChange={(e) => setForm({ ...form, prescripteurType: e.target.value })} style={inputStyle(C)}>
                 <option value="">Enseigne...</option>
-                <option value="PDB">PDB</option>
-                <option value="POINT_P">Point P</option>
-                <option value="BIGMAT">Big Mat</option>
+                {prescripteurOptions.map((p) => (
+                  <option key={p.type} value={p.type}>{p.nom}</option>
+                ))}
               </select>
             )}
           </div>
@@ -385,16 +389,10 @@ function PipelineTab({ C }: { C: Theme }) {
 // ===================== PRESCRIPTEURS =====================
 function PrescripteursTab({ C }: { C: Theme }) {
   const [configs, setConfigs] = useState<Array<{ id: string; type: string; nom: string; actif: boolean }>>([]);
+  const [newNom, setNewNom] = useState("");
 
   useEffect(() => {
-    fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then(setConfigs).catch(() => {
-      // Fallback if no PrescripteurConfig in DB yet
-      setConfigs([
-        { id: "pdb", type: "PDB", nom: "La Plateforme du Bâtiment", actif: true },
-        { id: "pointp", type: "POINT_P", nom: "Point P", actif: true },
-        { id: "bigmat", type: "BIGMAT", nom: "Big Mat Girardon", actif: true },
-      ]);
-    });
+    fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then(setConfigs).catch(() => {});
   }, []);
 
   const toggleActif = async (id: string, actif: boolean) => {
@@ -405,15 +403,29 @@ function PrescripteursTab({ C }: { C: Theme }) {
     if (res.ok) setConfigs((p) => p.map((c) => c.id === id ? { ...c, actif: !actif } : c));
   };
 
-  const URLS: Record<string, string> = {
-    PDB: "/formulaire/pdb",
-    POINT_P: "/formulaire/point-p",
-    BIGMAT: "/formulaire/bigmat",
+  const addPrescripteur = async () => {
+    if (!newNom.trim()) return;
+    const res = await fetch("/api/prescripteur-config", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nom: newNom.trim() }),
+    });
+    if (res.ok) {
+      const created = await res.json();
+      setConfigs((p) => [...p, created]);
+      setNewNom("");
+    }
+  };
+
+  const getUrl = (type: string) => {
+    const slug = type.toLowerCase().replace(/_/g, "-");
+    return `/formulaire/${slug}`;
   };
 
   return (
     <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-      <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Prescripteurs</h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Prescripteurs</h3>
+      </div>
       <p style={{ fontSize: 12, color: C.textDim, marginBottom: 16 }}>
         Chaque prescripteur a un formulaire public dédié et un accès en lecture seule au CRM. Archiver un prescripteur le masque des formulaires et sélecteurs.
       </p>
@@ -422,7 +434,7 @@ function PrescripteursTab({ C }: { C: Theme }) {
           <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.actif ? C.accent : C.border }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
-            <div style={{ fontSize: 11, color: C.textDim }}>{URLS[p.type] || "/formulaire"}</div>
+            <div style={{ fontSize: 11, color: C.textDim }}>{getUrl(p.type)}</div>
           </div>
           <Badge color={C.textDim} bg={C.surfaceHover}>{p.type}</Badge>
           <button onClick={() => toggleActif(p.id, p.actif)} style={{
@@ -434,6 +446,22 @@ function PrescripteursTab({ C }: { C: Theme }) {
           </button>
         </div>
       ))}
+
+      {/* Ajouter un prescripteur */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 14, padding: "10px 12px", borderRadius: 10, border: `2px dashed ${C.border}` }}>
+        <Plus size={14} color={C.textDim} />
+        <input placeholder="Nom du nouveau prescripteur (ex: Leroy Merlin)..."
+          value={newNom} onChange={(e) => setNewNom(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addPrescripteur()}
+          style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none" }} />
+        <button onClick={addPrescripteur} disabled={!newNom.trim()} style={{
+          padding: "6px 16px", borderRadius: 8, border: "none",
+          background: newNom.trim() ? C.accent : "#94a3b8", color: "#fff",
+          fontSize: 12, fontWeight: 600, cursor: newNom.trim() ? "pointer" : "not-allowed",
+        }}>
+          Ajouter
+        </button>
+      </div>
     </div>
   );
 }

@@ -32,7 +32,7 @@ model User {
   password         String
   avatarUrl        String?
   actif            Boolean       @default(true)
-  prescripteurType   Prescripteur?
+  prescripteurType   String?
   premiereConnexion  Boolean       @default(true)
   modeGuide          Boolean       @default(true)
   guideNiveau        Int           @default(1)
@@ -76,7 +76,7 @@ model Entreprise {
   telephone          String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
-  prescripteur       Prescripteur?      @default(PDB)
+  prescripteur       String?            @default("PDB")
   numeroCarte        String?
   depot              String?
   interesseTNK       InteretTNK?        @default(NSP)
@@ -102,11 +102,6 @@ model Entreprise {
 // 3. ENUMS MÉTIER
 // ============================================================
 
-enum Prescripteur {
-  PDB
-  POINT_P
-  BIGMAT
-}
 
 // Statuts dynamiques (gérés depuis Paramètres → Pipeline)
 model StatutPriseConfig {
@@ -447,7 +442,7 @@ model LeadFormulaire {
   email            String?
   telephone        String?
   adresse          String?
-  prescripteur     Prescripteur
+  prescripteur     String
   depot            String?
   numeroCarte      String?
   dejaReferentRGE  Boolean      @default(false)
@@ -536,7 +531,7 @@ model WebhookEvenement {
 
 model PrescripteurConfig {
   id     String       @id @default(cuid())
-  type   Prescripteur @unique
+  type   String @unique
   nom    String       // Nom complet (ex: "La Plateforme du Bâtiment")
   actif  Boolean      @default(true)
 }
