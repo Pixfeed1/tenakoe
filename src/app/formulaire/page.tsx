@@ -239,9 +239,10 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 <div>
                   <label style={labelStyle}>Prescripteur *</label>
                   <select style={inputStyle} value={form.prescripteur} onChange={(e) => set("prescripteur", e.target.value)}>
-                    <option value="PDB">La Plateforme du Bâtiment</option>
-                    <option value="POINT_P">Point P</option>
-                    <option value="BIGMAT">Big Mat Girardon</option>
+                    <option value="">Choisir...</option>
+                    {prescripteurConfigs.map((c) => (
+                      <option key={c.type} value={c.type}>{c.nom}</option>
+                    ))}
                   </select>
                 </div>
               )}
