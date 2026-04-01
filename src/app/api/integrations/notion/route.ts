@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     "Notion-Version": "2022-06-28",
     "Content-Type": "application/json",
   };
-  const results = { entreprises: 0, clients: 0, skipped: 0 };
+  const results = { total: 0, leads: 0, clients: 0, contacts: 0, skipped: 0 };
 
   const importDatabase = async (databaseId: string, asClient: boolean) => {
     let hasMore = true;
@@ -225,11 +225,11 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        results.total++;
         if (asClient) results.clients++;
-        else results.entreprises++;
+        else results.leads++;
 
-        const total = results.entreprises + results.clients;
-        setImportProgress("notion", asClient ? `Import des clients... (${results.clients})` : `Import des leads... (${results.entreprises})`, total, total + 10);
+        setImportProgress("notion", asClient ? `Import des clients... (${results.clients})` : `Import des leads... (${results.leads})`, results.total, results.total + 10);
 
         // Create contact if artisan info exists
         if (nomArtisan || prenomArtisan) {
@@ -244,6 +244,7 @@ export async function POST(request: NextRequest) {
               sourceId: sourceId + "-contact",
             },
           });
+          results.contacts++;
         }
       }
 
@@ -257,14 +258,16 @@ export async function POST(request: NextRequest) {
     if (dbClients) await importDatabase(dbClients, true);
 
     const parts = [];
-    if (results.entreprises > 0) parts.push(`${results.entreprises} leads`);
+    parts.push(`${results.total} entrées importées`);
+    if (results.leads > 0) parts.push(`${results.leads} leads`);
     if (results.clients > 0) parts.push(`${results.clients} clients`);
+    if (results.contacts > 0) parts.push(`${results.contacts} contacts`);
     if (results.skipped > 0) parts.push(`${results.skipped} doublons ignorés`);
 
     await prisma.logActivite.create({
       data: {
         type: "CREATION",
-        description: `Import Notion — ${parts.join(", ") || "aucune nouvelle entrée"}`,
+        description: `Import Notion — ${results.total > 0 ? parts.join(", ") : "aucune nouvelle entrée"}`,
         entite: "Import",
         entiteId: "notion",
       },

@@ -860,10 +860,12 @@ function ImportPanel({ C, source, config }: { C: Theme; source: "capsule" | "not
         <div style={{ padding: "12px 14px", borderRadius: 8, background: C.accentDim }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: C.accentText, marginBottom: 8 }}>Import terminé</div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            {(result as Record<string, number>).total > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.accent }}>{(result as Record<string, number>).total}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>total importées</span></div>}
             {result.entreprises != null && result.entreprises > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.entreprises}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>entreprises</span></div>}
+            {(result as Record<string, number>).leads > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{(result as Record<string, number>).leads}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>leads</span></div>}
+            {(result as Record<string, number>).clients > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{(result as Record<string, number>).clients}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>clients</span></div>}
             {result.contacts != null && result.contacts > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.contacts}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>contacts</span></div>}
             {result.projets != null && result.projets > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.projets}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>projets</span></div>}
-            {result.leads != null && result.leads > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.leads}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>entrées</span></div>}
             {(result as Record<string, number>).skipped > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.warning }}>{(result as Record<string, number>).skipped}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>doublons ignorés</span></div>}
           </div>
           <button onClick={() => { setResult(null); setProgress(null); }} style={{

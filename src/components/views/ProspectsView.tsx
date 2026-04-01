@@ -54,6 +54,10 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
 
   return (
     <>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{prospects.length} prospect{prospects.length > 1 ? "s" : ""}</span>
+        {(search || filterStatut) && <span style={{ fontSize: 12, color: C.textDim }}>sur {entreprises.length} total</span>}
+      </div>
       {/* Filters */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
         <div style={{

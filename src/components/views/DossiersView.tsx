@@ -49,6 +49,10 @@ export function DossiersView({ C, onSelectClient }: { C: Theme; onSelectClient: 
 
   return (
     <>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{filtered.length} dossier{filtered.length > 1 ? "s" : ""}</span>
+        {search && <span style={{ fontSize: 12, color: C.textDim }}>sur {projets.length} total</span>}
+      </div>
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
         <div style={{
           flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
