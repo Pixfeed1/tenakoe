@@ -743,8 +743,17 @@ function ImportPanel({ C, source, config }: { C: Theme; source: "capsule" | "not
   const [progress, setProgress] = useState<{ step: string; percent: number } | null>(null);
   const [result, setResult] = useState<{ contacts?: number; entreprises?: number; projets?: number; leads?: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastImport, setLastImport] = useState<{ date: string; description: string } | null>(null);
 
   const sourceName = source === "capsule" ? "Capsule CRM" : "Notion";
+
+  // Load last import info
+  useEffect(() => {
+    fetch(`/api/import-history?source=${source}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setLastImport(data); })
+      .catch(() => {});
+  }, [source]);
 
   const startImport = async () => {
     setImporting(true);
@@ -772,6 +781,8 @@ function ImportPanel({ C, source, config }: { C: Theme; source: "capsule" | "not
         const data = await res.json();
         setProgress({ step: "Terminé !", percent: 100 });
         setResult(data);
+        // Refresh last import info
+        fetch(`/api/import-history?source=${source}`).then((r) => r.ok ? r.json() : null).then((d) => { if (d) setLastImport(d); }).catch(() => {});
       } else {
         const err = await res.json();
         setError(err.error || "Erreur d'import");
@@ -787,6 +798,19 @@ function ImportPanel({ C, source, config }: { C: Theme; source: "capsule" | "not
   return (
     <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
       <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8 }}>Import depuis {sourceName}</div>
+
+      {/* Last import info */}
+      {lastImport && !result && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, background: C.accentDim, marginBottom: 10 }}>
+          <CheckCircle2 size={14} color={C.accent} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.accentText }}>
+              Dernier import : {new Date(lastImport.date).toLocaleDateString("fr-FR")} à {new Date(lastImport.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+            </div>
+            <div style={{ fontSize: 11, color: C.textDim }}>{lastImport.description}</div>
+          </div>
+        </div>
+      )}
 
       {!importing && !result && (
         <>
