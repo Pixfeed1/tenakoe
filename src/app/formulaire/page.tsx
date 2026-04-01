@@ -2,31 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { Send, Building2, CheckCircle2, UserCircle, Phone, Mail, MapPin, FileText, ChevronRight } from "lucide-react";
+import { LIGHT, DARK } from "@/lib/theme";
 
-const C = {
-  bg: "#f8f9fb", surface: "#ffffff", surfaceHover: "#f1f5f9",
-  border: "#e2e8f0", accent: "#16a34a", accentDim: "rgba(22,163,74,0.08)",
-  accentText: "#15803d", warning: "#d97706", warningDim: "rgba(217,119,6,0.08)",
-  danger: "#dc2626", dangerDim: "rgba(220,38,38,0.06)",
-  blue: "#2563eb", blueDim: "rgba(37,99,235,0.08)",
-  purple: "#7c3aed", purpleDim: "rgba(124,58,237,0.08)",
-  text: "#0f172a", textMuted: "#475569", textDim: "#94a3b8",
-  shadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
-  shadowHover: "0 4px 12px rgba(0,0,0,0.06)",
-};
-
-const inputStyle: React.CSSProperties = {
+const getInputStyle = (C: typeof LIGHT): React.CSSProperties => ({
   width: "100%", padding: "10px 14px", borderRadius: 10,
   border: `1px solid ${C.border}`, background: C.bg, color: C.text,
   fontSize: 14, outline: "none", boxSizing: "border-box",
   fontFamily: "'DM Sans', -apple-system, sans-serif",
-};
+});
 
-const labelStyle: React.CSSProperties = {
+const getLabelStyle = (C: typeof LIGHT): React.CSSProperties => ({
   display: "block", fontSize: 13, fontWeight: 500, color: C.textMuted, marginBottom: 6,
-};
+});
 
 export default function FormulairePrescripteur({ paramsPromise }: { paramsPromise?: Promise<{ prescripteur: string }> }) {
+  const [dark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("tenakoe-dark") === "true";
+  });
+  const C = dark ? DARK : LIGHT;
+  const inputStyle = getInputStyle(C);
+  const labelStyle = getLabelStyle(C);
+
   const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
   const [choosingPrescripteur, setChoosingPrescripteur] = useState(false);
   const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; actif: boolean }>>([]);

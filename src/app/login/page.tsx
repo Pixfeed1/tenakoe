@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { LIGHT, DARK } from "@/lib/theme";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,6 +11,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [dark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("tenakoe-dark") === "true";
+  });
+  const C = dark ? DARK : LIGHT;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,18 +44,19 @@ export default function LoginPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#f8f9fb",
+        background: C.bg,
         fontFamily: "'DM Sans', -apple-system, sans-serif",
+        transition: "background 0.3s",
       }}
     >
       <div
         style={{
           width: 400,
-          background: "#fff",
+          background: C.surface,
           borderRadius: 16,
           padding: "40px 36px",
           boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
-          border: "1px solid #e2e8f0",
+          border: `1px solid ${C.border}`,
         }}
       >
         {/* Logo */}
@@ -60,23 +67,23 @@ export default function LoginPage() {
             style={{ width: 44, height: 44, objectFit: "contain" }}
           />
           <div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.03em" }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>
               Tenakoe
             </div>
-            <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 500 }}>
+            <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>
               CRM · Qualification RGE
             </div>
           </div>
         </div>
 
-        <h1 style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", margin: "0 0 24px" }}>
+        <h1 style={{ fontSize: 18, fontWeight: 600, color: C.text, margin: "0 0 24px" }}>
           Connexion
         </h1>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
             <label
-              style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}
+              style={{ display: "block", fontSize: 13, fontWeight: 500, color: C.textMuted, marginBottom: 6 }}
             >
               Email
             </label>
@@ -90,11 +97,11 @@ export default function LoginPage() {
                 width: "100%",
                 padding: "10px 14px",
                 borderRadius: 10,
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${C.border}`,
                 fontSize: 14,
-                color: "#0f172a",
+                color: C.text,
                 outline: "none",
-                background: "#f8f9fb",
+                background: C.bg,
                 boxSizing: "border-box",
               }}
             />
@@ -102,7 +109,7 @@ export default function LoginPage() {
 
           <div style={{ marginBottom: 24 }}>
             <label
-              style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#475569", marginBottom: 6 }}
+              style={{ display: "block", fontSize: 13, fontWeight: 500, color: C.textMuted, marginBottom: 6 }}
             >
               Mot de passe
             </label>
@@ -116,11 +123,11 @@ export default function LoginPage() {
                 width: "100%",
                 padding: "10px 14px",
                 borderRadius: 10,
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${C.border}`,
                 fontSize: 14,
-                color: "#0f172a",
+                color: C.text,
                 outline: "none",
-                background: "#f8f9fb",
+                background: C.bg,
                 boxSizing: "border-box",
               }}
             />
