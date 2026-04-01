@@ -96,11 +96,23 @@ export async function POST(request: NextRequest) {
 
       for (const opp of opps) {
         if (!opp.party?.id) continue;
+
+        const existingProjet = await prisma.projet.findFirst({
+          where: { sourceId: String(opp.id), sourceImport: "CAPSULE" },
+        });
+        if (existingProjet) continue;
+
         const ent = await prisma.entreprise.findFirst({ where: { sourceId: String(opp.party.id), sourceImport: "CAPSULE" } });
         if (!ent) continue;
 
         await prisma.projet.create({
-          data: { nom: opp.name || "Projet Capsule", entrepriseId: ent.id },
+          data: {
+            nom: opp.name || "Projet Capsule",
+            description: opp.description || null,
+            entrepriseId: ent.id,
+            sourceImport: "CAPSULE",
+            sourceId: String(opp.id),
+          },
         });
         results.projets++;
       }

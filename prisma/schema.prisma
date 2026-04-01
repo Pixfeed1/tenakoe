@@ -204,6 +204,8 @@ model Projet {
   etapes         Etape[]
   documents      Document[]
   taches         Tache[]
+  sourceImport   SourceImport? @default(MANUEL)
+  sourceId       String?
 }
 
 model ProjetQualification {
