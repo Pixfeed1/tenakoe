@@ -67,8 +67,16 @@ function extractArtisanData(props: Record<string, unknown>) {
     email.includes("depot.") || email.includes("agence.")
   );
 
-  // Nom final : entreprise > titre page > "prénom nom" > nom artisan
-  const nom = nomEntreprise || pageTitle || (prenomArtisan && nomArtisan ? `${prenomArtisan} ${nomArtisan}` : null) || nomArtisan || null;
+  // Si pas de nom d'entreprise ET pas de nom d'artisan → le titre seul est probablement
+  // un conseiller ou une entrée non-client. On utilise le nom artisan comme fallback.
+  // Si RIEN n'est renseigné à part le titre → skip (return nom = null)
+  const hasRealData = nomEntreprise || nomArtisan || siret || (email && !isDepotEmail);
+
+  const nom = nomEntreprise
+    || (prenomArtisan && nomArtisan ? `${prenomArtisan} ${nomArtisan}` : null)
+    || nomArtisan
+    || (hasRealData ? pageTitle : null)  // titre de page seulement si on a des données artisan
+    || null;
 
   return {
     nom, nomArtisan, prenomArtisan,
@@ -161,7 +169,7 @@ export async function POST(request: NextRequest) {
         // Skip if no valid name
         if (!artisan.nom) { results.skipped++; continue; }
 
-        // TRIPLE ANTI-DOUBLON
+        // QUADRUPLE ANTI-DOUBLON
         const bySource = await prisma.entreprise.findFirst({ where: { sourceImport: "NOTION", sourceId } });
         if (bySource) { results.skipped++; continue; }
 
@@ -174,6 +182,12 @@ export async function POST(request: NextRequest) {
           const byEmail = await prisma.entreprise.findFirst({ where: { email: { equals: artisan.email, mode: "insensitive" } } });
           if (byEmail) { results.skipped++; results.skippedByEmail++; continue; }
         }
+
+        // Check 4 : même nom (case-insensitive, trim)
+        const byNom = await prisma.entreprise.findFirst({
+          where: { nom: { equals: artisan.nom.trim(), mode: "insensitive" } },
+        });
+        if (byNom) { results.skipped++; continue; }
 
         // Statut
         const statutPrise = await mapStatut(artisan.statut);
