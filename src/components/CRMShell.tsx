@@ -284,6 +284,7 @@ export function CRMShell({
 
         {view === "Dashboard" && (
           <DashboardView
+            key={navKey}
             C={C}
             onSelectClient={(client) => openClient(client as typeof selectedClient & object)}
             serverStats={initialStats}

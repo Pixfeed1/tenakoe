@@ -70,6 +70,9 @@ export function DashboardView({
       .catch(() => {});
   }, []);
 
+  // Refresh on mount (when navigating back to dashboard)
+  useEffect(() => { refreshPipeline(); }, [refreshPipeline]);
+
   useEffect(() => {
     const interval = setInterval(refreshPipeline, 30000);
     return () => clearInterval(interval);
