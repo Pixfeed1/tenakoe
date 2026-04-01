@@ -234,7 +234,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 {resolvedPrescripteur ? getPrescripteurName(resolvedPrescripteur) : "Votre enseigne"}
               </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: resolvedPrescripteur ? "1fr 1fr" : "1fr 1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
               {!resolvedPrescripteur && (
                 <div>
                   <label style={labelStyle}>Prescripteur *</label>
@@ -265,7 +265,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <UserCircle size={16} color={C.accent} />
               <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Artisan</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
               <div>
                 <label style={labelStyle}>Nom *</label>
                 <input style={inputStyle} placeholder="Nom" value={form.nomArtisan} onChange={(e) => set("nomArtisan", e.target.value)} required />
@@ -294,7 +294,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <Phone size={16} color={C.purple} />
               <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Coordonnées</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
               <div>
                 <label style={labelStyle}>Email</label>
                 <div style={{ position: "relative" }}>
