@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plug, ExternalLink, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronUp, Mail } from "lucide-react";
+import { Plug, ExternalLink, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronUp, Mail, Plus, Trash2, Check } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 
@@ -14,6 +14,7 @@ interface IntegrationConfig {
   color: string;
   url?: string;
   oauth?: boolean;
+  customPanel?: boolean;
   fields: Array<{ key: string; label: string; type: string; placeholder: string }>;
 }
 
@@ -85,15 +86,13 @@ const INTEGRATIONS: IntegrationConfig[] = [
   },
   {
     key: "make",
-    nom: "Make (ex-Integromat)",
-    description: "Webhooks pour automatisations Make / Zapier / n8n",
+    nom: "Webhooks (Make / Zapier / n8n)",
+    description: "Configurez des webhooks pour déclencher des automatisations externes",
     type: "webhook",
     logo: "/logos/make.svg",
     color: "#6D00CC",
-    fields: [
-      { key: "webhook_url", label: "URL Webhook", type: "url", placeholder: "https://hook.make.com/xxx" },
-      { key: "webhook_secret", label: "Cl\u00E9 d'authentification", type: "password", placeholder: "Cl\u00E9 secr\u00E8te" },
-    ],
+    customPanel: true,
+    fields: [],
   },
   {
     key: "google_sheets",
@@ -311,9 +310,10 @@ export function IntegrationsView({ C }: { C: Theme }) {
               {isExpanded && (
                 <div style={{ padding: "0 22px 20px", borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
                   {/* Gmail OAuth */}
-                  {integ.oauth && (
-                    <GmailOAuthSection C={C} />
-                  )}
+                  {integ.oauth && <GmailOAuthSection C={C} />}
+
+                  {/* Webhooks custom panel */}
+                  {integ.customPanel && integ.key === "make" && <WebhooksPanel C={C} />}
 
                   {/* External link for Abby-type integrations */}
                   {integ.url && (
@@ -489,6 +489,243 @@ function GmailOAuthSection({ C }: { C: Theme }) {
           display: "flex", alignItems: "center", gap: 6,
         }}>
           <Mail size={14} /> Connecter mon compte Gmail
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ===================== WEBHOOKS PANEL =====================
+
+const WEBHOOK_EVENT_OPTIONS = [
+  { type: "NOUVEAU_LEAD", label: "Nouveau lead" },
+  { type: "CHANGEMENT_STATUT_PROSPECT", label: "Changement statut prospect" },
+  { type: "CHANGEMENT_STATUT_FACTURATION", label: "Changement statut facturation" },
+  { type: "NOUVEAU_CLIENT", label: "Nouveau client (conversion)" },
+  { type: "DOCUMENT_RECU", label: "Document reçu" },
+  { type: "DOCUMENTS_COMPLETS", label: "Tous documents reçus (100%)" },
+  { type: "ETAPE_TERMINEE", label: "Étape feuille de route terminée" },
+  { type: "ETAPE_RETARD", label: "Étape en retard" },
+  { type: "MAIL_ENVOYE", label: "Mail envoyé" },
+  { type: "SMS_ENVOYE", label: "SMS envoyé" },
+  { type: "NOTE_AJOUTEE", label: "Note ajoutée" },
+  { type: "TACHE_CREEE", label: "Tâche créée" },
+  { type: "TACHE_TERMINEE", label: "Tâche terminée" },
+  { type: "TACHE_RETARD", label: "Tâche en retard" },
+];
+
+interface WebhookItem {
+  id: string;
+  nom: string;
+  url: string;
+  secret: string | null;
+  actif: boolean;
+  evenements: Array<{ type: string }>;
+}
+
+function WebhooksPanel({ C }: { C: Theme }) {
+  const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ nom: "", url: "", secret: "", evenements: [] as string[] });
+  const [testing, setTesting] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{ id: string; ok: boolean } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/webhooks-config")
+      .then((r) => r.ok ? r.json() : { webhooks: [] })
+      .then((data) => setWebhooks(data.webhooks || []))
+      .catch(() => {});
+  }, []);
+
+  const toggleEvent = (type: string) => {
+    setForm((f) => ({
+      ...f,
+      evenements: f.evenements.includes(type)
+        ? f.evenements.filter((e) => e !== type)
+        : [...f.evenements, type],
+    }));
+  };
+
+  const addWebhook = async () => {
+    if (!form.nom || !form.url) return;
+    const res = await fetch("/api/webhooks-config", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    if (res.ok) {
+      const wh = await res.json();
+      setWebhooks((p) => [...p, wh]);
+      setForm({ nom: "", url: "", secret: "", evenements: [] });
+      setShowAdd(false);
+    }
+  };
+
+  const toggleActive = async (id: string, actif: boolean) => {
+    await fetch("/api/webhooks-config", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, actif: !actif }),
+    });
+    setWebhooks((p) => p.map((w) => w.id === id ? { ...w, actif: !actif } : w));
+  };
+
+  const deleteWebhook = async (id: string) => {
+    await fetch(`/api/webhooks-config?id=${id}`, { method: "DELETE" });
+    setWebhooks((p) => p.filter((w) => w.id !== id));
+  };
+
+  const testWebhook = async (wh: WebhookItem) => {
+    setTesting(wh.id);
+    setTestResult(null);
+    const res = await fetch("/api/webhooks-config", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "test", url: wh.url, secret: wh.secret }),
+    });
+    const result = await res.json();
+    setTestResult({ id: wh.id, ok: result.ok });
+    setTesting(null);
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "8px 12px", borderRadius: 8,
+    border: `1px solid ${C.border}`, background: C.bg, color: C.text,
+    fontSize: 13, outline: "none", boxSizing: "border-box",
+  };
+
+  return (
+    <div>
+      {/* Existing webhooks */}
+      {webhooks.map((wh) => (
+        <div key={wh.id} style={{
+          padding: "14px 16px", borderRadius: 10, background: C.bg,
+          border: `1px solid ${wh.actif ? C.accent + "30" : C.border}`,
+          marginBottom: 10, opacity: wh.actif ? 1 : 0.5,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{wh.nom}</div>
+              <div style={{ fontSize: 11, color: C.textDim, fontFamily: "monospace" }}>{wh.url}</div>
+            </div>
+            <div style={{ display: "flex", gap: 4 }}>
+              <button onClick={() => testWebhook(wh)} disabled={testing === wh.id} style={{
+                padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`,
+                background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer",
+              }}>
+                {testing === wh.id ? "..." : "Tester"}
+              </button>
+              <button onClick={() => toggleActive(wh.id, wh.actif)} style={{
+                padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
+                background: wh.actif ? C.dangerDim : C.accentDim, color: wh.actif ? C.danger : C.accentText,
+              }}>
+                {wh.actif ? "Désactiver" : "Activer"}
+              </button>
+              <button onClick={() => deleteWebhook(wh.id)} style={{
+                padding: "4px 8px", borderRadius: 6, border: "none",
+                background: "transparent", color: C.textDim, cursor: "pointer",
+              }}>
+                <Trash2 size={12} />
+              </button>
+            </div>
+          </div>
+
+          {testResult?.id === wh.id && (
+            <div style={{
+              padding: "6px 10px", borderRadius: 6, marginBottom: 8, fontSize: 11, fontWeight: 600,
+              background: testResult.ok ? C.accentDim : C.dangerDim,
+              color: testResult.ok ? C.accentText : C.danger,
+            }}>
+              {testResult.ok ? "Webhook accessible" : "Erreur de connexion"}
+            </div>
+          )}
+
+          {/* Events */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {wh.evenements.map((ev) => (
+              <span key={ev.type} style={{
+                padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 600,
+                background: C.blueDim, color: C.blue,
+              }}>
+                {WEBHOOK_EVENT_OPTIONS.find((o) => o.type === ev.type)?.label || ev.type}
+              </span>
+            ))}
+            {wh.evenements.length === 0 && (
+              <span style={{ fontSize: 11, color: C.textDim }}>Aucun événement configuré</span>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {/* Add webhook form */}
+      {showAdd ? (
+        <div style={{
+          padding: "16px", borderRadius: 10, background: C.bg,
+          border: `1px solid ${C.border}`, marginTop: 10,
+        }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+            <div>
+              <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Nom *</label>
+              <input placeholder="Ex: Make — sync leads" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Clé secrète</label>
+              <input type="password" placeholder="Optionnel" value={form.secret} onChange={(e) => setForm({ ...form, secret: e.target.value })} style={inputStyle} />
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>URL du webhook *</label>
+              <input placeholder="https://hook.eu1.make.com/xxxxx" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} style={inputStyle} />
+            </div>
+          </div>
+
+          {/* Event checkboxes */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: C.text, display: "block", marginBottom: 8 }}>
+              Événements déclencheurs ({form.evenements.length} sélectionné{form.evenements.length > 1 ? "s" : ""})
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+              {WEBHOOK_EVENT_OPTIONS.map((ev) => {
+                const checked = form.evenements.includes(ev.type);
+                return (
+                  <label key={ev.type} onClick={() => toggleEvent(ev.type)} style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "7px 10px", borderRadius: 8, cursor: "pointer",
+                    background: checked ? C.blueDim : "transparent",
+                    border: `1px solid ${checked ? C.blue + "40" : "transparent"}`,
+                    transition: "all 0.15s",
+                  }}>
+                    <div style={{
+                      width: 16, height: 16, borderRadius: 4,
+                      border: `2px solid ${checked ? C.blue : C.border}`,
+                      background: checked ? C.blue : "transparent",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      {checked && <Check size={10} color="#fff" strokeWidth={3} />}
+                    </div>
+                    <span style={{ fontSize: 12, color: checked ? C.text : C.textMuted }}>{ev.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <button onClick={() => { setShowAdd(false); setForm({ nom: "", url: "", secret: "", evenements: [] }); }} style={{
+              padding: "6px 14px", borderRadius: 6, border: `1px solid ${C.border}`,
+              background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer",
+            }}>Annuler</button>
+            <button onClick={addWebhook} disabled={!form.nom || !form.url} style={{
+              padding: "6px 16px", borderRadius: 6, border: "none",
+              background: form.nom && form.url ? C.accent : "#94a3b8", color: "#fff",
+              fontSize: 12, fontWeight: 600, cursor: form.nom && form.url ? "pointer" : "not-allowed",
+            }}>Créer le webhook</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setShowAdd(true)} style={{
+          display: "flex", alignItems: "center", gap: 6, padding: "10px 16px",
+          borderRadius: 10, border: `2px dashed ${C.border}`, background: "transparent",
+          color: C.textDim, fontSize: 12, cursor: "pointer", width: "100%", marginTop: 10,
+        }}>
+          <Plus size={14} /> Ajouter un webhook
         </button>
       )}
     </div>
