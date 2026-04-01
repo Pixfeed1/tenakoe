@@ -739,29 +739,33 @@ function ImportExportTab({ C }: { C: Theme }) {
 
   const exportData = async (type: string) => {
     setExporting(true);
-    const res = await fetch("/api/import-export", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type }) });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.length === 0) { setExporting(false); return; }
 
-      const headers = Object.keys(data[0]);
-      const rows = data.map((r: Record<string, unknown>) => Object.values(r).map((v) => typeof v === "object" ? JSON.stringify(v) : String(v ?? "")));
-
-      if (exportFormat === "csv") {
+    if (exportFormat === "xls") {
+      // Real .xlsx via exceljs on server
+      const res = await fetch("/api/import-export", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, format: "xlsx" }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = `${type}-${new Date().toISOString().slice(0, 10)}.xlsx`; a.click();
+      }
+    } else {
+      // CSV
+      const res = await fetch("/api/import-export", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, format: "csv" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.length === 0) { setExporting(false); return; }
+        const headers = Object.keys(data[0]);
+        const rows = data.map((r: Record<string, unknown>) => Object.values(r).map((v) => typeof v === "object" ? JSON.stringify(v) : String(v ?? "")));
         const csv = [headers.join(";"), ...rows.map((r: string[]) => r.join(";"))].join("\n");
         const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a"); a.href = url; a.download = `${type}-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-      } else {
-        // XLS (HTML table format, compatible Excel)
-        let html = "<html><head><meta charset='utf-8'></head><body><table border='1'><tr>";
-        html += headers.map((h) => `<th>${h}</th>`).join("");
-        html += "</tr>";
-        rows.forEach((r: string[]) => { html += "<tr>" + r.map((c: string) => `<td>${c}</td>`).join("") + "</tr>"; });
-        html += "</table></body></html>";
-        const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a"); a.href = url; a.download = `${type}-${new Date().toISOString().slice(0, 10)}.xls`; a.click();
       }
     }
     setExporting(false);
@@ -797,7 +801,7 @@ function ImportExportTab({ C }: { C: Theme }) {
             padding: "5px 12px", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer",
             background: exportFormat === "xls" ? C.blueDim : C.surfaceHover,
             color: exportFormat === "xls" ? C.blue : C.textDim,
-          }}>XLS</button>
+          }}>Excel (.xlsx)</button>
         </div>
       </div>
       <div style={{ display: "flex", gap: 8 }}>
