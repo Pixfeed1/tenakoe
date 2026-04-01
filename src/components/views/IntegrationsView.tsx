@@ -113,6 +113,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     type: "crm",
     logo: "/logos/capsule.svg",
     color: "#1A73E8",
+    customPanel: true,
     fields: [
       { key: "api_token", label: "Token API", type: "password", placeholder: "Votre token Capsule" },
       { key: "subdomain", label: "Sous-domaine Capsule", type: "text", placeholder: "votre-entreprise" },
@@ -125,6 +126,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     type: "base de donn\u00E9es",
     logo: "/logos/notion.svg",
     color: "#000000",
+    customPanel: true,
     fields: [
       { key: "api_key", label: "Cl\u00E9 API Notion", type: "password", placeholder: "secret_xxx" },
       { key: "database_id", label: "ID de la base", type: "text", placeholder: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
@@ -314,6 +316,8 @@ export function IntegrationsView({ C }: { C: Theme }) {
 
                   {/* Webhooks custom panel */}
                   {integ.customPanel && integ.key === "make" && <WebhooksPanel C={C} />}
+                  {integ.customPanel && integ.key === "capsule" && <ImportPanel C={C} source="capsule" config={configs[integ.key] || {}} />}
+                  {integ.customPanel && integ.key === "notion" && <ImportPanel C={C} source="notion" config={configs[integ.key] || {}} />}
 
                   {/* External link for Abby-type integrations */}
                   {integ.url && (
@@ -727,6 +731,114 @@ function WebhooksPanel({ C }: { C: Theme }) {
         }}>
           <Plus size={14} /> Ajouter un webhook
         </button>
+      )}
+    </div>
+  );
+}
+
+// ===================== IMPORT PANEL (Capsule + Notion) =====================
+
+function ImportPanel({ C, source, config }: { C: Theme; source: "capsule" | "notion"; config: Record<string, string> }) {
+  const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState<{ step: string; percent: number } | null>(null);
+  const [result, setResult] = useState<{ contacts?: number; entreprises?: number; projets?: number; leads?: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const sourceName = source === "capsule" ? "Capsule CRM" : "Notion";
+
+  const startImport = async () => {
+    setImporting(true);
+    setProgress({ step: "Préparation...", percent: 5 });
+    setResult(null);
+    setError(null);
+
+    try {
+      const endpoint = `/api/integrations/${source}`;
+      const payload = source === "capsule"
+        ? { token: config.api_token }
+        : { token: config.api_key, databaseId: config.database_id };
+
+      if (source === "capsule" && !config.api_token) { setError("Token API requis"); setImporting(false); setProgress(null); return; }
+      if (source === "notion" && (!config.api_key || !config.database_id)) { setError("Clé API et ID base requis"); setImporting(false); setProgress(null); return; }
+
+      setProgress({ step: source === "capsule" ? "Import des entreprises..." : "Connexion à Notion...", percent: 25 });
+      await new Promise((r) => setTimeout(r, 300));
+
+      setProgress({ step: source === "capsule" ? "Import des contacts..." : "Import des données...", percent: 50 });
+      const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+
+      setProgress({ step: "Finalisation...", percent: 90 });
+      if (res.ok) {
+        const data = await res.json();
+        setProgress({ step: "Terminé !", percent: 100 });
+        setResult(data);
+      } else {
+        const err = await res.json();
+        setError(err.error || "Erreur d'import");
+        setProgress(null);
+      }
+    } catch {
+      setError("Erreur réseau");
+      setProgress(null);
+    }
+    setImporting(false);
+  };
+
+  return (
+    <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8 }}>Import depuis {sourceName}</div>
+
+      {!importing && !result && (
+        <>
+          <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 12px", lineHeight: 1.5 }}>
+            Les données existantes ne seront pas écrasées. Seules les nouvelles entrées seront ajoutées (doublons détectés automatiquement).
+          </p>
+          <button onClick={startImport} style={{
+            padding: "8px 18px", borderRadius: 8, border: "none",
+            background: "linear-gradient(135deg, #16a34a, #15803d)",
+            color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+          }}>
+            Importer depuis {sourceName}
+          </button>
+        </>
+      )}
+
+      {importing && progress && (
+        <div>
+          <div style={{ width: "100%", height: 8, borderRadius: 4, background: C.border, overflow: "hidden", marginBottom: 8 }}>
+            <div style={{
+              height: "100%", borderRadius: 4, background: "linear-gradient(90deg, #16a34a, #22c55e)",
+              width: `${progress.percent}%`, transition: "width 0.5s ease",
+            }} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 12, color: C.textMuted }}>{progress.step}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: C.accent }}>{progress.percent}%</span>
+          </div>
+        </div>
+      )}
+
+      {result && (
+        <div style={{ padding: "12px 14px", borderRadius: 8, background: C.accentDim }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.accentText, marginBottom: 8 }}>Import terminé</div>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            {result.entreprises != null && result.entreprises > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.entreprises}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>entreprises</span></div>}
+            {result.contacts != null && result.contacts > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.contacts}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>contacts</span></div>}
+            {result.projets != null && result.projets > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.projets}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>projets</span></div>}
+            {result.leads != null && result.leads > 0 && <div><span style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{result.leads}</span><span style={{ fontSize: 11, color: C.textDim, marginLeft: 4 }}>entrées</span></div>}
+          </div>
+          <button onClick={() => { setResult(null); setProgress(null); }} style={{
+            marginTop: 10, padding: "6px 14px", borderRadius: 6, border: `1px solid ${C.border}`,
+            background: "transparent", color: C.textMuted, fontSize: 12, cursor: "pointer",
+          }}>Réimporter</button>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ padding: "10px 14px", borderRadius: 8, marginTop: 8, fontSize: 12, fontWeight: 500, background: C.dangerDim, color: C.danger, display: "flex", justifyContent: "space-between" }}>
+          {error}
+          <button onClick={() => setError(null)} style={{ background: "none", border: "none", color: C.danger, cursor: "pointer" }}>×</button>
+        </div>
       )}
     </div>
   );
