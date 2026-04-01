@@ -32,8 +32,50 @@ function extractVal(prop: Record<string, unknown> | null): string | null {
     case "status": return ((prop.status as { name: string })?.name) || null;
     case "date": return ((prop.date as { start: string })?.start) || null;
     case "checkbox": return (prop.checkbox as boolean) ? "true" : "false";
+    case "relation": return ((prop.relation as Array<{ id: string }>)?.[0]?.id) || null;
     default: return null;
   }
+}
+
+// ========================
+// RELATION RESOLVER — résout les propriétés de type relation en lisant la page liée
+// Cache les résultats pour éviter les appels API redondants
+// ========================
+
+const relationCache: Record<string, string> = {};
+
+async function resolveRelation(pageId: string | null, headers: Record<string, string>): Promise<string | null> {
+  if (!pageId) return null;
+  if (relationCache[pageId]) return relationCache[pageId];
+
+  try {
+    const res = await fetch(`https://api.notion.com/v1/pages/${pageId}`, { headers });
+    if (!res.ok) return null;
+    const page = await res.json();
+    // Le titre est dans la première propriété de type "title"
+    const titleProp = Object.values(page.properties || {}).find((p) => (p as Record<string, unknown>).type === "title") as Record<string, unknown> | undefined;
+    const title = ((titleProp?.title as Array<{ plain_text: string }>)?.[0]?.plain_text) || null;
+    if (title) relationCache[pageId] = title;
+    return title;
+  } catch {
+    return null;
+  }
+}
+
+// ========================
+// PRESCRIPTEUR MAPPER
+// ========================
+
+const PRESCRIPTEUR_MAP: Record<string, string> = {
+  "la plateforme du bâtiment": "PDB", "plateforme du bâtiment": "PDB", "pdb": "PDB",
+  "point p": "POINT_P", "pointp": "POINT_P",
+  "big mat": "BIGMAT", "bigmat": "BIGMAT", "big mat girardon": "BIGMAT", "bigmat girardon": "BIGMAT",
+};
+
+function mapPrescripteur(value: string | null): string | null {
+  if (!value) return null;
+  const normalized = value.toLowerCase().trim();
+  return PRESCRIPTEUR_MAP[normalized] || value.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z_]/g, "");
 }
 
 // ========================
@@ -57,7 +99,12 @@ function extractArtisanData(props: Record<string, unknown>) {
   const depot = extractVal(findProp(props, ["votre dépôt", "dépôt", "depot"]));
   const numeroCarte = extractVal(findProp(props, ["numéro de carte", "n° de carte", "n° carte"]));
   const statut = extractVal(findProp(props, ["statut lead", "statut", "status"]));
+  const statutPaiement = extractVal(findProp(props, ["statut paiement", "paiement", "statut de paiement"]));
   const referentRGE = extractVal(findProp(props, ["déjà référent rge", "référent rge"]));
+  // Prescripteur peut être une relation (Base Clients) ou un select (Bases Leads)
+  const prescripteurRelationId = extractVal(findProp(props, ["prescripteur"]));
+  const prescripteurProp = findProp(props, ["prescripteur"]);
+  const prescripteurType = prescripteurProp ? (prescripteurProp as Record<string, unknown>).type as string : null;
 
   // Détection email conseiller/dépôt (à ignorer)
   // Les emails @laplateforme.com, @pointp.fr, @bigmat.fr sont des dépôts, pas des artisans
@@ -82,7 +129,10 @@ function extractArtisanData(props: Record<string, unknown>) {
     nom, nomArtisan, prenomArtisan,
     email: isDepotEmail ? null : email,
     telephone, siret, adresse, depot, numeroCarte, statut,
+    statutPaiement: typeof statutPaiement === "string" ? statutPaiement : null,
     referentRGE: referentRGE === "true",
+    prescripteurRelationId: prescripteurType === "relation" ? (typeof prescripteurRelationId === "string" ? prescripteurRelationId : null) : null,
+    prescripteurDirect: prescripteurType !== "relation" ? (typeof prescripteurRelationId === "string" ? prescripteurRelationId : null) : null,
   };
 }
 
@@ -234,8 +284,22 @@ export async function POST(request: NextRequest) {
         // Statut
         const statutPrise = await mapStatut(artisan.statut);
 
-        // Prescripteur : priorité = paramètre de la base > champ Notion
-        const prescripteur = db.prescripteur || null;
+        // Prescripteur : priorité = paramètre base > relation résolue > select direct
+        let prescripteur = db.prescripteur || null;
+        if (!prescripteur && artisan.prescripteurRelationId) {
+          // Résoudre la relation (Base Clients — le prescripteur est une page liée)
+          const relTitle = await resolveRelation(artisan.prescripteurRelationId, headers);
+          if (relTitle) prescripteur = mapPrescripteur(relTitle);
+        }
+        if (!prescripteur && artisan.prescripteurDirect) {
+          prescripteur = mapPrescripteur(artisan.prescripteurDirect);
+        }
+
+        // estClient : pour Base Clients, checker "Statut Paiement" = "payé"
+        let estClient = db.asClient;
+        if (db.asClient && artisan.statutPaiement) {
+          estClient = artisan.statutPaiement.toLowerCase().includes("pay");
+        }
 
         // CREATE
         const entreprise = await prisma.entreprise.create({
@@ -252,7 +316,7 @@ export async function POST(request: NextRequest) {
             dejaReferentRGE: artisan.referentRGE,
             sourceImport: "NOTION",
             sourceId,
-            estClient: db.asClient,
+            estClient,
           },
         });
 
