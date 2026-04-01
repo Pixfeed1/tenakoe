@@ -71,6 +71,8 @@ function UsersTab({ C }: { C: Theme }) {
   const [users, setUsers] = useState<Array<{ id: string; email: string; nom: string; prenom: string; telephone: string | null; role: string; actif: boolean }>>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [showInactifs, setShowInactifs] = useState(false);
+  const [deactivatingUser, setDeactivatingUser] = useState<string | null>(null);
+  const [reassignTo, setReassignTo] = useState("");
   const [form, setForm] = useState({ email: "", nom: "", prenom: "", telephone: "", role: "CHARGEE", password: "", prescripteurType: "" });
 
   const [prescripteurOptions, setPrescripteurOptions] = useState<Array<{ type: string; nom: string }>>([]);
@@ -143,7 +145,8 @@ function UsersTab({ C }: { C: Theme }) {
       )}
 
       {users.filter((u) => showInactifs ? true : u.actif).map((u) => (
-        <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
+        <div key={u.id}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: u.actif ? C.accentDim : C.surfaceHover, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: u.actif ? C.accentText : C.textDim }}>
             {u.prenom[0]}{u.nom[0]}
           </div>
@@ -156,28 +159,68 @@ function UsersTab({ C }: { C: Theme }) {
             <option value="CHARGEE">Chargée</option>
             <option value="PRESCRIPTEUR">Prescripteur</option>
           </select>
-          <button onClick={async () => {
+          <button onClick={() => {
             if (u.actif) {
-              // When deactivating, ask who to reassign to
-              const others = users.filter((x) => x.id !== u.id && x.actif && x.role === "CHARGEE");
-              if (others.length > 0) {
-                const names = others.map((o, i) => `${i + 1}. ${o.prenom} ${o.nom}`).join("\n");
-                const choice = prompt(`Réaffecter les dossiers de ${u.prenom} à :\n${names}\n\nEntrez le numéro (ou annulez pour ne pas réaffecter) :`);
-                if (choice) {
-                  const idx = parseInt(choice) - 1;
-                  if (idx >= 0 && idx < others.length) {
-                    await fetch("/api/users", {
-                      method: "PATCH", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ id: u.id, reassignTo: others[idx].id }),
-                    });
-                  }
-                }
-              }
+              setDeactivatingUser(u.id);
+              setReassignTo("");
+            } else {
+              toggleActif(u.id, u.actif);
             }
-            toggleActif(u.id, u.actif);
           }} style={{ padding: "4px 10px", borderRadius: 6, border: "none", background: u.actif ? C.dangerDim : C.accentDim, color: u.actif ? C.danger : C.accentText, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
             {u.actif ? "Désactiver" : "Activer"}
           </button>
+        </div>
+        {/* Reassignment panel */}
+        {deactivatingUser === u.id && (
+          <div style={{
+            padding: "14px 16px", borderRadius: 10, background: C.bg,
+            border: `1px solid ${C.danger}30`, marginTop: 8, marginBottom: 8,
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8 }}>
+              Désactiver {u.prenom} {u.nom}
+            </div>
+            <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 12px" }}>
+              {u.prenom} ne pourra plus se connecter. Ses dossiers restent visibles.
+            </p>
+            {users.filter((x) => x.id !== u.id && x.actif && x.role === "CHARGEE").length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>
+                  Réaffecter ses dossiers à :
+                </label>
+                <select value={reassignTo} onChange={(e) => setReassignTo(e.target.value)}
+                  style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, width: "100%" }}>
+                  <option value="">Ne pas réaffecter</option>
+                  {users.filter((x) => x.id !== u.id && x.actif && x.role === "CHARGEE").map((o) => (
+                    <option key={o.id} value={o.id}>{o.prenom} {o.nom}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={async () => {
+                if (reassignTo) {
+                  await fetch("/api/users", {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: u.id, reassignTo }),
+                  });
+                }
+                await toggleActif(u.id, true);
+                setDeactivatingUser(null);
+              }} style={{
+                padding: "7px 16px", borderRadius: 8, border: "none",
+                background: C.danger, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
+              }}>
+                Désactiver {u.prenom}
+              </button>
+              <button onClick={() => setDeactivatingUser(null)} style={{
+                padding: "7px 16px", borderRadius: 8, border: `1px solid ${C.border}`,
+                background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer",
+              }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
         </div>
       ))}
     </div>
