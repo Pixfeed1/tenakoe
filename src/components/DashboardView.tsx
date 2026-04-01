@@ -123,7 +123,7 @@ export function DashboardView({
   return (
     <>
       {/* Stats */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
+      <div data-guide="kpi" style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
         {STATS.map((s, i) => (
           <div
             key={i}
@@ -169,7 +169,7 @@ export function DashboardView({
       {(() => {
         const alertes = serverAlertes || [];
         return alertes.length > 0 ? (
-          <div style={{
+          <div data-guide="alertes" style={{
             background: C.dangerDim, border: "1px solid rgba(220,38,38,0.12)",
             borderRadius: 12, padding: "12px 20px", marginBottom: 24,
             display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
@@ -194,7 +194,7 @@ export function DashboardView({
       })()}
 
       {/* Pipeline */}
-      <div style={{ marginBottom: 28 }}>
+      <div data-guide="pipeline" style={{ marginBottom: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>
             Pipeline prospects
@@ -277,6 +277,7 @@ export function DashboardView({
       <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20 }}>
         {/* Clients Table */}
         <div
+          data-guide="clients-table"
           style={{
             background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
             padding: "20px 24px", boxShadow: C.shadow, overflow: "hidden",

@@ -2,10 +2,11 @@
 
 import {
   LayoutDashboard, Zap, Target, Users, FolderOpen,
-  Send, File, CreditCard, Plug, Settings, Sun, Moon, LogOut,
+  Send, File, CreditCard, Plug, Settings, Sun, Moon, LogOut, Lightbulb,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { SearchBar } from "@/components/SearchBar";
+import { useGuide } from "@/components/GuideSystem";
 
 const NAV_ITEMS = [
   { Icon: LayoutDashboard, label: "Dashboard" },
@@ -35,8 +36,10 @@ interface SidebarProps {
 }
 
 export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignOut, onSelectClient }: SidebarProps) {
+  const guide = useGuide();
   return (
     <aside
+      data-guide="sidebar"
       style={{
         width: 250,
         background: C.surface,
@@ -159,6 +162,18 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
           </div>
         </div>
         <div style={{ display: "flex", gap: 4 }}>
+          <button
+            onClick={guide.toggle}
+            style={{
+              width: 34, height: 34, borderRadius: 8,
+              border: `1px solid ${guide.active ? C.accent + "60" : C.border}`,
+              background: guide.active ? C.accentDim : C.bg, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+            title={guide.active ? "Désactiver le mode guidé" : "Activer le mode guidé"}
+          >
+            <Lightbulb size={15} color={guide.active ? C.accent : C.textDim} fill={guide.active ? C.accent : "none"} />
+          </button>
           <button
             onClick={onToggleDark}
             style={{

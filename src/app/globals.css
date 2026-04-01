@@ -7,3 +7,51 @@
 body {
   font-family: var(--font-sans);
 }
+
+.guide-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  animation: guidePulse 3s ease-in-out infinite;
+  pointer-events: auto;
+  cursor: help;
+  z-index: 10;
+}
+
+.guide-dot::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #16a34a;
+  opacity: 0;
+  top: -4px;
+  left: -4px;
+  animation: guidePulseRing 3s ease-in-out infinite;
+}
+
+@keyframes guidePulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes guidePulseRing {
+  0% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+@keyframes guideSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes guideFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

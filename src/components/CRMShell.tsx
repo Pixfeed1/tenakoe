@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Zap, FolderOpen, Mail, Upload, FileText } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { LIGHT, DARK } from "@/lib/theme";
+import { GuideProvider } from "@/components/GuideSystem";
 import { Sidebar } from "@/components/Sidebar";
 import { DashboardView } from "@/components/DashboardView";
 import { ClientDetailView } from "@/components/ClientDetailView";
@@ -155,6 +156,7 @@ export function CRMShell({
   };
 
   return (
+    <GuideProvider C={C}>
     <div
       style={{
         display: "flex",
@@ -235,6 +237,7 @@ export function CRMShell({
               if (!action) return null;
               return (
                 <button
+                  data-guide="nouveau-lead"
                   onClick={action.action}
                   style={{
                     padding: "9px 20px",
@@ -287,5 +290,6 @@ export function CRMShell({
         {view === "Paramètres" && <ParametresView C={C} />}
       </main>
     </div>
+    </GuideProvider>
   );
 }

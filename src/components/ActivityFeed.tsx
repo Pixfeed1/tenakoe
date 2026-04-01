@@ -108,7 +108,7 @@ export function ActivityFeed({ C, compact = false }: ActivityFeedProps) {
   };
 
   return (
-    <div style={{
+    <div data-guide="historique" style={{
       background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
       padding: "20px 24px", boxShadow: C.shadow,
     }}>

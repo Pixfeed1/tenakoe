@@ -32,7 +32,11 @@ model User {
   password         String
   avatarUrl        String?
   actif            Boolean       @default(true)
-  prescripteurType Prescripteur? // Pour le rôle PRESCRIPTEUR: quel prescripteur il représente
+  prescripteurType   Prescripteur?
+  premiereConnexion  Boolean       @default(true)
+  modeGuide          Boolean       @default(true)
+  guideNiveau        Int           @default(1)
+  guideProgression   String?       // JSON: { aOuvertFiche: bool, aEnvoyeMail: bool, ... }
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 

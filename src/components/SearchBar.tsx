@@ -72,7 +72,7 @@ export function SearchBar({ C, onSelectClient }: SearchBarProps) {
   };
 
   return (
-    <div ref={ref} style={{ padding: "8px 16px 4px", position: "relative" }}>
+    <div ref={ref} data-guide="search" style={{ padding: "8px 16px 4px", position: "relative" }}>
       <div style={{
         display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
         borderRadius: 10, border: `1px solid ${C.border}`, background: C.bg,
