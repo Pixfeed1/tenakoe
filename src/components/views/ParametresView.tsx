@@ -70,6 +70,7 @@ export function ParametresView({ C }: { C: Theme }) {
 function UsersTab({ C }: { C: Theme }) {
   const [users, setUsers] = useState<Array<{ id: string; email: string; nom: string; prenom: string; telephone: string | null; role: string; actif: boolean }>>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [showInactifs, setShowInactifs] = useState(false);
   const [form, setForm] = useState({ email: "", nom: "", prenom: "", telephone: "", role: "CHARGEE", password: "", prescripteurType: "" });
 
   const [prescripteurOptions, setPrescripteurOptions] = useState<Array<{ type: string; nom: string }>>([]);
@@ -97,9 +98,19 @@ function UsersTab({ C }: { C: Theme }) {
     <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Utilisateurs et rôles</h3>
-        <button onClick={() => setShowAdd(!showAdd)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-          <Plus size={12} /> Ajouter
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button onClick={() => setShowInactifs(!showInactifs)} style={{
+            padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer",
+            border: `1px solid ${showInactifs ? C.warning : C.border}`,
+            background: showInactifs ? C.warningDim : "transparent",
+            color: showInactifs ? C.warning : C.textDim,
+          }}>
+            {showInactifs ? "Masquer inactifs" : "Voir inactifs"}
+          </button>
+          <button onClick={() => setShowAdd(!showAdd)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+            <Plus size={12} /> Ajouter
+          </button>
+        </div>
       </div>
 
       {showAdd && (
@@ -131,7 +142,7 @@ function UsersTab({ C }: { C: Theme }) {
         </div>
       )}
 
-      {users.map((u) => (
+      {users.filter((u) => showInactifs ? true : u.actif).map((u) => (
         <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: u.actif ? C.accentDim : C.surfaceHover, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: u.actif ? C.accentText : C.textDim }}>
             {u.prenom[0]}{u.nom[0]}
