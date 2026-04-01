@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Zap, FolderOpen, Mail, Upload, FileText } from "lucide-react";
+import { Plus, Zap, FolderOpen, Mail, Upload, FileText, Menu, X as XIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { LIGHT, DARK, type Theme } from "@/lib/theme";
 import { GuideProvider } from "@/components/GuideSystem";
@@ -122,6 +122,7 @@ export function CRMShell({
   } | null>(null);
   const C = dark ? DARK : LIGHT;
   const firstName = user.name.split(" ")[0];
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Sync URL with view
   const navigateTo = (v: View) => {
@@ -160,6 +161,7 @@ export function CRMShell({
   return (
     <GuideProvider C={C}>
     <div
+      className="crm-layout"
       style={{
         display: "flex",
         height: "100vh",
@@ -170,8 +172,13 @@ export function CRMShell({
         transition: "background 0.3s, color 0.3s",
       }}
     >
+      {/* Mobile overlay */}
+      <div className={`sidebar-overlay ${mobileMenuOpen ? "open" : ""}`} onClick={() => setMobileMenuOpen(false)} />
+
       <Sidebar
         C={C}
+        className={mobileMenuOpen ? "open" : ""}
+        onNavMobile={() => setMobileMenuOpen(false)}
         activeNav={activeNav}
         onNav={(label) => navigateTo(label as View)}
         dark={dark}
@@ -181,7 +188,7 @@ export function CRMShell({
         onSelectClient={openClient}
       />
 
-      <main style={{ flex: 1, overflow: "auto", padding: "28px 36px" }}>
+      <main className="crm-main" style={{ flex: 1, overflow: "auto", padding: "28px 36px" }}>
         {/* Header */}
         <div
           style={{
@@ -191,7 +198,13 @@ export function CRMShell({
             marginBottom: 24,
           }}
         >
-          <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Mobile hamburger */}
+            <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{ width: 38, height: 38, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {mobileMenuOpen ? <XIcon size={18} color={C.text} /> : <Menu size={18} color={C.text} />}
+            </button>
+            <div>
             <h1
               style={{
                 fontSize: 22,
@@ -213,7 +226,8 @@ export function CRMShell({
               · Bonjour {firstName}
             </p>
           </div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          </div>
+          <div className="header-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <GuideToggleButton C={C} />
             <AlertesDropdown C={C} />
             {(() => {

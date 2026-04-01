@@ -279,7 +279,7 @@ export function DashboardView({
       </GuideTooltip>
 
       {/* Bottom Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20 }}>
+      <div className="bottom-grid" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20 }}>
         {/* Clients Table */}
         <div
           data-guide="clients-table"

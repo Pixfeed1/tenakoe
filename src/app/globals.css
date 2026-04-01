@@ -55,3 +55,161 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ========================
+   RESPONSIVE
+   ======================== */
+
+/* Mobile sidebar overlay */
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .crm-layout {
+    flex-direction: column !important;
+  }
+
+  .crm-sidebar {
+    position: fixed !important;
+    left: -280px;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: 260px !important;
+    transition: left 0.3s ease;
+  }
+
+  .crm-sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 999;
+  }
+
+  .sidebar-overlay.open {
+    display: block;
+  }
+
+  .crm-main {
+    padding: 16px !important;
+    width: 100% !important;
+  }
+
+  .crm-main h1 {
+    font-size: 18px !important;
+  }
+
+  /* Pipeline horizontal scroll */
+  .pipeline-columns {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 12px;
+  }
+
+  .pipeline-columns > div {
+    min-width: 260px !important;
+    scroll-snap-align: start;
+  }
+
+  /* Stats cards stack */
+  .stats-row {
+    flex-direction: column !important;
+  }
+
+  .stats-row > div {
+    min-width: 100% !important;
+  }
+
+  /* Bottom grid stack */
+  .bottom-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Fiche client grid stack */
+  .fiche-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Header buttons wrap */
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+
+  /* Action buttons stack on fiche */
+  .fiche-actions {
+    flex-wrap: wrap;
+  }
+
+  .fiche-actions button {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Tables responsive */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Filter bars wrap */
+  .filter-bar {
+    flex-wrap: wrap;
+  }
+
+  /* Tabs scroll */
+  .tabs-row {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Mobile hamburger visible */
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none !important;
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .crm-sidebar {
+    width: 220px !important;
+  }
+
+  .crm-main {
+    padding: 20px 24px !important;
+  }
+
+  .bottom-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pipeline-columns > div {
+    min-width: 180px !important;
+  }
+}
+
+/* Small desktop */
+@media (min-width: 1025px) and (max-width: 1280px) {
+  .pipeline-columns > div {
+    min-width: 170px !important;
+  }
+}

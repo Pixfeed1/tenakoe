@@ -33,13 +33,16 @@ interface SidebarProps {
   user?: { name: string; email: string; role: string; initials: string };
   onSignOut?: () => void;
   onSelectClient?: (client: { id: string; nom: string; siret?: string; prescripteur?: string }) => void;
+  className?: string;
+  onNavMobile?: () => void;
 }
 
-export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignOut, onSelectClient }: SidebarProps) {
+export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignOut, onSelectClient, className, onNavMobile }: SidebarProps) {
   const guide = useGuide();
   return (
     <aside
       data-guide="sidebar"
+      className={`crm-sidebar ${className || ""}`}
       style={{
         width: 250,
         background: C.surface,
@@ -84,7 +87,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
           return (
             <button
               key={item.label}
-              onClick={() => onNav(item.label)}
+              onClick={() => { onNav(item.label); onNavMobile?.(); }}
               style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 10,
                 padding: "9px 12px", borderRadius: 10, border: "none", cursor: "pointer",
@@ -121,7 +124,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
           return (
           <button
             key={item.label}
-            onClick={() => onNav(item.label)}
+            onClick={() => { onNav(item.label); onNavMobile?.(); }}
             style={{
               width: "100%", display: "flex", alignItems: "center", gap: 10,
               padding: "9px 12px", borderRadius: 10, border: "none", cursor: "pointer",
