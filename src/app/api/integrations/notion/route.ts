@@ -74,8 +74,18 @@ const PRESCRIPTEUR_MAP: Record<string, string> = {
 
 function mapPrescripteur(value: string | null): string | null {
   if (!value) return null;
-  const normalized = value.toLowerCase().trim();
-  return PRESCRIPTEUR_MAP[normalized] || value.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z_]/g, "");
+  // Normalize: lowercase, remove accents, remove special chars
+  const n = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, " ").trim();
+
+  if (n.includes("plateforme") || n.includes("pdb") || n.includes("batiment") || n.includes("btiment")) return "PDB";
+  if (n.includes("point p") || n.includes("point_p") || n.includes("pointp")) return "POINT_P";
+  if (n.includes("big mat") || n.includes("bigmat") || n.includes("girardon") || n.includes("big m")) return "BIGMAT";
+
+  // Exact match fallback
+  const exact = PRESCRIPTEUR_MAP[value.toLowerCase().trim()];
+  if (exact) return exact;
+
+  return null;
 }
 
 // ========================
