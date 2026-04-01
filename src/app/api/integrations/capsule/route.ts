@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
       for (const person of parties) {
         const existingContact = await prisma.contact.findFirst({
-          where: { nom: person.lastName || "", prenom: person.firstName || "" },
+          where: { sourceId: String(person.id), sourceImport: "CAPSULE" },
         });
         if (existingContact) continue;
 
@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
             email: person.emailAddresses?.[0]?.address || null,
             telephone: person.phoneNumbers?.[0]?.number || null,
             entrepriseId,
+            sourceImport: "CAPSULE",
+            sourceId: String(person.id),
           },
         });
         results.contacts++;

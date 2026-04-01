@@ -63,6 +63,8 @@ model Contact {
   updatedAt    DateTime    @updatedAt
   entrepriseId String?
   entreprise   Entreprise? @relation(fields: [entrepriseId], references: [id], onDelete: SetNull)
+  sourceImport SourceImport? @default(MANUEL)
+  sourceId     String?
 }
 
 model Entreprise {
