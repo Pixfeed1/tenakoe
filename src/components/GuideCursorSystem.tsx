@@ -163,7 +163,7 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     steps: [
       {
         title: "1/5 — Glisser un lead",
-        text: "Glissez-d\u00E9posez une carte de la colonne 'Nouveau' vers 'Prise en charge'",
+        text: "Glissez-déposez une carte de la colonne 'Nouveau' vers 'Prise en charge'",
         cursorAction: { type: "drag", from: "[data-guide='pipeline'] [draggable]:first-child", to: "[data-guide='pipeline'] > div:nth-child(2)" },
       },
       {
@@ -173,17 +173,17 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
       },
       {
         title: "3/5 — Choisir un template",
-        text: "S\u00E9lectionnez un mod\u00E8le pour pr\u00E9-remplir le message",
+        text: "Sélectionnez un modèle pour pré-remplir le message",
         cursorAction: { type: "click", target: "select" },
       },
       {
-        title: "4/5 — V\u00E9rifier l'historique",
-        text: "Le mail envoy\u00E9 appara\u00EEt dans l'historique",
+        title: "4/5 — Vérifier l'historique",
+        text: "Le mail envoyé apparaît dans l'historique",
         cursorAction: { type: "click", target: "[data-guide='historique']" },
       },
       {
-        title: "5/5 — Termin\u00E9 !",
-        text: "Le lead est pris en charge. Pensez \u00E0 cr\u00E9er une t\u00E2che de relance dans 3 jours.",
+        title: "5/5 — Terminé !",
+        text: "Le lead est pris en charge. Pensez à créer une tâche de relance dans 3 jours.",
         cursorAction: { type: "click", target: "[data-guide='kpi']" },
       },
     ],
@@ -192,18 +192,18 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     title: "Envoyer un mail avec template",
     steps: [
       {
-        title: "1/3 — Ouvrir l'\u00E9diteur",
+        title: "1/3 — Ouvrir l'éditeur",
         text: "Cliquez sur le bouton 'Envoyer mail'",
         cursorAction: { type: "click", target: "[data-guide='btn-mail'] button:first-child" },
       },
       {
-        title: "2/3 — Choisir un mod\u00E8le",
-        text: "S\u00E9lectionnez un template dans le menu d\u00E9roulant",
+        title: "2/3 — Choisir un modèle",
+        text: "Sélectionnez un template dans le menu déroulant",
         cursorAction: { type: "click", target: "select" },
       },
       {
         title: "3/3 — Historique",
-        text: "Le mail est trac\u00E9 dans l'historique. La direction voit tout.",
+        text: "Le mail est tracé dans l'historique. La direction voit tout.",
         cursorAction: { type: "click", target: "[data-guide='historique']" },
       },
     ],
@@ -218,12 +218,12 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
       },
       {
         title: "2/3 — Uploader un fichier",
-        text: "Glissez-d\u00E9posez un fichier dans la zone d'upload",
+        text: "Glissez-déposez un fichier dans la zone d'upload",
         cursorAction: { type: "drag", from: "[data-guide='kpi']", to: "[data-guide='upload']" },
       },
       {
         title: "3/3 — Cocher les documents",
-        text: "Cochez chaque document re\u00E7u. La barre de progression monte.",
+        text: "Cochez chaque document reçu. La barre de progression monte.",
         cursorAction: { type: "click", target: "[data-guide='upload']" },
       },
     ],
@@ -233,12 +233,12 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     steps: [
       {
         title: "1/2 — Ouvrir la feuille de route",
-        text: "L'onglet montre les \u00E9tapes du dossier avec leurs d\u00E9lais",
+        text: "L'onglet montre les étapes du dossier avec leurs délais",
         cursorAction: { type: "click", target: ".tabs-row button:nth-child(3)" },
       },
       {
-        title: "2/2 — Terminer une \u00E9tape",
-        text: "Cliquez sur le cercle pour la marquer comme termin\u00E9e. La suivante s'active.",
+        title: "2/2 — Terminer une étape",
+        text: "Cliquez sur le cercle pour la marquer comme terminée. La suivante s'active.",
         cursorAction: { type: "click", target: ".tabs-row button:nth-child(3)" },
       },
     ],
@@ -268,6 +268,7 @@ export function WalkthroughPlayer({ C, walkthroughId, onFinish }: {
   return (
     <>
       <GuideCursor
+        key={`cursor-step-${step}`}
         action={currentStep.cursorAction}
         visible={!cursorDone}
         onComplete={handleCursorComplete}
@@ -302,7 +303,7 @@ export function WalkthroughPlayer({ C, walkthroughId, onFinish }: {
               <button onClick={() => { setStep((s) => s - 1); setCursorDone(false); }} style={{
                 padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
                 background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
-              }}>Pr\u00E9c\u00E9dent</button>
+              }}>Précédent</button>
             )}
             <button onClick={() => {
               if (step === total - 1) { onFinish(); } else { setStep((s) => s + 1); setCursorDone(false); }
@@ -412,15 +413,15 @@ export const ACTION_SUGGESTIONS: Record<string, { title: string; message: string
     ],
   },
   "mail-envoye": {
-    title: "Mail envoy\u00E9",
+    title: "Mail envoyé",
     message: "Et maintenant ?",
     options: [
-      { label: "Cr\u00E9er une t\u00E2che de relance", icon: ClipboardList, targetSelector: "[data-guide='tab-taches']" },
+      { label: "Créer une tâche de relance", icon: ClipboardList, targetSelector: "[data-guide='tab-taches']" },
       { label: "Voir l'historique", icon: ArrowUpRight, targetSelector: "[data-guide='historique']" },
     ],
   },
   "document-recu": {
-    title: "Document re\u00E7u",
+    title: "Document reçu",
     message: "Continuez la collecte :",
     options: [
       { label: "Relancer les docs manquants", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
