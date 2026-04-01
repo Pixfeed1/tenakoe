@@ -123,11 +123,13 @@ export function CRMShell({
   const C = dark ? DARK : LIGHT;
   const firstName = user.name.split(" ")[0];
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [navKey, setNavKey] = useState(0);
 
   // Sync URL with view
   const navigateTo = (v: View) => {
     setView(v);
     setActiveNav(v === "ClientDetail" ? activeNav : v);
+    setNavKey((k) => k + 1); // Force remount = fresh data
     const url = new URL(window.location.href);
     if (v === "ClientDetail") {
       url.searchParams.set("view", "ClientDetail");
@@ -298,15 +300,15 @@ export function CRMShell({
             onBack={() => navigateTo(activeNav as View)}
           />
         )}
-        {view === "Leads" && <LeadsView C={C} />}
-        {view === "Prospects" && <ProspectsView C={C} onSelectClient={openClient} />}
-        {view === "Clients" && <ClientsView C={C} onSelectClient={openClient} />}
-        {view === "Dossiers" && <DossiersView C={C} onSelectClient={openClient} />}
-        {view === "Transmissions" && <TransmissionsView C={C} />}
-        {view === "Documents" && <DocumentsView C={C} />}
-        {view === "Facturation" && <FacturationView C={C} onSelectClient={openClient} />}
-        {view === "Intégrations" && <IntegrationsView C={C} />}
-        {view === "Paramètres" && <ParametresView C={C} />}
+        {view === "Leads" && <LeadsView key={navKey} C={C} />}
+        {view === "Prospects" && <ProspectsView key={navKey} C={C} onSelectClient={openClient} />}
+        {view === "Clients" && <ClientsView key={navKey} C={C} onSelectClient={openClient} />}
+        {view === "Dossiers" && <DossiersView key={navKey} C={C} onSelectClient={openClient} />}
+        {view === "Transmissions" && <TransmissionsView key={navKey} C={C} />}
+        {view === "Documents" && <DocumentsView key={navKey} C={C} />}
+        {view === "Facturation" && <FacturationView key={navKey} C={C} onSelectClient={openClient} />}
+        {view === "Intégrations" && <IntegrationsView key={navKey} C={C} />}
+        {view === "Paramètres" && <ParametresView key={navKey} C={C} />}
       </main>
     </div>
     </GuideProvider>
