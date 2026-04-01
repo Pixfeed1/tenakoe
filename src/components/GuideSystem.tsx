@@ -55,6 +55,7 @@ export const TOOLTIPS: Record<string, { title: string; text: string; niveau: num
   "tab-historique": { title: "Historique complet", text: "Tous les échanges avec ce client : mails, SMS, appels, changements de statut, documents reçus.", niveau: 2 },
   upload: { title: "Uploader un fichier", text: "Glissez-déposez un fichier ici ou cliquez pour parcourir. PDF, images, Word, Excel (max 10 Mo).", niveau: 2 },
   "template-mail": { title: "Modèles de mail", text: "Choisissez un modèle pré-rempli pour gagner du temps. Vous pouvez personnaliser avant d'envoyer.", niveau: 3 },
+  "param-users": { title: "Gestion des accès", text: "Chaque chargée ne voit que ses dossiers. Les prescripteurs ont un accès en lecture seule limité.", niveau: 4 },
   "param-pipeline": { title: "Personnaliser le pipeline", text: "Ajoutez, renommez ou réorganisez les statuts par glisser-déposer. Archivez pour masquer sans perdre les données.", niveau: 4 },
   "param-templates": { title: "Modèles de mail", text: "Créez des modèles réutilisables. Ils apparaîtront dans le sélecteur lors de l'envoi d'un mail.", niveau: 4 },
   "param-tracks": { title: "Feuilles de route", text: "Créez des parcours types. Quand un prospect devient client, la feuille de route se génère automatiquement.", niveau: 4 },

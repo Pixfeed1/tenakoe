@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
+import { GuideTooltip } from "@/components/GuideSystem";
 
 type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "notifications" | "import" | "securite";
 
@@ -53,13 +54,13 @@ export function ParametresView({ C }: { C: Theme }) {
         ))}
       </div>
 
-      {tab === "utilisateurs" && <UsersTab C={C} />}
-      {tab === "pipeline" && <PipelineTab C={C} />}
+      {tab === "utilisateurs" && <GuideTooltip id="param-users" C={C}><UsersTab C={C} /></GuideTooltip>}
+      {tab === "pipeline" && <GuideTooltip id="param-pipeline" C={C}><PipelineTab C={C} /></GuideTooltip>}
       {tab === "prescripteurs" && <PrescripteursTab C={C} />}
-      {tab === "templates" && <MailTemplatesTab C={C} />}
-      {tab === "tracks" && <TracksTab C={C} />}
-      {tab === "documents" && <DocumentsTab C={C} />}
-      {tab === "notifications" && <NotificationsTab C={C} />}
+      {tab === "templates" && <GuideTooltip id="param-templates" C={C}><MailTemplatesTab C={C} /></GuideTooltip>}
+      {tab === "tracks" && <GuideTooltip id="param-tracks" C={C}><TracksTab C={C} /></GuideTooltip>}
+      {tab === "documents" && <GuideTooltip id="param-docs" C={C}><DocumentsTab C={C} /></GuideTooltip>}
+      {tab === "notifications" && <GuideTooltip id="param-notifs" C={C}><NotificationsTab C={C} /></GuideTooltip>}
       {tab === "import" && <ImportExportTab C={C} />}
       {tab === "securite" && <SecuriteTab C={C} />}
     </>

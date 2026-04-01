@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plug, ExternalLink, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronUp, Mail, Plus, Trash2, Check } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
+import { GuideTooltip } from "@/components/GuideSystem";
 
 interface IntegrationConfig {
   key: string;
@@ -240,12 +241,14 @@ export function IntegrationsView({ C }: { C: Theme }) {
 
   return (
     <>
+      <GuideTooltip id="integ-gmail" C={C}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
         <Plug size={18} color={C.blue} />
         <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
           {saved.filter((s) => s.actif).length} intégration{saved.filter((s) => s.actif).length > 1 ? "s" : ""} active{saved.filter((s) => s.actif).length > 1 ? "s" : ""}
         </span>
       </div>
+      </GuideTooltip>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {INTEGRATIONS.map((integ) => {

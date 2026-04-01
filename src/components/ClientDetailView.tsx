@@ -270,7 +270,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <GuideTooltip id="btn-mail" C={C}>
+        <div className="fiche-actions" style={{ display: "flex", gap: 8 }}>
           {[
             { Icon: Mail, label: "Envoyer mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); } },
             { Icon: MessageSquare, label: "SMS", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
@@ -289,6 +290,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             </button>
           ))}
         </div>
+        </GuideTooltip>
       </div>
 
       {/* Mail Composer */}
@@ -901,6 +903,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               e.target.value = "";
             }}
           />
+          <GuideTooltip id="upload" C={C}>
           <div
             style={{
               marginTop: 16, padding: 24, borderRadius: 12,
@@ -927,6 +930,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               {uploading ? "" : "ou cliquer pour parcourir — PDF, images, Word, Excel (max 10 Mo)"}
             </div>
           </div>
+          </GuideTooltip>
         </div>
       )}
 
