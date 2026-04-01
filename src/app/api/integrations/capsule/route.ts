@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     // 1. Import organisations
     let page = 1;
     let hasMore = true;
-    while (hasMore) {
+    while (hasMore && page <= 100) {
       const res = await fetch(`https://api.capsulecrm.com/api/v2/parties?type=organisation&page=${page}&perPage=100`, { headers });
       if (!res.ok) throw new Error(`Capsule API ${res.status}`);
       const data = await res.json();
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     setImportProgress("capsule", "Import des contacts...", 0, 1);
     page = 1;
     hasMore = true;
-    while (hasMore) {
+    while (hasMore && page <= 100) {
       const res = await fetch(`https://api.capsulecrm.com/api/v2/parties?type=person&page=${page}&perPage=100`, { headers });
       if (!res.ok) break;
       const data = await res.json();
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     setImportProgress("capsule", "Import des projets...", 0, 1);
     page = 1;
     hasMore = true;
-    while (hasMore) {
+    while (hasMore && page <= 100) {
       const res = await fetch(`https://api.capsulecrm.com/api/v2/opportunities?page=${page}&perPage=100`, { headers });
       if (!res.ok) break;
       const data = await res.json();
