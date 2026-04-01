@@ -172,7 +172,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           statutFacturation: data.statutFacturation || "",
           miseEnRelation: data.miseEnRelation || "SANS_OBJET",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
+          qualificationId: firstQualif?.id || "",
           formation: formations.length > 0 ? formations.join(", ") : "",
+          formationITI: firstQualif?.formationITI ? "true" : "false",
+          formationITE: firstQualif?.formationITE ? "true" : "false",
+          formationMenuiserie: firstQualif?.formationMenuiserie ? "true" : "false",
+          formationQUALIPAC: firstQualif?.formationQUALIPAC ? "true" : "false",
           chargee: firstProjet?.chargee?.prenom || "",
         });
       })
@@ -684,13 +689,53 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Statut", value: formatStatutPrise(entrepriseData?.statutPrise) },
               { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation) },
               { label: "Qualification", value: entrepriseData?.qualification || "—" },
-              { label: "Formation", value: entrepriseData?.formation || "—" },
             ].map((f, i) => (
-              <div key={`s${i}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < 3 ? `1px solid ${C.border}` : "none" }}>
+              <div key={`s${i}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
                 <span style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
                 <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
               </div>
             ))}
+            {/* Formations checkboxes */}
+            <div style={{ padding: "10px 0" }}>
+              <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8 }}>Formations</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {[
+                  { key: "formationITI", label: "ITI" },
+                  { key: "formationITE", label: "ITE" },
+                  { key: "formationMenuiserie", label: "Menuiserie" },
+                  { key: "formationQUALIPAC", label: "QUALIPAC" },
+                ].map((f) => {
+                  const checked = entrepriseData?.[f.key] === "true";
+                  return (
+                    <label key={f.key} onClick={async () => {
+                      if (!entrepriseData?.qualificationId) return;
+                      const newVal = !checked;
+                      setEntrepriseData((prev) => prev ? { ...prev, [f.key]: String(newVal) } : prev);
+                      fetch(`/api/qualifications/${entrepriseData.qualificationId}`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ [f.key]: newVal }),
+                      }).catch(() => {});
+                    }} style={{
+                      display: "flex", alignItems: "center", gap: 6, padding: "5px 12px",
+                      borderRadius: 8, cursor: entrepriseData?.qualificationId ? "pointer" : "default",
+                      background: checked ? C.accentDim : C.bg,
+                      border: `1px solid ${checked ? C.accent + "40" : C.border}`,
+                      transition: "all 0.15s",
+                    }}>
+                      <div style={{
+                        width: 14, height: 14, borderRadius: 3,
+                        border: `2px solid ${checked ? C.accent : C.border}`,
+                        background: checked ? C.accent : "transparent",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {checked && <Check size={9} color="#fff" strokeWidth={3} />}
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.textMuted }}>{f.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Projets */}
