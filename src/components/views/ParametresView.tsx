@@ -717,8 +717,50 @@ function NotificationsTab({ C }: { C: Theme }) {
     relance48h: true, retardTache: true, retardEtape: true,
     docManquant: true, rappelEmail: true, delaiDocJours: 15,
   });
+  const [loaded, setLoaded] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const toggle = (key: string) => setSettings((p) => ({ ...p, [key]: !p[key as keyof typeof p] }));
+  // Load from BDD
+  useEffect(() => {
+    fetch("/api/parametres")
+      .then((r) => r.ok ? r.json() : [])
+      .then((params: Array<{ cle: string; valeur: string }>) => {
+        const map: Record<string, string> = {};
+        params.forEach((p) => { map[p.cle] = p.valeur; });
+        setSettings({
+          relance48h: map.notif_relance48h !== "false",
+          retardTache: map.notif_retardTache !== "false",
+          retardEtape: map.notif_retardEtape !== "false",
+          docManquant: map.notif_docManquant !== "false",
+          rappelEmail: map.notif_rappelEmail !== "false",
+          delaiDocJours: parseInt(map.notif_delaiDocJours || "15") || 15,
+        });
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, []);
+
+  // Save to BDD
+  const saveSettings = (newSettings: typeof settings) => {
+    setSettings(newSettings);
+    setSaved(false);
+    const entries = [
+      { cle: "notif_relance48h", valeur: String(newSettings.relance48h) },
+      { cle: "notif_retardTache", valeur: String(newSettings.retardTache) },
+      { cle: "notif_retardEtape", valeur: String(newSettings.retardEtape) },
+      { cle: "notif_docManquant", valeur: String(newSettings.docManquant) },
+      { cle: "notif_rappelEmail", valeur: String(newSettings.rappelEmail) },
+      { cle: "notif_delaiDocJours", valeur: String(newSettings.delaiDocJours) },
+    ];
+    Promise.all(entries.map((e) =>
+      fetch("/api/parametres", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(e) })
+    )).then(() => setSaved(true)).catch(() => {});
+  };
+
+  const toggle = (key: string) => {
+    const next = { ...settings, [key]: !settings[key as keyof typeof settings] };
+    saveSettings(next);
+  };
 
   const alertTypes = [
     { key: "relance48h", label: "Relance 48h", desc: "Alerte quand un prospect n'est pas contacté sous 48h" },
@@ -730,7 +772,10 @@ function NotificationsTab({ C }: { C: Theme }) {
 
   return (
     <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-      <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Configuration des alertes</h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Configuration des alertes</h3>
+        {saved && <span style={{ fontSize: 11, color: C.accentText, fontWeight: 600 }}>Enregistré</span>}
+      </div>
       {alertTypes.map((a) => (
         <div key={a.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 8px", borderBottom: `1px solid ${C.border}` }}>
           <div>
@@ -750,8 +795,11 @@ function NotificationsTab({ C }: { C: Theme }) {
       ))}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
         <span style={{ fontSize: 13, color: C.text }}>Délai documents manquants :</span>
-        <input type="number" value={settings.delaiDocJours} onChange={(e) => setSettings({ ...settings, delaiDocJours: parseInt(e.target.value) || 15 })}
-          style={{ ...inputStyle(C), width: 70 }} /> <span style={{ fontSize: 12, color: C.textDim }}>jours</span>
+        <input type="number" value={settings.delaiDocJours}
+          onChange={(e) => { const v = parseInt(e.target.value) || 15; setSettings({ ...settings, delaiDocJours: v }); }}
+          onBlur={() => saveSettings(settings)}
+          style={{ ...inputStyle(C), width: 70 }} />
+        <span style={{ fontSize: 12, color: C.textDim }}>jours</span>
       </div>
     </div>
   );
