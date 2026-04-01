@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Zap, Plus, Check, X, ChevronDown, Building2, Mail, Phone, MapPin,
+  Zap, Plus, Check, X, ChevronDown, Building2, Mail, Phone, MapPin, Edit3,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -37,6 +37,8 @@ export function LeadsView({ C }: { C: Theme }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [converting, setConverting] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ nomArtisan: "", prenomArtisan: "", nomEntreprise: "", email: "", telephone: "" });
 
   // Form state
   const [form, setForm] = useState({
@@ -226,7 +228,8 @@ export function LeadsView({ C }: { C: Theme }) {
             </thead>
             <tbody>
               {leads.map((lead) => (
-                <tr key={lead.id} style={{ borderBottom: `1px solid ${C.border}`, transition: "background 0.15s" }}
+                <React.Fragment key={lead.id}>
+                <tr style={{ borderBottom: `1px solid ${C.border}`, transition: "background 0.15s" }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                 >
@@ -255,11 +258,27 @@ export function LeadsView({ C }: { C: Theme }) {
                     {new Date(lead.createdAt).toLocaleDateString("fr-FR")}
                   </td>
                   <td style={{ padding: "12px 14px" }}>
+                    <div style={{ display: "flex", gap: 4 }}>
+                    <button
+                      onClick={() => {
+                        if (editingId === lead.id) { setEditingId(null); return; }
+                        setEditingId(lead.id);
+                        setEditForm({ nomArtisan: lead.nomArtisan, prenomArtisan: lead.prenomArtisan, nomEntreprise: lead.nomEntreprise || "", email: lead.email || "", telephone: lead.telephone || "" });
+                      }}
+                      style={{
+                        padding: "5px 10px", borderRadius: 8, border: "none",
+                        background: editingId === lead.id ? C.blueDim : C.surfaceHover,
+                        color: editingId === lead.id ? C.blue : C.textDim, fontSize: 12,
+                        fontWeight: 600, cursor: "pointer",
+                      }}
+                    >
+                      <Edit3 size={12} />
+                    </button>
                     <button
                       onClick={() => convertLead(lead)}
                       disabled={converting === lead.id}
                       style={{
-                        padding: "5px 12px", borderRadius: 8, border: "none",
+                        padding: "5px 10px", borderRadius: 8, border: "none",
                         background: C.accentDim, color: C.accentText, fontSize: 12,
                         fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
                       }}
@@ -279,8 +298,41 @@ export function LeadsView({ C }: { C: Theme }) {
                     >
                       Suppr.
                     </button>
+                    </div>
                   </td>
                 </tr>
+                {editingId === lead.id && (
+                  <tr style={{ background: C.bg }}>
+                    <td colSpan={7} style={{ padding: "12px 14px" }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <input placeholder="Prénom" value={editForm.prenomArtisan} onChange={(e) => setEditForm({ ...editForm, prenomArtisan: e.target.value })}
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 120 }} />
+                        <input placeholder="Nom" value={editForm.nomArtisan} onChange={(e) => setEditForm({ ...editForm, nomArtisan: e.target.value })}
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 120 }} />
+                        <input placeholder="Entreprise" value={editForm.nomEntreprise} onChange={(e) => setEditForm({ ...editForm, nomEntreprise: e.target.value })}
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 140 }} />
+                        <input placeholder="Email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 160 }} />
+                        <input placeholder="Téléphone" value={editForm.telephone} onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })}
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 120 }} />
+                        <button onClick={async () => {
+                          await fetch(`/api/leads/${lead.id}`, {
+                            method: "PATCH", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(editForm),
+                          });
+                          setEditingId(null);
+                          fetchLeads();
+                        }} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                          Enregistrer
+                        </button>
+                        <button onClick={() => setEditingId(null)} style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>
+                          Annuler
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
