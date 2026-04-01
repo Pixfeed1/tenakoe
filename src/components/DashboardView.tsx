@@ -10,7 +10,8 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ActivityFeed } from "@/components/ActivityFeed";
-import { GuideTooltip } from "@/components/GuideSystem";
+import { GuideTooltip, useGuide } from "@/components/GuideSystem";
+import { isDemo, demoBadgeStyle, demoCardStyle, injectDemoItems, DEMO_PIPELINE_ITEMS, handleDemoAction } from "@/lib/demo";
 import type { PipelineColumn, PipelineItem, Client } from "@/lib/data";
 
 interface ServerStats {
@@ -105,6 +106,13 @@ export function DashboardView({
       dstCol.items.push(item);
       return next;
     });
+
+    // Demo items: visual move only, no API call
+    if (itemId.startsWith("demo-")) {
+      handleDemoAction("Changement de statut");
+      setDragOver(null); setDragging(null);
+      return;
+    }
 
     // Persist status change via API — use pipelineType from column data
     const targetCol = pipeline.find((c) => c.id === targetColId);
@@ -244,7 +252,9 @@ export function DashboardView({
                 </span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
-                {(expandedCols[col.id] ? col.items : col.items.slice(0, PIPELINE_MAX)).map((item) => (
+                {(expandedCols[col.id] ? col.items : col.items.slice(0, PIPELINE_MAX)).map((item) => {
+                  const demo = isDemo(item);
+                  return (
                   <div
                     key={item.id}
                     draggable
@@ -254,21 +264,24 @@ export function DashboardView({
                       border: `1px solid ${C.border}`, cursor: "grab",
                       borderLeft: `3px solid ${col.colorKey}`,
                       boxShadow: C.shadow, transition: "all 0.15s", userSelect: "none",
+                      ...(demo ? demoCardStyle : {}),
                     }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadowHover; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadow; }}
-                    onClick={() => onSelectClient(item)}
+                    onClick={() => { if (demo) { handleDemoAction("Ouverture fiche"); return; } onSelectClient(item); }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                       <GripVertical size={12} color={C.textDim} />
                       <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{item.nom}</span>
+                      {demo && <span style={demoBadgeStyle}>DÉMO</span>}
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ fontSize: 11, color: C.textDim }}>{item.chargee} · {item.prescripteur}</span>
                       <span style={{ fontSize: 11, color: C.textDim }}>{item.date}</span>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
                 {col.items.length > PIPELINE_MAX && !expandedCols[col.id] && (
                   <button onClick={() => setExpandedCols((p) => ({ ...p, [col.id]: true }))} style={{
                     padding: "8px 0", borderRadius: 8, border: `1px dashed ${C.border}`,

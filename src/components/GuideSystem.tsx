@@ -81,6 +81,7 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
   const [loaded, setLoaded] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState<string | null>(null);
   const [activeWalkthrough, setActiveWalkthrough] = useState<string | null>(null);
+  const [demoNotif, setDemoNotif] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/guide")
@@ -113,6 +114,15 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
     setTourStep(0);
   };
 
+  // Wire demo notification callback
+  useEffect(() => {
+    const { setDemoNotificationCallback } = require("@/lib/demo");
+    setDemoNotificationCallback((msg: string) => {
+      setDemoNotif(msg);
+      setTimeout(() => setDemoNotif(null), 2500);
+    });
+  }, []);
+
   if (!loaded) return <>{children}</>;
 
   return (
@@ -140,6 +150,18 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
         const { WalkthroughPlayer } = require("@/components/GuideCursorSystem");
         return <WalkthroughPlayer C={C} walkthroughId={activeWalkthrough} onFinish={() => setActiveWalkthrough(null)} />;
       })()}
+      {demoNotif && (
+        <div style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          padding: "10px 20px", borderRadius: 10,
+          background: C.surface, border: `1px solid ${C.accent}40`,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 10001,
+          fontSize: 13, fontWeight: 600, color: C.accentText,
+          animation: "guideSlideIn 0.2s ease",
+        }}>
+          {demoNotif}
+        </div>
+      )}
     </GuideContext.Provider>
   );
 }
