@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Mail, MessageSquare, FileText, RefreshCw, Zap, Phone,
-  Filter, X, ChevronDown, Search,
+  Filter, X, ChevronDown, Search, ArrowUpRight, ArrowDownLeft,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -266,7 +266,7 @@ export function ActivityFeed({ C, compact = false }: ActivityFeedProps) {
                       bg={a.direction === "SORTANT" ? C.accentDim : C.blueDim}
                       style={{ fontSize: 10 }}
                     >
-                      {a.direction === "SORTANT" ? "↗ Envoyé" : "↙ Reçu"}
+                      {a.direction === "SORTANT" ? <><ArrowUpRight size={10} /> Envoyé</> : <><ArrowDownLeft size={10} /> Reçu</>}
                     </Badge>
                   )}
                 </div>

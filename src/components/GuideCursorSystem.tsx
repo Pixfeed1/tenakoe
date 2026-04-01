@@ -15,48 +15,69 @@ export function GuideCursor({
   targetSelector: string | null;
   visible: boolean;
 }) {
-  const [startPos] = useState({ x: typeof window !== "undefined" ? window.innerWidth / 2 : 400, y: typeof window !== "undefined" ? window.innerHeight / 2 : 300 });
-  const [targetPos, setTargetPos] = useState<{ x: number; y: number } | null>(null);
-  const [tapping, setTapping] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [phase, setPhase] = useState<"hidden" | "at-start" | "moving" | "arrived">("hidden");
+  const [startX, setStartX] = useState(0);
+  const [startY, setStartY] = useState(0);
+  const [endX, setEndX] = useState(0);
+  const [endY, setEndY] = useState(0);
 
   useEffect(() => {
-    if (!visible || !targetSelector) { setTargetPos(null); setMounted(false); return; }
+    if (!visible || !targetSelector) { setPhase("hidden"); return; }
     const el = document.querySelector(targetSelector);
-    if (!el) return;
+    if (!el) { setPhase("hidden"); return; }
+
     const rect = el.getBoundingClientRect();
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    const tx = rect.left + rect.width / 2;
+    const ty = rect.top + rect.height / 2;
 
-    // Step 1: mount at center (startPos), targetPos = null so it renders at startPos
-    setTargetPos(null);
-    setMounted(true);
+    setStartX(cx);
+    setStartY(cy);
+    setEndX(tx);
+    setEndY(ty);
 
-    // Step 2: after browser paints the cursor at center, move to target (triggers CSS transition)
-    const moveTimer = setTimeout(() => {
-      setTargetPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-    }, 80);
+    // Phase 1: appear at center
+    setPhase("at-start");
 
-    // Step 3: tap animation when cursor arrives
-    const t1 = setTimeout(() => setTapping(true), 1300);
-    const t2 = setTimeout(() => setTapping(false), 1700);
-    return () => { clearTimeout(moveTimer); clearTimeout(t1); clearTimeout(t2); };
+    // Phase 2: start moving after browser renders
+    const t1 = setTimeout(() => setPhase("moving"), 150);
+
+    // Phase 3: arrived (tap)
+    const t2 = setTimeout(() => setPhase("arrived"), 1400);
+
+    // Phase 4: hide after tap
+    const t3 = setTimeout(() => setPhase("hidden"), 2200);
+
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [targetSelector, visible]);
 
-  if (!visible || !mounted) return null;
+  if (phase === "hidden") return null;
 
-  const pos = targetPos || startPos;
+  const x = phase === "at-start" ? startX : endX;
+  const y = phase === "at-start" ? startY : endY;
+  const isTapping = phase === "arrived";
 
   return (
     <>
       <svg
-        className={`guide-cursor ${tapping ? "guide-cursor-tap" : ""}`}
-        style={{ left: pos.x, top: pos.y }}
-        viewBox="0 0 24 24" width="24" height="24"
+        width="28" height="28" viewBox="0 0 24 24"
+        style={{
+          position: "fixed",
+          left: x - 4,
+          top: y - 4,
+          zIndex: 10000,
+          pointerEvents: "none",
+          filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+          transition: phase === "moving" || phase === "arrived" ? "left 1.2s cubic-bezier(0.4, 0, 0.2, 1), top 1.2s cubic-bezier(0.4, 0, 0.2, 1)" : "none",
+          transform: isTapping ? "scale(0.85)" : "scale(1)",
+        }}
       >
         <path d="M4 0 L4 20 L9 15 L14 22 L17 20 L12 13 L19 13 Z"
           fill="#16a34a" stroke="#fff" strokeWidth="1.5" />
       </svg>
-      {targetPos && (
-        <div className="guide-target-ring" style={{ left: targetPos.x - 20, top: targetPos.y - 20 }} />
+      {(phase === "moving" || phase === "arrived") && (
+        <div className="guide-target-ring" style={{ left: endX - 20, top: endY - 20 }} />
       )}
     </>
   );

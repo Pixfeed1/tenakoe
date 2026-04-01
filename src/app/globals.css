@@ -56,24 +56,7 @@ body {
   to { opacity: 1; }
 }
 
-/* Guide cursor */
-.guide-cursor {
-  position: fixed;
-  z-index: 10000;
-  pointer-events: none;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-  transition: left 1.2s cubic-bezier(0.4, 0, 0.2, 1), top 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.guide-cursor-tap {
-  animation: cursorTap 0.4s ease-in-out;
-}
-
-@keyframes cursorTap {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.85); }
-  100% { transform: scale(1); }
-}
+/* Guide cursor — target ring only, cursor uses inline styles */
 
 .guide-target-ring {
   position: fixed;
