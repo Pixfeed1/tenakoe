@@ -60,7 +60,7 @@ export function setDemoNotificationCallback(cb: (msg: string) => void) {
 
 export function handleDemoAction(actionName: string): boolean {
   if (demoNotificationCallback) {
-    demoNotificationCallback(`✅ ${actionName} (mode démo — données simulées)`);
+    demoNotificationCallback(`${actionName} (mode démo — données simulées)`);
   }
   return true; // Action handled as demo
 }

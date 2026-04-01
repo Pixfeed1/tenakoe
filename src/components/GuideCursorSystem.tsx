@@ -25,14 +25,20 @@ export function GuideCursor({
     const el = document.querySelector(targetSelector);
     if (!el) return;
     const rect = el.getBoundingClientRect();
+
+    // Step 1: mount at center (startPos), targetPos = null so it renders at startPos
+    setTargetPos(null);
     setMounted(true);
-    // Small delay so transition works from start position
-    requestAnimationFrame(() => {
+
+    // Step 2: after browser paints the cursor at center, move to target (triggers CSS transition)
+    const moveTimer = setTimeout(() => {
       setTargetPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-    });
-    const t1 = setTimeout(() => setTapping(true), 1200);
-    const t2 = setTimeout(() => setTapping(false), 1600);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    }, 80);
+
+    // Step 3: tap animation when cursor arrives
+    const t1 = setTimeout(() => setTapping(true), 1300);
+    const t2 = setTimeout(() => setTapping(false), 1700);
+    return () => { clearTimeout(moveTimer); clearTimeout(t1); clearTimeout(t2); };
   }, [targetSelector, visible]);
 
   if (!visible || !mounted) return null;
