@@ -10,6 +10,7 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { GuideTooltip } from "@/components/GuideSystem";
 import type { PipelineColumn, PipelineItem, Client } from "@/lib/data";
 
 interface ServerStats {
@@ -123,7 +124,8 @@ export function DashboardView({
   return (
     <>
       {/* Stats */}
-      <div data-guide="kpi" style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
+      <GuideTooltip id="kpi" C={C} style={{ marginBottom: 24 }}>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         {STATS.map((s, i) => (
           <div
             key={i}
@@ -164,6 +166,7 @@ export function DashboardView({
           </div>
         ))}
       </div>
+      </GuideTooltip>
 
       {/* Alert Banner */}
       {(() => {
@@ -194,7 +197,8 @@ export function DashboardView({
       })()}
 
       {/* Pipeline */}
-      <div data-guide="pipeline" style={{ marginBottom: 28 }}>
+      <GuideTooltip id="pipeline" C={C} style={{ marginBottom: 28 }}>
+      <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>
             Pipeline prospects
@@ -272,6 +276,7 @@ export function DashboardView({
           ))}
         </div>
       </div>
+      </GuideTooltip>
 
       {/* Bottom Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20 }}>

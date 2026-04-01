@@ -12,9 +12,10 @@ interface GuideContextType {
   active: boolean;
   niveau: number;
   toggle: () => void;
+  startTour: () => void;
 }
 
-const GuideContext = createContext<GuideContextType>({ active: false, niveau: 1, toggle: () => {} });
+const GuideContext = createContext<GuideContextType>({ active: false, niveau: 1, toggle: () => {}, startTour: () => {} });
 export const useGuide = () => useContext(GuideContext);
 
 // ========================
@@ -109,7 +110,7 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
   if (!loaded) return <>{children}</>;
 
   return (
-    <GuideContext.Provider value={{ active, niveau, toggle }}>
+    <GuideContext.Provider value={{ active, niveau, toggle, startTour: () => { setShowTour(true); setTourStep(0); } }}>
       {children}
       {showWelcome && <WelcomeModal C={C} onFinish={finishWelcome} />}
       {showTour && <GuidedTour C={C} step={tourStep} onNext={() => setTourStep((s) => s + 1)} onPrev={() => setTourStep((s) => s - 1)} onFinish={finishTour} />}

@@ -19,7 +19,7 @@ import { ParametresView } from "@/components/views/ParametresView";
 import { IntegrationsView } from "@/components/views/IntegrationsView";
 import { AlertesDropdown } from "@/components/AlertesDropdown";
 import { useGuide } from "@/components/GuideSystem";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, ChevronRight } from "lucide-react";
 import type { PipelineColumn, Client, Activite } from "@/lib/data";
 
 type View =
@@ -299,18 +299,52 @@ export function CRMShell({
 
 function GuideToggleButton({ C }: { C: Theme }) {
   const guide = useGuide();
+  const [open, setOpen] = useState(false);
+
   return (
-    <button
-      onClick={guide.toggle}
-      style={{
-        width: 38, height: 38, borderRadius: 10,
-        border: `1px solid ${guide.active ? C.accent + "60" : C.border}`,
-        background: guide.active ? C.accentDim : C.surface,
-        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-      }}
-      title={guide.active ? "Désactiver le mode guidé" : "Activer le mode guidé"}
-    >
-      <Lightbulb size={16} color={guide.active ? C.accent : C.textMuted} fill={guide.active ? C.accent : "none"} />
-    </button>
+    <div style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: 38, height: 38, borderRadius: 10,
+          border: `1px solid ${guide.active ? C.accent + "60" : C.border}`,
+          background: guide.active ? C.accentDim : C.surface,
+          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+        title="Mode guidé"
+      >
+        <Lightbulb size={16} color={guide.active ? C.accent : C.textMuted} fill={guide.active ? C.accent : "none"} />
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", top: 44, right: 0, width: 220,
+          background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`,
+          boxShadow: C.shadowHover, zIndex: 100, overflow: "hidden",
+        }}>
+          <button onClick={() => { guide.toggle(); setOpen(false); }} style={{
+            width: "100%", padding: "12px 16px", border: "none", background: "transparent",
+            color: C.text, fontSize: 13, cursor: "pointer", textAlign: "left",
+            display: "flex", alignItems: "center", gap: 8, transition: "background 0.15s",
+          }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+          >
+            <Lightbulb size={14} color={guide.active ? C.accent : C.textDim} />
+            {guide.active ? "Désactiver le mode guidé" : "Activer le mode guidé"}
+          </button>
+          <button onClick={() => { guide.startTour(); setOpen(false); }} style={{
+            width: "100%", padding: "12px 16px", border: "none", borderTop: `1px solid ${C.border}`,
+            background: "transparent", color: C.text, fontSize: 13, cursor: "pointer", textAlign: "left",
+            display: "flex", alignItems: "center", gap: 8, transition: "background 0.15s",
+          }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+          >
+            <ChevronRight size={14} color={C.blue} />
+            Relancer le tour guidé
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
