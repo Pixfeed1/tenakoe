@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FolderOpen, Search, ChevronRight, Plus, X } from "lucide-react";
+import { FolderOpen, Search, ChevronRight, Plus, X, Archive } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -27,6 +27,7 @@ export function DossiersView({ C, onSelectClient }: { C: Theme; onSelectClient: 
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [newProjet, setNewProjet] = useState({ nom: "", entrepriseId: "", qualification: "" });
 
   useEffect(() => {
@@ -39,9 +40,12 @@ export function DossiersView({ C, onSelectClient }: { C: Theme; onSelectClient: 
     return () => window.removeEventListener("tenakoe:new-dossier", handler);
   }, []);
 
-  const filtered = projets.filter((p) =>
-    !search || p.nom.toLowerCase().includes(search.toLowerCase()) || p.entreprise.nom.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = projets.filter((p) => {
+    if (!showArchived && (p as Projet & { archive?: boolean }).archive) return false;
+    if (showArchived && !(p as Projet & { archive?: boolean }).archive) return false;
+    if (search && !p.nom.toLowerCase().includes(search.toLowerCase()) && !p.entreprise.nom.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   return (
     <>
@@ -54,6 +58,15 @@ export function DossiersView({ C, onSelectClient }: { C: Theme; onSelectClient: 
           <input placeholder="Rechercher un dossier..." value={search} onChange={(e) => setSearch(e.target.value)}
             style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
         </div>
+        <button onClick={() => setShowArchived(!showArchived)} style={{
+          padding: "8px 14px", borderRadius: 10,
+          border: `1px solid ${showArchived ? C.warning : C.border}`,
+          background: showArchived ? C.warningDim : C.surface,
+          color: showArchived ? C.warning : C.textMuted, fontSize: 13, cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+        }}>
+          <Archive size={13} /> {showArchived ? "Archivés" : "Voir archivés"}
+        </button>
       </div>
 
       {showAdd && (
