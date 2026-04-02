@@ -59,11 +59,16 @@ export async function PATCH(
     });
   }
 
-  // Auto-conversion en client quand FACTURE_PAYEE
-  if (statutFacturation === "FACTURE_PAYEE" && oldFacturation !== "FACTURE_PAYEE") {
+  // Auto-conversion via config dynamique (declencheConversion)
+  if (statutFacturation && statutFacturation !== oldFacturation) {
     try {
-      const { convertToClient } = await import("@/lib/conversion");
-      await convertToClient(id);
+      const statutConfig = await prisma.statutFacturationConfig.findFirst({
+        where: { code: statutFacturation },
+      });
+      if (statutConfig?.declencheConversion) {
+        const { convertToClient } = await import("@/lib/conversion");
+        await convertToClient(id);
+      }
     } catch {
       // Conversion non-bloquante
     }

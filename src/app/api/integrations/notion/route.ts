@@ -364,7 +364,7 @@ export async function POST(request: NextRequest) {
             prescripteur,
             depot: artisan.depot,
             numeroCarte: artisan.numeroCarte,
-            statutPrise: statutPrise as never,
+            statutPrise,
             dejaReferentRGE: artisan.referentRGE,
             sourceImport: "NOTION",
             sourceId,

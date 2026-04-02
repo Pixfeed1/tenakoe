@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { TypeQualification } from "@prisma/client";
 
 /**
  * Convertit un prospect en client quand le statut passe à FACTURE_PAYEE.
@@ -55,7 +56,7 @@ export async function convertToClient(entrepriseId: string) {
     // Spécifiques à la qualification
     if (qualification) {
       const specifiques = await prisma.documentTemplate.findMany({
-        where: { type: "SPECIFIQUE", qualification: qualification as never },
+        where: { type: "SPECIFIQUE", qualification: qualification as TypeQualification },
         orderBy: { ordre: "asc" },
       });
 
@@ -66,7 +67,7 @@ export async function convertToClient(entrepriseId: string) {
             type: "SPECIFIQUE",
             entrepriseId,
             projetId: projet.id,
-            qualificationAssociee: qualification as never,
+            qualificationAssociee: qualification as TypeQualification,
             dateDemande: new Date(),
           },
         });

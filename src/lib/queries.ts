@@ -81,9 +81,8 @@ export async function getPipelineData(user?: CurrentUser | null) {
     items: mapItems((e) => e.statutPrise === col.code),
   }));
 
-  // Facturation columns (only show main ones in pipeline)
+  // Facturation columns (all active statuts from config)
   const factColumns = statutsFactConfig
-    .filter((col) => ["DEVIS_ENVOYE", "DEVIS_SIGNE", "FACTURE_ENVOYEE", "FACTURE_PAYEE"].includes(col.code))
     .map((col) => ({
       id: col.code.toLowerCase(),
       status: col.nom,

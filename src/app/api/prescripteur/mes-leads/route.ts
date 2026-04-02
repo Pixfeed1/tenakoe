@@ -14,7 +14,7 @@ export async function GET() {
 
   const entreprises = await prisma.entreprise.findMany({
     where: {
-      prescripteur: user.prescripteurType as never,
+      prescripteur: user.prescripteurType,
       archive: false,
     },
     include: {

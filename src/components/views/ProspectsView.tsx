@@ -18,16 +18,24 @@ interface Entreprise {
   projets: Array<{ chargee: { prenom: string } | null }>;
 }
 
-const STATUT_LABELS: Record<string, string> = {
+// Fallback labels/colors if config not loaded yet
+const FALLBACK_LABELS: Record<string, string> = {
   NOUVEAU: "Nouveau",
   PRISE_EN_CHARGE: "Prise en charge",
-  PRISE_EN_CHARGE_A_RELANCER: "À relancer",
+  PRISE_EN_CHARGE_A_RELANCER: "A relancer",
 };
-const STATUT_COLORS: Record<string, { color: string; bg: string }> = {
+const FALLBACK_COLORS: Record<string, { color: string; bg: string }> = {
   NOUVEAU: { color: "blue", bg: "blueDim" },
   PRISE_EN_CHARGE: { color: "accent", bg: "accentDim" },
   PRISE_EN_CHARGE_A_RELANCER: { color: "warning", bg: "warningDim" },
 };
+
+interface StatutConfig {
+  code: string;
+  nom: string;
+  couleur: string;
+  actif: boolean;
+}
 
 export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient: (c: { id: string; nom: string; siret?: string; prescripteur?: string }) => void }) {
   const [entreprises, setEntreprises] = useState<Entreprise[]>([]);
@@ -35,6 +43,15 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [statutsPrise, setStatutsPrise] = useState<StatutConfig[]>([]);
+
+  // Load dynamic statuts config
+  useEffect(() => {
+    fetch("/api/pipeline-config")
+      .then((r) => r.json())
+      .then((data) => { if (data.statutsPrise) setStatutsPrise(data.statutsPrise.filter((s: StatutConfig) => s.actif)); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -47,9 +64,24 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
       .catch(() => setLoading(false));
   }, [search, filterStatut, showArchived]);
 
+  // Build labels/colors maps from dynamic config
+  const statutLabels: Record<string, string> = {};
+  const statutColors: Record<string, { color: string; bg: string }> = {};
+  const priseCodeSet = new Set<string>();
+  for (const s of statutsPrise) {
+    statutLabels[s.code] = s.nom;
+    priseCodeSet.add(s.code);
+    // Map couleur hex to theme key (best-effort)
+    const cMap = colorToThemeKey(s.couleur);
+    statutColors[s.code] = cMap;
+  }
+  // Merge fallbacks
+  for (const [k, v] of Object.entries(FALLBACK_LABELS)) { if (!statutLabels[k]) statutLabels[k] = v; priseCodeSet.add(k); }
+  for (const [k, v] of Object.entries(FALLBACK_COLORS)) { if (!statutColors[k]) statutColors[k] = v; }
+
   const prospects = entreprises.filter((e) =>
     !((e as Entreprise & { estClient?: boolean }).estClient) &&
-    ["NOUVEAU", "PRISE_EN_CHARGE", "PRISE_EN_CHARGE_A_RELANCER"].includes(e.statutPrise)
+    priseCodeSet.has(e.statutPrise)
   );
 
   return (
@@ -81,9 +113,9 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
           }}
         >
           <option value="">Tous les statuts</option>
-          <option value="NOUVEAU">Nouveau</option>
-          <option value="PRISE_EN_CHARGE">Prise en charge</option>
-          <option value="PRISE_EN_CHARGE_A_RELANCER">À relancer</option>
+          {(statutsPrise.length > 0 ? statutsPrise : [{ code: "NOUVEAU", nom: "Nouveau" }, { code: "PRISE_EN_CHARGE", nom: "Prise en charge" }, { code: "PRISE_EN_CHARGE_A_RELANCER", nom: "A relancer" }]).map((s) => (
+            <option key={s.code} value={s.code}>{s.nom}</option>
+          ))}
         </select>
         <button onClick={() => setShowArchived(!showArchived)} style={{
           padding: "8px 14px", borderRadius: 10,
@@ -98,9 +130,9 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-        {Object.entries(STATUT_LABELS).map(([key, label]) => {
+        {Object.entries(statutLabels).map(([key, label]) => {
           const count = entreprises.filter((e) => e.statutPrise === key).length;
-          const colors = STATUT_COLORS[key];
+          const colors = statutColors[key] || FALLBACK_COLORS.NOUVEAU;
           return (
             <div key={key} style={{
               padding: "12px 20px", borderRadius: 12, background: C.surface,
@@ -133,7 +165,7 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
             </thead>
             <tbody>
               {prospects.map((e) => {
-                const colors = STATUT_COLORS[e.statutPrise] || STATUT_COLORS.NOUVEAU;
+                const colors = statutColors[e.statutPrise] || FALLBACK_COLORS.NOUVEAU;
                 return (
                   <tr key={e.id} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.15s" }}
                     onMouseEnter={(ev) => { (ev.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
@@ -148,7 +180,7 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
                     </td>
                     <td style={{ padding: "12px 14px" }}>
                       <Badge color={C[colors.color as keyof Theme] as string} bg={C[colors.bg as keyof Theme] as string}>
-                        {STATUT_LABELS[e.statutPrise] || e.statutPrise}
+                        {statutLabels[e.statutPrise] || e.statutPrise}
                       </Badge>
                     </td>
                     <td style={{ padding: "12px 14px", fontSize: 12, color: C.textDim }}>
@@ -163,4 +195,15 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
       </div>
     </>
   );
+}
+
+function colorToThemeKey(hex: string): { color: string; bg: string } {
+  const map: Record<string, { color: string; bg: string }> = {
+    "#3b82f6": { color: "blue", bg: "blueDim" },
+    "#16a34a": { color: "accent", bg: "accentDim" },
+    "#ef4444": { color: "danger", bg: "dangerDim" },
+    "#d97706": { color: "warning", bg: "warningDim" },
+    "#7c3aed": { color: "purple", bg: "purpleDim" },
+  };
+  return map[hex] || { color: "blue", bg: "blueDim" };
 }

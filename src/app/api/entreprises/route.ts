@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
           { email: { contains: search, mode: "insensitive" } },
         ],
       }),
-      ...(statut && { statutPrise: statut as never }),
+      ...(statut && { statutPrise: statut }),
     },
     include: {
       contacts: true,

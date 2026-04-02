@@ -83,8 +83,8 @@ model Entreprise {
   depot              String?
   interesseTNK       InteretTNK?        @default(NSP)
   miseEnRelation     MiseEnRelation?    @default(SANS_OBJET)
-  statutPrise        StatutPrise        @default(NOUVEAU)
-  statutFacturation  StatutFacturation? @default(DEVIS_A_FAIRE)
+  statutPrise        String             @default("NOUVEAU")
+  statutFacturation  String?            @default("DEVIS_A_FAIRE")
   dejaReferentRGE    Boolean            @default(false)
   estClient          Boolean            @default(false)
   archive            Boolean            @default(false)
@@ -131,25 +131,6 @@ model StatutFacturationConfig {
   updatedAt           DateTime @updatedAt
 }
 
-// Keep enums for backward compat (used as string values in Entreprise)
-enum StatutPrise {
-  NOUVEAU
-  PRISE_EN_CHARGE
-  PRISE_EN_CHARGE_A_RELANCER
-}
-
-enum StatutFacturation {
-  DEVIS_A_FAIRE
-  DEVIS_ENVOYE
-  DEVIS_SIGNE
-  FACTURE_ENVOYEE
-  FACTURE_PAYEE
-  DOSSIER_DEPOSE
-  DOSSIER_COMPLEMENT
-  QUALIFIE
-  REFUSE
-  DOSSIER_EN_APPEL
-}
 
 enum InteretTNK {
   OUI
@@ -454,7 +435,7 @@ model LeadFormulaire {
   acceptePartage   Boolean      @default(false)
   dateTransmission DateTime     @default(now())
   createdAt        DateTime     @default(now())
-  statut           StatutPrise  @default(NOUVEAU)
+  statut           String       @default("NOUVEAU")
   converti         Boolean      @default(false)
   entrepriseId     String?
   sourceImport     String?
