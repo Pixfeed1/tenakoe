@@ -94,7 +94,7 @@ export function ClientsView({ C, onSelectClient }: { C: Theme; onSelectClient: (
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{clients.length} client{clients.length > 1 ? "s" : ""}</span>
       </div>
-      <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+      <div className="filter-bar" style={{ display: "flex", gap: 12, marginBottom: 20 }}>
         <div style={{
           flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
           borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface,

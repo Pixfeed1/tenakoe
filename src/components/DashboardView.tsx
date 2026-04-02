@@ -243,7 +243,7 @@ export function DashboardView({
             </span>
           </h2>
         </div>
-        <div data-guide="pipeline" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+        <div className="pipeline-columns" data-guide="pipeline" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
           {pipelineWithDemo.map((col, colIdx) => (
             <div
               key={col.id}

@@ -73,7 +73,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
       <SearchBar C={C} onSelectClient={onSelectClient || (() => {})} />
 
       {/* Main Nav */}
-      <nav style={{ flex: 1, padding: "12px 12px" }}>
+      <nav style={{ flex: 1, padding: "12px 12px", overflow: "auto" }}>
         <div
           style={{
             fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase",
