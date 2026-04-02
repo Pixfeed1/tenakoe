@@ -93,56 +93,98 @@ function mapPrescripteur(value: string | null): string | null {
 // On cherche EXPLICITEMENT les champs artisan et on IGNORE tout le reste
 // ========================
 
-function extractArtisanData(props: Record<string, unknown>) {
-  // Titre de la page = souvent le nom de l'entreprise dans la base Clients
+function extractArtisanData(props: Record<string, unknown>, isClientBase: boolean) {
   const titleProp = Object.values(props).find((p) => (p as Record<string, unknown>).type === "title") as Record<string, unknown> | undefined;
-  const pageTitle = extractVal(titleProp || null);
+  const pageTitle = typeof extractVal(titleProp || null) === "string" ? extractVal(titleProp || null) as string : null;
 
-  // Champs artisan spécifiques
-  const nomEntreprise = extractVal(findProp(props, ["nom entreprise", "nom de l'entreprise"]));
-  const nomArtisan = extractVal(findProp(props, ["nom de l'artisan", "nom artisan", "nom du lead"]));
-  const prenomArtisan = extractVal(findProp(props, ["prénom de l'artisan", "prénom artisan", "prénom du lead"]));
-  const email = extractVal(findProp(props, ["e-mail artisan", "email artisan", "e-mail", "email"]));
-  const telephone = extractVal(findProp(props, ["téléphone artisan", "téléphone", "tel artisan"]));
-  const siret = extractVal(findProp(props, ["siret"]));
-  const adresse = extractVal(findProp(props, ["adresse"]));
-  const depot = extractVal(findProp(props, ["votre dépôt", "dépôt", "depot"]));
-  const numeroCarte = extractVal(findProp(props, ["numéro de carte", "n° de carte", "n° carte"]));
-  const statut = extractVal(findProp(props, ["statut lead", "statut", "status"]));
-  const statutPaiement = extractVal(findProp(props, ["statut paiement", "paiement", "statut de paiement"]));
-  const referentRGE = extractVal(findProp(props, ["déjà référent rge", "référent rge"]));
-  // Prescripteur peut être une relation (Base Clients) ou un select (Bases Leads)
-  const prescripteurRelationId = extractVal(findProp(props, ["prescripteur"]));
+  // Champs entreprise (rich_text dans les leads, title dans la base clients)
+  const nomEntreprise = typeof extractVal(findProp(props, ["nom entreprise", "nom de l'entreprise"])) === "string"
+    ? extractVal(findProp(props, ["nom entreprise", "nom de l'entreprise"])) as string : null;
+
+  // Champs artisan — inclure les variantes Base Clients (dirigeant)
+  const nomArtisan = typeof extractVal(findProp(props, ["nom de l'artisan", "nom artisan", "nom du lead", "nom du dirigeant"])) === "string"
+    ? extractVal(findProp(props, ["nom de l'artisan", "nom artisan", "nom du lead", "nom du dirigeant"])) as string : null;
+  const prenomArtisan = typeof extractVal(findProp(props, ["prénom de l'artisan", "prénom artisan", "prénom du lead", "prenom du dirigeant", "prénom du dirigeant"])) === "string"
+    ? extractVal(findProp(props, ["prénom de l'artisan", "prénom artisan", "prénom du lead", "prenom du dirigeant", "prénom du dirigeant"])) as string : null;
+
+  // Le titre change de sens selon la base
+  let nomFromTitle: string | null = null;
+  let artisanFromTitle: string | null = null;
+
+  if (isClientBase) {
+    // Base Clients : le titre EST le nom d'entreprise
+    nomFromTitle = pageTitle;
+  } else {
+    // Bases Leads : le titre EST le nom de l'artisan (PAS l'entreprise !)
+    artisanFromTitle = pageTitle;
+  }
+
+  const email = typeof extractVal(findProp(props, ["e-mail", "email"])) === "string"
+    ? extractVal(findProp(props, ["e-mail", "email"])) as string : null;
+  const telephone = typeof extractVal(findProp(props, ["téléphone", "telephone", "tel"])) === "string"
+    ? extractVal(findProp(props, ["téléphone", "telephone", "tel"])) as string : null;
+  const siret = typeof extractVal(findProp(props, ["siret"])) === "string"
+    ? extractVal(findProp(props, ["siret"])) as string : null;
+  const adresse = typeof extractVal(findProp(props, ["adresse", "adresse postale"])) === "string"
+    ? extractVal(findProp(props, ["adresse", "adresse postale"])) as string : null;
+  // Dépôt: "Votre Dépôt" OU "Votre Agence" (Big Mat) — multi_select
+  const depot = typeof extractVal(findProp(props, ["votre dépôt", "dépôt", "depot", "votre agence", "agence"])) === "string"
+    ? extractVal(findProp(props, ["votre dépôt", "dépôt", "depot", "votre agence", "agence"])) as string : null;
+  const numeroCarte = typeof extractVal(findProp(props, ["numéro de carte", "n° de carte", "n° carte", "numero de carte"])) === "string"
+    ? extractVal(findProp(props, ["numéro de carte", "n° de carte", "n° carte", "numero de carte"])) as string : null;
+  const statut = typeof extractVal(findProp(props, ["statut lead", "statut", "status"])) === "string"
+    ? extractVal(findProp(props, ["statut lead", "statut", "status"])) as string : null;
+  const statutPaiement = typeof extractVal(findProp(props, ["statut paiement", "paiement"])) === "string"
+    ? extractVal(findProp(props, ["statut paiement", "paiement"])) as string : null;
+  const referentRGE = extractVal(findProp(props, ["déjà référent rge", "référent rge", "deja referent"]));
+
+  // Prescripteur : relation (Base Clients) ou multi_select (Leads)
   const prescripteurProp = findProp(props, ["prescripteur"]);
   const prescripteurType = prescripteurProp ? (prescripteurProp as Record<string, unknown>).type as string : null;
+  const prescripteurRelationId = prescripteurType === "relation"
+    ? (typeof extractVal(prescripteurProp) === "string" ? extractVal(prescripteurProp) as string : null)
+    : null;
+  const prescripteurDirect = prescripteurType !== "relation"
+    ? (typeof extractVal(prescripteurProp) === "string" ? extractVal(prescripteurProp) as string : null)
+    : null;
 
-  // Détection email conseiller/dépôt (à ignorer)
-  // Les emails @laplateforme.com, @pointp.fr, @bigmat.fr sont des dépôts, pas des artisans
+  // Détection email conseiller/dépôt
   const isDepotEmail = email && (
     email.includes("@laplateforme") || email.includes("@pointp") ||
     email.includes("@bigmat") || email.includes("clientele.") ||
     email.includes("depot.") || email.includes("agence.")
   );
 
-  // Si pas de nom d'entreprise ET pas de nom d'artisan → le titre seul est probablement
-  // un conseiller ou une entrée non-client. On utilise le nom artisan comme fallback.
-  // Si RIEN n'est renseigné à part le titre → skip (return nom = null)
-  const hasRealData = nomEntreprise || nomArtisan || siret || (email && !isDepotEmail);
+  // Nom artisan final
+  const finalNomArtisan = nomArtisan || artisanFromTitle || null;
+  const finalPrenomArtisan = prenomArtisan || null;
 
+  // Nom entreprise final : JAMAIS le nom d'artisan comme nom d'entreprise
   const nom = nomEntreprise
-    || (prenomArtisan && nomArtisan ? `${prenomArtisan} ${nomArtisan}` : null)
-    || nomArtisan
-    || (hasRealData ? pageTitle : null)  // titre de page seulement si on a des données artisan
+    || nomFromTitle
+    || (finalPrenomArtisan && finalNomArtisan ? `${finalPrenomArtisan} ${finalNomArtisan}` : null)
+    || finalNomArtisan
     || null;
 
+  // Skip si aucune donnée réelle
+  const hasRealData = nom || finalNomArtisan || siret || (email && !isDepotEmail);
+  if (!hasRealData) return {
+    nom: null, nomArtisan: null, prenomArtisan: null, email: null,
+    telephone: null, siret: null, adresse: null, depot: null,
+    numeroCarte: null, statut: null, statutPaiement: null,
+    referentRGE: false, prescripteurRelationId: null, prescripteurDirect: null,
+  };
+
   return {
-    nom, nomArtisan, prenomArtisan,
+    nom,
+    nomArtisan: finalNomArtisan,
+    prenomArtisan: finalPrenomArtisan,
     email: isDepotEmail ? null : email,
     telephone, siret, adresse, depot, numeroCarte, statut,
-    statutPaiement: typeof statutPaiement === "string" ? statutPaiement : null,
-    referentRGE: referentRGE === "true",
-    prescripteurRelationId: prescripteurType === "relation" ? (typeof prescripteurRelationId === "string" ? prescripteurRelationId : null) : null,
-    prescripteurDirect: prescripteurType !== "relation" ? (typeof prescripteurRelationId === "string" ? prescripteurRelationId : null) : null,
+    statutPaiement,
+    referentRGE: referentRGE === "true" || (typeof referentRGE === "string" && referentRGE.toLowerCase().includes("oui")),
+    prescripteurRelationId,
+    prescripteurDirect,
   };
 }
 
@@ -266,7 +308,7 @@ export async function POST(request: NextRequest) {
         const sourceId = page.id;
 
         // Extract artisan data (NOT conseiller)
-        const artisan = extractArtisanData(props);
+        const artisan = extractArtisanData(props, db.asClient);
 
         // Skip if no valid name
         if (!artisan.nom) { results.skipped++; continue; }

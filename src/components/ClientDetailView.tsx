@@ -174,6 +174,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           interesseTNK: data.interesseTNK || "NSP",
           statutFacturation: data.statutFacturation || "",
           miseEnRelation: data.miseEnRelation || "SANS_OBJET",
+          depot: data.depot || "",
+          numeroCarte: data.numeroCarte || "",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
           qualificationId: firstQualif?.id || "",
           formation: formations.length > 0 ? formations.join(", ") : "",
@@ -643,6 +645,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Email", key: "email", value: entrepriseData?.email || "—", Icon: Mail },
               { label: "Téléphone", key: "telephone", value: entrepriseData?.telephone || "—", Icon: Phone },
               { label: "Prescripteur", key: "", value: client?.prescripteur || "—", Icon: Building2 },
+              { label: "Dépôt", key: "", value: entrepriseData?.depot || "—", Icon: Building2 },
+              { label: "N° carte", key: "", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
             ].map((f, i) => (
               <div
                 key={i}
