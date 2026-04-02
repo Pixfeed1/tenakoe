@@ -399,6 +399,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             }}
           />
           <textarea
+            data-guide="mail-body"
             placeholder="Votre message..."
             value={mailBody}
             onChange={(e) => setMailBody(e.target.value)}
@@ -949,7 +950,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Documents à fournir</h3>
               <span style={{ fontSize: 12, color: C.textDim }}>{docsRecu}/{docs.length} reçus</span>
             </div>
-            <ProgressBar value={Math.round((docsRecu / docs.length) * 100)} C={C} />
+            <div data-guide="docs-progress">
+              <ProgressBar value={Math.round((docsRecu / docs.length) * 100)} C={C} />
+            </div>
           </div>
           {docs.map((d, i) => (
             <div
@@ -963,6 +966,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               onClick={() => toggleDoc(i)}
             >
               <div
+                {...(i === 0 ? { "data-guide": "doc-checkbox-first" } : {})}
                 style={{
                   width: 22, height: 22, borderRadius: 6,
                   border: `2px solid ${d.recu ? C.accent : C.border}`,
@@ -1048,11 +1052,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>
             Feuille de route{entrepriseData?.qualification ? ` — ${entrepriseData.qualification}` : ""}
           </h3>
-          <div style={{ position: "relative" }}>
+          <div data-guide="track-timeline" style={{ position: "relative" }}>
             {tracks.map((t, i) => (
               <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 32 }}>
                   <div
+                    {...(t.active ? { "data-guide": "track-active-step" } : {})}
                     onClick={async () => {
                       if (!t.active && !t.done) return;
                       const newDone = !t.done;
@@ -1241,7 +1246,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Tâches</h3>
-            <button onClick={() => setShowAddTache(!showAddTache)} style={{
+            <button data-guide="btn-nouvelle-tache" onClick={() => setShowAddTache(!showAddTache)} style={{
               padding: "6px 14px", borderRadius: 8, border: "none",
               background: C.accentDim, color: C.accentText, fontSize: 12,
               fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
