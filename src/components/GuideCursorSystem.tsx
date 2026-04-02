@@ -253,14 +253,25 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     title: "Utiliser la facturation Abby",
     steps: [
       {
-        title: "1/2 — Pipeline facturation",
-        text: "Glissez une carte pour faire avancer le statut de facturation",
-        cursorAction: { type: "click", target: "[data-guide='pipeline-facturation']" },
+        title: "1/4 — Ouvrir la page Facturation",
+        text: "Cliquez sur 'Facturation' dans le menu pour voir le pipeline de facturation",
+        cursorAction: { type: "click", target: "[data-guide='nav-facturation']" },
       },
       {
-        title: "2/2 — Cr\u00e9er dans Abby",
-        text: "Cliquez pour cr\u00e9er automatiquement le devis/facture dans Abby",
+        title: "2/4 — Changer le statut",
+        text: "Glissez une carte vers 'Devis envoye' pour faire avancer le statut de facturation",
+        cursorAction: { type: "drag", from: "[data-guide='factu-card-first']", to: "[data-guide='factu-col-devis-envoye']" },
+        waitEvent: "tenakoe:factu-drop",
+      },
+      {
+        title: "3/4 — Creer dans Abby",
+        text: "Cliquez sur 'Creer dans Abby' pour envoyer automatiquement les infos client vers Abby. Le devis sera cree dans Abby, plus de double saisie.",
         cursorAction: { type: "click", target: "[data-guide='btn-abby']" },
+      },
+      {
+        title: "4/4 — Voir dans Abby",
+        text: "Le lien 'Voir dans Abby' vous emmene directement sur le document dans Abby pour ajouter les lignes de facturation (montants, prestations, TVA).",
+        cursorAction: { type: "click", target: "[data-guide='btn-voir-abby']" },
       },
     ],
   },

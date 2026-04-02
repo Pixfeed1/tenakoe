@@ -9,14 +9,14 @@ import { SearchBar } from "@/components/SearchBar";
 import { useGuide } from "@/components/GuideSystem";
 
 const NAV_ITEMS = [
-  { Icon: LayoutDashboard, label: "Dashboard" },
-  { Icon: Zap, label: "Leads" },
-  { Icon: Target, label: "Prospects" },
-  { Icon: Users, label: "Clients" },
-  { Icon: FolderOpen, label: "Dossiers" },
-  { Icon: Send, label: "Transmissions" },
-  { Icon: File, label: "Documents" },
-  { Icon: CreditCard, label: "Facturation" },
+  { Icon: LayoutDashboard, label: "Dashboard", guide: "nav-dashboard" },
+  { Icon: Zap, label: "Leads", guide: "nav-leads" },
+  { Icon: Target, label: "Prospects", guide: "nav-prospects" },
+  { Icon: Users, label: "Clients", guide: "nav-clients" },
+  { Icon: FolderOpen, label: "Dossiers", guide: "nav-dossiers" },
+  { Icon: Send, label: "Transmissions", guide: "nav-transmissions" },
+  { Icon: File, label: "Documents", guide: "nav-documents" },
+  { Icon: CreditCard, label: "Facturation", guide: "nav-facturation" },
 ];
 
 const NAV_BOTTOM = [
@@ -82,6 +82,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
           return (
             <button
               key={item.label}
+              data-guide={item.guide}
               onClick={() => { onNav(item.label); onNavMobile?.(); }}
               style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 10,

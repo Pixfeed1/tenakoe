@@ -356,6 +356,7 @@ function GuideToggleButton({ C }: { C: Theme }) {
               { id: "envoyer-mail", label: "Envoyer un mail avec template" },
               { id: "collecter-docs", label: "Collecter les documents" },
               { id: "feuille-route", label: "Suivre la feuille de route" },
+              { id: "facturation-abby", label: "Utiliser la facturation Abby" },
             ].map((w) => (
               <button key={w.id} onClick={() => { guide.startWalkthrough(w.id); setOpen(false); }} style={{
                 width: "100%", padding: "8px 16px", border: "none", background: "transparent",

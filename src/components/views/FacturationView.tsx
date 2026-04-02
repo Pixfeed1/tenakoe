@@ -153,12 +153,13 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
       {/* Stats */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         {[
-          { label: "Devis à faire", count: devisAFaire, Icon: FileText, color: "warning", filter: "DEVIS_A_FAIRE" },
-          { label: "Devis envoyés", count: devisEnvoye, Icon: Clock, color: "blue", filter: "DEVIS_ENVOYE" },
-          { label: "Factures en cours", count: factureEnCours, Icon: CreditCard, color: "purple", filter: "FACTURE_ENVOYEE" },
-          { label: "Factures payées", count: facturePayee, Icon: Check, color: "accent", filter: "FACTURE_PAYEE" },
+          { label: "Devis a faire", count: devisAFaire, Icon: FileText, color: "warning", filter: "DEVIS_A_FAIRE", guide: "" },
+          { label: "Devis envoyes", count: devisEnvoye, Icon: Clock, color: "blue", filter: "DEVIS_ENVOYE", guide: "factu-col-devis-envoye" },
+          { label: "Factures en cours", count: factureEnCours, Icon: CreditCard, color: "purple", filter: "FACTURE_ENVOYEE", guide: "" },
+          { label: "Factures payees", count: facturePayee, Icon: Check, color: "accent", filter: "FACTURE_PAYEE", guide: "" },
         ].map((s) => (
           <div key={s.filter}
+            {...(s.guide ? { "data-guide": s.guide } : {})}
             onClick={() => setFilterStatut(filterStatut === s.filter ? "" : s.filter)}
             style={{
               flex: 1, minWidth: 160, padding: "14px 20px", borderRadius: 12, background: C.surface,
@@ -199,10 +200,12 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
               </tr>
             </thead>
             <tbody>
-              {filtered.map((e) => {
+              {filtered.map((e, rowIdx) => {
                 const style = statutStyles[e.statutFacturation || ""] || FALLBACK_STYLES.DEVIS_A_FAIRE;
                 return (
-                  <tr key={e.id} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.15s" }}
+                  <tr key={e.id}
+                    {...(rowIdx === 0 ? { "data-guide": "factu-card-first" } : {})}
+                    style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.15s" }}
                     onMouseEnter={(ev) => { (ev.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                     onMouseLeave={(ev) => { (ev.currentTarget as HTMLElement).style.background = "transparent"; }}
                     onClick={() => onSelectClient({ id: e.id, nom: e.nom, siret: e.siret || undefined })}
@@ -248,7 +251,7 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
                             {e.statutFacturation === "DEVIS_A_FAIRE" ? "Créer devis" : "Créer facture"}
                           </button>
                         )}
-                        <a href="https://app.abby.fr" target="_blank" rel="noopener noreferrer" style={{
+                        <a data-guide="btn-voir-abby" href="https://app.abby.fr" target="_blank" rel="noopener noreferrer" style={{
                           padding: "4px 8px", borderRadius: 6, border: "none",
                           background: C.purpleDim, color: C.purple, fontSize: 10,
                           fontWeight: 600, cursor: "pointer", textDecoration: "none",
