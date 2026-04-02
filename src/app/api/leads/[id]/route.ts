@@ -30,7 +30,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+  if (user.role !== "ADMIN" && user.role !== "CHARGEE") {
+    return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+  }
 
   const { id } = await params;
   await prisma.leadFormulaire.delete({ where: { id } });
