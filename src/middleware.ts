@@ -18,7 +18,7 @@ export default withAuth(
       // Pages autorisées
       const allowedPages = ["/dashboard"];
       // API GET uniquement sur certaines routes
-      const allowedAPIs = ["/api/entreprises", "/api/projets", "/api/documents", "/api/alertes"];
+      const allowedAPIs = ["/api/prescripteur/mes-leads", "/api/auth", "/api/guide"];
 
       if (path.startsWith("/api/")) {
         // Prescripteurs ne peuvent que lire (GET)

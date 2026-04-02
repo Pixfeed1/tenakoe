@@ -77,5 +77,10 @@ export function getTacheFilter(user: CurrentUser) {
 
 export function getTransmissionFilter(user: CurrentUser) {
   if (user.role === "ADMIN") return {};
-  return { expediteurId: user.id };
+  return {
+    OR: [
+      { expediteurId: user.id },
+      { entreprise: { projets: { some: { chargeeId: user.id } } } },
+    ],
+  };
 }

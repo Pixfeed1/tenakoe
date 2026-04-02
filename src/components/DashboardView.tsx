@@ -147,6 +147,7 @@ export function DashboardView({
 
     // Trigger suggestion toast after drag & drop (guide mode)
     guide.showSuggestion("lead-pris-en-charge");
+    window.dispatchEvent(new CustomEvent("tenakoe:pipeline-drop"));
   };
 
   return (

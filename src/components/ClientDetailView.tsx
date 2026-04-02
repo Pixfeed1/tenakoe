@@ -233,7 +233,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: doc.id, recu: newRecu }),
       }).catch(() => {});
-      if (newRecu) guide.showSuggestion("document-recu");
+      if (newRecu) {
+        guide.showSuggestion("document-recu");
+        window.dispatchEvent(new CustomEvent("tenakoe:document-received"));
+      }
     }
   };
   const docsRecu = docs.filter((d) => d.recu).length;
@@ -275,7 +278,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <GuideTooltip id="btn-mail" C={C}>
         <div className="fiche-actions" style={{ display: "flex", gap: 8 }}>
           {[
-            { Icon: Mail, label: "Envoyer mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); } },
+            { Icon: Mail, label: "Envoyer mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
             { Icon: MessageSquare, label: "SMS", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
             { Icon: Phone, label: "Appeler", onClick: () => { setShowCallLog(true); setMailOpen(false); setSmsOpen(false); } },
           ].map((btn, i) => (
@@ -390,6 +393,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setSendStatus({ type: "success", msg: "Mail envoyé avec succès" });
                     fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeMail" }) }).catch(() => {});
                     guide.showSuggestion("mail-envoye");
+                    window.dispatchEvent(new CustomEvent("tenakoe:mail-sent"));
                     setMailSubject("");
                     setMailBody("");
                   } else {

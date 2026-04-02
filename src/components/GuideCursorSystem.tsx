@@ -155,6 +155,7 @@ export interface WalkthroughStep {
   title: string;
   text: string;
   cursorAction: CursorAction;
+  waitEvent?: string; // Custom event name to wait for before enabling "Suivant"
 }
 
 export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughStep[] }> = {
@@ -163,27 +164,29 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     steps: [
       {
         title: "1/5 — Glisser un lead",
-        text: "Glissez-déposez une carte de la colonne 'Nouveau' vers 'Prise en charge'",
-        cursorAction: { type: "drag", from: "[data-guide='pipeline'] [draggable]:first-child", to: "[data-guide='pipeline'] > div:nth-child(2)" },
+        text: "Glissez-d\u00e9posez une carte de la colonne 'Nouveau' vers 'Prise en charge'",
+        cursorAction: { type: "drag", from: "[data-guide='pipeline'] div[style*='minWidth'] div[draggable]", to: "[data-guide='pipeline'] div[style*='minWidth']:nth-child(2)" },
+        waitEvent: "tenakoe:pipeline-drop",
       },
       {
         title: "2/5 — Envoyer un mail",
-        text: "Cliquez sur 'Envoyer mail' pour contacter le lead",
-        cursorAction: { type: "click", target: "[data-guide='btn-mail'] button:first-child" },
+        text: "Cliquez sur le bouton 'Envoyer mail' en haut de la fiche",
+        cursorAction: { type: "click", target: "[data-guide='btn-mail']" },
+        waitEvent: "tenakoe:mail-opened",
       },
       {
         title: "3/5 — Choisir un template",
-        text: "Sélectionnez un modèle pour pré-remplir le message",
-        cursorAction: { type: "click", target: "select" },
+        text: "S\u00e9lectionnez un mod\u00e8le dans le menu d\u00e9roulant pour pr\u00e9-remplir le message",
+        cursorAction: { type: "click", target: "[data-guide='btn-mail'] select" },
       },
       {
-        title: "4/5 — Vérifier l'historique",
-        text: "Le mail envoyé apparaît dans l'historique",
+        title: "4/5 — V\u00e9rifier l'historique",
+        text: "Le mail envoy\u00e9 appara\u00eet dans l'historique de la fiche",
         cursorAction: { type: "click", target: "[data-guide='historique']" },
       },
       {
-        title: "5/5 — Terminé !",
-        text: "Le lead est pris en charge. Pensez à créer une tâche de relance dans 3 jours.",
+        title: "5/5 — Termin\u00e9",
+        text: "Le lead est pris en charge. Pensez \u00e0 cr\u00e9er une t\u00e2che de relance dans 3 jours.",
         cursorAction: { type: "click", target: "[data-guide='kpi']" },
       },
     ],
@@ -256,9 +259,36 @@ export function WalkthroughPlayer({ C, walkthroughId, onFinish }: {
 }) {
   const [step, setStep] = useState(0);
   const [cursorDone, setCursorDone] = useState(false);
+  const [actionDone, setActionDone] = useState(false);
   const wt = WALKTHROUGHS[walkthroughId];
 
   const handleCursorComplete = useCallback(() => setCursorDone(true), []);
+
+  // Listen for waitEvent from the real UI
+  useEffect(() => {
+    if (!wt) return;
+    const currentStep = wt.steps[step];
+    if (!currentStep?.waitEvent) { setActionDone(true); return; }
+
+    setActionDone(false);
+    const eventName = currentStep.waitEvent;
+    const handler = () => setActionDone(true);
+    window.addEventListener(eventName, handler);
+    return () => window.removeEventListener(eventName, handler);
+  }, [step, wt]);
+
+  // Highlight target element while waiting
+  useEffect(() => {
+    if (!wt) return;
+    const currentStep = wt.steps[step];
+    if (!currentStep) return;
+    const sel = currentStep.cursorAction.type === "drag"
+      ? (currentStep.cursorAction as { from: string }).from
+      : (currentStep.cursorAction as { target: string }).target;
+    const el = document.querySelector(sel);
+    if (el && !actionDone) el.classList.add("guide-highlight");
+    return () => { if (el) el.classList.remove("guide-highlight"); };
+  }, [step, actionDone, wt]);
 
   if (!wt) { onFinish(); return null; }
   const currentStep = wt.steps[step];
@@ -305,13 +335,20 @@ export function WalkthroughPlayer({ C, walkthroughId, onFinish }: {
                 background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
               }}>Précédent</button>
             )}
-            <button onClick={() => {
-              if (step === total - 1) { onFinish(); } else { setStep((s) => s + 1); setCursorDone(false); }
-            }} style={{
-              padding: "7px 16px", borderRadius: 8, border: "none",
-              background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
-            }}>
-              {step === total - 1 ? "Terminer" : "Suivant"}
+            <button
+              disabled={!actionDone && !!currentStep.waitEvent}
+              onClick={() => {
+                if (step === total - 1) { onFinish(); } else { setStep((s) => s + 1); setCursorDone(false); setActionDone(false); }
+              }}
+              style={{
+                padding: "7px 16px", borderRadius: 8, border: "none",
+                background: actionDone || !currentStep.waitEvent ? C.accent : C.border,
+                color: "#fff", fontSize: 12, fontWeight: 600,
+                cursor: actionDone || !currentStep.waitEvent ? "pointer" : "not-allowed",
+                transition: "background 0.3s",
+              }}
+            >
+              {!actionDone && currentStep.waitEvent ? "En attente de votre action..." : step === total - 1 ? "Terminer" : "Suivant"}
             </button>
           </div>
         </div>
