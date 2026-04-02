@@ -75,33 +75,168 @@ body {
 }
 
 .guide-highlight {
-  outline: 2px solid #16a34a !important;
+  outline: 2px solid #16a34a;
   outline-offset: 4px;
-  box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.15) !important;
+  box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.15);
   transition: outline 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* ========================
-   RESPONSIVE
+   BASE LAYOUT CLASSES
+   (styles owned by CSS, not inline)
    ======================== */
+
+.crm-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.crm-main {
+  flex: 1;
+  overflow: auto;
+  padding: 28px 36px;
+}
+
+.crm-main h1 {
+  font-size: 22px;
+}
+
+/* Header: row 1 = title + actions, row 2 = subtitle */
+.crm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.crm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  order: 1;
+}
+
+.crm-header-subtitle {
+  font-size: 13px;
+  margin: 0;
+  width: 100%;
+  order: 3;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  order: 2;
+}
+
+.header-actions .btn-nouveau-lead {
+  padding: 9px 20px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(22,163,74,0.25);
+  white-space: nowrap;
+}
+
+/* Stats row */
+.stats-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Pipeline columns */
+.pipeline-columns {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+/* Bottom grid */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 20px;
+}
+
+/* Fiche client grid */
+.fiche-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Fiche action buttons */
+.fiche-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Tabs row */
+.tabs-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+/* Filter bars */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* Sidebar */
+.crm-sidebar {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  flex-shrink: 0;
+}
 
 /* Mobile sidebar overlay */
 .sidebar-overlay {
   display: none;
 }
 
+/* Mobile hamburger — hidden by default */
+.mobile-menu-btn {
+  display: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================
+   MOBILE (max 768px)
+   ======================== */
+
 @media (max-width: 768px) {
   .crm-layout {
-    flex-direction: column !important;
+    flex-direction: column;
   }
 
   .crm-sidebar {
-    position: fixed !important;
+    position: fixed;
     left: -280px;
     top: 0;
     bottom: 0;
     z-index: 1000;
-    width: 260px !important;
+    width: 260px;
     transition: left 0.3s ease;
   }
 
@@ -122,60 +257,78 @@ body {
   }
 
   .crm-main {
-    padding: 16px !important;
-    width: 100% !important;
+    padding: 16px;
+    width: 100%;
   }
 
   .crm-main h1 {
-    font-size: 18px !important;
+    font-size: 18px;
+  }
+
+  /* Header mobile layout:
+     Line 1: hamburger + title + guide/bell icons
+     Line 2: date + bonjour
+     Line 3: "Nouveau lead" full width */
+  .crm-header {
+    gap: 6px;
+  }
+
+  .crm-header-subtitle {
+    font-size: 12px;
+  }
+
+  .header-actions {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .header-actions .btn-nouveau-lead {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
   }
 
   /* Pipeline horizontal scroll */
   .pipeline-columns {
-    overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
     padding-bottom: 12px;
   }
 
   .pipeline-columns > div {
-    min-width: 260px !important;
+    min-width: 260px;
     scroll-snap-align: start;
   }
 
-  /* Stats cards stack */
+  /* Stats cards: 2x2 grid */
   .stats-row {
-    flex-direction: column !important;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
   .stats-row > div {
-    min-width: 100% !important;
+    min-width: 0;
   }
 
   /* Bottom grid stack */
   .bottom-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr;
   }
 
   /* Fiche client grid stack */
   .fiche-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr;
   }
 
-  /* Header buttons wrap */
-  .header-actions {
-    flex-wrap: wrap;
-    gap: 6px !important;
-  }
-
-  /* Action buttons stack on fiche */
+  /* Action buttons wrap */
   .fiche-actions {
     flex-wrap: wrap;
   }
 
   .fiche-actions button {
-    font-size: 11px !important;
-    padding: 6px 10px !important;
+    font-size: 11px;
+    padding: 6px 10px;
   }
 
   /* Tables responsive */
@@ -203,38 +356,38 @@ body {
 
   /* Mobile hamburger visible */
   .mobile-menu-btn {
-    display: flex !important;
+    display: flex;
   }
 }
 
-@media (min-width: 769px) {
-  .mobile-menu-btn {
-    display: none !important;
-  }
-}
+/* ========================
+   TABLET (769px - 1024px)
+   ======================== */
 
-/* Tablet */
 @media (min-width: 769px) and (max-width: 1024px) {
   .crm-sidebar {
-    width: 220px !important;
+    width: 220px;
   }
 
   .crm-main {
-    padding: 20px 24px !important;
+    padding: 20px 24px;
   }
 
   .bottom-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr;
   }
 
   .pipeline-columns > div {
-    min-width: 180px !important;
+    min-width: 180px;
   }
 }
 
-/* Small desktop */
+/* ========================
+   SMALL DESKTOP (1025px - 1280px)
+   ======================== */
+
 @media (min-width: 1025px) and (max-width: 1280px) {
   .pipeline-columns > div {
-    min-width: 170px !important;
+    min-width: 170px;
   }
 }

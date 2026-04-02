@@ -172,7 +172,6 @@ export function CRMShell({
     <div
       className="crm-layout"
       style={{
-        display: "flex",
         height: "100vh",
         width: "100%",
         background: C.bg,
@@ -197,46 +196,38 @@ export function CRMShell({
         onSelectClient={openClient}
       />
 
-      <main className="crm-main" style={{ flex: 1, overflow: "auto", padding: "28px 36px" }}>
+      <main className="crm-main">
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 24,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="crm-header">
+          <div className="crm-header-left">
             {/* Mobile hamburger */}
             <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{ width: 38, height: 38, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              style={{ border: `1px solid ${C.border}`, background: C.surface }}>
               {mobileMenuOpen ? <XIcon size={18} color={C.text} /> : <Menu size={18} color={C.text} />}
             </button>
             <div>
-            <h1
-              style={{
-                fontSize: 22,
-                fontWeight: 700,
-                margin: 0,
-                letterSpacing: "-0.03em",
-                color: C.text,
-              }}
-            >
-              {VIEW_TITLES[view]}
-            </h1>
-            <p style={{ fontSize: 13, color: C.textMuted, margin: "4px 0 0" }}>
-              {new Date().toLocaleDateString("fr-FR", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}{" "}
-              · Bonjour {firstName}
-            </p>
+              <h1
+                style={{
+                  fontWeight: 700,
+                  margin: 0,
+                  letterSpacing: "-0.03em",
+                  color: C.text,
+                }}
+              >
+                {VIEW_TITLES[view]}
+              </h1>
+            </div>
           </div>
-          </div>
-          <div className="header-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <p className="crm-header-subtitle" style={{ color: C.textMuted }}>
+            {new Date().toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}{" "}
+            · Bonjour {firstName}
+          </p>
+          <div className="header-actions">
             <GuideToggleButton C={C} />
             <GuideTooltip id="notifications" C={C}>
               <AlertesDropdown C={C} />
@@ -265,22 +256,9 @@ export function CRMShell({
               if (!action) return null;
               return (
                 <button
+                  className="btn-nouveau-lead"
                   data-guide="nouveau-lead"
                   onClick={action.action}
-                  style={{
-                    padding: "9px 20px",
-                    borderRadius: 10,
-                    border: "none",
-                    background: "linear-gradient(135deg, #16a34a, #15803d)",
-                    color: "#fff",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    boxShadow: "0 2px 8px rgba(22,163,74,0.25)",
-                  }}
                 >
                   <action.Icon size={15} strokeWidth={2.5} /> {action.label}
                 </button>
