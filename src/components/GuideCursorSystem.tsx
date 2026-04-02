@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Mail, MessageSquare, StickyNote, ClipboardList, FileText, X, ArrowUpRight } from "lucide-react";
+import { Mail, MessageSquare, StickyNote, ClipboardList, FileText, X, ArrowUpRight, Phone } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 
 // ========================
@@ -165,28 +165,28 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
       {
         title: "1/5 — Glisser un lead",
         text: "Glissez-d\u00e9posez une carte de la colonne 'Nouveau' vers 'Prise en charge'",
-        cursorAction: { type: "drag", from: "[data-guide='pipeline'] div[style*='minWidth'] div[draggable]", to: "[data-guide='pipeline'] div[style*='minWidth']:nth-child(2)" },
+        cursorAction: { type: "drag", from: "[data-guide='pipeline-card-first']", to: "[data-guide='pipeline-col-2']" },
         waitEvent: "tenakoe:pipeline-drop",
       },
       {
         title: "2/5 — Envoyer un mail",
-        text: "Cliquez sur le bouton 'Envoyer mail' en haut de la fiche",
+        text: "Cliquez sur 'Envoyer mail' pour contacter le lead",
         cursorAction: { type: "click", target: "[data-guide='btn-mail']" },
         waitEvent: "tenakoe:mail-opened",
       },
       {
         title: "3/5 — Choisir un template",
-        text: "S\u00e9lectionnez un mod\u00e8le dans le menu d\u00e9roulant pour pr\u00e9-remplir le message",
-        cursorAction: { type: "click", target: "[data-guide='btn-mail'] select" },
+        text: "S\u00e9lectionnez un mod\u00e8le pour pr\u00e9-remplir le message",
+        cursorAction: { type: "click", target: "[data-guide='template-select']" },
       },
       {
         title: "4/5 — V\u00e9rifier l'historique",
-        text: "Le mail envoy\u00e9 appara\u00eet dans l'historique de la fiche",
-        cursorAction: { type: "click", target: "[data-guide='historique']" },
+        text: "Le mail envoy\u00e9 appara\u00eet dans l'historique",
+        cursorAction: { type: "click", target: "[data-guide='tab-historique']" },
       },
       {
-        title: "5/5 — Termin\u00e9",
-        text: "Le lead est pris en charge. Pensez \u00e0 cr\u00e9er une t\u00e2che de relance dans 3 jours.",
+        title: "5/5 — Termin\u00e9 !",
+        text: "Le lead est pris en charge. Pensez \u00e0 cr\u00e9er une t\u00e2che de relance.",
         cursorAction: { type: "click", target: "[data-guide='kpi']" },
       },
     ],
@@ -195,19 +195,21 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     title: "Envoyer un mail avec template",
     steps: [
       {
-        title: "1/3 — Ouvrir l'éditeur",
-        text: "Cliquez sur le bouton 'Envoyer mail'",
-        cursorAction: { type: "click", target: "[data-guide='btn-mail'] button:first-child" },
+        title: "1/3 — Ouvrir l'\u00e9diteur",
+        text: "Cliquez sur 'Envoyer mail'",
+        cursorAction: { type: "click", target: "[data-guide='btn-mail']" },
+        waitEvent: "tenakoe:mail-opened",
       },
       {
-        title: "2/3 — Choisir un modèle",
-        text: "Sélectionnez un template dans le menu déroulant",
-        cursorAction: { type: "click", target: "select" },
+        title: "2/3 — Choisir un mod\u00e8le",
+        text: "S\u00e9lectionnez un template dans le menu d\u00e9roulant",
+        cursorAction: { type: "click", target: "[data-guide='template-select']" },
       },
       {
-        title: "3/3 — Historique",
-        text: "Le mail est tracé dans l'historique. La direction voit tout.",
-        cursorAction: { type: "click", target: "[data-guide='historique']" },
+        title: "3/3 — Envoyer",
+        text: "V\u00e9rifiez le message et cliquez sur Envoyer",
+        cursorAction: { type: "click", target: "[data-guide='btn-send-mail']" },
+        waitEvent: "tenakoe:mail-sent",
       },
     ],
   },
@@ -215,18 +217,19 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     title: "Collecter les documents",
     steps: [
       {
-        title: "1/3 — Onglet Documents",
-        text: "Ouvrez l'onglet Documents pour voir la checklist",
-        cursorAction: { type: "click", target: ".tabs-row button:nth-child(2)" },
+        title: "1/3 — Ouvrir les documents",
+        text: "Cliquez sur l'onglet Documents pour voir la checklist",
+        cursorAction: { type: "click", target: "[data-guide='tab-docs']" },
       },
       {
-        title: "2/3 — Uploader un fichier",
-        text: "Glissez-déposez un fichier dans la zone d'upload",
-        cursorAction: { type: "drag", from: "[data-guide='kpi']", to: "[data-guide='upload']" },
+        title: "2/3 — Cocher un document",
+        text: "Cochez un document re\u00e7u, la date s'inscrit automatiquement",
+        cursorAction: { type: "click", target: "[data-guide='tab-docs']" },
+        waitEvent: "tenakoe:document-received",
       },
       {
-        title: "3/3 — Cocher les documents",
-        text: "Cochez chaque document reçu. La barre de progression monte.",
+        title: "3/3 — Uploader un fichier",
+        text: "Glissez-d\u00e9posez un fichier dans la zone d'upload",
         cursorAction: { type: "click", target: "[data-guide='upload']" },
       },
     ],
@@ -236,13 +239,28 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     steps: [
       {
         title: "1/2 — Ouvrir la feuille de route",
-        text: "L'onglet montre les étapes du dossier avec leurs délais",
-        cursorAction: { type: "click", target: ".tabs-row button:nth-child(3)" },
+        text: "Cliquez sur l'onglet Feuille de route",
+        cursorAction: { type: "click", target: "[data-guide='tab-track']" },
       },
       {
-        title: "2/2 — Terminer une étape",
-        text: "Cliquez sur le cercle pour la marquer comme terminée. La suivante s'active.",
-        cursorAction: { type: "click", target: ".tabs-row button:nth-child(3)" },
+        title: "2/2 — Terminer une \u00e9tape",
+        text: "Cliquez sur l'\u00e9tape pour la terminer. La suivante s'active automatiquement.",
+        cursorAction: { type: "click", target: "[data-guide='tab-track']" },
+      },
+    ],
+  },
+  "facturation-abby": {
+    title: "Utiliser la facturation Abby",
+    steps: [
+      {
+        title: "1/2 — Pipeline facturation",
+        text: "Glissez une carte pour faire avancer le statut de facturation",
+        cursorAction: { type: "click", target: "[data-guide='pipeline-facturation']" },
+      },
+      {
+        title: "2/2 — Cr\u00e9er dans Abby",
+        text: "Cliquez pour cr\u00e9er automatiquement le devis/facture dans Abby",
+        cursorAction: { type: "click", target: "[data-guide='btn-abby']" },
       },
     ],
   },
@@ -450,19 +468,95 @@ export const ACTION_SUGGESTIONS: Record<string, { title: string; message: string
     ],
   },
   "mail-envoye": {
-    title: "Mail envoyé",
-    message: "Et maintenant ?",
+    title: "Mail envoye",
+    message: "Le mail est trace dans l'historique.",
     options: [
-      { label: "Créer une tâche de relance", icon: ClipboardList, targetSelector: "[data-guide='tab-taches']" },
-      { label: "Voir l'historique", icon: ArrowUpRight, targetSelector: "[data-guide='historique']" },
+      { label: "Creer une tache de relance", icon: ClipboardList, targetSelector: "[data-guide='tab-taches']" },
+      { label: "Voir l'historique", icon: ArrowUpRight, targetSelector: "[data-guide='tab-historique']" },
     ],
   },
   "document-recu": {
-    title: "Document reçu",
-    message: "Continuez la collecte :",
+    title: "Document recu",
+    message: "Continuez la collecte.",
     options: [
       { label: "Relancer les docs manquants", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
       { label: "Voir la feuille de route", icon: FileText, targetSelector: "[data-guide='tab-track']" },
     ],
+  },
+  "lead-a-relancer": {
+    title: "Lead marque a relancer",
+    message: "Contactez-le rapidement.",
+    options: [
+      { label: "Envoyer un SMS de relance", icon: MessageSquare, targetSelector: "[data-guide='btn-sms']" },
+      { label: "Envoyer un mail de relance", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
+      { label: "Loguer un appel", icon: Phone, targetSelector: "[data-guide='btn-appeler']" },
+    ],
+  },
+  "devis-envoye": {
+    title: "Statut passe a Devis envoye",
+    message: "Creez le devis dans Abby.",
+    options: [
+      { label: "Creer le devis dans Abby", icon: FileText, targetSelector: "[data-guide='btn-abby']" },
+      { label: "Envoyer le devis par mail", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
+    ],
+  },
+  "facture-payee": {
+    title: "Prospect converti en client !",
+    message: "La checklist docs et la feuille de route ont ete generees automatiquement.",
+    options: [
+      { label: "Voir la checklist documents", icon: FileText, targetSelector: "[data-guide='tab-docs']" },
+      { label: "Envoyer la liste des docs a fournir", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
+      { label: "Voir la feuille de route", icon: ClipboardList, targetSelector: "[data-guide='tab-track']" },
+    ],
+  },
+  "sms-envoye": {
+    title: "SMS envoye",
+    message: "Le SMS est trace dans l'historique.",
+    options: [
+      { label: "Loguer un appel si rappel", icon: Phone, targetSelector: "[data-guide='btn-appeler']" },
+      { label: "Creer une tache de relance", icon: ClipboardList, targetSelector: "[data-guide='tab-taches']" },
+    ],
+  },
+  "appel-logue": {
+    title: "Appel enregistre",
+    message: "Pensez a noter un resume.",
+    options: [
+      { label: "Envoyer un mail recapitulatif", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
+      { label: "Ajouter une note interne", icon: StickyNote, targetSelector: "[data-guide='tab-notes']" },
+    ],
+  },
+  "etape-terminee": {
+    title: "Etape terminee",
+    message: "L'etape suivante est maintenant active.",
+    options: [
+      { label: "Voir la feuille de route", icon: ClipboardList, targetSelector: "[data-guide='tab-track']" },
+      { label: "Envoyer un mail au client", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
+    ],
+  },
+  "tous-docs-recus": {
+    title: "Tous les documents sont recus !",
+    message: "Vous pouvez passer a la verification.",
+    options: [
+      { label: "Voir la feuille de route", icon: ClipboardList, targetSelector: "[data-guide='tab-track']" },
+      { label: "Envoyer un mail de confirmation", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
+    ],
+  },
+  "nouveau-projet": {
+    title: "Nouveau projet cree",
+    message: "Le dossier est pret.",
+    options: [
+      { label: "Voir la checklist documents", icon: FileText, targetSelector: "[data-guide='tab-docs']" },
+      { label: "Voir la feuille de route", icon: ClipboardList, targetSelector: "[data-guide='tab-track']" },
+    ],
+  },
+  "note-ajoutee": {
+    title: "Note ajoutee",
+    message: "Epinglez-la pour la garder visible en haut.",
+    options: [],
+  },
+  "tache-creee": {
+    title: "Tache creee",
+    message: "Vous recevrez un rappel si elle est en retard.",
+    options: [],
   },
 };

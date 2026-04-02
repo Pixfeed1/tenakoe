@@ -146,7 +146,11 @@ export function DashboardView({
     setDragging(null);
 
     // Trigger suggestion toast after drag & drop (guide mode)
-    guide.showSuggestion("lead-pris-en-charge");
+    if (targetCode === "PRISE_EN_CHARGE") guide.showSuggestion("lead-pris-en-charge");
+    else if (targetCode === "PRISE_EN_CHARGE_A_RELANCER") guide.showSuggestion("lead-a-relancer");
+    else if (targetCode === "DEVIS_ENVOYE") guide.showSuggestion("devis-envoye");
+    else if (targetCode === "FACTURE_PAYEE") guide.showSuggestion("facture-payee");
+    else guide.showSuggestion("lead-pris-en-charge");
     window.dispatchEvent(new CustomEvent("tenakoe:pipeline-drop"));
   };
 
@@ -154,7 +158,7 @@ export function DashboardView({
     <>
       {/* Stats */}
       <GuideTooltip id="kpi" C={C} style={{ marginBottom: 24 }}>
-      <div className="stats-row" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+      <div data-guide="kpi" className="stats-row" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         {STATS.map((s, i) => (
           <div
             key={i}
@@ -239,10 +243,11 @@ export function DashboardView({
             </span>
           </h2>
         </div>
-        <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
-          {pipelineWithDemo.map((col) => (
+        <div data-guide="pipeline" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+          {pipelineWithDemo.map((col, colIdx) => (
             <div
               key={col.id}
+              {...(colIdx === 1 ? { "data-guide": "pipeline-col-2" } : {})}
               style={{
                 flex: 1, minWidth: 200, padding: 8, borderRadius: 12,
                 background: dragOver === col.id ? C.accentDim : "transparent",
@@ -268,12 +273,14 @@ export function DashboardView({
                 </span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
-                {(expandedCols[col.id] ? col.items : col.items.slice(0, PIPELINE_MAX)).map((item) => {
+                {(expandedCols[col.id] ? col.items : col.items.slice(0, PIPELINE_MAX)).map((item, itemIdx) => {
                   const demo = isDemo(item);
+                  const isFirstCard = colIdx === 0 && itemIdx === 0;
                   return (
                   <div
                     key={item.id}
                     draggable
+                    {...(isFirstCard ? { "data-guide": "pipeline-card-first" } : {})}
                     onDragStart={(e) => onDragStart(e, item.id, col.id)}
                     style={{
                       background: C.surface, borderRadius: 10, padding: "12px 14px",
@@ -402,7 +409,9 @@ export function DashboardView({
 
         {/* Activity */}
         <GuideTooltip id="historique" C={C}>
-          <ActivityFeed C={C} compact />
+          <div data-guide="historique">
+            <ActivityFeed C={C} compact />
+          </div>
         </GuideTooltip>
       </div>
     </>

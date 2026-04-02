@@ -236,7 +236,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         body: JSON.stringify({ id: doc.id, recu: newRecu }),
       }).catch(() => {});
       if (newRecu) {
-        guide.showSuggestion("document-recu");
+        // Check if all docs are now received (count the updated state)
+        const allReceived = n.every((d) => d.recu);
+        if (allReceived && n.length > 0) {
+          guide.showSuggestion("tous-docs-recus");
+        } else {
+          guide.showSuggestion("document-recu");
+        }
         window.dispatchEvent(new CustomEvent("tenakoe:document-received"));
       }
     }
@@ -280,12 +286,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <GuideTooltip id="btn-mail" C={C}>
         <div className="fiche-actions" style={{ display: "flex", gap: 8 }}>
           {[
-            { Icon: Mail, label: "Envoyer mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
-            { Icon: MessageSquare, label: "SMS", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
-            { Icon: Phone, label: "Appeler", onClick: () => { setShowCallLog(true); setMailOpen(false); setSmsOpen(false); } },
+            { Icon: Mail, label: "Envoyer mail", guide: "btn-mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
+            { Icon: MessageSquare, label: "SMS", guide: "btn-sms", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
+            { Icon: Phone, label: "Appeler", guide: "btn-appeler", onClick: () => { setShowCallLog(true); setMailOpen(false); setSmsOpen(false); } },
           ].map((btn, i) => (
             <button
               key={i}
+              data-guide={btn.guide}
               onClick={btn.onClick}
               style={{
                 padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`,
@@ -354,6 +361,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           />
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <select
+              data-guide="template-select"
               style={{
                 padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`,
                 background: C.bg, color: C.textMuted, fontSize: 12,
@@ -372,6 +380,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               ))}
             </select>
             <button
+              data-guide="btn-send-mail"
               disabled={sending || !mailSubject}
               onClick={async () => {
                 setSending(true);
@@ -477,6 +486,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   if (res.ok) {
                     setSendStatus({ type: "success", msg: "SMS envoyé avec succès" });
                     fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeSms" }) }).catch(() => {});
+                    guide.showSuggestion("sms-envoye");
                     setSmsBody("");
                   } else {
                     const err = await res.json();
@@ -514,6 +524,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         ].map((t) => (
           <button
             key={t.id}
+            data-guide={`tab-${t.id}`}
             onClick={() => setTab(t.id)}
             style={{
               padding: "10px 16px", borderRadius: "8px 8px 0 0", border: "none", cursor: "pointer",
@@ -619,6 +630,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 setShowCallLog(false);
                 setCallNote("");
                 setSendStatus({ type: "success", msg: "Appel logué dans l'historique" });
+                guide.showSuggestion("appel-logue");
               }}
               style={{
                 padding: "8px 20px", borderRadius: 10, border: "none",
@@ -776,7 +788,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Projets / Dossiers</h3>
-              <button onClick={() => setShowAddProjet(!showAddProjet)} style={{
+              <button data-guide="btn-nouveau-projet" onClick={() => setShowAddProjet(!showAddProjet)} style={{
                 padding: "6px 14px", borderRadius: 8, border: "none",
                 background: C.accentDim, color: C.accentText, fontSize: 12,
                 fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
@@ -809,6 +821,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     if (res.ok) {
                       setShowAddProjet(false);
                       setNewProjetForm({ nom: "", qualification: "" });
+                      guide.showSuggestion("nouveau-projet");
                       // Refresh data
                       fetch(`/api/entreprises/${client.id}`).then((r) => r.ok ? r.json() : null).then((data) => {
                         if (data?.projets) setProjets(data.projets);
@@ -916,6 +929,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           />
           <GuideTooltip id="upload" C={C}>
           <div
+            data-guide="upload"
             style={{
               marginTop: 16, padding: 24, borderRadius: 12,
               border: `2px dashed ${dragFile ? C.accent : C.border}`,
@@ -966,6 +980,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         method: "PATCH", headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ terminee: newDone }),
                       }).catch(() => {});
+                      if (newDone) guide.showSuggestion("etape-terminee");
                     }}
                     style={{
                       width: 28, height: 28, borderRadius: "50%",
@@ -1170,6 +1185,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setTaches((prev) => [...prev, t]);
                     setNewTache({ titre: "", type: "AUTRE", dateEcheance: "" });
                     setShowAddTache(false);
+                    guide.showSuggestion("tache-creee");
                   }
                 }} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                   Créer
@@ -1259,6 +1275,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     const note = await res.json();
                     setNotes((prev) => [note, ...prev]);
                     setNewNote("");
+                    guide.showSuggestion("note-ajoutee");
                   }
                 }}
                 style={{

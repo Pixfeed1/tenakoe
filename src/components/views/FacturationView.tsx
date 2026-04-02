@@ -160,7 +160,7 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
       </div>
 
       {/* Table */}
-      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: C.shadow, overflow: "hidden" }}>
+      <div data-guide="pipeline-facturation" style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: C.shadow, overflow: "hidden" }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>
         ) : filtered.length === 0 ? (
@@ -203,7 +203,7 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
                     <td style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
                       <div style={{ display: "flex", gap: 4 }}>
                         {(e.statutFacturation === "DEVIS_A_FAIRE" || e.statutFacturation === "FACTURE_PAYEE") && (
-                          <button onClick={async () => {
+                          <button data-guide="btn-abby" onClick={async () => {
                             setAbbyMsg(null);
                             try {
                               // Sync client first, then create estimate
