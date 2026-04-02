@@ -4,7 +4,16 @@ import { getCurrentUser } from "@/lib/rbac";
 import { setImportProgress, clearImportProgress } from "@/lib/import-progress";
 
 // ========================
-// PROPERTY FINDER — case-insensitive includes
+// EXACT PROPERTY FINDER — case-insensitive exact match
+// ========================
+
+function getProp(properties: Record<string, unknown>, exactName: string): Record<string, unknown> | null {
+  const key = Object.keys(properties).find((k) => k.trim().toLowerCase() === exactName.trim().toLowerCase());
+  return key ? properties[key] as Record<string, unknown> : null;
+}
+
+// ========================
+// FUZZY PROPERTY FINDER — case-insensitive includes (for Leads bases)
 // ========================
 
 function findProp(properties: Record<string, unknown>, possibleNames: string[]): Record<string, unknown> | null {
@@ -89,102 +98,147 @@ function mapPrescripteur(value: string | null): string | null {
 }
 
 // ========================
-// CHAMPS ARTISAN vs CONSEILLER
-// On cherche EXPLICITEMENT les champs artisan et on IGNORE tout le reste
+// BASE CLIENTS — extraction par noms EXACTS de proprietes
 // ========================
 
-function extractArtisanData(props: Record<string, unknown>, isClientBase: boolean) {
+interface ExtractedData {
+  nom: string | null;
+  nomArtisan: string | null;
+  prenomArtisan: string | null;
+  email: string | null;
+  telephone: string | null;
+  siret: string | null;
+  adresse: string | null;
+  depot: string | null;
+  numeroCarte: string | null;
+  statut: string | null;
+  statutPaiement: string | null;
+  referentRGE: boolean;
+  prescripteurRelationId: string | null;
+  prescripteurDirect: string | null;
+  commentaire: string | null;
+}
+
+const EMPTY_DATA: ExtractedData = {
+  nom: null, nomArtisan: null, prenomArtisan: null, email: null,
+  telephone: null, siret: null, adresse: null, depot: null,
+  numeroCarte: null, statut: null, statutPaiement: null,
+  referentRGE: false, prescripteurRelationId: null, prescripteurDirect: null,
+  commentaire: null,
+};
+
+function isInternalEmail(email: string | null): boolean {
+  return !!email && email.toLowerCase().includes("@tenakoe.fr");
+}
+
+function isDepotEmail(email: string | null): boolean {
+  if (!email) return false;
+  return email.includes("@laplateforme") || email.includes("@pointp") ||
+    email.includes("@bigmat") || email.includes("clientele.") ||
+    email.includes("depot.") || email.includes("agence.");
+}
+
+function extractFromClientBase(props: Record<string, unknown>): ExtractedData {
+  // Entreprise
+  const nomEntreprise = extractVal(getProp(props, "Nom"));
+  const siret = extractVal(getProp(props, "SIRET"));
+  const rawEmail = extractVal(getProp(props, "E-mail"));
+  const telephone = extractVal(getProp(props, "Telephone")) || extractVal(getProp(props, "Téléphone"));
+  const adresse = extractVal(getProp(props, "Adresse postale"));
+
+  // Contact dirigeant
+  const nomDirigeant = extractVal(getProp(props, "NOM du dirigeant"));
+  const prenomDirigeant = extractVal(getProp(props, "PRENOM du dirigeant"));
+
+  // Statuts
+  const statutPaiement = extractVal(getProp(props, "Statut Paiement"));
+  const statutDossier = extractVal(getProp(props, "Statut dossier certificateur"));
+  const eligible = extractVal(getProp(props, "Eligible ou pas"));
+
+  // Prescripteur (relation)
+  const prescripteurRelationId = extractVal(getProp(props, "Prescripteur"));
+
+  // Commentaire (2 champs possibles)
+  const commentaire = extractVal(getProp(props, "Commentaire")) || extractVal(getProp(props, "commentaire"));
+
+  // Filtrer email interne (@tenakoe.fr) et email depot
+  const clientEmail = (isInternalEmail(rawEmail) || isDepotEmail(rawEmail)) ? null : rawEmail;
+
+  if (!nomEntreprise) return EMPTY_DATA;
+
+  return {
+    nom: nomEntreprise,
+    nomArtisan: nomDirigeant,
+    prenomArtisan: prenomDirigeant,
+    email: clientEmail,
+    telephone,
+    siret,
+    adresse,
+    depot: null,
+    numeroCarte: null,
+    statut: statutDossier,
+    statutPaiement,
+    referentRGE: eligible?.toLowerCase() === "eligible",
+    prescripteurRelationId,
+    prescripteurDirect: null,
+    commentaire,
+  };
+}
+
+// ========================
+// BASES LEADS (PDB, Point P, Big Mat) — extraction par noms FUZZY
+// ========================
+
+function extractFromLeadBase(props: Record<string, unknown>): ExtractedData {
   const titleProp = Object.values(props).find((p) => (p as Record<string, unknown>).type === "title") as Record<string, unknown> | undefined;
-  const pageTitle = typeof extractVal(titleProp || null) === "string" ? extractVal(titleProp || null) as string : null;
+  const pageTitle = extractVal(titleProp || null);
 
-  // Champs entreprise (rich_text dans les leads, title dans la base clients)
-  const nomEntreprise = typeof extractVal(findProp(props, ["nom entreprise", "nom de l'entreprise"])) === "string"
-    ? extractVal(findProp(props, ["nom entreprise", "nom de l'entreprise"])) as string : null;
+  const nomEntreprise = extractVal(findProp(props, ["nom entreprise", "nom de l'entreprise"]));
+  const nomArtisan = extractVal(findProp(props, ["nom de l'artisan", "nom artisan", "nom du lead"])) || pageTitle;
+  const prenomArtisan = extractVal(findProp(props, ["prenom de l'artisan", "prenom artisan", "prenom du lead"]));
 
-  // Champs artisan — inclure les variantes Base Clients (dirigeant)
-  const nomArtisan = typeof extractVal(findProp(props, ["nom de l'artisan", "nom artisan", "nom du lead", "nom du dirigeant"])) === "string"
-    ? extractVal(findProp(props, ["nom de l'artisan", "nom artisan", "nom du lead", "nom du dirigeant"])) as string : null;
-  const prenomArtisan = typeof extractVal(findProp(props, ["prénom de l'artisan", "prénom artisan", "prénom du lead", "prenom du dirigeant", "prénom du dirigeant"])) === "string"
-    ? extractVal(findProp(props, ["prénom de l'artisan", "prénom artisan", "prénom du lead", "prenom du dirigeant", "prénom du dirigeant"])) as string : null;
+  const rawEmail = extractVal(findProp(props, ["e-mail", "email"]));
+  const telephone = extractVal(findProp(props, ["telephone", "tel"]));
+  const siret = extractVal(findProp(props, ["siret"]));
+  const adresse = extractVal(findProp(props, ["adresse"]));
+  const depot = extractVal(findProp(props, ["votre depot", "depot", "votre agence", "agence"]));
+  const numeroCarte = extractVal(findProp(props, ["numero de carte", "n carte"]));
+  const statut = extractVal(findProp(props, ["statut lead", "statut", "status"]));
+  const referentRGE = extractVal(findProp(props, ["referent rge", "deja referent"]));
 
-  // Le titre change de sens selon la base
-  let nomFromTitle: string | null = null;
-  let artisanFromTitle: string | null = null;
-
-  if (isClientBase) {
-    // Base Clients : le titre EST le nom d'entreprise
-    nomFromTitle = pageTitle;
-  } else {
-    // Bases Leads : le titre EST le nom de l'artisan (PAS l'entreprise !)
-    artisanFromTitle = pageTitle;
-  }
-
-  const email = typeof extractVal(findProp(props, ["e-mail", "email"])) === "string"
-    ? extractVal(findProp(props, ["e-mail", "email"])) as string : null;
-  const telephone = typeof extractVal(findProp(props, ["téléphone", "telephone", "tel"])) === "string"
-    ? extractVal(findProp(props, ["téléphone", "telephone", "tel"])) as string : null;
-  const siret = typeof extractVal(findProp(props, ["siret"])) === "string"
-    ? extractVal(findProp(props, ["siret"])) as string : null;
-  const adresse = typeof extractVal(findProp(props, ["adresse", "adresse postale"])) === "string"
-    ? extractVal(findProp(props, ["adresse", "adresse postale"])) as string : null;
-  // Dépôt: "Votre Dépôt" OU "Votre Agence" (Big Mat) — multi_select
-  const depot = typeof extractVal(findProp(props, ["votre dépôt", "dépôt", "depot", "votre agence", "agence"])) === "string"
-    ? extractVal(findProp(props, ["votre dépôt", "dépôt", "depot", "votre agence", "agence"])) as string : null;
-  const numeroCarte = typeof extractVal(findProp(props, ["numéro de carte", "n° de carte", "n° carte", "numero de carte"])) === "string"
-    ? extractVal(findProp(props, ["numéro de carte", "n° de carte", "n° carte", "numero de carte"])) as string : null;
-  const statut = typeof extractVal(findProp(props, ["statut lead", "statut", "status"])) === "string"
-    ? extractVal(findProp(props, ["statut lead", "statut", "status"])) as string : null;
-  const statutPaiement = typeof extractVal(findProp(props, ["statut paiement", "paiement"])) === "string"
-    ? extractVal(findProp(props, ["statut paiement", "paiement"])) as string : null;
-  const referentRGE = extractVal(findProp(props, ["déjà référent rge", "référent rge", "deja referent"]));
-
-  // Prescripteur : relation (Base Clients) ou multi_select (Leads)
   const prescripteurProp = findProp(props, ["prescripteur"]);
   const prescripteurType = prescripteurProp ? (prescripteurProp as Record<string, unknown>).type as string : null;
-  const prescripteurRelationId = prescripteurType === "relation"
-    ? (typeof extractVal(prescripteurProp) === "string" ? extractVal(prescripteurProp) as string : null)
-    : null;
   const prescripteurDirect = prescripteurType !== "relation"
-    ? (typeof extractVal(prescripteurProp) === "string" ? extractVal(prescripteurProp) as string : null)
-    : null;
+    ? extractVal(prescripteurProp) : null;
 
-  // Détection email conseiller/dépôt
-  const isDepotEmail = email && (
-    email.includes("@laplateforme") || email.includes("@pointp") ||
-    email.includes("@bigmat") || email.includes("clientele.") ||
-    email.includes("depot.") || email.includes("agence.")
-  );
+  const clientEmail = (isInternalEmail(rawEmail) || isDepotEmail(rawEmail)) ? null : rawEmail;
 
-  // Nom artisan final
-  const finalNomArtisan = nomArtisan || artisanFromTitle || null;
-  const finalPrenomArtisan = prenomArtisan || null;
-
-  // Nom entreprise final : JAMAIS le nom d'artisan comme nom d'entreprise
+  // Nom entreprise final
   const nom = nomEntreprise
-    || nomFromTitle
-    || (finalPrenomArtisan && finalNomArtisan ? `${finalPrenomArtisan} ${finalNomArtisan}` : null)
-    || finalNomArtisan
+    || (prenomArtisan && nomArtisan ? `${prenomArtisan} ${nomArtisan}` : null)
+    || nomArtisan
     || null;
 
-  // Skip si aucune donnée réelle
-  const hasRealData = nom || finalNomArtisan || siret || (email && !isDepotEmail);
-  if (!hasRealData) return {
-    nom: null, nomArtisan: null, prenomArtisan: null, email: null,
-    telephone: null, siret: null, adresse: null, depot: null,
-    numeroCarte: null, statut: null, statutPaiement: null,
-    referentRGE: false, prescripteurRelationId: null, prescripteurDirect: null,
-  };
+  // Skip leads with no real data (quasi-vides)
+  const hasRealData = nom && (siret || clientEmail);
+  if (!hasRealData) return EMPTY_DATA;
 
   return {
     nom,
-    nomArtisan: finalNomArtisan,
-    prenomArtisan: finalPrenomArtisan,
-    email: isDepotEmail ? null : email,
-    telephone, siret, adresse, depot, numeroCarte, statut,
-    statutPaiement,
+    nomArtisan,
+    prenomArtisan,
+    email: clientEmail,
+    telephone,
+    siret,
+    adresse,
+    depot,
+    numeroCarte,
+    statut,
+    statutPaiement: null,
     referentRGE: referentRGE === "true" || (typeof referentRGE === "string" && referentRGE.toLowerCase().includes("oui")),
-    prescripteurRelationId,
+    prescripteurRelationId: null,
     prescripteurDirect,
+    commentaire: null,
   };
 }
 
@@ -307,8 +361,10 @@ export async function POST(request: NextRequest) {
         const props = page.properties || {};
         const sourceId = page.id;
 
-        // Extract artisan data (NOT conseiller)
-        const artisan = extractArtisanData(props, db.asClient);
+        // Extract data based on base type
+        const artisan = db.asClient
+          ? extractFromClientBase(props)
+          : extractFromLeadBase(props);
 
         // Skip if no valid name
         if (!artisan.nom) { results.skipped++; continue; }
@@ -322,7 +378,7 @@ export async function POST(request: NextRequest) {
           if (bySiret) { results.skipped++; results.skippedBySiret++; continue; }
         }
 
-        if (artisan.email && artisan.email.includes("@")) {
+        if (artisan.email && artisan.email.includes("@") && !isInternalEmail(artisan.email)) {
           const byEmail = await prisma.entreprise.findFirst({ where: { email: { equals: artisan.email, mode: "insensitive" } } });
           if (byEmail) { results.skipped++; results.skippedByEmail++; continue; }
         }
