@@ -34,6 +34,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [entrepriseData, setEntrepriseData] = useState<Record<string, string> | null>(null);
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
+  const [mailCc, setMailCc] = useState("");
+  const [mailBcc, setMailBcc] = useState("");
   const [sending, setSending] = useState(false);
   const [sendStatus, setSendStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [smsOpen, setSmsOpen] = useState(false);
@@ -390,10 +392,18 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <span style={{ fontSize: 12, color: C.text }}>{entrepriseData?.email || "—"}</span>
           </div>
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-            <input placeholder="CC (séparés par des virgules)" id="mail-cc"
-              style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
-            <input placeholder="CCi" id="mail-bcc"
-              style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 11, color: C.textDim, marginBottom: 2, display: "block" }}>CC</label>
+              <input placeholder="email1@test.fr, email2@test.fr"
+                value={mailCc} onChange={(e) => setMailCc(e.target.value)}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 11, color: C.textDim, marginBottom: 2, display: "block" }}>CCi (copie cachee)</label>
+              <input placeholder="email@test.fr"
+                value={mailBcc} onChange={(e) => setMailBcc(e.target.value)}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+            </div>
           </div>
           {sendStatus && (
             <div style={{
@@ -456,14 +466,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   setHistorique((prev) => [{ type: "EMAIL", message: `Mail envoye — ${mailSubject}`, chargee: "Vous", time: "A l'instant" }, ...prev]);
                   guide.showSuggestion("mail-envoye");
                   window.dispatchEvent(new CustomEvent("tenakoe:mail-sent"));
-                  setMailSubject(""); setMailBody("");
+                  setMailSubject(""); setMailBody(""); setMailCc(""); setMailBcc("");
                   return;
                 }
                 setSending(true);
                 setSendStatus(null);
                 try {
-                  const cc = (document.getElementById("mail-cc") as HTMLInputElement)?.value || "";
-                  const bcc = (document.getElementById("mail-bcc") as HTMLInputElement)?.value || "";
+                  const cc = mailCc;
+                  const bcc = mailBcc;
                   const res = await fetch("/api/send-mail", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -483,6 +493,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     window.dispatchEvent(new CustomEvent("tenakoe:mail-sent"));
                     setMailSubject("");
                     setMailBody("");
+                    setMailCc("");
+                    setMailBcc("");
                   } else {
                     const err = await res.json();
                     setSendStatus({ type: "error", msg: err.error || "Erreur d'envoi" });
