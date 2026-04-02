@@ -62,6 +62,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [showCallLog, setShowCallLog] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editFieldValue, setEditFieldValue] = useState("");
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  const [editContact, setEditContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [callNote, setCallNote] = useState("");
 
   const handleFileUpload = async (file: File) => {
@@ -104,6 +106,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     setEntrepriseData({
       email: DEMO_ENTREPRISE.email,
       telephone: DEMO_ENTREPRISE.telephone,
+      adresse: DEMO_ENTREPRISE.adresse,
       contact: `${DEMO_CONTACT.prenom} ${DEMO_CONTACT.nom}`,
       statutPrise: DEMO_ENTREPRISE.statutPrise,
       interesseTNK: DEMO_ENTREPRISE.interesseTNK,
@@ -200,6 +203,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         setEntrepriseData({
           email: data.email || "",
           telephone: data.telephone || "",
+          adresse: data.adresse || "",
           contact: data.contacts?.[0] ? `${data.contacts[0].prenom} ${data.contacts[0].nom}` : "—",
           statutPrise: data.statutPrise || "",
           interesseTNK: data.interesseTNK || "NSP",
@@ -730,10 +734,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "SIRET", key: "siret", value: client?.siret || "—", Icon: FileText },
               { label: "Contact", key: "", value: entrepriseData?.contact || "—", Icon: UserCircle },
               { label: "Email", key: "email", value: entrepriseData?.email || "—", Icon: Mail },
-              { label: "Téléphone", key: "telephone", value: entrepriseData?.telephone || "—", Icon: Phone },
+              { label: "Telephone", key: "telephone", value: entrepriseData?.telephone || "—", Icon: Phone },
+              { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "Prescripteur", key: "", value: client?.prescripteur || "—", Icon: Building2 },
-              { label: "Dépôt", key: "", value: entrepriseData?.depot || "—", Icon: Building2 },
-              { label: "N° carte", key: "", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
+              { label: "Depot", key: "depot", value: entrepriseData?.depot || "—", Icon: Building2 },
+              { label: "N carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
             ].map((f, i) => (
               <div
                 key={i}
@@ -756,14 +761,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     value={editFieldValue}
                     onChange={(e) => setEditFieldValue(e.target.value)}
                     onBlur={async () => {
-                      if (client?.id) {
+                      if (["email", "telephone", "adresse", "depot", "numeroCarte"].includes(f.key)) {
+                        setEntrepriseData((prev) => prev ? { ...prev, [f.key]: editFieldValue } : prev);
+                      }
+                      if (client?.id && !isDemoMode) {
                         await fetch(`/api/entreprises/${client.id}`, {
                           method: "PATCH", headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ [f.key]: editFieldValue }),
                         });
-                        if (f.key === "email" || f.key === "telephone") {
-                          setEntrepriseData((prev) => prev ? { ...prev, [f.key]: editFieldValue } : prev);
-                        }
                       }
                       setEditingField(null);
                     }}
@@ -1222,20 +1227,53 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           {contacts.length === 0 ? (
             <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun contact</div>
           ) : contacts.map((c) => (
-            <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
-              <UserCircle size={16} color={C.purple} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{c.prenom} {c.nom}</div>
-                <div style={{ fontSize: 11, color: C.textDim }}>
-                  {c.fonction || ""}{c.email ? ` · ${c.email}` : ""}{c.telephone ? ` · ${c.telephone}` : ""}
+            <div key={c.id}>
+              {editingContactId === c.id ? (
+                <div style={{ padding: 12, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <input placeholder="Nom" value={editContact.nom} onChange={(e) => setEditContact({ ...editContact, nom: e.target.value })}
+                      style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }} />
+                    <input placeholder="Prenom" value={editContact.prenom} onChange={(e) => setEditContact({ ...editContact, prenom: e.target.value })}
+                      style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }} />
+                    <input placeholder="Email" value={editContact.email} onChange={(e) => setEditContact({ ...editContact, email: e.target.value })}
+                      style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }} />
+                    <input placeholder="Telephone" value={editContact.telephone} onChange={(e) => setEditContact({ ...editContact, telephone: e.target.value })}
+                      style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }} />
+                    <input placeholder="Fonction" value={editContact.fonction} onChange={(e) => setEditContact({ ...editContact, fonction: e.target.value })}
+                      style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", gridColumn: "1 / -1" }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginTop: 8 }}>
+                    <button onClick={() => setEditingContactId(null)} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer" }}>Annuler</button>
+                    <button onClick={async () => {
+                      if (isDemoMode) { handleDemoAction("Contact modifie"); setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x)); setEditingContactId(null); return; }
+                      await fetch(`/api/contacts/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editContact) });
+                      setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x));
+                      setEditingContactId(null);
+                    }} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Enregistrer</button>
+                  </div>
                 </div>
-              </div>
-              <button onClick={async () => {
-                await fetch(`/api/contacts/${c.id}`, { method: "DELETE" });
-                setContacts((prev) => prev.filter((x) => x.id !== c.id));
-              }} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
-                <Trash2 size={13} />
-              </button>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
+                  <UserCircle size={16} color={C.purple} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{c.prenom} {c.nom}</div>
+                    <div style={{ fontSize: 11, color: C.textDim }}>
+                      {c.fonction || ""}{c.email ? ` · ${c.email}` : ""}{c.telephone ? ` · ${c.telephone}` : ""}
+                    </div>
+                  </div>
+                  <button onClick={() => { setEditingContactId(c.id); setEditContact({ nom: c.nom, prenom: c.prenom, email: c.email || "", telephone: c.telephone || "", fonction: c.fonction || "" }); }}
+                    style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
+                    <Edit3 size={13} />
+                  </button>
+                  <button onClick={async () => {
+                    if (isDemoMode) { handleDemoAction("Contact supprime"); setContacts((prev) => prev.filter((x) => x.id !== c.id)); return; }
+                    await fetch(`/api/contacts/${c.id}`, { method: "DELETE" });
+                    setContacts((prev) => prev.filter((x) => x.id !== c.id));
+                  }} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
