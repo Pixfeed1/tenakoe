@@ -19,26 +19,23 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
-          rel="stylesheet"
-        />
+        <style dangerouslySetInnerHTML={{ __html: `html{visibility:hidden}` }} />
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {
               var dark = localStorage.getItem('tenakoe-dark') === 'true';
-              if (dark) {
-                document.documentElement.style.background = '#0f1117';
-                document.documentElement.style.color = '#f1f5f9';
-              } else {
-                document.documentElement.style.background = '#f8f9fb';
-                document.documentElement.style.color = '#0f172a';
-              }
+              document.documentElement.style.background = dark ? '#0f1117' : '#f8f9fb';
+              document.documentElement.style.color = dark ? '#f1f5f9' : '#0f172a';
             } catch(e) {}
+            document.documentElement.style.visibility = 'visible';
           })();
         `}} />
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+          rel="stylesheet"
+        />
       </head>
-      <body className="antialiased" style={{ transition: "background 0.3s, color 0.3s" }}>
+      <body className="antialiased">
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
