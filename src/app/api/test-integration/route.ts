@@ -111,7 +111,9 @@ export async function POST(request: NextRequest) {
         if (!config.api_key) {
           return NextResponse.json({ ok: false, msg: "Clé API Abby requise" });
         }
-        const res = await fetch("https://docs.abby.fr/mcp/facturation/customers", {
+        const apiUrl = config.api_url || process.env.ABBY_API_URL || "";
+        if (!apiUrl) return NextResponse.json({ ok: false, msg: "URL API requise" });
+        const res = await fetch(`${apiUrl}/customers`, {
           headers: { Authorization: `Bearer ${config.api_key}`, "Content-Type": "application/json" },
         });
         if (res.ok) {

@@ -81,6 +81,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     color: "#6C5CE7",
     url: "https://app.abby.fr",
     fields: [
+      { key: "api_url", label: "URL API Abby", type: "url", placeholder: "https://api.abby.fr/v1" },
       { key: "api_key", label: "Cl\u00E9 API Abby", type: "password", placeholder: "Votre cl\u00E9 API Abby" },
       { key: "auto_sync", label: "Sync auto quand Facture pay\u00E9e", type: "toggle", placeholder: "" },
     ],

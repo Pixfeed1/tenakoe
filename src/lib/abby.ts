@@ -1,6 +1,17 @@
 import { prisma } from "@/lib/prisma";
 
-const ABBY_BASE = "https://docs.abby.fr/mcp/facturation";
+async function getAbbyBaseUrl(): Promise<string> {
+  const integration = await prisma.integration.findFirst({
+    where: { nom: "Abby", actif: true },
+  });
+  if (integration?.config) {
+    try {
+      const config = JSON.parse(integration.config);
+      if (config.api_url) return config.api_url;
+    } catch {}
+  }
+  return process.env.ABBY_API_URL || "";
+}
 
 async function getAbbyApiKey(): Promise<string | null> {
   const integration = await prisma.integration.findFirst({
@@ -18,8 +29,10 @@ async function getAbbyApiKey(): Promise<string | null> {
 async function abbyFetch(endpoint: string, options: RequestInit = {}) {
   const apiKey = await getAbbyApiKey();
   if (!apiKey) throw new Error("Clé API Abby non configurée");
+  const baseUrl = await getAbbyBaseUrl();
+  if (!baseUrl) throw new Error("URL API Abby non configurée");
 
-  const res = await fetch(`${ABBY_BASE}${endpoint}`, {
+  const res = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
