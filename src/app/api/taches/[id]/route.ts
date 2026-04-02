@@ -7,9 +7,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
 
   const { id } = await params;
+  const tache = await prisma.tache.findUnique({ where: { id } });
+  if (!tache) return NextResponse.json({ error: "Tache non trouvee" }, { status: 404 });
+
+  if (user.role !== "ADMIN" && tache.assigneeId !== user.id && tache.createurId !== user.id) {
+    return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+  }
+
   const body = await request.json();
 
   const data: Record<string, unknown> = {};
@@ -21,12 +28,12 @@ export async function PATCH(
   if (body.statut === "TERMINEE") data.dateRealisee = new Date();
   if (body.statut === "A_FAIRE") data.dateRealisee = null;
 
-  const tache = await prisma.tache.update({
+  const updated = await prisma.tache.update({
     where: { id },
     data,
   });
 
-  return NextResponse.json(tache);
+  return NextResponse.json(updated);
 }
 
 export async function DELETE(
@@ -34,9 +41,16 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
 
   const { id } = await params;
+  const tache = await prisma.tache.findUnique({ where: { id } });
+  if (!tache) return NextResponse.json({ error: "Tache non trouvee" }, { status: 404 });
+
+  if (user.role !== "ADMIN" && tache.assigneeId !== user.id && tache.createurId !== user.id) {
+    return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+  }
+
   await prisma.tache.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }
