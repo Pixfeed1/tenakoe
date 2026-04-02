@@ -203,7 +203,7 @@ export function CRMShell({
           <div className="crm-header-left">
             {/* Mobile hamburger */}
             <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{ border: `1px solid ${C.border}`, background: C.surface }}>
+              style={{ display: "none", width: 38, height: 38, borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", alignItems: "center", justifyContent: "center" }}>
               {mobileMenuOpen ? <XIcon size={18} color={C.text} /> : <Menu size={18} color={C.text} />}
             </button>
             <div>
@@ -260,6 +260,13 @@ export function CRMShell({
                   className="btn-nouveau-lead"
                   data-guide="nouveau-lead"
                   onClick={action.action}
+                  style={{
+                    padding: "9px 20px", borderRadius: 10, border: "none",
+                    background: "linear-gradient(135deg, #16a34a, #15803d)",
+                    color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 6,
+                    boxShadow: "0 2px 8px rgba(22,163,74,0.25)", whiteSpace: "nowrap",
+                  }}
                 >
                   <action.Icon size={15} strokeWidth={2.5} /> {action.label}
                 </button>

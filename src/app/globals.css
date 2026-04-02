@@ -354,7 +354,7 @@ body {
 
   /* Mobile hamburger visible */
   .mobile-menu-btn {
-    display: flex;
+    display: flex !important;
   }
 }
 
