@@ -542,6 +542,7 @@ function MailTemplatesTab({ C }: { C: Theme }) {
   };
 
   const remove = async (id: string) => {
+    if (!window.confirm("Supprimer ce template ?")) return;
     await fetch(`/api/mail-templates/${id}`, { method: "DELETE" });
     setTemplates((p) => p.filter((t) => t.id !== id));
   };
@@ -698,6 +699,7 @@ function DocumentsTab({ C }: { C: Theme }) {
   };
 
   const remove = async (id: string) => {
+    if (!window.confirm("Supprimer ce template de document ?")) return;
     const res = await fetch(`/api/document-templates?id=${id}`, { method: "DELETE" });
     if (res.ok) setTemplates((p) => p.filter((t) => t.id !== id));
   };

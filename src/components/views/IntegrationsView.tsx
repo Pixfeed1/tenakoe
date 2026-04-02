@@ -450,6 +450,7 @@ function GmailOAuthSection({ C }: { C: Theme }) {
   };
 
   const disconnect = async () => {
+    if (!window.confirm("Deconnecter Gmail ?")) return;
     await fetch("/api/auth/gmail", { method: "DELETE" });
     setStatus({ connected: false });
   };
@@ -580,6 +581,7 @@ function WebhooksPanel({ C }: { C: Theme }) {
   };
 
   const deleteWebhook = async (id: string) => {
+    if (!window.confirm("Supprimer ce webhook ?")) return;
     await fetch(`/api/webhooks-config?id=${id}`, { method: "DELETE" });
     setWebhooks((p) => p.filter((w) => w.id !== id));
   };

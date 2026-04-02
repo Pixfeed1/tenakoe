@@ -42,11 +42,37 @@ export async function POST(request: NextRequest) {
       epinglee: body.epinglee ?? false,
       auteurId: user.id,
       entrepriseId: body.entrepriseId,
+      fichierUrl: body.fichierUrl || null,
+      fichierNom: body.fichierNom || null,
+      fichierTaille: body.fichierTaille || null,
     },
     include: {
       auteur: { select: { id: true, prenom: true, nom: true } },
     },
   });
+
+  // Detect @mentions and create alerts
+  const mentions = (body.contenu.match(/@(\w+)/g) || []).map((m: string) => m.slice(1).toLowerCase());
+  if (mentions.length > 0) {
+    const mentionedUsers = await prisma.user.findMany({
+      where: {
+        OR: mentions.map((m: string) => ({
+          prenom: { equals: m, mode: "insensitive" as const },
+        })),
+      },
+    });
+    for (const mu of mentionedUsers) {
+      if (mu.id === user.id) continue;
+      await prisma.alerte.create({
+        data: {
+          type: "RAPPEL_ECHEANCE",
+          message: `${user.name} vous a mentionne dans une note`,
+          userId: mu.id,
+          entrepriseId: body.entrepriseId || null,
+        },
+      });
+    }
+  }
 
   return NextResponse.json(note, { status: 201 });
 }

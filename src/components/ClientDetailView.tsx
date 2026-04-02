@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
-  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download,
+  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -41,6 +41,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [notes, setNotes] = useState<Array<{
     id: string; contenu: string; epinglee: boolean; createdAt: string;
     auteur: { id: string; prenom: string; nom: string };
+    fichierUrl?: string | null; fichierNom?: string | null; fichierTaille?: number | null;
   }>>([]);
   const [newNote, setNewNote] = useState("");
   const [editingNote, setEditingNote] = useState<string | null>(null);
@@ -65,6 +66,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [editingContactId, setEditingContactId] = useState<string | null>(null);
   const [editContact, setEditContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [callNote, setCallNote] = useState("");
+  const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
+  const [showMentionMenu, setShowMentionMenu] = useState(false);
+  const [mentionFilter, setMentionFilter] = useState("");
+  const [mentionCursorPos, setMentionCursorPos] = useState(0);
+  const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [noteFile, setNoteFile] = useState<File | null>(null);
 
   const handleFileUpload = async (file: File) => {
     if (!client?.id) return;
@@ -237,6 +244,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     fetch("/api/mail-templates")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setMailTemplates(data))
+      .catch(() => {});
+
+    fetch("/api/users")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setMentionUsers(data))
       .catch(() => {});
 
     // Fetch transmissions as historique
@@ -1266,6 +1278,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     <Edit3 size={13} />
                   </button>
                   <button onClick={async () => {
+                    if (!window.confirm("Supprimer ce contact ?")) return;
                     if (isDemoMode) { handleDemoAction("Contact supprime"); setContacts((prev) => prev.filter((x) => x.id !== c.id)); return; }
                     await fetch(`/api/contacts/${c.id}`, { method: "DELETE" });
                     setContacts((prev) => prev.filter((x) => x.id !== c.id));
@@ -1380,6 +1393,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
               <button onClick={async (e) => {
                 e.stopPropagation();
+                if (!window.confirm("Supprimer cette tache ?")) return;
                 await fetch(`/api/taches/${t.id}`, { method: "DELETE" });
                 setTaches((prev) => prev.filter((x) => x.id !== t.id));
               }} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
@@ -1396,11 +1410,25 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Notes internes</h3>
 
           {/* New note form */}
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 20, position: "relative" }}>
             <textarea
-              placeholder="Ajouter une note..."
+              ref={noteTextareaRef}
+              placeholder="Ajouter une note... (tapez @ pour mentionner)"
               value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
+              onChange={(e) => {
+                setNewNote(e.target.value);
+                const pos = e.target.selectionStart || 0;
+                const textBefore = e.target.value.slice(0, pos);
+                const atMatch = textBefore.match(/@(\w*)$/);
+                if (atMatch) {
+                  setShowMentionMenu(true);
+                  setMentionFilter(atMatch[1].toLowerCase());
+                  setMentionCursorPos(pos);
+                } else {
+                  setShowMentionMenu(false);
+                }
+              }}
+              onKeyDown={(e) => { if (showMentionMenu && e.key === "Escape") setShowMentionMenu(false); }}
               rows={3}
               style={{
                 width: "100%", padding: "10px 14px", borderRadius: 10,
@@ -1408,36 +1436,117 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box",
               }}
             />
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+            {/* Mention dropdown */}
+            {showMentionMenu && (
+              <div style={{
+                position: "absolute", zIndex: 50, background: C.surface,
+                border: `1px solid ${C.border}`, borderRadius: 10,
+                boxShadow: C.shadowHover, maxHeight: 160, overflowY: "auto",
+                width: 200, bottom: "100%", marginBottom: 4,
+              }}>
+                {mentionUsers
+                  .filter((u) => u.prenom.toLowerCase().includes(mentionFilter) || u.nom.toLowerCase().includes(mentionFilter))
+                  .map((u) => (
+                    <button key={u.id} onClick={() => {
+                      const before = newNote.slice(0, mentionCursorPos - mentionFilter.length - 1);
+                      const after = newNote.slice(mentionCursorPos);
+                      setNewNote(`${before}@${u.prenom} ${after}`);
+                      setShowMentionMenu(false);
+                      noteTextareaRef.current?.focus();
+                    }} style={{
+                      width: "100%", padding: "8px 12px", border: "none",
+                      background: "transparent", cursor: "pointer", textAlign: "left",
+                      fontSize: 13, color: C.text, display: "flex", alignItems: "center", gap: 8,
+                    }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                    >
+                      <div style={{
+                        width: 24, height: 24, borderRadius: 6,
+                        background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 10, fontWeight: 700, color: "#fff",
+                      }}>
+                        {u.prenom[0]}{u.nom[0]}
+                      </div>
+                      {u.prenom} {u.nom}
+                    </button>
+                  ))
+                }
+                {mentionUsers.filter((u) => u.prenom.toLowerCase().includes(mentionFilter) || u.nom.toLowerCase().includes(mentionFilter)).length === 0 && (
+                  <div style={{ padding: "8px 12px", fontSize: 12, color: C.textDim }}>Aucun utilisateur</div>
+                )}
+              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <label style={{
+                  padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`,
+                  background: "transparent", cursor: "pointer", fontSize: 12, color: C.textMuted,
+                  display: "flex", alignItems: "center", gap: 4,
+                }}>
+                  <Paperclip size={13} />
+                  {noteFile ? noteFile.name : "Joindre"}
+                  <input type="file" style={{ display: "none" }} onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && file.size > 10 * 1024 * 1024) { alert("Fichier trop volumineux (max 10 Mo)"); return; }
+                    setNoteFile(file || null);
+                  }} />
+                </label>
+                {noteFile && (
+                  <button onClick={() => setNoteFile(null)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim, fontSize: 11 }}>
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
               <button
-                disabled={!newNote.trim()}
+                disabled={!newNote.trim() && !noteFile}
                 onClick={async () => {
-                  if (!newNote.trim()) return;
+                  if (!newNote.trim() && !noteFile) return;
                   if (isDemoMode) {
                     handleDemoAction("Note ajoutee");
-                    setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" } }, ...prev]);
-                    setNewNote("");
+                    setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote || `[Piece jointe : ${noteFile?.name}]`, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" } }, ...prev]);
+                    setNewNote(""); setNoteFile(null);
                     guide.showSuggestion("note-ajoutee");
                     return;
                   }
                   if (!client?.id) return;
+                  let fichierUrl = null;
+                  let fichierNom = null;
+                  let fichierTaille = null;
+                  if (noteFile) {
+                    const formData = new FormData();
+                    formData.append("file", noteFile);
+                    formData.append("entrepriseId", client.id);
+                    const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+                    if (uploadRes.ok) {
+                      const uploadData = await uploadRes.json();
+                      fichierUrl = uploadData.url;
+                      fichierNom = noteFile.name;
+                      fichierTaille = noteFile.size;
+                    }
+                  }
                   const res = await fetch("/api/notes", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contenu: newNote, entrepriseId: client.id }),
+                    body: JSON.stringify({
+                      contenu: newNote || `[Piece jointe : ${fichierNom}]`,
+                      entrepriseId: client.id,
+                      fichierUrl, fichierNom, fichierTaille,
+                    }),
                   });
                   if (res.ok) {
                     const note = await res.json();
                     setNotes((prev) => [note, ...prev]);
-                    setNewNote("");
+                    setNewNote(""); setNoteFile(null);
                     guide.showSuggestion("note-ajoutee");
                   }
                 }}
                 style={{
                   padding: "8px 18px", borderRadius: 8, border: "none",
-                  background: newNote.trim() ? "linear-gradient(135deg, #16a34a, #15803d)" : "#94a3b8",
+                  background: (newNote.trim() || noteFile) ? "linear-gradient(135deg, #16a34a, #15803d)" : "#94a3b8",
                   color: "#fff", fontSize: 13, fontWeight: 600,
-                  cursor: newNote.trim() ? "pointer" : "not-allowed",
+                  cursor: (newNote.trim() || noteFile) ? "pointer" : "not-allowed",
                   display: "flex", alignItems: "center", gap: 6,
                 }}
               >
@@ -1523,6 +1632,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       {/* Delete */}
                       <button
                         onClick={async () => {
+                          if (!window.confirm("Supprimer cette note ?")) return;
                           const res = await fetch(`/api/notes?id=${note.id}`, { method: "DELETE" });
                           if (res.ok) {
                             setNotes((prev) => prev.filter((n) => n.id !== note.id));
@@ -1587,9 +1697,31 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       </div>
                     </div>
                   ) : (
-                    <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                      {note.contenu}
-                    </div>
+                    <>
+                      <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                        {note.contenu.split(/(@\w+)/g).map((part, pi) =>
+                          part.startsWith("@")
+                            ? <span key={pi} style={{ color: C.accent, fontWeight: 600, background: C.accentDim, padding: "0 4px", borderRadius: 4 }}>{part}</span>
+                            : part
+                        )}
+                      </div>
+                      {note.fichierUrl && (
+                        <a href={note.fichierUrl} target="_blank" rel="noopener noreferrer" style={{
+                          display: "inline-flex", alignItems: "center", gap: 6,
+                          marginTop: 8, padding: "6px 10px", borderRadius: 6,
+                          background: C.bg, border: `1px solid ${C.border}`,
+                          fontSize: 12, color: C.blue, textDecoration: "none",
+                        }}>
+                          <Paperclip size={12} />
+                          {note.fichierNom || "Piece jointe"}
+                          {note.fichierTaille && (
+                            <span style={{ color: C.textDim }}>
+                              ({(note.fichierTaille / 1024).toFixed(0)} Ko)
+                            </span>
+                          )}
+                        </a>
+                      )}
+                    </>
                   )}
                 </div>
               ))}

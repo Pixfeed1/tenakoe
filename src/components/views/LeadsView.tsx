@@ -287,6 +287,7 @@ export function LeadsView({ C }: { C: Theme }) {
                     </button>
                     <button
                       onClick={async () => {
+                        if (!window.confirm("Supprimer ce lead ?")) return;
                         await fetch(`/api/leads/${lead.id}`, { method: "DELETE" });
                         fetchLeads();
                       }}
