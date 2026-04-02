@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 import {
   Settings, Users, Columns3, Building2, Mail, ClipboardList, FileText,
   Bell, Download, Upload, Shield, Plus, Trash2, Check, X, Save, Eye, EyeOff,
@@ -589,7 +590,7 @@ function MailTemplatesTab({ C }: { C: Theme }) {
           </div>
           {previewId === t.id && (
             <div style={{ marginTop: 10, padding: "14px 16px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, fontSize: 13, color: C.text, lineHeight: 1.6 }}
-              dangerouslySetInnerHTML={{ __html: t.contenu }} />
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(t.contenu) }} />
           )}
         </div>
       ))}
