@@ -19,16 +19,12 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
-        <style dangerouslySetInnerHTML={{ __html: `html{visibility:hidden}` }} />
         <script dangerouslySetInnerHTML={{ __html: `
-          (function() {
-            try {
-              var dark = localStorage.getItem('tenakoe-dark') === 'true';
-              document.documentElement.style.background = dark ? '#0f1117' : '#f8f9fb';
-              document.documentElement.style.color = dark ? '#f1f5f9' : '#0f172a';
-            } catch(e) {}
-            document.documentElement.style.visibility = 'visible';
-          })();
+          try {
+            var d = localStorage.getItem('tenakoe-dark') === 'true';
+            document.documentElement.style.background = d ? '#0f1117' : '#f8f9fb';
+            document.documentElement.style.color = d ? '#f1f5f9' : '#0f172a';
+          } catch(e) {}
         `}} />
         <link
           href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
