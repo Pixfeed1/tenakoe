@@ -7,11 +7,26 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+
   const { id } = await params;
   const entreprise = await getEntrepriseDetail(id);
 
   if (!entreprise) {
-    return NextResponse.json({ error: "Entreprise non trouvée" }, { status: 404 });
+    return NextResponse.json({ error: "Entreprise non trouvee" }, { status: 404 });
+  }
+
+  // RBAC: chargee can only see entreprises assigned to her
+  if (user.role === "CHARGEE") {
+    const hasAccess = entreprise.projets.some((p) => p.chargee?.id === user.id);
+    if (!hasAccess) return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+  }
+  // RBAC: prescripteur can only see entreprises from their network
+  if (user.role === "PRESCRIPTEUR") {
+    if (entreprise.prescripteur !== user.prescripteurType) {
+      return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+    }
   }
 
   return NextResponse.json(entreprise);
@@ -22,7 +37,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
 
   const { id } = await params;
   const body = await request.json();
