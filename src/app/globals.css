@@ -101,7 +101,7 @@ body {
   font-size: 22px;
 }
 
-/* Header: row 1 = title + actions, row 2 = subtitle */
+/* Header: row 1 = title + icons, row 2 = subtitle, row 3 = button */
 .crm-header {
   display: flex;
   justify-content: space-between;
@@ -115,6 +115,14 @@ body {
   align-items: center;
   gap: 12px;
   order: 1;
+}
+
+/* Icons (guide toggle + bell) — always visible, pushed right */
+.crm-header-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .crm-header-subtitle {
@@ -131,7 +139,7 @@ body {
   order: 2;
 }
 
-.header-actions .btn-nouveau-lead {
+.btn-nouveau-lead {
   padding: 9px 20px;
   border-radius: 10px;
   border: none;
@@ -266,11 +274,15 @@ body {
   }
 
   /* Header mobile layout:
-     Line 1: hamburger + title + guide/bell icons
+     Line 1: hamburger + title + icons (guide, bell) pushed right
      Line 2: date + bonjour
-     Line 3: "Nouveau lead" full width */
+     Line 3: "Nouveau lead" full width centered */
   .crm-header {
     gap: 6px;
+  }
+
+  .crm-header-left {
+    width: 100%;
   }
 
   .crm-header-subtitle {
@@ -278,8 +290,8 @@ body {
   }
 
   .header-actions {
-    gap: 6px;
-    flex-wrap: wrap;
+    width: 100%;
+    order: 4;
   }
 
   .header-actions .btn-nouveau-lead {
