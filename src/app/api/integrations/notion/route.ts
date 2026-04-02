@@ -98,6 +98,28 @@ function mapPrescripteur(value: string | null): string | null {
 }
 
 // ========================
+// PLACEHOLDER DETECTION
+// ========================
+
+const PLACEHOLDER_PATTERNS = [
+  "ecrire manuellement", "checklist docs", "nouveau client -",
+  "template", "exemple", "modele", "a completer",
+];
+
+function isPlaceholder(nom: string): boolean {
+  const lower = nom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  return PLACEHOLDER_PATTERNS.some((p) => lower.includes(p));
+}
+
+const FIELD_PLACEHOLDERS = ["prenom", "nom", "email", "telephone", "adresse", "siret"];
+
+function isFieldPlaceholder(value: string | null): boolean {
+  if (!value) return true;
+  const lower = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  return FIELD_PLACEHOLDERS.includes(lower) || lower.length < 2;
+}
+
+// ========================
 // BASE CLIENTS — extraction par noms EXACTS de proprietes
 // ========================
 
@@ -164,12 +186,16 @@ function extractFromClientBase(props: Record<string, unknown>): ExtractedData {
   // Filtrer email interne (@tenakoe.fr) et email depot
   const clientEmail = (isInternalEmail(rawEmail) || isDepotEmail(rawEmail)) ? null : rawEmail;
 
-  if (!nomEntreprise) return EMPTY_DATA;
+  if (!nomEntreprise || isPlaceholder(nomEntreprise)) return EMPTY_DATA;
+
+  // Clean dirigeant fields (skip placeholders like "prenom", "nom")
+  const cleanNomDir = isFieldPlaceholder(nomDirigeant) ? null : nomDirigeant;
+  const cleanPrenomDir = isFieldPlaceholder(prenomDirigeant) ? null : prenomDirigeant;
 
   return {
     nom: nomEntreprise,
-    nomArtisan: nomDirigeant,
-    prenomArtisan: prenomDirigeant,
+    nomArtisan: cleanNomDir,
+    prenomArtisan: cleanPrenomDir,
     email: clientEmail,
     telephone,
     siret,
@@ -219,8 +245,9 @@ function extractFromLeadBase(props: Record<string, unknown>): ExtractedData {
     || nomArtisan
     || null;
 
-  // Skip leads with no real data (quasi-vides)
-  const hasRealData = nom && (siret || clientEmail);
+  // Skip leads with no real data or placeholders
+  if (!nom || isPlaceholder(nom)) return EMPTY_DATA;
+  const hasRealData = siret || clientEmail;
   if (!hasRealData) return EMPTY_DATA;
 
   return {
@@ -434,12 +461,13 @@ export async function POST(request: NextRequest) {
 
         setImportProgress("notion", db.asClient ? `Clients... (${results.clients})` : `Leads ${db.prescripteur || ""}... (${results.leads})`, results.total, results.total + 10);
 
-        // Contact artisan
-        if (artisan.nomArtisan || artisan.prenomArtisan) {
+        // Contact dirigeant — seulement si on a un vrai nom (pas placeholder, pas vide)
+        const hasRealContact = artisan.nomArtisan && !isFieldPlaceholder(artisan.nomArtisan);
+        if (hasRealContact) {
           await prisma.contact.create({
             data: {
-              nom: artisan.nomArtisan || "?",
-              prenom: artisan.prenomArtisan || "?",
+              nom: artisan.nomArtisan!,
+              prenom: artisan.prenomArtisan && !isFieldPlaceholder(artisan.prenomArtisan) ? artisan.prenomArtisan : "?",
               email: artisan.email,
               telephone: artisan.telephone,
               entrepriseId: entreprise.id,
