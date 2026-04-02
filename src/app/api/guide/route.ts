@@ -32,7 +32,7 @@ export async function GET() {
     premiereConnexion: dbUser.premiereConnexion,
     modeGuide: dbUser.modeGuide,
     guideNiveau: Math.max(calculatedNiveau, dbUser.guideNiveau || 1),
-    guideProgression: progression,
+    guideProgression: dbUser.guideProgression || "{}",
   });
 }
 
@@ -47,11 +47,23 @@ export async function PATCH(request: NextRequest) {
   if (body.guideNiveau !== undefined) data.guideNiveau = body.guideNiveau;
 
   // Merge progression flags
-  if (body.action) {
+  if (body.action || body.dismissSuggestion) {
     const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { guideProgression: true } });
-    let progression: Record<string, boolean> = {};
+    let progression: Record<string, unknown> = {};
     try { progression = dbUser?.guideProgression ? JSON.parse(dbUser.guideProgression) : {}; } catch {}
-    progression[body.action] = true;
+
+    if (body.action) {
+      progression[body.action] = true;
+    }
+
+    if (body.dismissSuggestion) {
+      const dismissed = Array.isArray(progression.dismissed) ? progression.dismissed as string[] : [];
+      if (!dismissed.includes(body.dismissSuggestion)) {
+        dismissed.push(body.dismissSuggestion);
+      }
+      progression.dismissed = dismissed;
+    }
+
     data.guideProgression = JSON.stringify(progression);
   }
 

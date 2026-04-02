@@ -82,6 +82,7 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
   const [activeSuggestion, setActiveSuggestion] = useState<string | null>(null);
   const [activeWalkthrough, setActiveWalkthrough] = useState<string | null>(null);
   const [demoNotif, setDemoNotif] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState<string[]>([]);
 
   useEffect(() => {
     fetch("/api/guide")
@@ -91,6 +92,10 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
         setActive(data.modeGuide);
         setNiveau(data.guideNiveau || 1);
         if (data.premiereConnexion) setShowWelcome(true);
+        try {
+          const prog = JSON.parse(data.guideProgression || "{}");
+          if (prog.dismissed) setDismissed(prog.dismissed);
+        } catch {}
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
@@ -129,7 +134,7 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
     <GuideContext.Provider value={{
       active, niveau, toggle,
       startTour: () => { setShowTour(true); setTourStep(0); },
-      showSuggestion: (id: string) => { if (active) setActiveSuggestion(id); },
+      showSuggestion: (id: string) => { if (active && !dismissed.includes(id)) setActiveSuggestion(id); },
       startWalkthrough: (id: string) => { setActiveWalkthrough(id); setActiveSuggestion(null); },
       trackAction: (action: string) => {
         fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).then(() => {
@@ -144,7 +149,8 @@ export function GuideProvider({ children, C }: { children: React.ReactNode; C: T
         const { GuideToast: GT, ACTION_SUGGESTIONS } = require("@/components/GuideCursorSystem");
         const suggestion = ACTION_SUGGESTIONS[activeSuggestion];
         if (!suggestion) return null;
-        return <GT C={C} title={suggestion.title} message={suggestion.message} options={suggestion.options} onClose={() => setActiveSuggestion(null)} onAction={(opt: { action?: () => void }) => { setActiveSuggestion(null); opt.action?.(); }} />;
+        const sid = activeSuggestion;
+        return <GT C={C} title={suggestion.title} message={suggestion.message} options={suggestion.options} suggestionId={sid} onClose={() => { setActiveSuggestion(null); }} onDismiss={() => { setDismissed((prev) => [...prev, sid]); setActiveSuggestion(null); }} onAction={(opt: { action?: () => void }) => { setActiveSuggestion(null); opt.action?.(); }} />;
       })()}
       {activeWalkthrough && (() => {
         const { WalkthroughPlayer } = require("@/components/GuideCursorSystem");

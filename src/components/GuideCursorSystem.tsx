@@ -397,10 +397,12 @@ interface ToastOption {
   action?: () => void;
 }
 
-export function GuideToast({ C, title, message, options, onClose, onAction }: {
+export function GuideToast({ C, title, message, options, onClose, onAction, suggestionId, onDismiss }: {
   C: Theme; title: string; message: string;
   options: ToastOption[]; onClose: () => void;
   onAction: (option: ToastOption) => void;
+  suggestionId?: string;
+  onDismiss?: () => void;
 }) {
   const [hoveredAction, setHoveredAction] = useState<CursorAction | null>(null);
   const [prevHighlight, setPrevHighlight] = useState<Element | null>(null);
@@ -436,7 +438,7 @@ export function GuideToast({ C, title, message, options, onClose, onAction }: {
           </button>
         </div>
         {options.length > 0 && (
-          <div style={{ padding: "0 10px 14px" }}>
+          <div style={{ padding: "0 10px 10px" }}>
             {options.map((opt, i) => (
               <button key={i}
                 onMouseEnter={() => handleHover(opt.targetSelector)}
@@ -457,6 +459,28 @@ export function GuideToast({ C, title, message, options, onClose, onAction }: {
                 <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>{opt.label}</span>
               </button>
             ))}
+          </div>
+        )}
+        {suggestionId && (
+          <div style={{ padding: "0 18px 12px" }}>
+            <button
+              onClick={() => {
+                fetch("/api/guide", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ dismissSuggestion: suggestionId }),
+                }).catch(() => {});
+                if (onDismiss) onDismiss();
+                else onClose();
+              }}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                fontSize: 11, color: C.textDim, textDecoration: "underline",
+                padding: 0,
+              }}
+            >
+              Ne plus afficher ce conseil
+            </button>
           </div>
         )}
       </div>
