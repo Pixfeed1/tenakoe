@@ -1,32 +1,78 @@
 "use client";
 
-import type { PipelineItem } from "@/lib/data";
-
 // ========================
-// DEMO DATA — cartes fictives pour les parcours guidés
+// DEMO DATA — donnees fictives pour les parcours guides
+// Rien n'est sauvegarde en BDD, tout est en memoire
 // ========================
 
-export const DEMO_PIPELINE_ITEMS: Record<string, PipelineItem & { isDemo: true }> = {
+export const DEMO_ENTREPRISE = {
+  id: "demo-entreprise-1",
+  nom: "MARTIN RENOVATION",
+  siret: "12345678900000",
+  email: "pierre.martin@demo.fr",
+  telephone: "06 00 00 00 00",
+  adresse: "12 rue de la Demo, 75001 Paris",
+  prescripteur: "PDB",
+  depot: "0004 — AUBERVILLIERS",
+  numeroCarte: "2004000000000",
+  interesseTNK: "OUI",
+  miseEnRelation: "SANS_OBJET",
+  statutPrise: "NOUVEAU",
+  statutFacturation: "DEVIS_A_FAIRE",
+  estClient: false,
+  isDemo: true,
+};
+
+export const DEMO_CONTACT = {
+  id: "demo-contact-1",
+  nom: "Martin",
+  prenom: "Pierre",
+  email: "pierre.martin@demo.fr",
+  telephone: "06 00 00 00 00",
+  fonction: "Gerant",
+  isDemo: true,
+};
+
+export const DEMO_PIPELINE_ITEMS: Record<string, { id: string; nom: string; chargee: string; prescripteur: string; date: string; siret: string; isDemo: true }> = {
   "demo-lead-1": {
-    id: "demo-lead-1", nom: "MARTIN RENOVATION", chargee: "—", prescripteur: "PDB",
+    id: "demo-lead-1",
+    nom: "MARTIN RENOVATION",
+    chargee: "—",
+    prescripteur: "PDB",
     date: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
-    siret: "123456789", isDemo: true,
-  },
-  "demo-lead-2": {
-    id: "demo-lead-2", nom: "DURAND COUVERTURE", chargee: "—", prescripteur: "Point P",
-    date: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
-    siret: "987654321", isDemo: true,
+    siret: "12345678900000",
+    isDemo: true,
   },
 };
 
-export const DEMO_DOCS = [
-  { id: "demo-doc-1", nom: "EXTRAIT KBIS", recu: false, date: null, isDemo: true },
-  { id: "demo-doc-2", nom: "ATTESTATION DÉCENNALE", recu: false, date: null, isDemo: true },
-  { id: "demo-doc-3", nom: "ATTESTATION URSSAF", recu: true, date: "01/04/2026", isDemo: true },
+export const DEMO_DOCUMENTS = [
+  { id: "demo-doc-1", nom: "EXTRAIT KBIS", recu: false, date: null as string | null, isDemo: true },
+  { id: "demo-doc-2", nom: "FICHE INSEE", recu: false, date: null as string | null, isDemo: true },
+  { id: "demo-doc-3", nom: "ATTESTATION RC PROFESSIONNELLE", recu: false, date: null as string | null, isDemo: true },
+  { id: "demo-doc-4", nom: "ATTESTATION DECENNALE", recu: true, date: "01/04/2026" as string | null, isDemo: true },
+  { id: "demo-doc-5", nom: "ATTESTATION URSSAF", recu: false, date: null as string | null, isDemo: true },
+  { id: "demo-doc-6", nom: "DIPLOMES ET FORMATIONS", recu: true, date: "28/03/2026" as string | null, isDemo: true },
+];
+
+export const DEMO_ETAPES = [
+  { id: "demo-etape-1", nom: "Prise de contact", delai: 2, done: true, active: false, isDemo: true },
+  { id: "demo-etape-2", nom: "Collecte documents", delai: 14, done: false, active: true, isDemo: true },
+  { id: "demo-etape-3", nom: "Verification conformite", delai: 7, done: false, active: false, isDemo: true },
+  { id: "demo-etape-4", nom: "Depot dossier certificateur", delai: 3, done: false, active: false, isDemo: true },
+];
+
+export const DEMO_HISTORIQUE = [
+  { type: "EMAIL", message: "Mail envoye — Bienvenue chez Tenakoe", chargee: "Kelly", time: "Il y a 2 jours", isDemo: true },
+  { type: "STATUT", message: "MARTIN RENOVATION — Prise en charge", chargee: "Kelly", time: "Il y a 3 jours", isDemo: true },
+  { type: "LEAD", message: "Nouveau lead — MARTIN RENOVATION via PDB", chargee: "—", time: "Il y a 4 jours", isDemo: true },
+];
+
+export const DEMO_NOTES = [
+  { id: "demo-note-1", contenu: "Artisan motive, a des chantiers en cours. Relancer dans 3 jours si pas de retour.", auteur: { id: "demo", prenom: "Kelly", nom: "Demo" }, createdAt: "2026-03-29T10:00:00Z", epinglee: true, isDemo: true },
 ];
 
 // ========================
-// DEMO BADGE STYLE
+// STYLES
 // ========================
 
 export const demoBadgeStyle: React.CSSProperties = {
@@ -37,20 +83,17 @@ export const demoBadgeStyle: React.CSSProperties = {
 
 export const demoCardStyle: React.CSSProperties = {
   borderStyle: "dashed",
-  opacity: 0.85,
+  borderColor: "#7c3aed",
+  opacity: 0.9,
 };
 
 // ========================
-// IS DEMO CHECK
+// HELPERS
 // ========================
 
-export function isDemo(item: { id: string; isDemo?: boolean }): boolean {
-  return item.id.startsWith("demo-") || item.isDemo === true;
+export function isDemo(item: { id?: string; isDemo?: boolean }): boolean {
+  return (item.id?.startsWith("demo-")) || item.isDemo === true;
 }
-
-// ========================
-// DEMO ACTION HANDLER
-// ========================
 
 let demoNotificationCallback: ((msg: string) => void) | null = null;
 
@@ -60,19 +103,13 @@ export function setDemoNotificationCallback(cb: (msg: string) => void) {
 
 export function handleDemoAction(actionName: string): boolean {
   if (demoNotificationCallback) {
-    demoNotificationCallback(`${actionName} (mode démo — données simulées)`);
+    demoNotificationCallback(`${actionName} (mode demo — donnees simulees)`);
   }
-  return true; // Action handled as demo
+  return true;
 }
 
-// ========================
-// INJECT DEMO ITEMS INTO PIPELINE
-// ========================
-
 export function injectDemoItems<T extends { id: string; items: Array<{ id: string }> }>(
-  columns: T[],
-  targetColumnId: string,
-  demoItems: Array<{ id: string }>,
+  columns: T[], targetColumnId: string, demoItems: Array<{ id: string }>,
 ): T[] {
   return columns.map((col) => {
     if (col.id === targetColumnId) {

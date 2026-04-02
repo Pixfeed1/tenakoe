@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import type { DocCheck, TrackStep } from "@/lib/data";
 import { GuideTooltip, useGuide } from "@/components/GuideSystem";
+import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACT, DEMO_DOCUMENTS, DEMO_ETAPES, DEMO_HISTORIQUE, DEMO_NOTES, demoBadgeStyle, handleDemoAction } from "@/lib/demo";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -21,12 +22,13 @@ const ACTIVITY_COLORS: Record<string, string> = {
 
 interface ClientDetailViewProps {
   C: Theme;
-  client: { id?: string; nom: string; siret?: string; prescripteur?: string } | null;
+  client: { id?: string; nom: string; siret?: string; prescripteur?: string; isDemo?: boolean } | null;
   onBack: () => void;
 }
 
 export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const guide = useGuide();
+  const isDemoMode = client?.isDemo || checkIsDemo(client || {});
   const [docs, setDocs] = useState<(DocCheck & { id?: string })[]>([]);
   const [tracks, setTracks] = useState<TrackStep[]>([]);
   const [entrepriseData, setEntrepriseData] = useState<Record<string, string> | null>(null);
@@ -96,16 +98,45 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     setUploading(false);
   };
 
+  // Initialize demo data
+  useEffect(() => {
+    if (!isDemoMode) return;
+    setEntrepriseData({
+      email: DEMO_ENTREPRISE.email,
+      telephone: DEMO_ENTREPRISE.telephone,
+      contact: `${DEMO_CONTACT.prenom} ${DEMO_CONTACT.nom}`,
+      statutPrise: DEMO_ENTREPRISE.statutPrise,
+      interesseTNK: DEMO_ENTREPRISE.interesseTNK,
+      statutFacturation: DEMO_ENTREPRISE.statutFacturation,
+      miseEnRelation: DEMO_ENTREPRISE.miseEnRelation,
+      depot: DEMO_ENTREPRISE.depot,
+      numeroCarte: DEMO_ENTREPRISE.numeroCarte,
+      qualification: "Qualibat RGE",
+      qualificationId: "",
+      formation: "",
+      formationITI: "false",
+      formationITE: "false",
+      formationMenuiserie: "false",
+      formationQUALIPAC: "false",
+      chargee: "Kelly",
+    });
+    setDocs(DEMO_DOCUMENTS.map((d) => ({ id: d.id, nom: d.nom, recu: d.recu, date: d.date })));
+    setTracks(DEMO_ETAPES.map((e) => ({ id: e.id, nom: e.nom, delai: e.delai, done: e.done, active: e.active })));
+    setContacts([{ id: DEMO_CONTACT.id, nom: DEMO_CONTACT.nom, prenom: DEMO_CONTACT.prenom, email: DEMO_CONTACT.email, telephone: DEMO_CONTACT.telephone, fonction: DEMO_CONTACT.fonction }]);
+    setHistorique(DEMO_HISTORIQUE.map((h) => ({ type: h.type, message: h.message, chargee: h.chargee, time: h.time })));
+    setNotes(DEMO_NOTES.map((n) => ({ id: n.id, contenu: n.contenu, epinglee: n.epinglee, createdAt: n.createdAt, auteur: n.auteur })));
+  }, [isDemoMode]);
+
   // Track fiche opened for guide progression
   useEffect(() => {
-    if (client?.id) {
+    if (client?.id && !isDemoMode) {
       fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aOuvertFiche" }) }).catch(() => {});
     }
-  }, [client?.id]);
+  }, [client?.id, isDemoMode]);
 
   // Fetch real data if client has an ID
   useEffect(() => {
-    if (!client?.id) return;
+    if (!client?.id || isDemoMode) return;
 
     fetch(`/api/entreprises/${client.id}`)
       .then((r) => (r.ok ? r.json() : null))
@@ -228,23 +259,23 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     n[i] = { ...n[i], recu: newRecu, date: newRecu ? new Date().toLocaleDateString("fr-FR") : null };
     setDocs(n);
 
-    // Persist to DB
-    if (doc.id) {
+    if (newRecu) {
+      const allReceived = n.every((d) => d.recu);
+      if (allReceived && n.length > 0) {
+        guide.showSuggestion("tous-docs-recus");
+      } else {
+        guide.showSuggestion("document-recu");
+      }
+      window.dispatchEvent(new CustomEvent("tenakoe:document-received"));
+    }
+
+    // Persist to DB (skip in demo mode)
+    if (doc.id && !isDemoMode) {
       fetch("/api/documents", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: doc.id, recu: newRecu }),
       }).catch(() => {});
-      if (newRecu) {
-        // Check if all docs are now received (count the updated state)
-        const allReceived = n.every((d) => d.recu);
-        if (allReceived && n.length > 0) {
-          guide.showSuggestion("tous-docs-recus");
-        } else {
-          guide.showSuggestion("document-recu");
-        }
-        window.dispatchEvent(new CustomEvent("tenakoe:document-received"));
-      }
     }
   };
   const docsRecu = docs.filter((d) => d.recu).length;
@@ -259,6 +290,25 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <ChevronRight size={13} />
         <span style={{ color: C.text, fontWeight: 600 }}>{client?.nom || "—"}</span>
       </div>
+
+      {/* Demo banner */}
+      {isDemoMode && (
+        <div style={{
+          padding: "8px 16px", borderRadius: 10, marginBottom: 16,
+          background: "rgba(124,58,237,0.08)", border: "1px dashed #7c3aed",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#7c3aed" }}>
+            Mode demo — Les actions sont simulees, aucune donnee reelle n&apos;est modifiee
+          </span>
+          <button onClick={() => onBack()} style={{
+            fontSize: 11, color: "#7c3aed", background: "none",
+            border: "none", cursor: "pointer", textDecoration: "underline",
+          }}>
+            Quitter la demo
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
@@ -383,6 +433,15 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               data-guide="btn-send-mail"
               disabled={sending || !mailSubject}
               onClick={async () => {
+                if (isDemoMode) {
+                  handleDemoAction("Mail envoye");
+                  setSendStatus({ type: "success", msg: "Mail envoye (demo)" });
+                  setHistorique((prev) => [{ type: "EMAIL", message: `Mail envoye — ${mailSubject}`, chargee: "Vous", time: "A l'instant" }, ...prev]);
+                  guide.showSuggestion("mail-envoye");
+                  window.dispatchEvent(new CustomEvent("tenakoe:mail-sent"));
+                  setMailSubject(""); setMailBody("");
+                  return;
+                }
                 setSending(true);
                 setSendStatus(null);
                 try {
@@ -471,6 +530,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <button
               disabled={sending || !smsBody}
               onClick={async () => {
+                if (isDemoMode) {
+                  handleDemoAction("SMS envoye");
+                  setSendStatus({ type: "success", msg: "SMS envoye (demo)" });
+                  guide.showSuggestion("sms-envoye");
+                  setSmsBody("");
+                  return;
+                }
                 setSending(true);
                 setSendStatus(null);
                 try {
@@ -609,6 +675,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             }}>Annuler</button>
             <button
               onClick={async () => {
+                if (isDemoMode) {
+                  handleDemoAction("Appel enregistre");
+                  setShowCallLog(false);
+                  setCallNote("");
+                  setSendStatus({ type: "success", msg: "Appel logue (demo)" });
+                  guide.showSuggestion("appel-logue");
+                  return;
+                }
                 if (!client?.id) return;
                 const datetime = (document.getElementById("call-datetime") as HTMLInputElement)?.value;
                 const duration = (document.getElementById("call-duration") as HTMLSelectElement)?.value;
@@ -814,7 +888,16 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
                   <button onClick={() => setShowAddProjet(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
                   <button onClick={async () => {
-                    if (!newProjetForm.nom || !client?.id) return;
+                    if (!newProjetForm.nom) return;
+                    if (isDemoMode) {
+                      handleDemoAction("Projet cree");
+                      setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualification ? [{ type: newProjetForm.qualification }] : [], etapes: [] }]);
+                      setShowAddProjet(false);
+                      setNewProjetForm({ nom: "", qualification: "" });
+                      guide.showSuggestion("nouveau-projet");
+                      return;
+                    }
+                    if (!client?.id) return;
                     const payload: Record<string, unknown> = { nom: newProjetForm.nom, entrepriseId: client.id };
                     if (newProjetForm.qualification) payload.qualifications = [{ type: newProjetForm.qualification }];
                     const res = await fetch("/api/projets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -973,13 +1056,25 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     onClick={async () => {
                       if (!t.active && !t.done) return;
                       const newDone = !t.done;
-                      setTracks((prev) => prev.map((step) =>
-                        step.id === t.id ? { ...step, done: newDone, active: !newDone } : step
-                      ));
-                      fetch(`/api/etapes/${t.id}`, {
-                        method: "PATCH", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ terminee: newDone }),
-                      }).catch(() => {});
+                      setTracks((prev) => {
+                        const updated = prev.map((step) =>
+                          step.id === t.id ? { ...step, done: newDone, active: !newDone } : step
+                        );
+                        // In demo mode, activate next step
+                        if (isDemoMode && newDone) {
+                          const idx = updated.findIndex((s) => s.id === t.id);
+                          if (idx >= 0 && idx + 1 < updated.length) {
+                            updated[idx + 1] = { ...updated[idx + 1], active: true };
+                          }
+                        }
+                        return updated;
+                      });
+                      if (!isDemoMode) {
+                        fetch(`/api/etapes/${t.id}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ terminee: newDone }),
+                        }).catch(() => {});
+                      }
                       if (newDone) guide.showSuggestion("etape-terminee");
                     }}
                     style={{
@@ -1175,7 +1270,16 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
                 <button onClick={() => setShowAddTache(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
                 <button onClick={async () => {
-                  if (!newTache.titre || !client?.id) return;
+                  if (!newTache.titre) return;
+                  if (isDemoMode) {
+                    handleDemoAction("Tache creee");
+                    setTaches((prev) => [...prev, { id: `demo-tache-${Date.now()}`, titre: newTache.titre, statut: "A_FAIRE", type: newTache.type, dateEcheance: newTache.dateEcheance || null, enRetard: false }]);
+                    setNewTache({ titre: "", type: "AUTRE", dateEcheance: "" });
+                    setShowAddTache(false);
+                    guide.showSuggestion("tache-creee");
+                    return;
+                  }
+                  if (!client?.id) return;
                   const res = await fetch("/api/taches", {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ ...newTache, entrepriseId: client.id, dateEcheance: newTache.dateEcheance || null }),
@@ -1265,7 +1369,15 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               <button
                 disabled={!newNote.trim()}
                 onClick={async () => {
-                  if (!newNote.trim() || !client?.id) return;
+                  if (!newNote.trim()) return;
+                  if (isDemoMode) {
+                    handleDemoAction("Note ajoutee");
+                    setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" } }, ...prev]);
+                    setNewNote("");
+                    guide.showSuggestion("note-ajoutee");
+                    return;
+                  }
+                  if (!client?.id) return;
                   const res = await fetch("/api/notes", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

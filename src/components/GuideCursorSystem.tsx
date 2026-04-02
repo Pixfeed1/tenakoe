@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Mail, MessageSquare, StickyNote, ClipboardList, FileText, X, ArrowUpRight, Phone } from "lucide-react";
+import { Mail, MessageSquare, StickyNote, ClipboardList, FileText, X, ArrowUpRight, Phone, PartyPopper } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 
 // ========================
@@ -289,6 +289,7 @@ export function WalkthroughPlayer({ C, walkthroughId, onFinish }: {
   const [step, setStep] = useState(0);
   const [cursorDone, setCursorDone] = useState(false);
   const [actionDone, setActionDone] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
   const wt = WALKTHROUGHS[walkthroughId];
 
   const handleCursorComplete = useCallback(() => setCursorDone(true), []);
@@ -367,7 +368,7 @@ export function WalkthroughPlayer({ C, walkthroughId, onFinish }: {
             <button
               disabled={!actionDone && !!currentStep.waitEvent}
               onClick={() => {
-                if (step === total - 1) { onFinish(); } else { setStep((s) => s + 1); setCursorDone(false); setActionDone(false); }
+                if (step === total - 1) { setShowTransition(true); } else { setStep((s) => s + 1); setCursorDone(false); setActionDone(false); }
               }}
               style={{
                 padding: "7px 16px", borderRadius: 8, border: "none",
@@ -382,6 +383,41 @@ export function WalkthroughPlayer({ C, walkthroughId, onFinish }: {
           </div>
         </div>
       </div>
+
+      {/* Transition screen */}
+      {showTransition && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9998,
+          background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            background: C.surface, borderRadius: 16, padding: "32px 28px", maxWidth: 420,
+            textAlign: "center", boxShadow: "0 16px 48px rgba(0,0,0,0.2)",
+          }}>
+            <PartyPopper size={36} color={C.accent} style={{ marginBottom: 12 }} />
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: C.text, margin: "0 0 8px" }}>
+              Parcours termine !
+            </h3>
+            <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px", lineHeight: 1.5 }}>
+              Vous maitrisez maintenant cette fonctionnalite. Essayez avec vos vraies donnees !
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button onClick={onFinish} style={{
+                padding: "10px 20px", borderRadius: 10, border: `1px solid ${C.border}`,
+                background: C.surface, color: C.textMuted, fontSize: 13, cursor: "pointer",
+              }}>
+                Fermer
+              </button>
+              <button onClick={onFinish} style={{
+                padding: "10px 20px", borderRadius: 10, border: "none",
+                background: C.accent, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              }}>
+                Aller au dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

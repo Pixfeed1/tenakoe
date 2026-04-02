@@ -291,7 +291,7 @@ export function DashboardView({
                     }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadowHover; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadow; }}
-                    onClick={() => { if (demo) { handleDemoAction("Ouverture fiche"); return; } onSelectClient(item); }}
+                    onClick={() => { if (demo) { onSelectClient({ ...item, isDemo: true } as PipelineItem & { isDemo: boolean }); return; } onSelectClient(item); }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                       <GripVertical size={12} color={C.textDim} />
