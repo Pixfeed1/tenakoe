@@ -44,8 +44,13 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
       data-guide="sidebar"
       className={`crm-sidebar ${className || ""}`}
       style={{
+        width: 250,
         background: C.surface,
         borderRight: `1px solid ${C.border}`,
+        display: "flex",
+        flexDirection: "column",
+        padding: "20px 0",
+        flexShrink: 0,
         transition: "background 0.3s",
       }}
     >

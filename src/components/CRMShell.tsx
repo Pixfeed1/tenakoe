@@ -172,6 +172,7 @@ export function CRMShell({
     <div
       className="crm-layout"
       style={{
+        display: "flex",
         height: "100vh",
         width: "100%",
         background: C.bg,
@@ -196,9 +197,9 @@ export function CRMShell({
         onSelectClient={openClient}
       />
 
-      <main className="crm-main">
+      <main className="crm-main" style={{ flex: 1, overflow: "auto", padding: "28px 36px" }}>
         {/* Header */}
-        <div className="crm-header">
+        <div className="crm-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <div className="crm-header-left">
             {/* Mobile hamburger */}
             <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -227,7 +228,7 @@ export function CRMShell({
               </p>
             </div>
           </div>
-          <div className="header-actions">
+          <div className="header-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <GuideToggleButton C={C} />
             <GuideTooltip id="notifications" C={C}>
               <AlertesDropdown C={C} />

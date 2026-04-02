@@ -91,7 +91,7 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
         {(search || filterStatut) && <span style={{ fontSize: 12, color: C.textDim }}>sur {entreprises.length} total</span>}
       </div>
       {/* Filters */}
-      <div className="filter-bar">
+      <div className="filter-bar" style={{ display: "flex", gap: 12, marginBottom: 20 }}>
         <div style={{
           flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
           borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface,

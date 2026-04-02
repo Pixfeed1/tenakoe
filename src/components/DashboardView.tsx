@@ -158,7 +158,7 @@ export function DashboardView({
     <>
       {/* Stats */}
       <GuideTooltip id="kpi" C={C} style={{ marginBottom: 24 }}>
-      <div data-guide="kpi" className="stats-row">
+      <div data-guide="kpi" className="stats-row" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         {STATS.map((s, i) => (
           <div
             key={i}
@@ -243,7 +243,7 @@ export function DashboardView({
             </span>
           </h2>
         </div>
-        <div className="pipeline-columns" data-guide="pipeline">
+        <div className="pipeline-columns" data-guide="pipeline" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
           {pipelineWithDemo.map((col, colIdx) => (
             <div
               key={col.id}
@@ -341,7 +341,7 @@ export function DashboardView({
       </GuideTooltip>
 
       {/* Bottom Grid */}
-      <div className="bottom-grid">
+      <div className="bottom-grid" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20 }}>
         {/* Clients Table */}
         <div
           data-guide="clients-table"

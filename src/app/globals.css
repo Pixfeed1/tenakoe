@@ -225,13 +225,18 @@ body {
     flex-direction: column;
   }
 
+  .crm-layout {
+    flex-direction: column !important;
+  }
+
   .crm-sidebar {
-    position: fixed;
+    position: fixed !important;
     left: -280px;
     top: 0;
     bottom: 0;
     z-index: 1000;
-    width: 260px;
+    width: 260px !important;
+    padding: 20px 0 !important;
     transition: left 0.3s ease;
   }
 
@@ -252,18 +257,18 @@ body {
   }
 
   .crm-main {
-    padding: 16px;
-    width: 100%;
+    padding: 16px !important;
+    width: 100% !important;
   }
 
   .crm-main h1 {
-    font-size: 18px;
+    font-size: 18px !important;
   }
 
   /* Header mobile: stack and full-width button */
   .crm-header {
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
   }
 
   .crm-header-subtitle {
@@ -271,57 +276,57 @@ body {
   }
 
   .header-actions {
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
   }
 
   .header-actions .btn-nouveau-lead {
     width: 100%;
     justify-content: center;
-    padding: 10px 16px;
+    padding: 10px 16px !important;
   }
 
   /* Pipeline horizontal scroll */
   .pipeline-columns {
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
-    padding-bottom: 12px;
+    padding-bottom: 12px !important;
   }
 
   .pipeline-columns > div {
-    min-width: 260px;
+    min-width: 260px !important;
     scroll-snap-align: start;
   }
 
   /* Stats cards: 2x2 grid */
   .stats-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
   }
 
   .stats-row > div {
-    min-width: 0;
+    min-width: 0 !important;
   }
 
   /* Bottom grid stack */
   .bottom-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 
   /* Fiche client grid stack */
   .fiche-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 
   /* Action buttons wrap */
   .fiche-actions {
-    flex-wrap: wrap;
+    flex-wrap: wrap !important;
   }
 
   .fiche-actions button {
-    font-size: 11px;
-    padding: 6px 10px;
+    font-size: 11px !important;
+    padding: 6px 10px !important;
   }
 
   /* Tables responsive */
@@ -359,19 +364,19 @@ body {
 
 @media (min-width: 769px) and (max-width: 1024px) {
   .crm-sidebar {
-    width: 220px;
+    width: 220px !important;
   }
 
   .crm-main {
-    padding: 20px 24px;
+    padding: 20px 24px !important;
   }
 
   .bottom-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 
   .pipeline-columns > div {
-    min-width: 180px;
+    min-width: 180px !important;
   }
 }
 
@@ -381,6 +386,6 @@ body {
 
 @media (min-width: 1025px) and (max-width: 1280px) {
   .pipeline-columns > div {
-    min-width: 170px;
+    min-width: 170px !important;
   }
 }

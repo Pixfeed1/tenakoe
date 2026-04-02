@@ -350,7 +350,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </div>
         </div>
         <GuideTooltip id="btn-mail" C={C}>
-        <div className="fiche-actions">
+        <div className="fiche-actions" style={{ display: "flex", gap: 8 }}>
           {[
             { Icon: Mail, label: "Envoyer mail", guide: "btn-mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
             { Icon: MessageSquare, label: "SMS", guide: "btn-sms", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
@@ -595,7 +595,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       )}
 
       {/* Tabs */}
-      <div className="tabs-row" style={{ borderBottom: `1px solid ${C.border}` }}>
+      <div className="tabs-row" style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: `1px solid ${C.border}` }}>
         {[
           { id: "dossier", label: "Dossier", Icon: FolderOpen },
           { id: "docs", label: `Documents (${docsRecu}/${docs.length})`, Icon: FileText },
@@ -738,7 +738,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
       {/* Tab: Dossier */}
       {tab === "dossier" && (
-        <div className="fiche-grid">
+        <div className="fiche-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Informations entreprise</h3>
             {[
