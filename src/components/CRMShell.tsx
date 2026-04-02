@@ -205,33 +205,33 @@ export function CRMShell({
               style={{ border: `1px solid ${C.border}`, background: C.surface }}>
               {mobileMenuOpen ? <XIcon size={18} color={C.text} /> : <Menu size={18} color={C.text} />}
             </button>
-            <h1
-              style={{
-                fontWeight: 700,
-                margin: 0,
-                letterSpacing: "-0.03em",
-                color: C.text,
-              }}
-            >
-              {VIEW_TITLES[view]}
-            </h1>
-            <div className="crm-header-icons">
-              <GuideToggleButton C={C} />
-              <GuideTooltip id="notifications" C={C}>
-                <AlertesDropdown C={C} />
-              </GuideTooltip>
+            <div>
+              <h1
+                style={{
+                  fontWeight: 700,
+                  margin: 0,
+                  letterSpacing: "-0.03em",
+                  color: C.text,
+                }}
+              >
+                {VIEW_TITLES[view]}
+              </h1>
+              <p className="crm-header-subtitle" style={{ color: C.textMuted }}>
+                {new Date().toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}{" "}
+                · Bonjour {firstName}
+              </p>
             </div>
           </div>
-          <p className="crm-header-subtitle" style={{ color: C.textMuted }}>
-            {new Date().toLocaleDateString("fr-FR", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}{" "}
-            · Bonjour {firstName}
-          </p>
           <div className="header-actions">
+            <GuideToggleButton C={C} />
+            <GuideTooltip id="notifications" C={C}>
+              <AlertesDropdown C={C} />
+            </GuideTooltip>
             {(() => {
               const actions: Partial<Record<View, { label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; action: () => void }>> = {
                 Dashboard: { label: "Nouveau lead", Icon: Zap, action: () => navigateTo("Leads") },
