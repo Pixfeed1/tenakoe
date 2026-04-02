@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
 
+// Rate limiting for public POST endpoint
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+const RATE_LIMIT = 10;
+const RATE_WINDOW = 60 * 60 * 1000; // 1 hour
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.lastReset > RATE_WINDOW) {
+    rateLimitMap.set(ip, { count: 1, lastReset: now });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 // GET: protected — only authenticated users can list leads
 export async function GET() {
   const user = await getCurrentUser();
@@ -17,6 +34,11 @@ export async function GET() {
 
 // POST: public — formulaire prescripteur (pas besoin d'auth)
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: "Trop de soumissions, reessayez plus tard" }, { status: 429 });
+  }
+
   const body = await request.json();
 
   if (!body.nomArtisan || !body.prenomArtisan || !body.prescripteur) {
