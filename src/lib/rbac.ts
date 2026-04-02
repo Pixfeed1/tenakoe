@@ -75,6 +75,17 @@ export function getTacheFilter(user: CurrentUser) {
   };
 }
 
+export async function checkEntrepriseAccess(user: CurrentUser, entrepriseId: string): Promise<boolean> {
+  if (user.role === "ADMIN") return true;
+  if (user.role === "PRESCRIPTEUR") {
+    const ent = await prisma.entreprise.findUnique({ where: { id: entrepriseId }, select: { prescripteur: true } });
+    return ent?.prescripteur === user.prescripteurType;
+  }
+  // CHARGEE
+  const projet = await prisma.projet.findFirst({ where: { entrepriseId, chargeeId: user.id } });
+  return !!projet;
+}
+
 export function getTransmissionFilter(user: CurrentUser) {
   if (user.role === "ADMIN") return {};
   return {

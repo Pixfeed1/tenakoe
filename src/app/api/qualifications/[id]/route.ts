@@ -7,9 +7,21 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
 
   const { id } = await params;
+
+  const qualif = await prisma.projetQualification.findUnique({
+    where: { id },
+    include: { projet: { select: { chargeeId: true } } },
+  });
+  if (!qualif) return NextResponse.json({ error: "Non trouvee" }, { status: 404 });
+
+  if (user.role === "CHARGEE" && qualif.projet.chargeeId !== user.id) {
+    return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+  }
+
   const body = await request.json();
 
   const data: Record<string, unknown> = {};

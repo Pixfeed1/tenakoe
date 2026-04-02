@@ -9,16 +9,27 @@ export async function PATCH(
 ) {
   const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+    return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+  }
+  if (session.user.role === "PRESCRIPTEUR") {
+    return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
   }
 
   const { id } = await params;
   const body = await request.json();
   const { statutPrise, statutFacturation } = body;
 
-  const entreprise = await prisma.entreprise.findUnique({ where: { id } });
+  const entreprise = await prisma.entreprise.findUnique({
+    where: { id },
+    include: { projets: { select: { chargeeId: true } } },
+  });
   if (!entreprise) {
-    return NextResponse.json({ error: "Entreprise non trouvée" }, { status: 404 });
+    return NextResponse.json({ error: "Entreprise non trouvee" }, { status: 404 });
+  }
+
+  if (session.user.role === "CHARGEE") {
+    const hasAccess = entreprise.projets.some((p) => p.chargeeId === session.user.id);
+    if (!hasAccess) return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
   }
 
   const oldStatut = entreprise.statutPrise;
