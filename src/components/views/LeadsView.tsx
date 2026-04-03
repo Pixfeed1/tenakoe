@@ -96,6 +96,24 @@ export function LeadsView({ C }: { C: Theme }) {
       }),
     });
     if (res.ok) {
+      const entreprise = await res.json();
+
+      // Creer le contact artisan
+      if (lead.nomArtisan || lead.prenomArtisan) {
+        await fetch("/api/contacts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nom: lead.nomArtisan || "?",
+            prenom: lead.prenomArtisan || "?",
+            email: lead.email,
+            telephone: lead.telephone,
+            fonction: "Gerant",
+            entrepriseId: entreprise.id,
+          }),
+        }).catch(() => {});
+      }
+
       // Marquer le lead comme converti
       await fetch("/api/leads", {
         method: "PATCH",
