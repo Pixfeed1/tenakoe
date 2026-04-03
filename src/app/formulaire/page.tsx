@@ -25,6 +25,15 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
   const [choosingPrescripteur, setChoosingPrescripteur] = useState(false);
   const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; actif: boolean }>>([]);
+  const [form, setForm] = useState({
+    nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
+    email: "", telephone: "", adresse: "", prescripteur: "PDB",
+    depot: "", numeroCarte: "", dejaReferentRGE: false,
+    commentaires: "", acceptePartage: false,
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     // Load prescripteur configs
@@ -95,15 +104,12 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     );
   }
 
-  const [form, setForm] = useState({
-    nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
-    email: "", telephone: "", adresse: "", prescripteur: resolvedPrescripteur || "PDB",
-    depot: "", numeroCarte: "", dejaReferentRGE: false,
-    commentaires: "", acceptePartage: false,
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
+  // Update prescripteur in form when resolved
+  useEffect(() => {
+    if (resolvedPrescripteur) {
+      setForm((prev) => ({ ...prev, prescripteur: resolvedPrescripteur }));
+    }
+  }, [resolvedPrescripteur]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
