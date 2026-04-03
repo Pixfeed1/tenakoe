@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 
 interface Lead {
   id: string;
@@ -150,20 +151,14 @@ export function LeadsView({ C }: { C: Theme }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => {
+          <Button C={C} variant="secondary" onClick={() => {
             navigator.clipboard.writeText(`${window.location.origin}/formulaire`);
-          }} style={{
-            padding: "8px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
-            background: C.surface, color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer",
           }}>
             Copier le lien
-          </button>
-          <button onClick={() => window.open("/formulaire", "_blank")} style={{
-            padding: "8px 14px", borderRadius: 8, border: "none",
-            background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
-          }}>
+          </Button>
+          <Button C={C} variant="primary" onClick={() => { window.open("/formulaire", "_blank"); }}>
             Voir le formulaire
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -243,17 +238,9 @@ export function LeadsView({ C }: { C: Theme }) {
             <button onClick={() => setShowForm(false)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.textMuted, fontSize: 13, cursor: "pointer" }}>
               Annuler
             </button>
-            <button
-              onClick={submitLead}
-              disabled={!form.nomArtisan || !form.prenomArtisan}
-              style={{
-                padding: "8px 20px", borderRadius: 8, border: "none",
-                background: form.nomArtisan && form.prenomArtisan ? "linear-gradient(135deg, #16a34a, #15803d)" : "#94a3b8",
-                color: "#fff", fontSize: 13, fontWeight: 600, cursor: form.nomArtisan ? "pointer" : "not-allowed",
-              }}
-            >
+            <Button C={C} variant="primary" type="submit" disabled={!form.nomArtisan || !form.prenomArtisan} onClick={submitLead}>
               Créer le lead
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -326,31 +313,16 @@ export function LeadsView({ C }: { C: Theme }) {
                     >
                       <Edit3 size={12} />
                     </button>
-                    <button
-                      onClick={() => convertLead(lead)}
-                      disabled={converting === lead.id}
-                      style={{
-                        padding: "5px 10px", borderRadius: 8, border: "none",
-                        background: C.accentDim, color: C.accentText, fontSize: 12,
-                        fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-                      }}
-                    >
-                      <Building2 size={12} /> {converting === lead.id ? "..." : "Convertir"}
-                    </button>
-                    <button
-                      onClick={async () => {
+                    <Button C={C} variant="primary" size="sm" onClick={() => convertLead(lead)} disabled={converting === lead.id} icon={<Building2 size={12} />}>
+                      {converting === lead.id ? "..." : "Convertir"}
+                    </Button>
+                    <Button C={C} variant="danger" size="sm" onClick={async () => {
                         if (!window.confirm("Supprimer ce lead ?")) return;
                         await fetch(`/api/leads/${lead.id}`, { method: "DELETE" });
                         fetchLeads();
-                      }}
-                      style={{
-                        padding: "5px 10px", borderRadius: 8, border: "none",
-                        background: C.dangerDim, color: C.danger, fontSize: 12,
-                        fontWeight: 600, cursor: "pointer", marginLeft: 4,
-                      }}
-                    >
+                      }} style={{ marginLeft: 4 }}>
                       Suppr.
-                    </button>
+                    </Button>
                     </div>
                   </td>
                 </tr>

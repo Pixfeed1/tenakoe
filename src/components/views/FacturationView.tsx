@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { CreditCard, Search, FileText, Check, Clock, AlertTriangle, ExternalLink, Send, Plus, X, Circle, GripVertical } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import type { PipelineColumn } from "@/lib/data";
 
@@ -118,7 +119,7 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
           </div>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
-          <button onClick={async () => {
+          <Button C={C} variant="secondary" onClick={async () => {
             setAbbyAction("sync"); setAbbyMsg(null);
             const payees = entreprises.filter((e) => e.statutFacturation === "FACTURE_PAYEE");
             let synced = 0;
@@ -133,13 +134,9 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
             }
             setAbbyMsg({ type: "success", msg: `${synced} client${synced > 1 ? "s" : ""} synchronisé${synced > 1 ? "s" : ""} vers Abby` });
             setAbbyAction(null);
-          }} disabled={abbyAction === "sync"} style={{
-            padding: "7px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
-            background: C.surface, color: C.textMuted, fontSize: 12, fontWeight: 500, cursor: "pointer",
-            display: "flex", alignItems: "center", gap: 5,
-          }}>
-            <Send size={12} /> {abbyAction === "sync" ? "Sync..." : "Sync clients"}
-          </button>
+          }} disabled={abbyAction === "sync"} loading={abbyAction === "sync"} icon={<Send size={12} />} size="sm">
+            {abbyAction === "sync" ? "Sync..." : "Sync clients"}
+          </Button>
           <a href="https://app.abby.fr" target="_blank" rel="noopener noreferrer" style={{
             padding: "7px 14px", borderRadius: 8, border: "none",
             background: "linear-gradient(135deg, #6C5CE7, #5a4bd1)",

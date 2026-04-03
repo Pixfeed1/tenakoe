@@ -13,6 +13,7 @@ import type { DocCheck, TrackStep } from "@/lib/data";
 import { GuideTooltip, useGuide } from "@/components/GuideSystem";
 import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACT, DEMO_DOCUMENTS, DEMO_ETAPES, DEMO_HISTORIQUE, DEMO_NOTES, demoBadgeStyle, handleDemoAction } from "@/lib/demo";
 import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -370,18 +371,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             { Icon: MessageSquare, label: "SMS", guide: "btn-sms", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
             { Icon: Phone, label: "Appeler", guide: "btn-appeler", onClick: () => { setShowCallLog(true); setMailOpen(false); setSmsOpen(false); } },
           ].map((btn, i) => (
-            <button
-              key={i}
-              data-guide={btn.guide}
-              onClick={btn.onClick}
-              style={{
-                padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`,
-                background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 6, fontWeight: 500,
-              }}
-            >
-              <btn.Icon size={14} /> {btn.label}
-            </button>
+            <Button key={i} C={C} variant="secondary" data-guide={btn.guide} onClick={btn.onClick} icon={<btn.Icon size={14} />} size="sm">
+              {btn.label}
+            </Button>
           ))}
         </div>
         </GuideTooltip>
@@ -928,13 +920,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Projets / Dossiers</h3>
-              <button data-guide="btn-nouveau-projet" onClick={() => setShowAddProjet(!showAddProjet)} style={{
-                padding: "6px 14px", borderRadius: 8, border: "none",
-                background: C.accentDim, color: C.accentText, fontSize: 12,
-                fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-              }}>
-                <Plus size={12} /> Nouveau projet
-              </button>
+              <Button C={C} variant="secondary" data-guide="btn-nouveau-projet" onClick={() => setShowAddProjet(!showAddProjet)} icon={<Plus size={12} />} size="sm">
+                Nouveau projet
+              </Button>
             </div>
 
             {showAddProjet && (
@@ -1311,13 +1299,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Contacts</h3>
-            <button onClick={() => setShowAddContact(!showAddContact)} style={{
-              padding: "6px 14px", borderRadius: 8, border: "none",
-              background: C.accentDim, color: C.accentText, fontSize: 12,
-              fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-            }}>
-              <Plus size={12} /> Ajouter
-            </button>
+            <Button C={C} variant="secondary" onClick={() => setShowAddContact(!showAddContact)} icon={<Plus size={12} />} size="sm">
+              Ajouter
+            </Button>
           </div>
 
           {showAddContact && (
@@ -1418,13 +1402,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Tâches</h3>
-            <button data-guide="btn-nouvelle-tache" onClick={() => setShowAddTache(!showAddTache)} style={{
-              padding: "6px 14px", borderRadius: 8, border: "none",
-              background: C.accentDim, color: C.accentText, fontSize: 12,
-              fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-            }}>
-              <Plus size={12} /> Ajouter
-            </button>
+            <Button C={C} variant="secondary" data-guide="btn-nouvelle-tache" onClick={() => setShowAddTache(!showAddTache)} icon={<Plus size={12} />} size="sm">
+              Ajouter
+            </Button>
           </div>
 
           {showAddTache && (

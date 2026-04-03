@@ -9,6 +9,7 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import DOMPurify from "dompurify";
 import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
 
 interface Transmission {
   id: string;
@@ -150,17 +151,16 @@ export function TransmissionsView({ C }: { C: Theme }) {
           { canal: "SMS", label: `SMS (${stats.SMS})`, Icon: MessageSquare, color: "purple" },
           { canal: "TELEPHONE", label: `Appels (${stats.TELEPHONE})`, Icon: Phone, color: "accent" },
         ].map((s) => (
-          <button key={s.canal} onClick={() => setFilterCanal(s.canal)}
+          <Button key={s.canal} C={C} variant={filterCanal === s.canal ? "secondary" : "ghost"} onClick={() => setFilterCanal(s.canal)}
+            icon={<s.Icon size={14} color={C[s.color as keyof Theme] as string} />}
             style={{
-              padding: "10px 18px", borderRadius: 10, background: C.surface,
-              border: `1px solid ${filterCanal === s.canal ? (C[s.color as keyof Theme] as string) : C.border}`,
-              cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
-              transition: "all 0.15s", fontSize: 13, fontWeight: filterCanal === s.canal ? 600 : 400,
+              border: filterCanal === s.canal ? `1px solid ${C[s.color as keyof Theme] as string}` : `1px solid transparent`,
+              background: C.surface,
+              fontWeight: filterCanal === s.canal ? 600 : 400,
               color: filterCanal === s.canal ? C.text : C.textMuted,
             }}>
-            <s.Icon size={14} color={C[s.color as keyof Theme] as string} />
             {s.label}
-          </button>
+          </Button>
         ))}
         {stats.nonLu > 0 && (
           <Badge color={C.danger} bg={C.dangerDim} style={{ alignSelf: "center" }}>{stats.nonLu} non lu{stats.nonLu > 1 ? "s" : ""}</Badge>
@@ -206,18 +206,20 @@ export function TransmissionsView({ C }: { C: Theme }) {
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={() => setComposeType("EMAIL")} style={{
-                padding: "6px 14px", borderRadius: 8, border: "none",
-                background: composeType === "EMAIL" ? C.blueDim : "transparent",
-                color: composeType === "EMAIL" ? C.blue : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 4,
-              }}><Mail size={13} /> Email</button>
-              <button onClick={() => setComposeType("SMS")} style={{
-                padding: "6px 14px", borderRadius: 8, border: "none",
-                background: composeType === "SMS" ? C.purpleDim : "transparent",
-                color: composeType === "SMS" ? C.purple : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 4,
-              }}><MessageSquare size={13} /> SMS</button>
+              <Button C={C} variant="ghost" size="sm" onClick={() => setComposeType("EMAIL")} icon={<Mail size={13} />}
+                style={{
+                  background: composeType === "EMAIL" ? C.blueDim : "transparent",
+                  color: composeType === "EMAIL" ? C.blue : C.textDim,
+                }}>
+                Email
+              </Button>
+              <Button C={C} variant="ghost" size="sm" onClick={() => setComposeType("SMS")} icon={<MessageSquare size={13} />}
+                style={{
+                  background: composeType === "SMS" ? C.purpleDim : "transparent",
+                  color: composeType === "SMS" ? C.purple : C.textDim,
+                }}>
+                SMS
+              </Button>
             </div>
             <X size={16} color={C.textDim} style={{ cursor: "pointer" }} onClick={() => setShowCompose(false)} />
           </div>
@@ -298,14 +300,9 @@ export function TransmissionsView({ C }: { C: Theme }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             {composeType === "SMS" && <span style={{ fontSize: 11, color: C.textDim }}>{composeBody.length}/160</span>}
             <div style={{ marginLeft: "auto" }}>
-              <button onClick={sendMessage} disabled={sending || !composeTo || !composeBody} style={{
-                padding: "8px 20px", borderRadius: 8, border: "none",
-                background: composeTo && composeBody ? "linear-gradient(135deg, #16a34a, #15803d)" : "#94a3b8",
-                color: "#fff", fontSize: 13, fontWeight: 600, cursor: composeTo && composeBody ? "pointer" : "not-allowed",
-                display: "flex", alignItems: "center", gap: 6,
-              }}>
-                <Send size={13} /> {sending ? "Envoi..." : "Envoyer"}
-              </button>
+              <Button C={C} variant="primary" onClick={sendMessage} disabled={sending || !composeTo || !composeBody} loading={sending} icon={<Send size={13} />}>
+                Envoyer
+              </Button>
             </div>
           </div>
         </div>

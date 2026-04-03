@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Users, Search, Download, Archive } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 interface ClientRow {
@@ -107,29 +108,16 @@ export function ClientsView({ C, onSelectClient }: { C: Theme; onSelectClient: (
             style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }}
           />
         </div>
-        <button onClick={exportCSV} style={{
-          padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`,
-          background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 5, fontWeight: 500,
-        }}>
-          <Download size={13} /> CSV
-        </button>
-        <button onClick={exportXLS} style={{
-          padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`,
-          background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 5, fontWeight: 500,
-        }}>
-          <Download size={13} /> Excel
-        </button>
-        <button onClick={() => setShowArchived(!showArchived)} style={{
-          padding: "8px 14px", borderRadius: 10,
-          border: `1px solid ${showArchived ? C.warning : C.border}`,
-          background: showArchived ? C.warningDim : C.surface,
-          color: showArchived ? C.warning : C.textMuted, fontSize: 13, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 4,
-        }}>
-          <Archive size={13} /> {showArchived ? "Archivés" : "Voir archivés"}
-        </button>
+        <Button C={C} variant="secondary" onClick={exportCSV} icon={<Download size={13} />} size="sm">CSV</Button>
+        <Button C={C} variant="secondary" onClick={exportXLS} icon={<Download size={13} />} size="sm">Excel</Button>
+        <Button C={C} variant="secondary" onClick={() => setShowArchived(!showArchived)} icon={<Archive size={13} />}
+          style={{
+            border: `1px solid ${showArchived ? C.warning : C.border}`,
+            background: showArchived ? C.warningDim : C.surface,
+            color: showArchived ? C.warning : C.textMuted,
+          }}>
+          {showArchived ? "Archives" : "Voir archives"}
+        </Button>
       </div>
 
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: C.shadow, overflow: "hidden" }}>

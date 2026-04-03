@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Target, Search, Filter, Archive } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 
 interface Entreprise {
   id: string;
@@ -117,15 +118,14 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
             <option key={s.code} value={s.code}>{s.nom}</option>
           ))}
         </select>
-        <button onClick={() => setShowArchived(!showArchived)} style={{
-          padding: "8px 14px", borderRadius: 10,
-          border: `1px solid ${showArchived ? C.warning : C.border}`,
-          background: showArchived ? C.warningDim : C.surface,
-          color: showArchived ? C.warning : C.textMuted, fontSize: 13, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 4,
-        }}>
-          <Archive size={13} /> {showArchived ? "Archivés" : "Voir archivés"}
-        </button>
+        <Button C={C} variant="secondary" onClick={() => setShowArchived(!showArchived)} icon={<Archive size={13} />}
+          style={{
+            border: `1px solid ${showArchived ? C.warning : C.border}`,
+            background: showArchived ? C.warningDim : C.surface,
+            color: showArchived ? C.warning : C.textMuted,
+          }}>
+          {showArchived ? "Archives" : "Voir archives"}
+        </Button>
       </div>
 
       {/* Stats */}
