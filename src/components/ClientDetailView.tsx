@@ -115,9 +115,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   useEffect(() => {
     if (!isDemoMode) return;
     setEntrepriseData({
+      nom: DEMO_ENTREPRISE.nom,
+      siret: DEMO_ENTREPRISE.siret,
       email: DEMO_ENTREPRISE.email,
       telephone: DEMO_ENTREPRISE.telephone,
       adresse: DEMO_ENTREPRISE.adresse,
+      prescripteur: DEMO_ENTREPRISE.prescripteur,
       contact: `${DEMO_CONTACT.prenom} ${DEMO_CONTACT.nom}`,
       statutPrise: DEMO_ENTREPRISE.statutPrise,
       interesseTNK: DEMO_ENTREPRISE.interesseTNK,
@@ -212,9 +215,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         if (firstQualif?.formationAutre) formations.push(firstQualif.formationAutre);
 
         setEntrepriseData({
+          nom: data.nom || "",
+          siret: data.siret || "",
           email: data.email || "",
           telephone: data.telephone || "",
           adresse: data.adresse || "",
+          prescripteur: data.prescripteur || "",
           contact: data.contacts?.[0] ? `${data.contacts[0].prenom} ${data.contacts[0].nom}` : "—",
           statutPrise: data.statutPrise || "",
           interesseTNK: data.interesseTNK || "NSP",
@@ -756,51 +762,69 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Informations entreprise</h3>
             {[
-              { label: "Entreprise", key: "nom", value: client?.nom || "—", Icon: Building2 },
-              { label: "SIRET", key: "siret", value: client?.siret || "—", Icon: FileText },
-              { label: "Contact", key: "", value: entrepriseData?.contact || "—", Icon: UserCircle },
+              { label: "Entreprise", key: "nom", value: entrepriseData?.nom || client?.nom || "—", Icon: Building2 },
+              { label: "SIRET", key: "siret", value: entrepriseData?.siret || client?.siret || "—", Icon: FileText },
+              { label: "Contact", key: "contact", value: entrepriseData?.contact || "—", Icon: UserCircle },
               { label: "Email", key: "email", value: entrepriseData?.email || "—", Icon: Mail },
               { label: "Telephone", key: "telephone", value: entrepriseData?.telephone || "—", Icon: Phone },
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
-              { label: "Prescripteur", key: "", value: client?.prescripteur || "—", Icon: Building2 },
+              { label: "Prescripteur", key: "prescripteur", value: entrepriseData?.prescripteur || client?.prescripteur || "—", Icon: Building2 },
               { label: "Depot", key: "depot", value: entrepriseData?.depot || "—", Icon: Building2 },
               { label: "N carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
-            ].map((f, i) => (
+            ].map((f, i) => {
+              const saveField = async (val: string) => {
+                const original = f.value === "\u2014" ? "" : f.value;
+                if (val !== original && val.trim()) {
+                  setEntrepriseData((prev) => prev ? { ...prev, [f.key]: val } : prev);
+                  if (client?.id && !isDemoMode) {
+                    await fetch(`/api/entreprises/${client.id}`, {
+                      method: "PATCH", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ [f.key]: val }),
+                    });
+                  }
+                }
+                setEditingField(null);
+              };
+
+              return (
               <div
                 key={i}
                 style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "8px 0",
-                  borderBottom: i < 5 ? `1px solid ${C.border}` : "none",
-                  cursor: f.key ? "pointer" : "default",
+                  borderBottom: i < 7 ? `1px solid ${C.border}` : "none",
+                  cursor: "pointer",
                 }}
                 onClick={() => {
-                  if (!f.key || editingField === f.key) return;
+                  if (editingField === f.key || f.key === "contact") return;
                   setEditingField(f.key);
                   setEditFieldValue(f.value === "—" ? "" : f.value);
                 }}
               >
                 <f.Icon size={14} color={C.textDim} />
                 <span style={{ fontSize: 12, color: C.textDim, width: 90 }}>{f.label}</span>
-                {editingField === f.key ? (
+                {editingField === f.key && f.key === "prescripteur" ? (
+                  <select
+                    autoFocus
+                    value={editFieldValue}
+                    onChange={(e) => setEditFieldValue(e.target.value)}
+                    onBlur={() => saveField(editFieldValue)}
+                    style={{
+                      flex: 1, padding: "4px 8px", borderRadius: 6,
+                      border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
+                      fontSize: 13, fontWeight: 500, outline: "none",
+                    }}
+                  >
+                    <option value="">Aucun</option>
+                    <option value="PDB">PDB</option>
+                    <option value="POINT_P">Point P</option>
+                    <option value="BIGMAT">Big Mat</option>
+                  </select>
+                ) : editingField === f.key ? (
                   <input
                     autoFocus
                     value={editFieldValue}
                     onChange={(e) => setEditFieldValue(e.target.value)}
-                    onBlur={async () => {
-                      const original = f.value === "\u2014" ? "" : f.value;
-                      if (editFieldValue !== original && editFieldValue.trim()) {
-                        if (["email", "telephone", "adresse", "depot", "numeroCarte"].includes(f.key)) {
-                          setEntrepriseData((prev) => prev ? { ...prev, [f.key]: editFieldValue } : prev);
-                        }
-                        if (client?.id && !isDemoMode) {
-                          await fetch(`/api/entreprises/${client.id}`, {
-                            method: "PATCH", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ [f.key]: editFieldValue }),
-                          });
-                        }
-                      }
-                      setEditingField(null);
-                    }}
+                    onBlur={() => saveField(editFieldValue)}
                     onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingField(null); }}
                     style={{
                       flex: 1, padding: "4px 8px", borderRadius: 6,
@@ -811,9 +835,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 ) : (
                   <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{f.value}</span>
                 )}
-                {f.key && editingField !== f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
+                {f.key !== "contact" && editingField !== f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
               </div>
-            ))}
+              );
+            })}
           </div>
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>

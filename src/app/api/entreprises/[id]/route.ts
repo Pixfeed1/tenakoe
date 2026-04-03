@@ -55,6 +55,9 @@ export async function PATCH(
   if (body.interesseTNK !== undefined) data.interesseTNK = body.interesseTNK;
   if (body.miseEnRelation !== undefined) data.miseEnRelation = body.miseEnRelation;
   if (body.dejaReferentRGE !== undefined) data.dejaReferentRGE = body.dejaReferentRGE;
+  if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
+  if (body.depot !== undefined) data.depot = body.depot;
+  if (body.numeroCarte !== undefined) data.numeroCarte = body.numeroCarte;
 
   const updated = await prisma.entreprise.update({ where: { id }, data });
   return NextResponse.json(updated);
