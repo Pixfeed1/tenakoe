@@ -60,7 +60,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newContact, setNewContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [showAddTache, setShowAddTache] = useState(false);
   const [showAddProjet, setShowAddProjet] = useState(false);
-  const [newProjetForm, setNewProjetForm] = useState({ nom: "", qualification: "" });
+  const [newProjetForm, setNewProjetForm] = useState({ nom: "", qualification: "", chargeeId: "" });
   const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }> }>>([]);
   const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
   const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
@@ -905,7 +905,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
             {showAddProjet && (
               <div style={{ padding: 14, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 14 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                   <input placeholder="Nom du projet *" value={newProjetForm.nom} onChange={(e) => setNewProjetForm({ ...newProjetForm, nom: e.target.value })}
                     style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
                   <select value={newProjetForm.qualification} onChange={(e) => setNewProjetForm({ ...newProjetForm, qualification: e.target.value })}
@@ -916,6 +916,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     <option value="QUALIFELEC">Qualifelec</option>
                     <option value="QUALIPAC">QualiPAC</option>
                   </select>
+                  <select value={newProjetForm.chargeeId} onChange={(e) => setNewProjetForm({ ...newProjetForm, chargeeId: e.target.value })}
+                    style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
+                    <option value="">Chargee (moi par defaut)</option>
+                    {mentionUsers.map((u) => (
+                      <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+                    ))}
+                  </select>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
                   <button onClick={() => setShowAddProjet(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
@@ -925,17 +932,18 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       handleDemoAction("Projet cree");
                       setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualification ? [{ type: newProjetForm.qualification }] : [], etapes: [] }]);
                       setShowAddProjet(false);
-                      setNewProjetForm({ nom: "", qualification: "" });
+                      setNewProjetForm({ nom: "", qualification: "", chargeeId: "" });
                       guide.showSuggestion("nouveau-projet");
                       return;
                     }
                     if (!client?.id) return;
                     const payload: Record<string, unknown> = { nom: newProjetForm.nom, entrepriseId: client.id };
                     if (newProjetForm.qualification) payload.qualifications = [{ type: newProjetForm.qualification }];
+                    if (newProjetForm.chargeeId) payload.chargeeId = newProjetForm.chargeeId;
                     const res = await fetch("/api/projets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                     if (res.ok) {
                       setShowAddProjet(false);
-                      setNewProjetForm({ nom: "", qualification: "" });
+                      setNewProjetForm({ nom: "", qualification: "", chargeeId: "" });
                       guide.showSuggestion("nouveau-projet");
                       // Refresh data
                       fetch(`/api/entreprises/${client.id}`).then((r) => r.ok ? r.json() : null).then((data) => {
