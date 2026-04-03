@@ -25,6 +25,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
   const [choosingPrescripteur, setChoosingPrescripteur] = useState(false);
   const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; actif: boolean }>>([]);
+  const [depots, setDepots] = useState<Array<{ id: string; nom: string }>>([]);
   const [form, setForm] = useState({
     nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
     email: "", telephone: "", adresse: "", prescripteur: "PDB",
@@ -104,10 +105,14 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     );
   }
 
-  // Update prescripteur in form when resolved
+  // Update prescripteur in form + load depots when resolved
   useEffect(() => {
     if (resolvedPrescripteur) {
       setForm((prev) => ({ ...prev, prescripteur: resolvedPrescripteur }));
+      fetch(`/api/depot-config?prescripteur=${resolvedPrescripteur}`)
+        .then((r) => r.ok ? r.json() : [])
+        .then(setDepots)
+        .catch(() => {});
     }
   }, [resolvedPrescripteur]);
 
@@ -249,7 +254,16 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               )}
               <div>
                 <label style={labelStyle}>Dépôt</label>
-                <input style={inputStyle} placeholder="Ex: Paris 15" value={form.depot} onChange={(e) => set("depot", e.target.value)} />
+                {depots.length > 0 ? (
+                  <select style={inputStyle} value={form.depot} onChange={(e) => set("depot", e.target.value)}>
+                    <option value="">Selectionnez votre depot...</option>
+                    {depots.map((d) => (
+                      <option key={d.id} value={d.nom}>{d.nom}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input style={inputStyle} placeholder="Ex: Paris 15" value={form.depot} onChange={(e) => set("depot", e.target.value)} />
+                )}
               </div>
               <div>
                 <label style={labelStyle}>N° carte</label>

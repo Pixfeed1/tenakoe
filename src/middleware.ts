@@ -46,5 +46,5 @@ export default withAuth(
 
 export const config = {
   // Exclude /api/auth and /api/leads (public form submission) from auth
-  matcher: ["/dashboard/:path*", "/api/((?!auth|leads|prescripteur-config).*)"],
+  matcher: ["/dashboard/:path*", "/api/((?!auth|leads|prescripteur-config|depot-config).*)"],
 };

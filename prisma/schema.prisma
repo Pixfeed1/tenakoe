@@ -522,8 +522,19 @@ model WebhookEvenement {
 model PrescripteurConfig {
   id     String       @id @default(cuid())
   type   String @unique
-  nom    String       // Nom complet (ex: "La Plateforme du Bâtiment")
+  nom    String
   actif  Boolean      @default(true)
+}
+
+model DepotConfig {
+  id               String   @id @default(cuid())
+  nom              String
+  prescripteurType String
+  actif            Boolean  @default(true)
+  ordre            Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  @@unique([nom, prescripteurType])
 }
 
 model LogActivite {

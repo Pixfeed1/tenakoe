@@ -446,6 +446,9 @@ function PipelineTab({ C }: { C: Theme }) {
 function PrescripteursTab({ C }: { C: Theme }) {
   const [configs, setConfigs] = useState<Array<{ id: string; type: string; nom: string; actif: boolean }>>([]);
   const [newNom, setNewNom] = useState("");
+  const [expandedDepots, setExpandedDepots] = useState<string | null>(null);
+  const [depots, setDepots] = useState<Array<{ id: string; nom: string; prescripteurType: string }>>([]);
+  const [newDepotNom, setNewDepotNom] = useState("");
 
   useEffect(() => {
     fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then(setConfigs).catch(() => {});
@@ -486,30 +489,77 @@ function PrescripteursTab({ C }: { C: Theme }) {
         Chaque prescripteur a un formulaire public dédié et un accès en lecture seule au CRM. Archiver un prescripteur le masque des formulaires et sélecteurs.
       </p>
       {configs.map((p) => (
-        <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 12px", borderBottom: `1px solid ${C.border}`, opacity: p.actif ? 1 : 0.5 }}>
-          <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.actif ? C.accent : C.border }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 11, color: C.blue }}>{typeof window !== "undefined" ? window.location.origin : ""}{getUrl(p.type)}</span>
-              <button onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}${getUrl(p.type)}`);
-              }} style={{
-                padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`,
-                background: "transparent", cursor: "pointer", fontSize: 10, color: C.textDim,
-              }}>
-                Copier
-              </button>
+        <div key={p.id} style={{ borderBottom: `1px solid ${C.border}`, opacity: p.actif ? 1 : 0.5 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 12px" }}>
+            <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.actif ? C.accent : C.border }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 11, color: C.blue }}>{typeof window !== "undefined" ? window.location.origin : ""}{getUrl(p.type)}</span>
+                <button onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}${getUrl(p.type)}`);
+                }} style={{
+                  padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`,
+                  background: "transparent", cursor: "pointer", fontSize: 10, color: C.textDim,
+                }}>
+                  Copier
+                </button>
+              </div>
             </div>
+            <button onClick={() => {
+              if (expandedDepots === p.type) { setExpandedDepots(null); return; }
+              setExpandedDepots(p.type);
+              fetch(`/api/depot-config?prescripteur=${p.type}`).then((r) => r.ok ? r.json() : []).then(setDepots).catch(() => {});
+            }} style={{
+              padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`, fontSize: 11, fontWeight: 600, cursor: "pointer",
+              background: expandedDepots === p.type ? C.blueDim : "transparent", color: expandedDepots === p.type ? C.blue : C.textDim,
+            }}>
+              Depots ({expandedDepots === p.type ? depots.length : "..."})
+            </button>
+            <Badge color={C.textDim} bg={C.surfaceHover}>{p.type}</Badge>
+            <button onClick={() => toggleActif(p.id, p.actif)} style={{
+              padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
+              background: p.actif ? C.dangerDim : C.accentDim,
+              color: p.actif ? C.danger : C.accentText,
+            }}>
+              {p.actif ? "Archiver" : "Reactiver"}
+            </button>
           </div>
-          <Badge color={C.textDim} bg={C.surfaceHover}>{p.type}</Badge>
-          <button onClick={() => toggleActif(p.id, p.actif)} style={{
-            padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
-            background: p.actif ? C.dangerDim : C.accentDim,
-            color: p.actif ? C.danger : C.accentText,
-          }}>
-            {p.actif ? "Archiver" : "Réactiver"}
-          </button>
+          {expandedDepots === p.type && (
+            <div style={{ padding: "0 12px 12px 34px" }}>
+              <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 8 }}>
+                {depots.map((d) => (
+                  <div key={d.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", fontSize: 12, color: C.text, borderBottom: `1px solid ${C.border}` }}>
+                    <span>{d.nom}</span>
+                    <button onClick={async () => {
+                      if (!window.confirm(`Supprimer ${d.nom} ?`)) return;
+                      await fetch(`/api/depot-config?id=${d.id}`, { method: "DELETE" });
+                      setDepots((prev) => prev.filter((x) => x.id !== d.id));
+                    }} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim, fontSize: 11 }}>
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
+                ))}
+                {depots.length === 0 && <div style={{ fontSize: 12, color: C.textDim, padding: 8 }}>Aucun depot</div>}
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <input placeholder="Nouveau depot..." value={newDepotNom} onChange={(e) => setNewDepotNom(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && newDepotNom.trim() && (async () => {
+                    const res = await fetch("/api/depot-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nom: newDepotNom.trim(), prescripteurType: p.type }) });
+                    if (res.ok) { const d = await res.json(); setDepots((prev) => [...prev, d]); setNewDepotNom(""); }
+                  })()}
+                  style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }} />
+                <button onClick={async () => {
+                  if (!newDepotNom.trim()) return;
+                  const res = await fetch("/api/depot-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nom: newDepotNom.trim(), prescripteurType: p.type }) });
+                  if (res.ok) { const d = await res.json(); setDepots((prev) => [...prev, d]); setNewDepotNom(""); }
+                }} disabled={!newDepotNom.trim()} style={{
+                  padding: "6px 12px", borderRadius: 6, border: "none",
+                  background: newDepotNom.trim() ? C.accent : "#94a3b8", color: "#fff", fontSize: 11, fontWeight: 600, cursor: newDepotNom.trim() ? "pointer" : "not-allowed",
+                }}>Ajouter</button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
 
