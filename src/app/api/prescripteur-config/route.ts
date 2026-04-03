@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
 
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-
-  const configs = await prisma.prescripteurConfig.findMany({ orderBy: { nom: "asc" } });
+  // Public — needed by prescripteur form (no auth required)
+  const configs = await prisma.prescripteurConfig.findMany({
+    where: { actif: true },
+    orderBy: { nom: "asc" },
+  });
   return NextResponse.json(configs);
 }
 
