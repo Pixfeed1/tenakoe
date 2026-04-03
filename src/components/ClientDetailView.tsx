@@ -334,12 +334,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <span style={{ fontSize: 12, fontWeight: 600, color: "#7c3aed" }}>
             Mode demo — Les actions sont simulees, aucune donnee reelle n&apos;est modifiee
           </span>
-          <button onClick={() => onBack()} style={{
-            fontSize: 11, color: "#7c3aed", background: "none",
-            border: "none", cursor: "pointer", textDecoration: "underline",
+          <Button C={C} variant="ghost" onClick={() => onBack()} style={{
+            fontSize: 11, color: "#7c3aed", textDecoration: "underline",
           }}>
             Quitter la demo
-          </button>
+          </Button>
         </div>
       )}
 
@@ -462,9 +461,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <option key={t.id} value={t.id}>{t.nom}</option>
               ))}
             </select>
-            <button
+            <Button
+              C={C}
+              variant="primary"
               data-guide="btn-send-mail"
               disabled={sending || !mailSubject}
+              loading={sending}
+              icon={<Send size={13} />}
               onClick={async () => {
                 if (isDemoMode) {
                   handleDemoAction("Mail envoye");
@@ -511,15 +514,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 setSending(false);
               }}
               style={{
-                padding: "8px 20px", borderRadius: 10, border: "none",
                 background: sending ? "#94a3b8" : "linear-gradient(135deg, #16a34a, #15803d)",
-                color: "#fff", fontSize: 13, fontWeight: 600,
-                cursor: sending ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center", gap: 6,
               }}
             >
-              <Send size={13} /> {sending ? "Envoi..." : "Envoyer"}
-            </button>
+              {sending ? "Envoi..." : "Envoyer"}
+            </Button>
           </div>
         </div>
       )}
@@ -562,8 +561,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 11, color: C.textDim }}>{smsBody.length}/160 caractères</span>
-            <button
+            <Button
+              C={C}
+              variant="primary"
               disabled={sending || !smsBody}
+              loading={sending}
+              icon={<MessageSquare size={13} />}
               onClick={async () => {
                 if (isDemoMode) {
                   handleDemoAction("SMS envoye");
@@ -599,15 +602,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 setSending(false);
               }}
               style={{
-                padding: "8px 20px", borderRadius: 10, border: "none",
                 background: sending ? "#94a3b8" : "linear-gradient(135deg, #7c3aed, #6d28d9)",
-                color: "#fff", fontSize: 13, fontWeight: 600,
-                cursor: sending ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center", gap: 6,
               }}
             >
-              <MessageSquare size={13} /> {sending ? "Envoi..." : "Envoyer SMS"}
-            </button>
+              {sending ? "Envoi..." : "Envoyer SMS"}
+            </Button>
           </div>
         </div>
       )}
@@ -623,22 +622,21 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           { id: "taches", label: `Tâches (${taches.length})`, Icon: ClipboardList },
           { id: "notes", label: `Notes (${notes.length})`, Icon: StickyNote },
         ].map((t) => (
-          <button
+          <Button
+            C={C}
+            variant="ghost"
             key={t.id}
             data-guide={`tab-${t.id}`}
             onClick={() => setTab(t.id)}
-            onMouseEnter={(e) => { if (tab !== t.id) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-            onMouseLeave={(e) => { if (tab !== t.id) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             style={{
-              padding: "10px 16px", borderRadius: "8px 8px 0 0", border: "none", cursor: "pointer",
+              borderRadius: "8px 8px 0 0",
               background: tab === t.id ? C.surface : "transparent",
               borderBottom: tab === t.id ? `2px solid ${C.accent}` : "2px solid transparent",
-              color: tab === t.id ? C.accentText : C.textMuted, fontSize: 13, fontWeight: 500,
-              display: "flex", alignItems: "center", gap: 6, transition: "all 0.15s",
+              color: tab === t.id ? C.accentText : C.textMuted,
             }}
           >
             <t.Icon size={14} /> {t.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -706,11 +704,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <button onClick={() => { setShowCallLog(false); setCallNote(""); }} style={{
-              padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.border}`,
-              background: "transparent", color: C.textDim, fontSize: 13, cursor: "pointer",
-            }}>Annuler</button>
-            <button
+            <Button C={C} variant="ghost" onClick={() => { setShowCallLog(false); setCallNote(""); }}>Annuler</Button>
+            <Button
+              C={C}
+              variant="primary"
+              icon={<Phone size={13} />}
               onClick={async () => {
                 if (isDemoMode) {
                   handleDemoAction("Appel enregistre");
@@ -744,14 +742,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 guide.showSuggestion("appel-logue");
               }}
               style={{
-                padding: "8px 20px", borderRadius: 10, border: "none",
                 background: "linear-gradient(135deg, #16a34a, #15803d)",
-                color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 6,
               }}
             >
-              <Phone size={13} /> Enregistrer l&apos;appel
-            </button>
+              Enregistrer l&apos;appel
+            </Button>
           </div>
         </div>
       )}
@@ -981,8 +976,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   </select>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
-                  <button onClick={() => setShowAddProjet(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
-                  <button onClick={async () => {
+                  <Button C={C} variant="ghost" onClick={() => setShowAddProjet(false)}>Annuler</Button>
+                  <Button C={C} variant="primary" disabled={!newProjetForm.nom} onClick={async () => {
                     if (!newProjetForm.nom) return;
                     if (isDemoMode) {
                       handleDemoAction("Projet cree");
@@ -1006,10 +1001,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         if (data?.projets) setProjets(data.projets);
                       }).catch(() => {});
                     }
-                  }} disabled={!newProjetForm.nom} style={{
-                    padding: "6px 14px", borderRadius: 6, border: "none",
-                    background: newProjetForm.nom ? C.accent : "#94a3b8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: newProjetForm.nom ? "pointer" : "not-allowed",
-                  }}>Créer</button>
+                  }}>Créer</Button>
                 </div>
               </div>
             )}
@@ -1052,7 +1044,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             )}
           </div>
           {docs.length === 0 && projets.length > 0 && !isDemoMode && (
-            <button onClick={async () => {
+            <Button C={C} variant="primary" onClick={async () => {
               const projetId = projets[0]?.id;
               if (!projetId) return;
               const res = await fetch(`/api/projets/${projetId}/generate-docs`, { method: "POST" });
@@ -1070,12 +1062,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 }
               }
             }} style={{
-              padding: "10px 20px", borderRadius: 10, border: "none",
-              background: C.accent, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
               marginBottom: 16, width: "100%", textAlign: "center",
             }}>
               Generer la checklist documents
-            </button>
+            </Button>
           )}
           {docs.map((d, i) => (
             <div
@@ -1200,13 +1190,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
           {/* Collapsed done steps */}
           {doneCount > 2 && (
-            <button onClick={() => setExpandedCols((p) => ({ ...p, trackDone: !p.trackDone }))} style={{
-              width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px dashed ${C.border}`,
-              background: "transparent", color: C.textMuted, fontSize: 12, fontWeight: 500,
-              cursor: "pointer", marginBottom: 12, textAlign: "left",
+            <Button C={C} variant="ghost" onClick={() => setExpandedCols((p) => ({ ...p, trackDone: !p.trackDone }))} style={{
+              width: "100%", border: `1px dashed ${C.border}`,
+              color: C.textMuted, marginBottom: 12, textAlign: "left",
             }}>
               {expandedCols.trackDone ? "Masquer" : "Voir"} les {doneCount} etapes terminees
-            </button>
+            </Button>
           )}
 
           <div data-guide="track-timeline" style={{ position: "relative" }}>
@@ -1353,8 +1342,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", gridColumn: "1 / -1" }} />
               </div>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
-                <button onClick={() => setShowAddContact(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
-                <button onClick={async () => {
+                <Button C={C} variant="ghost" onClick={() => setShowAddContact(false)}>Annuler</Button>
+                <Button C={C} variant="primary" onClick={async () => {
                   if (!newContact.nom || !newContact.prenom || !client?.id) return;
                   const res = await fetch("/api/contacts", {
                     method: "POST", headers: { "Content-Type": "application/json" },
@@ -1367,9 +1356,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setShowAddContact(false);
                     toast("Contact ajoute");
                   }
-                }} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                }}>
                   Créer
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1393,14 +1382,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", gridColumn: "1 / -1" }} />
                   </div>
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginTop: 8 }}>
-                    <button onClick={() => setEditingContactId(null)} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer" }}>Annuler</button>
-                    <button onClick={async () => {
+                    <Button C={C} variant="ghost" onClick={() => setEditingContactId(null)}>Annuler</Button>
+                    <Button C={C} variant="primary" onClick={async () => {
                       if (isDemoMode) { handleDemoAction("Contact modifie"); setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x)); setEditingContactId(null); toast("Contact modifie"); return; }
                       await fetch(`/api/contacts/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editContact) });
                       setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x));
                       setEditingContactId(null);
                       toast("Contact modifie");
-                    }} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Enregistrer</button>
+                    }}>Enregistrer</Button>
                   </div>
                 </div>
               ) : (
@@ -1412,18 +1401,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       {c.fonction || ""}{c.email ? ` · ${c.email}` : ""}{c.telephone ? ` · ${c.telephone}` : ""}
                     </div>
                   </div>
-                  <button onClick={() => { setEditingContactId(c.id); setEditContact({ nom: c.nom, prenom: c.prenom, email: c.email || "", telephone: c.telephone || "", fonction: c.fonction || "" }); }}
-                    style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
+                  <Button C={C} variant="ghost" size="sm" onClick={() => { setEditingContactId(c.id); setEditContact({ nom: c.nom, prenom: c.prenom, email: c.email || "", telephone: c.telephone || "", fonction: c.fonction || "" }); }}>
                     <Edit3 size={13} />
-                  </button>
-                  <button onClick={async () => {
+                  </Button>
+                  <Button C={C} variant="danger" size="sm" onClick={async () => {
                     if (!window.confirm("Supprimer ce contact ?")) return;
                     if (isDemoMode) { handleDemoAction("Contact supprime"); setContacts((prev) => prev.filter((x) => x.id !== c.id)); return; }
                     await fetch(`/api/contacts/${c.id}`, { method: "DELETE" });
                     setContacts((prev) => prev.filter((x) => x.id !== c.id));
-                  }} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
+                  }}>
                     <Trash2 size={13} />
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -1459,8 +1447,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }} />
               </div>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
-                <button onClick={() => setShowAddTache(false)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
-                <button onClick={async () => {
+                <Button C={C} variant="ghost" onClick={() => setShowAddTache(false)}>Annuler</Button>
+                <Button C={C} variant="primary" onClick={async () => {
                   if (!newTache.titre) return;
                   if (isDemoMode) {
                     handleDemoAction("Tache creee");
@@ -1482,9 +1470,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setShowAddTache(false);
                     guide.showSuggestion("tache-creee"); toast("Tache creee");
                   }
-                }} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                }}>
                   Créer
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1526,14 +1514,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   {t.enRetard && <span style={{ color: C.danger, fontWeight: 600 }}> · En retard</span>}
                 </div>
               </div>
-              <button onClick={async (e) => {
-                e.stopPropagation();
+              <Button C={C} variant="danger" size="sm" onClick={async (e) => {
+                e?.stopPropagation();
                 if (!window.confirm("Supprimer cette tache ?")) return;
                 await fetch(`/api/taches/${t.id}`, { method: "DELETE" });
                 setTaches((prev) => prev.filter((x) => x.id !== t.id));
-              }} style={{ padding: "3px 8px", borderRadius: 4, border: "none", background: "transparent", color: C.textDim, cursor: "pointer" }}>
+              }}>
                 <Trash2 size={13} />
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -1629,13 +1617,16 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   }} />
                 </label>
                 {noteFile && (
-                  <button onClick={() => setNoteFile(null)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim, fontSize: 11 }}>
+                  <Button C={C} variant="ghost" size="sm" onClick={() => setNoteFile(null)} style={{ color: C.textDim }}>
                     <X size={12} />
-                  </button>
+                  </Button>
                 )}
               </div>
-              <button
+              <Button
+                C={C}
+                variant="primary"
                 disabled={!newNote.trim() && !noteFile}
+                icon={<StickyNote size={13} />}
                 onClick={async () => {
                   if (!newNote.trim() && !noteFile) return;
                   if (isDemoMode) {
@@ -1678,15 +1669,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   }
                 }}
                 style={{
-                  padding: "8px 18px", borderRadius: 8, border: "none",
                   background: (newNote.trim() || noteFile) ? "linear-gradient(135deg, #16a34a, #15803d)" : "#94a3b8",
-                  color: "#fff", fontSize: 13, fontWeight: 600,
-                  cursor: (newNote.trim() || noteFile) ? "pointer" : "not-allowed",
-                  display: "flex", alignItems: "center", gap: 6,
                 }}
               >
-                <StickyNote size={13} /> Ajouter
-              </button>
+                Ajouter
+              </Button>
             </div>
           </div>
 
@@ -1721,7 +1708,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     </div>
                     <div style={{ display: "flex", gap: 4 }}>
                       {/* Pin toggle */}
-                      <button
+                      <Button
+                        C={C}
+                        variant="ghost"
+                        size="sm"
                         onClick={async () => {
                           const res = await fetch("/api/notes", {
                             method: "PATCH",
@@ -1736,17 +1726,16 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             );
                           }
                         }}
-                        style={{
-                          width: 26, height: 26, borderRadius: 6, border: "none",
-                          background: "transparent", cursor: "pointer",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}
+                        style={{ width: 26, height: 26 }}
                         title={note.epinglee ? "Désépingler" : "Épingler"}
                       >
                         <Pin size={13} color={note.epinglee ? C.warning : C.textDim} />
-                      </button>
+                      </Button>
                       {/* Edit */}
-                      <button
+                      <Button
+                        C={C}
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
                           if (editingNote === note.id) {
                             setEditingNote(null);
@@ -1755,17 +1744,16 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             setEditContent(note.contenu);
                           }
                         }}
-                        style={{
-                          width: 26, height: 26, borderRadius: 6, border: "none",
-                          background: "transparent", cursor: "pointer",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}
+                        style={{ width: 26, height: 26 }}
                         title="Modifier"
                       >
                         <Edit3 size={13} color={C.textDim} />
-                      </button>
+                      </Button>
                       {/* Delete */}
-                      <button
+                      <Button
+                        C={C}
+                        variant="danger"
+                        size="sm"
                         onClick={async () => {
                           if (!window.confirm("Supprimer cette note ?")) return;
                           const res = await fetch(`/api/notes?id=${note.id}`, { method: "DELETE" });
@@ -1773,15 +1761,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             setNotes((prev) => prev.filter((n) => n.id !== note.id));
                           }
                         }}
-                        style={{
-                          width: 26, height: 26, borderRadius: 6, border: "none",
-                          background: "transparent", cursor: "pointer",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}
+                        style={{ width: 26, height: 26 }}
                         title="Supprimer"
                       >
                         <Trash2 size={13} color={C.textDim} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
@@ -1799,7 +1783,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         }}
                       />
                       <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                        <button
+                        <Button
+                          C={C}
+                          variant="primary"
+                          size="sm"
                           onClick={async () => {
                             const res = await fetch("/api/notes", {
                               method: "PATCH",
@@ -1812,23 +1799,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                               setEditingNote(null);
                             }
                           }}
-                          style={{
-                            padding: "5px 12px", borderRadius: 6, border: "none",
-                            background: C.accent, color: "#fff", fontSize: 12,
-                            fontWeight: 600, cursor: "pointer",
-                          }}
                         >
                           Enregistrer
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          C={C}
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setEditingNote(null)}
-                          style={{
-                            padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border}`,
-                            background: "transparent", color: C.textMuted, fontSize: 12, cursor: "pointer",
-                          }}
                         >
                           Annuler
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ) : (
