@@ -28,6 +28,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     email: "", telephone: "", adresse: "", prescripteur: "PDB",
     depot: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false,
+    nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -183,6 +184,8 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               email: "", telephone: "", adresse: "", prescripteur: form.prescripteur,
               depot: form.depot, numeroCarte: form.numeroCarte, dejaReferentRGE: false,
               commentaires: "", acceptePartage: false,
+              nomConseiller: form.nomConseiller, prenomConseiller: form.prenomConseiller,
+              emailConseiller: form.emailConseiller, telephoneConseiller: form.telephoneConseiller,
             }); }}
             style={{
               marginTop: 24, padding: "10px 24px", borderRadius: 10, border: "none",
@@ -223,6 +226,21 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* Conseiller */}
+          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <UserCircle size={16} color={C.accent} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Vos coordonnees (conseiller)</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+              <div><label style={labelStyle}>Votre nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomConseiller} onChange={(e) => set("nomConseiller", e.target.value)} required /></div>
+              <div><label style={labelStyle}>Votre prenom *</label><input style={inputStyle} placeholder="Prenom" value={form.prenomConseiller} onChange={(e) => set("prenomConseiller", e.target.value)} required /></div>
+              <div><label style={labelStyle}>Votre email *</label><input type="email" style={inputStyle} placeholder="email@laplateforme.com" value={form.emailConseiller} onChange={(e) => set("emailConseiller", e.target.value)} required /></div>
+              <div><label style={labelStyle}>Votre telephone</label><input style={inputStyle} placeholder="06 12 34 56 78" value={form.telephoneConseiller} onChange={(e) => set("telephoneConseiller", e.target.value)} /></div>
+            </div>
+          </div>
+
+          {/* Prescripteur */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <Building2 size={16} color={C.blue} />

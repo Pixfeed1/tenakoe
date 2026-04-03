@@ -63,6 +63,10 @@ export async function POST(request: NextRequest) {
       dejaReferentRGE: body.dejaReferentRGE ?? false,
       commentaires: body.commentaires || null,
       acceptePartage: body.acceptePartage ?? false,
+      nomConseiller: body.nomConseiller || null,
+      prenomConseiller: body.prenomConseiller || null,
+      emailConseiller: body.emailConseiller || null,
+      telephoneConseiller: body.telephoneConseiller || null,
     },
   });
 

@@ -26,6 +26,11 @@ interface Lead {
   statut: string;
   converti: boolean;
   createdAt: string;
+  dateTransmission: string;
+  nomConseiller: string | null;
+  prenomConseiller: string | null;
+  emailConseiller: string | null;
+  telephoneConseiller: string | null;
 }
 
 const PRESCRIPTEUR_LABELS: Record<string, string> = {
@@ -257,7 +262,7 @@ export function LeadsView({ C }: { C: Theme }) {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                {["Artisan", "Entreprise", "Prescripteur", "Contact", "Statut", "Date", "Actions"].map((h) => (
+                {["Artisan", "Conseiller", "Depot", "Prescripteur", "Statut", "Date transmission", "Actions"].map((h) => (
                   <th key={h} style={{
                     textAlign: "left", padding: "12px 14px", fontSize: 11, fontWeight: 600,
                     color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em",
@@ -274,16 +279,28 @@ export function LeadsView({ C }: { C: Theme }) {
                 >
                   <td style={{ padding: "12px 14px" }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{lead.prenomArtisan} {lead.nomArtisan}</div>
+                    <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>
+                      {lead.nomEntreprise || "—"}{lead.siret ? ` · ${lead.siret}` : ""}
+                    </div>
+                    {lead.commentaires && (
+                      <div style={{ fontSize: 11, color: C.textMuted, marginTop: 4, fontStyle: "italic", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        &quot;{lead.commentaires}&quot;
+                      </div>
+                    )}
                   </td>
-                  <td style={{ padding: "12px 14px", fontSize: 13, color: C.textMuted }}>{lead.nomEntreprise || "—"}</td>
+                  <td style={{ padding: "12px 14px" }}>
+                    {lead.prenomConseiller || lead.nomConseiller ? (
+                      <div>
+                        <div style={{ fontSize: 12, color: C.text }}>{lead.prenomConseiller} {lead.nomConseiller}</div>
+                        {lead.emailConseiller && <div style={{ fontSize: 11, color: C.textDim }}>{lead.emailConseiller}</div>}
+                      </div>
+                    ) : <span style={{ color: C.textDim }}>—</span>}
+                  </td>
+                  <td style={{ padding: "12px 14px", fontSize: 12, color: C.textMuted }}>
+                    {lead.depot || "—"}
+                  </td>
                   <td style={{ padding: "12px 14px" }}>
                     <Badge color={C.blue} bg={C.blueDim}>{PRESCRIPTEUR_LABELS[lead.prescripteur] || lead.prescripteur}</Badge>
-                  </td>
-                  <td style={{ padding: "12px 14px" }}>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      {lead.email && <Mail size={13} color={C.textDim} />}
-                      {lead.telephone && <Phone size={13} color={C.textDim} />}
-                    </div>
                   </td>
                   <td style={{ padding: "12px 14px" }}>
                     <Badge
@@ -294,7 +311,9 @@ export function LeadsView({ C }: { C: Theme }) {
                     </Badge>
                   </td>
                   <td style={{ padding: "12px 14px", fontSize: 12, color: C.textDim }}>
-                    {new Date(lead.createdAt).toLocaleDateString("fr-FR")}
+                    {new Date(lead.dateTransmission || lead.createdAt).toLocaleDateString("fr-FR", {
+                      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+                    })}
                   </td>
                   <td style={{ padding: "12px 14px" }}>
                     <div style={{ display: "flex", gap: 4 }}>

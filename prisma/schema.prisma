@@ -440,9 +440,13 @@ model LeadFormulaire {
   createdAt        DateTime     @default(now())
   statut           String       @default("NOUVEAU")
   converti         Boolean      @default(false)
-  entrepriseId     String?
-  sourceImport     String?
-  sourceId         String?
+  entrepriseId        String?
+  sourceImport        String?
+  sourceId            String?
+  nomConseiller       String?
+  prenomConseiller    String?
+  emailConseiller     String?
+  telephoneConseiller String?
 }
 
 // ============================================================
