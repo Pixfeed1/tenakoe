@@ -72,6 +72,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [editingContactId, setEditingContactId] = useState<string | null>(null);
   const [editContact, setEditContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [callNote, setCallNote] = useState("");
+  const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
   const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
   const [showMentionMenu, setShowMentionMenu] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
@@ -1147,13 +1148,51 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       )}
 
       {/* Tab: Track */}
-      {tab === "track" && (
+      {tab === "track" && (() => {
+        const doneCount = tracks.filter((t) => t.done).length;
+        const activeStep = tracks.find((t) => t.active);
+        const progress = tracks.length > 0 ? Math.round((doneCount / tracks.length) * 100) : 0;
+        const isMail = (nom: string) => nom.toLowerCase().includes("mail automatique");
+
+        return (
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 8px", color: C.text }}>
             Feuille de route{entrepriseData?.qualification ? ` — ${entrepriseData.qualification}` : ""}
           </h3>
+
+          {/* Progress header */}
+          {tracks.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: activeStep ? C.blue : C.textMuted }}>
+                  Etape {doneCount + (activeStep ? 1 : 0)}/{tracks.length}
+                  {activeStep ? ` — ${activeStep.nom}` : doneCount === tracks.length ? " — Termine" : ""}
+                </span>
+                <span style={{ fontSize: 11, color: C.textDim }}>{progress}%</span>
+              </div>
+              <div style={{ height: 4, borderRadius: 2, background: C.border }}>
+                <div style={{ height: 4, borderRadius: 2, background: C.accent, width: `${progress}%`, transition: "width 0.3s" }} />
+              </div>
+            </div>
+          )}
+
+          {/* Collapsed done steps */}
+          {doneCount > 2 && (
+            <button onClick={() => setExpandedCols((p) => ({ ...p, trackDone: !p.trackDone }))} style={{
+              width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px dashed ${C.border}`,
+              background: "transparent", color: C.textMuted, fontSize: 12, fontWeight: 500,
+              cursor: "pointer", marginBottom: 12, textAlign: "left",
+            }}>
+              {expandedCols.trackDone ? "Masquer" : "Voir"} les {doneCount} etapes terminees
+            </button>
+          )}
+
           <div data-guide="track-timeline" style={{ position: "relative" }}>
-            {tracks.map((t, i) => (
+            {tracks.map((t, i) => {
+              // Hide done steps if collapsed (show last done + active + future)
+              if (t.done && doneCount > 2 && !expandedCols.trackDone && i < doneCount - 1) return null;
+
+              return (
               <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 32 }}>
                   <div
@@ -1165,7 +1204,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         const updated = prev.map((step) =>
                           step.id === t.id ? { ...step, done: newDone, active: !newDone } : step
                         );
-                        // In demo mode, activate next step
                         if (isDemoMode && newDone) {
                           const idx = updated.findIndex((s) => s.id === t.id);
                           if (idx >= 0 && idx + 1 < updated.length) {
@@ -1200,38 +1238,36 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     )}
                   </div>
                   {i < tracks.length - 1 && (
-                    <div style={{ width: 2, height: 40, background: t.done ? C.accent : C.border, transition: "all 0.3s" }} />
+                    <div style={{ width: 2, height: 32, background: t.done ? C.accent : C.border, transition: "all 0.3s" }} />
                   )}
                 </div>
-                <div style={{ flex: 1, paddingBottom: 24 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ flex: 1, paddingBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: t.done ? C.accentText : t.active ? C.blue : C.textMuted }}>
                       {t.nom}
                     </span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Calendar size={12} color={C.textDim} />
-                      <span style={{ fontSize: 11, color: t.active ? C.blue : C.textDim }}>
-                        {t.delai}j {t.active && "— En cours"}
-                      </span>
-                      {t.done && <Badge color={C.accentText} bg={C.accentDim}>Terminé</Badge>}
-                    </div>
+                    {isMail(t.nom) && <Badge color={C.purple} bg={C.purpleDim}>Mail auto</Badge>}
+                    {t.done && <Badge color={C.accentText} bg={C.accentDim}>Fait</Badge>}
                   </div>
-                  {t.active && (
-                    <div
-                      style={{
-                        marginTop: 6, padding: "8px 12px", borderRadius: 8,
-                        background: C.blueDim, fontSize: 12, color: C.blue,
-                      }}
-                    >
-                      Étape en cours — délai estimé {t.delai} jours — alerte si dépassement
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                    <span style={{ fontSize: 11, color: t.active ? C.blue : C.textDim }}>
+                      {t.delai > 0 ? `${t.delai}j` : "Duree variable"}
+                      {t.active && " — En cours"}
+                    </span>
+                  </div>
+                  {t.active && t.delai > 0 && (
+                    <div style={{ marginTop: 6, padding: "6px 10px", borderRadius: 8, background: C.blueDim, fontSize: 11, color: C.blue }}>
+                      Delai estime {t.delai} jours — alerte si depassement
                     </div>
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Tab: Historique */}
       {tab === "historique" && (

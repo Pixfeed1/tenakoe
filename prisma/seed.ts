@@ -154,31 +154,53 @@ async function main() {
   console.log("Document templates created:", docsCommuns.length);
 
   // ========================
-  // TEMPLATE FEUILLE DE ROUTE (Qualibat RGE)
+  // TEMPLATE FEUILLE DE ROUTE (Qualibat RGE — 22 etapes)
   // ========================
+  // Clean old etapes if re-running seed
+  await prisma.trackTemplateEtape.deleteMany({ where: { trackTemplateId: "track-qualibat-rge" } });
+
   const trackRGE = await prisma.trackTemplate.upsert({
     where: { id: "track-qualibat-rge" },
-    update: {},
+    update: { nom: "Feuille de route Qualibat RGE", description: "Parcours complet qualification RGE — 22 etapes" },
     create: {
       id: "track-qualibat-rge",
       nom: "Feuille de route Qualibat RGE",
-      description: "Parcours standard pour qualification RGE",
-      etapes: {
-        createMany: {
-          data: [
-            { nom: "Prise de contact", ordre: 1, delaiJours: 2 },
-            { nom: "Collecte documents", ordre: 2, delaiJours: 14 },
-            { nom: "Vérification conformité", ordre: 3, delaiJours: 7 },
-            { nom: "Dépôt dossier certificateur", ordre: 4, delaiJours: 3 },
-            { nom: "Instruction & compléments", ordre: 5, delaiJours: 30 },
-            { nom: "Décision qualification", ordre: 6, delaiJours: 14 },
-          ],
-        },
-      },
+      description: "Parcours complet qualification RGE — 22 etapes",
     },
   });
 
-  console.log("Track template created:", trackRGE.nom);
+  const etapesRGE = [
+    { nom: "Transmission par prescripteurs", ordre: 1, delaiJours: 0 },
+    { nom: "Prise en charge", ordre: 2, delaiJours: 2 },
+    { nom: "Premiere prise de contact — Explication methode de travail", ordre: 3, delaiJours: 1 },
+    { nom: "Envoi devis", ordre: 4, delaiJours: 15 },
+    { nom: "Envoi facture (caution ou fonds propre), CGV", ordre: 5, delaiJours: 15 },
+    { nom: "Verif paiement = GO", ordre: 6, delaiJours: 2 },
+    { nom: "Envoi liste documents a fournir + Mandat + doc se preparer", ordre: 7, delaiJours: 5 },
+    { nom: "Mail automatique rappel du RDV J-4", ordre: 8, delaiJours: 5 },
+    { nom: "Mail automatique rappel du RDV J-1", ordre: 9, delaiJours: 5 },
+    { nom: "RDV RECUEIL EN DIRECT DES DOCS", ordre: 10, delaiJours: 15 },
+    { nom: "Demande de bon de commande", ordre: 11, delaiJours: 7 },
+    { nom: "Ouverture du compte QUALIBAT + Paiement QUALIBAT", ordre: 12, delaiJours: 0 },
+    { nom: "Debut echanges avec instructeur", ordre: 13, delaiJours: 0 },
+    { nom: "FINALISATION DE LA COLLECTE", ordre: 14, delaiJours: 0 },
+    { nom: "Bilan docs EL + chargee de projet avant depot", ordre: 15, delaiJours: 0 },
+    { nom: "Etat du dossier — feu vert client depot ?", ordre: 16, delaiJours: 0 },
+    { nom: "Depot du dossier + complements eventuels", ordre: 17, delaiJours: 0 },
+    { nom: "Info au client sur modalites reponse par commission", ordre: 18, delaiJours: 0 },
+    { nom: "Obtention QUALIF : info au client (n qualifie et usage marque Qualibat-RGE)", ordre: 19, delaiJours: 0 },
+    { nom: "Telechargement certificat Qualif dans dossier client (France Renov)", ordre: 20, delaiJours: 0 },
+    { nom: "Remplir les dates echeances dans dossier client", ordre: 21, delaiJours: 0 },
+    { nom: "Envoi questionnaire satisfaction", ordre: 22, delaiJours: 0 },
+  ];
+
+  for (const e of etapesRGE) {
+    await prisma.trackTemplateEtape.create({
+      data: { ...e, trackTemplateId: trackRGE.id },
+    });
+  }
+
+  console.log("Track template updated: 22 etapes Qualibat RGE");
 
   // ========================
   // DEPOTS PDB
