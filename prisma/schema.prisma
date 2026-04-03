@@ -537,6 +537,15 @@ model DepotConfig {
   @@unique([nom, prescripteurType])
 }
 
+model NomenclatureQualibat {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  nom       String
+  categorie String?
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
 model LogActivite {
   id          String       @id @default(cuid())
   type        TypeActivite

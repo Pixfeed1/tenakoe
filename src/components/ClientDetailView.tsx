@@ -64,6 +64,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [showAddTache, setShowAddTache] = useState(false);
   const [showAddProjet, setShowAddProjet] = useState(false);
   const [newProjetForm, setNewProjetForm] = useState({ nom: "", qualification: "", chargeeId: "" });
+  const [qualifSearch, setQualifSearch] = useState("");
+  const [qualifResults, setQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
   const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }> }>>([]);
   const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
   const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
@@ -930,14 +932,46 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                   <input placeholder="Nom du projet *" value={newProjetForm.nom} onChange={(e) => setNewProjetForm({ ...newProjetForm, nom: e.target.value })}
                     style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
-                  <select value={newProjetForm.qualification} onChange={(e) => setNewProjetForm({ ...newProjetForm, qualification: e.target.value })}
-                    style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
-                    <option value="">Qualification...</option>
-                    <option value="QUALIBAT_RGE">Qualibat RGE</option>
-                    <option value="CERTIBAT">Certibat</option>
-                    <option value="QUALIFELEC">Qualifelec</option>
-                    <option value="QUALIPAC">QualiPAC</option>
-                  </select>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      placeholder="Rechercher qualification (code ou nom)..."
+                      value={qualifSearch}
+                      onChange={(e) => {
+                        setQualifSearch(e.target.value);
+                        if (e.target.value.length >= 2) {
+                          fetch(`/api/nomenclature-qualibat?search=${encodeURIComponent(e.target.value)}`)
+                            .then((r) => r.json()).then(setQualifResults).catch(() => {});
+                        } else { setQualifResults([]); }
+                      }}
+                      style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }}
+                    />
+                    {qualifResults.length > 0 && (
+                      <div style={{
+                        position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50,
+                        background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8,
+                        boxShadow: C.shadowHover, maxHeight: 180, overflowY: "auto",
+                      }}>
+                        {qualifResults.map((q) => (
+                          <button key={q.code} onClick={() => {
+                            setNewProjetForm({ ...newProjetForm, qualification: q.code });
+                            setQualifSearch(`${q.code} — ${q.nom}`);
+                            setQualifResults([]);
+                          }} style={{
+                            width: "100%", padding: "6px 10px", border: "none",
+                            background: "transparent", cursor: "pointer", textAlign: "left",
+                            fontSize: 11, color: C.text, borderBottom: `1px solid ${C.border}`,
+                          }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                          >
+                            <span style={{ fontWeight: 700, color: C.blue }}>{q.code}</span>
+                            <span style={{ marginLeft: 6 }}>{q.nom}</span>
+                            <span style={{ marginLeft: 6, fontSize: 10, color: C.textDim }}>{q.categorie}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <select value={newProjetForm.chargeeId} onChange={(e) => setNewProjetForm({ ...newProjetForm, chargeeId: e.target.value })}
                     style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
                     <option value="">Chargee (moi par defaut)</option>

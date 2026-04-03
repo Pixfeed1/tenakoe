@@ -249,6 +249,20 @@ async function main() {
   console.log("Depots PDB created:", depotsPDB.length);
 
   // ========================
+  // NOMENCLATURE QUALIBAT (400+ qualifications)
+  // ========================
+  const { parseNomenclature } = await import("./nomenclature-qualibat");
+  const nomenclature = parseNomenclature();
+  for (const q of nomenclature) {
+    await prisma.nomenclatureQualibat.upsert({
+      where: { code: q.code },
+      update: { nom: q.nom, categorie: q.categorie },
+      create: { code: q.code, nom: q.nom, categorie: q.categorie },
+    });
+  }
+  console.log("Nomenclature Qualibat seeded:", nomenclature.length, "qualifications");
+
+  // ========================
   // TEMPLATES MAILS
   // ========================
   await prisma.mailTemplate.upsert({
