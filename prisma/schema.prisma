@@ -90,6 +90,11 @@ model Entreprise {
   archive            Boolean            @default(false)
   sourceImport       SourceImport?      @default(MANUEL)
   sourceId           String?
+  dateStatutPrise       DateTime?
+  dateStatutFacturation DateTime?
+  dateInteresseTNK      DateTime?
+  dateMiseEnRelation    DateTime?
+  dateQualification     DateTime?
 
   contacts      Contact[]
   projets       Projet[]

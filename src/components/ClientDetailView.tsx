@@ -244,6 +244,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           formationMenuiserie: firstQualif?.formationMenuiserie ? "true" : "false",
           formationQUALIPAC: firstQualif?.formationQUALIPAC ? "true" : "false",
           chargee: firstProjet?.chargee?.prenom || "",
+          dateStatutPrise: data.dateStatutPrise || "",
+          dateStatutFacturation: data.dateStatutFacturation || "",
+          dateInteresseTNK: data.dateInteresseTNK || "",
+          dateMiseEnRelation: data.dateMiseEnRelation || "",
+          dateQualification: data.dateQualification || "",
         });
       })
       .catch(() => {});
@@ -839,11 +844,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>
             {[
-              { label: "Intéressé TNK", key: "interesseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
-              { label: "Mise en relation", key: "miseEnRelation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation), raw: entrepriseData?.miseEnRelation, options: [{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }] },
+              { label: "Interesse TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
+              { label: "Mise en relation", key: "miseEnRelation", dateKey: "dateMiseEnRelation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation), raw: entrepriseData?.miseEnRelation, options: [{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }] },
             ].map((f, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
                 <span style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
+                <div>
                 <select
                   value={f.raw || ""}
                   onChange={async (e) => {
@@ -853,22 +859,35 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       method: "PATCH", headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ [f.key]: val }),
                     });
-                    setEntrepriseData((prev) => prev ? { ...prev, [f.key]: val } : prev);
+                    setEntrepriseData((prev) => prev ? { ...prev, [f.key]: val, [f.dateKey]: new Date().toISOString() } : prev);
                   }}
                   style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
                 >
                   {f.options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
                 </select>
+                {entrepriseData?.[f.dateKey] && (
+                  <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                    Modifie le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
+                  </div>
+                )}
+                </div>
               </div>
             ))}
             {[
-              { label: "Statut", value: formatStatutPrise(entrepriseData?.statutPrise) },
-              { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation) },
-              { label: "Qualification", value: entrepriseData?.qualification || "—" },
+              { label: "Statut", value: formatStatutPrise(entrepriseData?.statutPrise), dateKey: "dateStatutPrise" },
+              { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation), dateKey: "dateStatutFacturation" },
+              { label: "Qualification", value: entrepriseData?.qualification || "—", dateKey: "dateQualification" },
             ].map((f, i) => (
               <div key={`s${i}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
                 <span style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
-                <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
+                <div>
+                  <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
+                  {entrepriseData?.[f.dateKey] && (
+                    <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                      Modifie le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
             {/* Formations checkboxes */}

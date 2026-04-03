@@ -38,8 +38,8 @@ export async function PATCH(
   const updated = await prisma.entreprise.update({
     where: { id },
     data: {
-      ...(statutPrise && { statutPrise }),
-      ...(statutFacturation && { statutFacturation }),
+      ...(statutPrise && { statutPrise, dateStatutPrise: new Date() }),
+      ...(statutFacturation && { statutFacturation, dateStatutFacturation: new Date() }),
     },
   });
 

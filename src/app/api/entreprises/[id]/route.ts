@@ -42,6 +42,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
+  const existing = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, interesseTNK: true, miseEnRelation: true } });
 
   const data: Record<string, unknown> = {};
   if (body.archive !== undefined) data.archive = body.archive;
@@ -52,13 +53,24 @@ export async function PATCH(
   if (body.adresse !== undefined) data.adresse = body.adresse;
   if (body.ville !== undefined) data.ville = body.ville;
   if (body.codePostal !== undefined) data.codePostal = body.codePostal;
-  if (body.interesseTNK !== undefined) data.interesseTNK = body.interesseTNK;
-  if (body.miseEnRelation !== undefined) data.miseEnRelation = body.miseEnRelation;
+  if (body.interesseTNK !== undefined) { data.interesseTNK = body.interesseTNK; data.dateInteresseTNK = new Date(); }
+  if (body.miseEnRelation !== undefined) { data.miseEnRelation = body.miseEnRelation; data.dateMiseEnRelation = new Date(); }
   if (body.dejaReferentRGE !== undefined) data.dejaReferentRGE = body.dejaReferentRGE;
   if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
   if (body.depot !== undefined) data.depot = body.depot;
   if (body.numeroCarte !== undefined) data.numeroCarte = body.numeroCarte;
 
   const updated = await prisma.entreprise.update({ where: { id }, data });
+
+  // Log tracked field changes
+  const logs: string[] = [];
+  if (body.interesseTNK !== undefined && body.interesseTNK !== existing?.interesseTNK) logs.push(`Interesse TNK : ${body.interesseTNK}`);
+  if (body.miseEnRelation !== undefined && body.miseEnRelation !== existing?.miseEnRelation) logs.push(`Mise en relation : ${body.miseEnRelation}`);
+  if (logs.length > 0) {
+    await prisma.logActivite.create({
+      data: { type: "CHANGEMENT_STATUT", description: `${existing?.nom || "?"} — ${logs.join(", ")}`, entite: "Entreprise", entiteId: id, userId: user.id },
+    });
+  }
+
   return NextResponse.json(updated);
 }
