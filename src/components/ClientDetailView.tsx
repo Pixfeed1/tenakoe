@@ -14,6 +14,7 @@ import { GuideTooltip, useGuide } from "@/components/GuideSystem";
 import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACT, DEMO_DOCUMENTS, DEMO_ETAPES, DEMO_HISTORIQUE, DEMO_NOTES, demoBadgeStyle, handleDemoAction } from "@/lib/demo";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { formatPhone, formatContactName } from "@/lib/format";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -228,7 +229,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           telephone: data.telephone || "",
           adresse: data.adresse || "",
           prescripteur: data.prescripteur || "",
-          contact: data.contacts?.[0] ? `${data.contacts[0].prenom} ${data.contacts[0].nom}` : "—",
+          contact: data.contacts?.[0] ? formatContactName(data.contacts[0], data.nom) : "—",
           statutPrise: data.statutPrise || "",
           interesseTNK: data.interesseTNK || "NSP",
           statutFacturation: data.statutFacturation || "",
@@ -537,7 +538,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </div>
           <div style={{ marginBottom: 8 }}>
             <span style={{ fontSize: 12, color: C.textDim }}>À : </span>
-            <span style={{ fontSize: 12, color: C.text }}>{entrepriseData?.telephone || "—"}</span>
+            <span style={{ fontSize: 12, color: C.text }}>{formatPhone(entrepriseData?.telephone)}</span>
           </div>
           {sendStatus && (
             <div style={{
@@ -653,7 +654,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
           <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}` }}>
             <span style={{ fontSize: 12, color: C.textDim }}>Numéro : </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{entrepriseData?.telephone || "—"}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{formatPhone(entrepriseData?.telephone)}</span>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
@@ -761,7 +762,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "SIRET", key: "siret", value: entrepriseData?.siret || client?.siret || "—", Icon: FileText },
               { label: "Contact", key: "contact", value: entrepriseData?.contact || "—", Icon: UserCircle },
               { label: "Email", key: "email", value: entrepriseData?.email || "—", Icon: Mail },
-              { label: "Telephone", key: "telephone", value: entrepriseData?.telephone || "—", Icon: Phone },
+              { label: "Telephone", key: "telephone", value: formatPhone(entrepriseData?.telephone), Icon: Phone },
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "Prescripteur", key: "prescripteur", value: entrepriseData?.prescripteur || client?.prescripteur || "—", Icon: Building2 },
               { label: "Depot", key: "depot", value: entrepriseData?.depot || "—", Icon: Building2 },
@@ -1396,9 +1397,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
                   <UserCircle size={16} color={C.purple} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{c.prenom} {c.nom}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{formatContactName(c, entrepriseData?.nom)}</div>
                     <div style={{ fontSize: 11, color: C.textDim }}>
-                      {c.fonction || ""}{c.email ? ` · ${c.email}` : ""}{c.telephone ? ` · ${c.telephone}` : ""}
+                      {c.fonction || ""}{c.email ? ` · ${c.email}` : ""}{c.telephone ? ` · ${formatPhone(c.telephone)}` : ""}
                     </div>
                   </div>
                   <Button C={C} variant="ghost" size="sm" onClick={() => { setEditingContactId(c.id); setEditContact({ nom: c.nom, prenom: c.prenom, email: c.email || "", telephone: c.telephone || "", fonction: c.fonction || "" }); }}>

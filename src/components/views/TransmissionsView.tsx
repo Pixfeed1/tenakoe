@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatPhone } from "@/lib/format";
 import {
   Mail, MessageSquare, Phone, Search, ArrowUpRight, ArrowDownLeft,
   Archive, Eye, EyeOff, ChevronDown, ChevronUp, Send, X, Plus,
@@ -357,7 +358,7 @@ export function TransmissionsView({ C }: { C: Theme }) {
                     fontSize: 12, color: C.textMuted, overflow: "hidden",
                     textOverflow: "ellipsis", whiteSpace: "nowrap",
                   }}>
-                    {isSortant ? `→ ${t.destinataire}` : `← ${t.destinataire}`}
+                    {isSortant ? `→ ${t.canal === "SMS" || t.canal === "TELEPHONE" ? formatPhone(t.destinataire) : t.destinataire}` : `← ${t.canal === "SMS" || t.canal === "TELEPHONE" ? formatPhone(t.destinataire) : t.destinataire}`}
                     {!isExpanded && t.contenu && ` — ${t.contenu.replace(/<[^>]*>/g, "").slice(0, 100)}`}
                   </div>
                 </div>
