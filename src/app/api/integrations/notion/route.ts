@@ -102,8 +102,9 @@ function mapPrescripteur(value: string | null): string | null {
 // ========================
 
 const PLACEHOLDER_PATTERNS = [
-  "ecrire manuellement", "checklist docs", "nouveau client -",
+  "ecrire manuellement", "checklist docs", "nouveau client",
   "template", "exemple", "modele", "a completer",
+  "test", "nom de l'entreprise",
 ];
 
 function isPlaceholder(nom: string): boolean {
@@ -111,7 +112,7 @@ function isPlaceholder(nom: string): boolean {
   return PLACEHOLDER_PATTERNS.some((p) => lower.includes(p));
 }
 
-const FIELD_PLACEHOLDERS = ["prenom", "nom", "email", "telephone", "adresse", "siret"];
+const FIELD_PLACEHOLDERS = ["prenom", "nom", "email", "telephone", "adresse", "siret", "a completer", "dirigeant"];
 
 function isFieldPlaceholder(value: string | null): boolean {
   if (!value) return true;
@@ -410,11 +411,46 @@ export async function POST(request: NextRequest) {
           if (byEmail) { results.skipped++; results.skippedByEmail++; continue; }
         }
 
-        // Check 4 : même nom (case-insensitive, trim)
+        // Check 4 : same name (case-insensitive, trim)
         const byNom = await prisma.entreprise.findFirst({
           where: { nom: { equals: artisan.nom.trim(), mode: "insensitive" } },
         });
-        if (byNom) { results.skipped++; continue; }
+        if (byNom) {
+          // If existing has no sourceImport, enrich with Notion data
+          if (!byNom.sourceImport) {
+            await prisma.entreprise.update({
+              where: { id: byNom.id },
+              data: {
+                ...(artisan.siret && !byNom.siret ? { siret: artisan.siret } : {}),
+                ...(artisan.email && !byNom.email ? { email: artisan.email } : {}),
+                ...(artisan.telephone && !byNom.telephone ? { telephone: artisan.telephone } : {}),
+                ...(artisan.adresse && !byNom.adresse ? { adresse: artisan.adresse } : {}),
+                ...(prescripteur && !byNom.prescripteur ? { prescripteur } : {}),
+                sourceImport: "NOTION",
+                sourceId,
+              },
+            });
+            const existingContact = await prisma.contact.findFirst({ where: { entrepriseId: byNom.id } });
+            const nomNotSameAsEntreprise = artisan.nomArtisan && artisan.nomArtisan.trim().toLowerCase() !== artisan.nom.trim().toLowerCase();
+            if (!existingContact && nomNotSameAsEntreprise && !isFieldPlaceholder(artisan.nomArtisan)) {
+              await prisma.contact.create({
+                data: {
+                  nom: artisan.nomArtisan!,
+                  prenom: artisan.prenomArtisan && !isFieldPlaceholder(artisan.prenomArtisan) ? artisan.prenomArtisan : "?",
+                  email: artisan.email,
+                  telephone: artisan.telephone,
+                  entrepriseId: byNom.id,
+                  sourceImport: "NOTION",
+                  sourceId: sourceId + "-contact",
+                },
+              });
+              results.contacts++;
+            }
+            results.total++;
+          }
+          results.skipped++;
+          continue;
+        }
 
         // Statut
         const statutPrise = await mapStatut(artisan.statut);
@@ -461,8 +497,10 @@ export async function POST(request: NextRequest) {
 
         setImportProgress("notion", db.asClient ? `Clients... (${results.clients})` : `Leads ${db.prescripteur || ""}... (${results.leads})`, results.total, results.total + 10);
 
-        // Contact dirigeant — seulement si on a un vrai nom (pas placeholder, pas vide)
-        const hasRealContact = artisan.nomArtisan && !isFieldPlaceholder(artisan.nomArtisan);
+        // Contact dirigeant — seulement si vrai nom, pas placeholder, pas identique au nom d'entreprise
+        const nomIdentique = artisan.nomArtisan && artisan.nom &&
+          artisan.nomArtisan.trim().toLowerCase() === artisan.nom.trim().toLowerCase();
+        const hasRealContact = artisan.nomArtisan && !isFieldPlaceholder(artisan.nomArtisan) && !nomIdentique;
         if (hasRealContact) {
           await prisma.contact.create({
             data: {
