@@ -16,12 +16,8 @@ const getLabelStyle = (C: typeof LIGHT): React.CSSProperties => ({
 });
 
 export default function FormulairePrescripteur({ paramsPromise }: { paramsPromise?: Promise<{ prescripteur: string }> }) {
+  // ALL hooks at the top, before any conditional return
   const [dark, setDark] = useState(false);
-  useEffect(() => { setDark(localStorage.getItem("tenakoe-dark") === "true"); }, []);
-  const C = dark ? DARK : LIGHT;
-  const inputStyle = getInputStyle(C);
-  const labelStyle = getLabelStyle(C);
-
   const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
   const [choosingPrescripteur, setChoosingPrescripteur] = useState(false);
   const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; actif: boolean }>>([]);
@@ -36,8 +32,9 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => { setDark(localStorage.getItem("tenakoe-dark") === "true"); }, []);
+
   useEffect(() => {
-    // Load prescripteur configs
     fetch("/api/prescripteur-config")
       .then((r) => r.ok ? r.json() : [])
       .then((data) => setPrescripteurConfigs(data.filter((c: { actif: boolean }) => c.actif)))
@@ -47,7 +44,6 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   useEffect(() => {
     if (paramsPromise) {
       paramsPromise.then((p) => {
-        // Convert slug to code: "point-p" → "POINT_P", "leroy-merlin" → "LEROY_MERLIN"
         const code = p.prescripteur.toUpperCase().replace(/-/g, "_");
         setResolvedPrescripteur(code);
       });
@@ -56,19 +52,65 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     }
   }, [paramsPromise]);
 
-  // Helper to get prescripteur name from code
+  useEffect(() => {
+    if (resolvedPrescripteur) {
+      setForm((prev) => ({ ...prev, prescripteur: resolvedPrescripteur }));
+      fetch(`/api/depot-config?prescripteur=${resolvedPrescripteur}`)
+        .then((r) => r.ok ? r.json() : [])
+        .then(setDepots)
+        .catch(() => {});
+    }
+  }, [resolvedPrescripteur]);
+
+  const C = dark ? DARK : LIGHT;
+  const inputStyle = getInputStyle(C);
+  const labelStyle = getLabelStyle(C);
+
   const getPrescripteurName = (code: string): string => {
     const config = prescripteurConfigs.find((c) => c.type === code);
     return config?.nom || code;
   };
 
+  const set = (key: string, value: string | boolean) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!form.nomArtisan || !form.prenomArtisan) {
+      setError("Nom et prenom de l'artisan sont obligatoires");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Erreur lors de l'envoi");
+      }
+    } catch {
+      setError("Erreur reseau, veuillez reessayer");
+    }
+    setSubmitting(false);
+  };
+
+  const fontLink = <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet" />;
+
+  // ========== CONDITIONAL RETURNS (after all hooks) ==========
+
+  // Step 1: Choose prescripteur
   if (choosingPrescripteur && !resolvedPrescripteur) {
     return (
       <div style={{
         minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
         background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif", padding: "40px 16px",
       }}>
-        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet" />
+        {fontLink}
         <div style={{ width: 480, maxWidth: "100%" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
@@ -79,7 +121,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               </div>
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 6px" }}>Transmission d&apos;un artisan</h1>
-            <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>Sélectionnez votre enseigne pour commencer</p>
+            <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>Selectionnez votre enseigne pour commencer</p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {prescripteurConfigs.map((config) => (
@@ -105,56 +147,14 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     );
   }
 
-  // Update prescripteur in form + load depots when resolved
-  useEffect(() => {
-    if (resolvedPrescripteur) {
-      setForm((prev) => ({ ...prev, prescripteur: resolvedPrescripteur }));
-      fetch(`/api/depot-config?prescripteur=${resolvedPrescripteur}`)
-        .then((r) => r.ok ? r.json() : [])
-        .then(setDepots)
-        .catch(() => {});
-    }
-  }, [resolvedPrescripteur]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!form.nomArtisan || !form.prenomArtisan) {
-      setError("Nom et prénom de l'artisan sont obligatoires");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (res.ok) {
-        setSubmitted(true);
-      } else {
-        const data = await res.json();
-        setError(data.error || "Erreur lors de l'envoi");
-      }
-    } catch {
-      setError("Erreur réseau, veuillez réessayer");
-    }
-    setSubmitting(false);
-  };
-
-  const set = (key: string, value: string | boolean) => setForm((prev) => ({ ...prev, [key]: value }));
-
+  // Step 3: Submitted confirmation
   if (submitted) {
     return (
-      <div
-        style={{
-          minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-          background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif",
-        }}
-      >
-        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet" />
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif",
+      }}>
+        {fontLink}
         <div style={{
           width: 480, background: C.surface, borderRadius: 16, padding: "48px 40px",
           boxShadow: C.shadowHover, border: `1px solid ${C.border}`, textAlign: "center",
@@ -167,11 +167,11 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             <CheckCircle2 size={32} color={C.accent} />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 10px" }}>
-            Transmission reçue
+            Transmission recue
           </h1>
           <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6, margin: 0 }}>
-            Les coordonnées de <strong>{form.prenomArtisan} {form.nomArtisan}</strong> ont bien été transmises
-            à l&apos;équipe Tenakoe. Une chargée de projet prendra contact sous 48h.
+            Les coordonnees de <strong>{form.prenomArtisan} {form.nomArtisan}</strong> ont bien ete transmises
+            a l&apos;equipe Tenakoe. Une chargee de projet prendra contact sous 48h.
           </p>
           <button
             onClick={() => { setSubmitted(false); setForm({
@@ -194,27 +194,18 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     );
   }
 
+  // Step 2: Main form
   return (
-    <div
-      style={{
-        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-        background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif",
-        padding: "40px 16px",
-      }}
-    >
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet" />
-
+    <div style={{
+      minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif",
+      padding: "40px 16px",
+    }}>
+      {fontLink}
       <div style={{ width: 560, maxWidth: "100%" }}>
-        {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16,
-          }}>
-            <img
-              src="/logo.png"
-              alt="Tenakoe"
-              style={{ width: 44, height: 44, objectFit: "contain" }}
-            />
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <img src="/logo.png" alt="Tenakoe" style={{ width: 44, height: 44, objectFit: "contain" }} />
             <div style={{ textAlign: "left" }}>
               <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
               <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>Qualification RGE</div>
@@ -224,16 +215,12 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             Transmission d&apos;un artisan
           </h1>
           <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>
-            Remplissez ce formulaire pour transmettre les coordonnées d&apos;un artisan à l&apos;équipe Tenakoe
+            Remplissez ce formulaire pour transmettre les coordonnees d&apos;un artisan a l&apos;equipe Tenakoe
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Prescripteur info */}
-          <div style={{
-            background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-            padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16,
-          }}>
+          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <Building2 size={16} color={C.blue} />
               <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
@@ -246,69 +233,45 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                   <label style={labelStyle}>Prescripteur *</label>
                   <select style={inputStyle} value={form.prescripteur} onChange={(e) => set("prescripteur", e.target.value)}>
                     <option value="">Choisir...</option>
-                    {prescripteurConfigs.map((c) => (
-                      <option key={c.type} value={c.type}>{c.nom}</option>
-                    ))}
+                    {prescripteurConfigs.map((c) => <option key={c.type} value={c.type}>{c.nom}</option>)}
                   </select>
                 </div>
               )}
               <div>
-                <label style={labelStyle}>Dépôt</label>
+                <label style={labelStyle}>Depot</label>
                 {depots.length > 0 ? (
                   <select style={inputStyle} value={form.depot} onChange={(e) => set("depot", e.target.value)}>
                     <option value="">Selectionnez votre depot...</option>
-                    {depots.map((d) => (
-                      <option key={d.id} value={d.nom}>{d.nom}</option>
-                    ))}
+                    {depots.map((d) => <option key={d.id} value={d.nom}>{d.nom}</option>)}
                   </select>
                 ) : (
                   <input style={inputStyle} placeholder="Ex: Paris 15" value={form.depot} onChange={(e) => set("depot", e.target.value)} />
                 )}
               </div>
               <div>
-                <label style={labelStyle}>N° carte</label>
-                <input style={inputStyle} placeholder="N° carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} />
+                <label style={labelStyle}>N carte</label>
+                <input style={inputStyle} placeholder="N carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} />
               </div>
             </div>
           </div>
 
-          {/* Artisan info */}
-          <div style={{
-            background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-            padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16,
-          }}>
+          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <UserCircle size={16} color={C.accent} />
               <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Artisan</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
-              <div>
-                <label style={labelStyle}>Nom *</label>
-                <input style={inputStyle} placeholder="Nom" value={form.nomArtisan} onChange={(e) => set("nomArtisan", e.target.value)} required />
-              </div>
-              <div>
-                <label style={labelStyle}>Prénom *</label>
-                <input style={inputStyle} placeholder="Prénom" value={form.prenomArtisan} onChange={(e) => set("prenomArtisan", e.target.value)} required />
-              </div>
-              <div>
-                <label style={labelStyle}>Entreprise</label>
-                <input style={inputStyle} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value)} />
-              </div>
-              <div>
-                <label style={labelStyle}>SIRET</label>
-                <input style={inputStyle} placeholder="N° SIRET" value={form.siret} onChange={(e) => set("siret", e.target.value)} />
-              </div>
+              <div><label style={labelStyle}>Nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomArtisan} onChange={(e) => set("nomArtisan", e.target.value)} required /></div>
+              <div><label style={labelStyle}>Prenom *</label><input style={inputStyle} placeholder="Prenom" value={form.prenomArtisan} onChange={(e) => set("prenomArtisan", e.target.value)} required /></div>
+              <div><label style={labelStyle}>Entreprise</label><input style={inputStyle} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value)} /></div>
+              <div><label style={labelStyle}>SIRET</label><input style={inputStyle} placeholder="N SIRET" value={form.siret} onChange={(e) => set("siret", e.target.value)} /></div>
             </div>
           </div>
 
-          {/* Contact */}
-          <div style={{
-            background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-            padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16,
-          }}>
+          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <Phone size={16} color={C.purple} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Coordonnées</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Coordonnees</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
               <div>
@@ -319,7 +282,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Téléphone</label>
+                <label style={labelStyle}>Telephone</label>
                 <div style={{ position: "relative" }}>
                   <Phone size={14} color={C.textDim} style={{ position: "absolute", left: 12, top: 13 }} />
                   <input style={{ ...inputStyle, paddingLeft: 34 }} placeholder="06 12 34 56 78" value={form.telephone} onChange={(e) => set("telephone", e.target.value)} />
@@ -335,93 +298,55 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             </div>
           </div>
 
-          {/* Compléments */}
-          <div style={{
-            background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-            padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16,
-          }}>
+          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <FileText size={16} color={C.warning} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Informations complémentaires</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Informations complementaires</span>
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={labelStyle}>Commentaires</label>
-              <textarea
-                rows={3}
-                style={{ ...inputStyle, resize: "vertical" }}
-                placeholder="Précisions sur l'artisan, son besoin..."
-                value={form.commentaires}
-                onChange={(e) => set("commentaires", e.target.value)}
-              />
+              <textarea rows={3} style={{ ...inputStyle, resize: "vertical" }} placeholder="Precisions sur l'artisan, son besoin..." value={form.commentaires} onChange={(e) => set("commentaires", e.target.value)} />
             </div>
-
-            {/* Checkboxes */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <label style={{
                 display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
                 padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`,
-                background: form.dejaReferentRGE ? C.accentDim : "transparent",
-                transition: "all 0.15s",
+                background: form.dejaReferentRGE ? C.accentDim : "transparent", transition: "all 0.15s",
               }}>
-                <input
-                  type="checkbox"
-                  checked={form.dejaReferentRGE}
-                  onChange={(e) => set("dejaReferentRGE", e.target.checked)}
-                  style={{ width: 16, height: 16, accentColor: C.accent }}
-                />
-                <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>
-                  L&apos;artisan est déjà référent RGE
-                </span>
+                <input type="checkbox" checked={form.dejaReferentRGE} onChange={(e) => set("dejaReferentRGE", e.target.checked)} style={{ width: 16, height: 16, accentColor: C.accent }} />
+                <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>L&apos;artisan est deja referent RGE</span>
               </label>
-
               <label style={{
                 display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
                 padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`,
-                background: form.acceptePartage ? C.blueDim : "transparent",
-                transition: "all 0.15s",
+                background: form.acceptePartage ? C.blueDim : "transparent", transition: "all 0.15s",
               }}>
-                <input
-                  type="checkbox"
-                  checked={form.acceptePartage}
-                  onChange={(e) => set("acceptePartage", e.target.checked)}
-                  style={{ width: 16, height: 16, accentColor: C.blue, marginTop: 2 }}
-                />
-                <span style={{ fontSize: 13, color: C.text, fontWeight: 500, lineHeight: 1.5 }}>
-                  L&apos;artisan accepte le partage de ses coordonnées avec l&apos;équipe Tenakoe
-                </span>
+                <input type="checkbox" checked={form.acceptePartage} onChange={(e) => set("acceptePartage", e.target.checked)} style={{ width: 16, height: 16, accentColor: C.blue, marginTop: 2 }} />
+                <span style={{ fontSize: 13, color: C.text, fontWeight: 500, lineHeight: 1.5 }}>L&apos;artisan accepte le partage de ses coordonnees avec l&apos;equipe Tenakoe</span>
               </label>
             </div>
           </div>
 
-          {/* Error */}
           {error && (
-            <div style={{
-              padding: "12px 16px", borderRadius: 10, marginBottom: 16,
-              background: C.dangerDim, color: C.danger, fontSize: 13, fontWeight: 500,
-            }}>
+            <div style={{ padding: "12px 16px", borderRadius: 10, marginBottom: 16, background: C.dangerDim, color: C.danger, fontSize: 13, fontWeight: 500 }}>
               {error}
             </div>
           )}
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{
-              width: "100%", padding: "14px 0", borderRadius: 12, border: "none",
-              background: submitting ? "#94a3b8" : "linear-gradient(135deg, #16a34a, #15803d)",
-              color: "#fff", fontSize: 15, fontWeight: 600,
-              cursor: submitting ? "not-allowed" : "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              boxShadow: "0 2px 8px rgba(22,163,74,0.25)",
-            }}
-          >
+          <button type="submit" disabled={submitting} style={{
+            width: "100%", padding: "14px 0", borderRadius: 12, border: "none",
+            background: submitting ? "#94a3b8" : "linear-gradient(135deg, #16a34a, #15803d)",
+            color: "#fff", fontSize: 15, fontWeight: 600,
+            cursor: submitting ? "not-allowed" : "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            boxShadow: "0 2px 8px rgba(22,163,74,0.25)",
+          }}>
             <Send size={16} /> {submitting ? "Envoi en cours..." : "Transmettre l'artisan"}
           </button>
 
           <p style={{ fontSize: 11, color: C.textDim, textAlign: "center", marginTop: 12, lineHeight: 1.5 }}>
-            Les informations transmises sont traitées par Tenakoe dans le cadre de l&apos;accompagnement
-            à la qualification RGE. Elles ne sont pas partagées avec des tiers.
+            Les informations transmises sont traitees par Tenakoe dans le cadre de l&apos;accompagnement
+            a la qualification RGE. Elles ne sont pas partagees avec des tiers.
           </p>
         </form>
       </div>
