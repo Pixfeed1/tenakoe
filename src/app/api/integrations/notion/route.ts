@@ -411,6 +411,16 @@ export async function POST(request: NextRequest) {
           if (byEmail) { results.skipped++; results.skippedByEmail++; continue; }
         }
 
+        // Resolve prescripteur early (needed for enrichment + creation)
+        let prescripteur = db.prescripteur || null;
+        if (!prescripteur && artisan.prescripteurRelationId) {
+          const relTitle = await resolveRelation(artisan.prescripteurRelationId, headers);
+          if (relTitle) prescripteur = mapPrescripteur(relTitle);
+        }
+        if (!prescripteur && artisan.prescripteurDirect) {
+          prescripteur = mapPrescripteur(artisan.prescripteurDirect);
+        }
+
         // Check 4 : same name (case-insensitive, trim)
         const byNom = await prisma.entreprise.findFirst({
           where: { nom: { equals: artisan.nom.trim(), mode: "insensitive" } },
@@ -455,16 +465,7 @@ export async function POST(request: NextRequest) {
         // Statut
         const statutPrise = await mapStatut(artisan.statut);
 
-        // Prescripteur : priorité = paramètre base > relation résolue > select direct
-        let prescripteur = db.prescripteur || null;
-        if (!prescripteur && artisan.prescripteurRelationId) {
-          // Résoudre la relation (Base Clients — le prescripteur est une page liée)
-          const relTitle = await resolveRelation(artisan.prescripteurRelationId, headers);
-          if (relTitle) prescripteur = mapPrescripteur(relTitle);
-        }
-        if (!prescripteur && artisan.prescripteurDirect) {
-          prescripteur = mapPrescripteur(artisan.prescripteurDirect);
-        }
+        // prescripteur already resolved above
 
         // estClient : pour Base Clients, checker "Statut Paiement" = "payé"
         let estClient = db.asClient;
