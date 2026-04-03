@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useToast } from "@/components/ui/Toast";
 import {
   Zap, Plus, Check, X, ChevronDown, Building2, Mail, Phone, MapPin, Edit3,
 } from "lucide-react";
@@ -37,6 +38,7 @@ export function LeadsView({ C }: { C: Theme }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [converting, setConverting] = useState<string | null>(null);
+  const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ nomArtisan: "", prenomArtisan: "", nomEntreprise: "", email: "", telephone: "" });
 
@@ -75,6 +77,7 @@ export function LeadsView({ C }: { C: Theme }) {
         depot: "", numeroCarte: "", dejaReferentRGE: false, commentaires: "",
       });
       fetchLeads();
+      toast("Lead cree");
     }
   };
 
@@ -121,6 +124,7 @@ export function LeadsView({ C }: { C: Theme }) {
         body: JSON.stringify({ id: lead.id, converti: true }),
       }).catch(() => {});
       fetchLeads();
+      toast("Lead converti en entreprise");
     }
     setConverting(null);
   };

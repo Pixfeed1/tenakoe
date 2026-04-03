@@ -8,6 +8,7 @@ import {
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import DOMPurify from "dompurify";
+import { useToast } from "@/components/ui/Toast";
 
 interface Transmission {
   id: string;
@@ -49,6 +50,7 @@ export function TransmissionsView({ C }: { C: Theme }) {
   const [composeEntrepriseId, setComposeEntrepriseId] = useState("");
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const { toast } = useToast();
   const [mailTemplates, setMailTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string }>>([]);
   const [entreprises, setEntreprises] = useState<Array<{ id: string; nom: string; email: string | null }>>([]);
 
@@ -111,6 +113,7 @@ export function TransmissionsView({ C }: { C: Theme }) {
       const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (res.ok) {
         setSendMsg({ type: "success", msg: `${composeType === "EMAIL" ? "Email" : "SMS"} envoye` });
+        toast(`${composeType === "EMAIL" ? "Email" : "SMS"} envoye`);
         setComposeTo(""); setComposeSubject(""); setComposeBody(""); setComposeCc(""); setComposeBcc(""); setComposeEntrepriseId("");
         setTimeout(() => { setShowCompose(false); setSendMsg(null); fetchData(); }, 1500);
       } else {

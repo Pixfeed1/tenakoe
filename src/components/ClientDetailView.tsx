@@ -92,7 +92,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       if (res.ok) {
         const data = await res.json();
-        setUploadMsg({ type: "success", msg: `${data.nom} uploadé avec succès` });
+        setUploadMsg({ type: "success", msg: `${data.nom} uploade` });
+        toast("Fichier uploade");
         // Refresh docs list
         if (client?.id) {
           fetch(`/api/documents?entrepriseId=${client.id}`)
@@ -631,6 +632,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             key={t.id}
             data-guide={`tab-${t.id}`}
             onClick={() => setTab(t.id)}
+            onMouseEnter={(e) => { if (tab !== t.id) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+            onMouseLeave={(e) => { if (tab !== t.id) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             style={{
               padding: "10px 16px", borderRadius: "8px 8px 0 0", border: "none", cursor: "pointer",
               background: tab === t.id ? C.surface : "transparent",
@@ -1177,7 +1180,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                           body: JSON.stringify({ terminee: newDone }),
                         }).catch(() => {});
                       }
-                      if (newDone) guide.showSuggestion("etape-terminee"); toast("Etape terminee");
+                      if (newDone) { guide.showSuggestion("etape-terminee"); toast("Etape terminee"); }
                     }}
                     style={{
                       width: 28, height: 28, borderRadius: "50%",
@@ -1308,6 +1311,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setContacts((prev) => [...prev, c]);
                     setNewContact({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
                     setShowAddContact(false);
+                    toast("Contact ajoute");
                   }
                 }} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                   Créer
@@ -1337,10 +1341,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginTop: 8 }}>
                     <button onClick={() => setEditingContactId(null)} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer" }}>Annuler</button>
                     <button onClick={async () => {
-                      if (isDemoMode) { handleDemoAction("Contact modifie"); setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x)); setEditingContactId(null); return; }
+                      if (isDemoMode) { handleDemoAction("Contact modifie"); setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x)); setEditingContactId(null); toast("Contact modifie"); return; }
                       await fetch(`/api/contacts/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editContact) });
                       setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x));
                       setEditingContactId(null);
+                      toast("Contact modifie");
                     }} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Enregistrer</button>
                   </div>
                 </div>

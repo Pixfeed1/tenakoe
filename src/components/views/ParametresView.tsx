@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import DOMPurify from "dompurify";
+import { useToast } from "@/components/ui/Toast";
 import {
   Settings, Users, Columns3, Building2, Mail, ClipboardList, FileText,
   Bell, Download, Upload, Shield, Plus, Trash2, Check, X, Save, Eye, EyeOff,
@@ -231,6 +232,7 @@ function UsersTab({ C }: { C: Theme }) {
 
 // ===================== PIPELINE =====================
 function PipelineTab({ C }: { C: Theme }) {
+  const { toast } = useToast();
   const [statutsPrise, setStatutsPrise] = useState<Array<{ id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean }>>([]);
   const [statutsFacturation, setStatutsFacturation] = useState<Array<{ id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean; declencheConversion: boolean }>>([]);
   const [newPrise, setNewPrise] = useState({ nom: "", couleur: "#3b82f6" });
@@ -444,6 +446,7 @@ function PipelineTab({ C }: { C: Theme }) {
 
 // ===================== PRESCRIPTEURS =====================
 function PrescripteursTab({ C }: { C: Theme }) {
+  const { toast } = useToast();
   const [configs, setConfigs] = useState<Array<{ id: string; type: string; nom: string; actif: boolean }>>([]);
   const [newNom, setNewNom] = useState("");
   const [expandedDepots, setExpandedDepots] = useState<string | null>(null);
@@ -472,6 +475,7 @@ function PrescripteursTab({ C }: { C: Theme }) {
       const created = await res.json();
       setConfigs((p) => [...p, created]);
       setNewNom("");
+      toast("Prescripteur ajoute");
     }
   };
 
@@ -584,6 +588,7 @@ function PrescripteursTab({ C }: { C: Theme }) {
 
 // ===================== TEMPLATES MAILS =====================
 function MailTemplatesTab({ C }: { C: Theme }) {
+  const { toast } = useToast();
   const [templates, setTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string; actif: boolean }>>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ nom: "", objet: "", contenu: "" });
