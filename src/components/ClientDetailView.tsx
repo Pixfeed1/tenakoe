@@ -314,7 +314,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <ChevronRight size={13} />
         <span style={{ cursor: "pointer", color: C.blue }} onClick={onBack}>Prospects</span>
         <ChevronRight size={13} />
-        <span style={{ color: C.text, fontWeight: 600 }}>{client?.nom || "—"}</span>
+        <span style={{ color: C.text, fontWeight: 600 }}>{entrepriseData?.nom || client?.nom || "—"}</span>
       </div>
 
       {/* Demo banner */}
@@ -350,10 +350,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </div>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: C.text }}>
-              {client?.nom || "—"}
+              {entrepriseData?.nom || client?.nom || "—"}
             </h1>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4 }}>
-              <span style={{ fontSize: 12, color: C.textMuted }}>SIRET: {client?.siret || "—"}</span>
+              <span style={{ fontSize: 12, color: C.textMuted }}>SIRET: {entrepriseData?.siret || client?.siret || "—"}</span>
               {entrepriseData?.qualification && <Badge color={C.blue} bg={C.blueDim}>{entrepriseData.qualification}</Badge>}
               {entrepriseData?.chargee && <Badge color={C.accentText} bg={C.accentDim}>{entrepriseData.chargee}</Badge>}
             </div>
@@ -1014,13 +1014,41 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div>
-              <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Documents à fournir</h3>
-              <span style={{ fontSize: 12, color: C.textDim }}>{docsRecu}/{docs.length} reçus</span>
+              <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Documents a fournir</h3>
+              <span style={{ fontSize: 12, color: C.textDim }}>{docsRecu}/{docs.length} recus</span>
             </div>
-            <div data-guide="docs-progress">
-              <ProgressBar value={Math.round((docsRecu / docs.length) * 100)} C={C} />
-            </div>
+            {docs.length > 0 && (
+              <div data-guide="docs-progress">
+                <ProgressBar value={Math.round((docsRecu / docs.length) * 100)} C={C} />
+              </div>
+            )}
           </div>
+          {docs.length === 0 && projets.length > 0 && !isDemoMode && (
+            <button onClick={async () => {
+              const projetId = projets[0]?.id;
+              if (!projetId) return;
+              const res = await fetch(`/api/projets/${projetId}/generate-docs`, { method: "POST" });
+              if (res.ok) {
+                // Recharger les docs
+                if (client?.id) {
+                  const r = await fetch(`/api/documents?entrepriseId=${client.id}`);
+                  if (r.ok) {
+                    const freshDocs = await r.json();
+                    setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null }) => ({
+                      id: d.id, nom: d.nom, recu: d.recu,
+                      date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null,
+                    })));
+                  }
+                }
+              }
+            }} style={{
+              padding: "10px 20px", borderRadius: 10, border: "none",
+              background: C.accent, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              marginBottom: 16, width: "100%", textAlign: "center",
+            }}>
+              Generer la checklist documents
+            </button>
+          )}
           {docs.map((d, i) => (
             <div
               key={i}
