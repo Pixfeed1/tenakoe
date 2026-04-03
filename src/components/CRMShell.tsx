@@ -117,7 +117,7 @@ export function CRMShell({
     nom: string;
     siret?: string;
     prescripteur?: string;
-  } | null>(initialClientId ? { id: initialClientId, nom: "Chargement..." } : null);
+  } | null>(initialClientId ? { id: initialClientId, nom: "" } : null);
 
   const getViewFromURL = (): View => {
     if (typeof window === "undefined") return "Dashboard";

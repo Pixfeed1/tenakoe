@@ -787,14 +787,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     value={editFieldValue}
                     onChange={(e) => setEditFieldValue(e.target.value)}
                     onBlur={async () => {
-                      if (["email", "telephone", "adresse", "depot", "numeroCarte"].includes(f.key)) {
-                        setEntrepriseData((prev) => prev ? { ...prev, [f.key]: editFieldValue } : prev);
-                      }
-                      if (client?.id && !isDemoMode) {
-                        await fetch(`/api/entreprises/${client.id}`, {
-                          method: "PATCH", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ [f.key]: editFieldValue }),
-                        });
+                      const original = f.value === "\u2014" ? "" : f.value;
+                      if (editFieldValue !== original && editFieldValue.trim()) {
+                        if (["email", "telephone", "adresse", "depot", "numeroCarte"].includes(f.key)) {
+                          setEntrepriseData((prev) => prev ? { ...prev, [f.key]: editFieldValue } : prev);
+                        }
+                        if (client?.id && !isDemoMode) {
+                          await fetch(`/api/entreprises/${client.id}`, {
+                            method: "PATCH", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ [f.key]: editFieldValue }),
+                          });
+                        }
                       }
                       setEditingField(null);
                     }}
