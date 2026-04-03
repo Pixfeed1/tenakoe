@@ -133,6 +133,36 @@ export function LeadsView({ C }: { C: Theme }) {
 
   return (
     <>
+      {/* Formulaire prescripteur */}
+      <div style={{
+        background: C.blueDim, borderRadius: 12, padding: "14px 20px",
+        marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between",
+        border: `1px solid ${C.border}`,
+      }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Formulaire de transmission prescripteur</div>
+          <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>
+            Partagez ce lien avec vos prescripteurs pour recevoir des leads
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => {
+            navigator.clipboard.writeText(`${window.location.origin}/formulaire`);
+          }} style={{
+            padding: "8px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
+            background: C.surface, color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer",
+          }}>
+            Copier le lien
+          </button>
+          <button onClick={() => window.open("/formulaire", "_blank")} style={{
+            padding: "8px 14px", borderRadius: 8, border: "none",
+            background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
+          }}>
+            Voir le formulaire
+          </button>
+        </div>
+      </div>
+
       {/* Action bar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
