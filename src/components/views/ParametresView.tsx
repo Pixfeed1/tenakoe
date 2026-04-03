@@ -490,7 +490,17 @@ function PrescripteursTab({ C }: { C: Theme }) {
           <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.actif ? C.accent : C.border }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
-            <div style={{ fontSize: 11, color: C.textDim }}>{getUrl(p.type)}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 11, color: C.blue }}>{typeof window !== "undefined" ? window.location.origin : ""}{getUrl(p.type)}</span>
+              <button onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}${getUrl(p.type)}`);
+              }} style={{
+                padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}`,
+                background: "transparent", cursor: "pointer", fontSize: 10, color: C.textDim,
+              }}>
+                Copier
+              </button>
+            </div>
           </div>
           <Badge color={C.textDim} bg={C.surfaceHover}>{p.type}</Badge>
           <button onClick={() => toggleActif(p.id, p.actif)} style={{
