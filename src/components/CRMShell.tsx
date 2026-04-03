@@ -5,6 +5,7 @@ import { Plus, Zap, FolderOpen, Mail, Upload, FileText, Menu, X as XIcon } from 
 import { signOut } from "next-auth/react";
 import { LIGHT, DARK, type Theme } from "@/lib/theme";
 import { GuideProvider, GuideTooltip } from "@/components/GuideSystem";
+import { ToastProvider } from "@/components/ui/Toast";
 import { Sidebar } from "@/components/Sidebar";
 import { DashboardView } from "@/components/DashboardView";
 import { ClientDetailView } from "@/components/ClientDetailView";
@@ -167,6 +168,7 @@ export function CRMShell({
   };
 
   return (
+    <ToastProvider C={C}>
     <GuideProvider C={C}>
     <div
       className="crm-layout"
@@ -279,6 +281,7 @@ export function CRMShell({
             key={navKey}
             C={C}
             onSelectClient={(client) => openClient(client as typeof selectedClient & object)}
+            onNavigate={(v) => navigateTo(v as View)}
             serverStats={initialStats}
             serverPipeline={initialPipeline}
             serverClients={initialClients}
@@ -305,6 +308,7 @@ export function CRMShell({
       </main>
     </div>
     </GuideProvider>
+    </ToastProvider>
   );
 }
 

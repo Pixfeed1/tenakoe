@@ -12,6 +12,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { GuideTooltip, useGuide } from "@/components/GuideSystem";
 import { isDemo, demoBadgeStyle, demoCardStyle, DEMO_PIPELINE_ITEMS, handleDemoAction } from "@/lib/demo";
+import { useToast } from "@/components/ui/Toast";
 import type { PipelineColumn, PipelineItem, Client } from "@/lib/data";
 
 interface ServerStats {
@@ -32,6 +33,7 @@ interface AlerteData {
 interface DashboardViewProps {
   C: Theme;
   onSelectClient: (client: PipelineItem | Client) => void;
+  onNavigate?: (view: string) => void;
   serverStats?: ServerStats | null;
   serverPipeline?: PipelineColumn[] | null;
   serverClients?: Client[] | null;
@@ -42,6 +44,7 @@ interface DashboardViewProps {
 export function DashboardView({
   C,
   onSelectClient,
+  onNavigate,
   serverStats,
   serverPipeline,
   serverClients,
@@ -58,15 +61,20 @@ export function DashboardView({
   ];
 
   const guide = useGuide();
+  const { toast } = useToast();
   const [pipeline, setPipeline] = useState<PipelineColumn[]>(
     serverPipeline || []
   );
+
+  // Separate prise vs facturation columns
+  const pipelineProspects = pipeline.filter((c) => c.pipelineType === "prise");
+  const pipelineFacturation = pipeline.filter((c) => c.pipelineType === "facturation");
   const [dragging, setDragging] = useState<{ itemId: string; colId: string } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
 
   // Inject demo items into first column when guide mode is active
-  const pipelineWithDemo = guide.active ? pipeline.map((col, i) => {
+  const pipelineWithDemo = guide.active ? pipelineProspects.map((col, i) => {
     if (i === 0) {
       const demoItems = Object.values(DEMO_PIPELINE_ITEMS).filter(
         (d) => !col.items.some((item) => item.id === d.id)
@@ -74,7 +82,7 @@ export function DashboardView({
       return { ...col, items: [...demoItems, ...col.items] };
     }
     return col;
-  }) : pipeline;
+  }) : pipelineProspects;
   const PIPELINE_MAX = 5;
 
   // Poll pipeline every 30s for new leads / status changes
@@ -144,6 +152,11 @@ export function DashboardView({
 
     setDragOver(null);
     setDragging(null);
+
+    // Find item name for toast
+    const movedItem = pipeline.flatMap((c) => c.items).find((i) => i.id === itemId);
+    const targetStatus = targetCol?.status || targetColId;
+    if (movedItem) toast(`${movedItem.nom} → ${targetStatus}`);
 
     // Trigger suggestion toast after drag & drop (guide mode)
     if (targetCode === "PRISE_EN_CHARGE") guide.showSuggestion("lead-pris-en-charge");
@@ -339,6 +352,42 @@ export function DashboardView({
         </div>
       </div>
       </GuideTooltip>
+
+      {/* Facturation summary */}
+      {pipelineFacturation.length > 0 && (
+        <div style={{
+          background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
+          padding: "16px 20px", marginBottom: 24, boxShadow: C.shadow,
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: C.text }}>Facturation</h2>
+            <button onClick={() => onNavigate?.("Facturation")} style={{
+              padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
+              background: "transparent", color: C.blue, fontSize: 12, fontWeight: 600, cursor: "pointer",
+            }}>
+              Voir le detail
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {pipelineFacturation.map((col) => (
+              <div key={col.id} style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "8px 14px", borderRadius: 10,
+                background: C.bg, border: `1px solid ${C.border}`,
+              }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: col.colorKey || C.textDim }} />
+                <span style={{ fontSize: 12, color: C.textMuted }}>{col.status}</span>
+                <span style={{
+                  fontSize: 12, fontWeight: 700, color: C.text,
+                  background: C.surfaceHover, padding: "2px 8px", borderRadius: 6,
+                }}>
+                  {col.items.length}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bottom Grid */}
       <div className="bottom-grid" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20 }}>

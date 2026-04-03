@@ -12,6 +12,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import type { DocCheck, TrackStep } from "@/lib/data";
 import { GuideTooltip, useGuide } from "@/components/GuideSystem";
 import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACT, DEMO_DOCUMENTS, DEMO_ETAPES, DEMO_HISTORIQUE, DEMO_NOTES, demoBadgeStyle, handleDemoAction } from "@/lib/demo";
+import { useToast } from "@/components/ui/Toast";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -30,6 +31,7 @@ interface ClientDetailViewProps {
 
 export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const guide = useGuide();
+  const { toast } = useToast();
   const isDemoMode = client?.isDemo || checkIsDemo(client || {});
   const [docs, setDocs] = useState<(DocCheck & { id?: string })[]>([]);
   const [tracks, setTracks] = useState<TrackStep[]>([]);
@@ -288,9 +290,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     if (newRecu) {
       const allReceived = n.every((d) => d.recu);
       if (allReceived && n.length > 0) {
-        guide.showSuggestion("tous-docs-recus");
+        guide.showSuggestion("tous-docs-recus"); toast("Tous les documents recus !");
       } else {
-        guide.showSuggestion("document-recu");
+        guide.showSuggestion("document-recu"); toast("Document mis a jour");
       }
       window.dispatchEvent(new CustomEvent("tenakoe:document-received"));
     }
@@ -470,7 +472,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               onClick={async () => {
                 if (isDemoMode) {
                   handleDemoAction("Mail envoye");
-                  setSendStatus({ type: "success", msg: "Mail envoye (demo)" });
+                  setSendStatus({ type: "success", msg: "Mail envoye (demo)" }); toast("Mail envoye");
                   setHistorique((prev) => [{ type: "EMAIL", message: `Mail envoye — ${mailSubject}`, chargee: "Vous", time: "A l'instant" }, ...prev]);
                   guide.showSuggestion("mail-envoye");
                   window.dispatchEvent(new CustomEvent("tenakoe:mail-sent"));
@@ -495,7 +497,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     }),
                   });
                   if (res.ok) {
-                    setSendStatus({ type: "success", msg: "Mail envoyé avec succès" });
+                    setSendStatus({ type: "success", msg: "Mail envoye" }); toast("Mail envoye");
                     fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeMail" }) }).catch(() => {});
                     guide.showSuggestion("mail-envoye");
                     window.dispatchEvent(new CustomEvent("tenakoe:mail-sent"));
@@ -569,7 +571,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               onClick={async () => {
                 if (isDemoMode) {
                   handleDemoAction("SMS envoye");
-                  setSendStatus({ type: "success", msg: "SMS envoye (demo)" });
+                  setSendStatus({ type: "success", msg: "SMS envoye (demo)" }); toast("SMS envoye");
                   guide.showSuggestion("sms-envoye");
                   setSmsBody("");
                   return;
@@ -587,7 +589,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     }),
                   });
                   if (res.ok) {
-                    setSendStatus({ type: "success", msg: "SMS envoyé avec succès" });
+                    setSendStatus({ type: "success", msg: "SMS envoye" }); toast("SMS envoye");
                     fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeSms" }) }).catch(() => {});
                     guide.showSuggestion("sms-envoye");
                     setSmsBody("");
@@ -716,7 +718,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   handleDemoAction("Appel enregistre");
                   setShowCallLog(false);
                   setCallNote("");
-                  setSendStatus({ type: "success", msg: "Appel logue (demo)" });
+                  setSendStatus({ type: "success", msg: "Appel logue (demo)" }); toast("Appel enregistre");
                   guide.showSuggestion("appel-logue");
                   return;
                 }
@@ -740,7 +742,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 });
                 setShowCallLog(false);
                 setCallNote("");
-                setSendStatus({ type: "success", msg: "Appel logué dans l'historique" });
+                setSendStatus({ type: "success", msg: "Appel enregistre" }); toast("Appel enregistre");
                 guide.showSuggestion("appel-logue");
               }}
               style={{
@@ -961,7 +963,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualification ? [{ type: newProjetForm.qualification }] : [], etapes: [] }]);
                       setShowAddProjet(false);
                       setNewProjetForm({ nom: "", qualification: "", chargeeId: "" });
-                      guide.showSuggestion("nouveau-projet");
+                      guide.showSuggestion("nouveau-projet"); toast("Projet cree");
                       return;
                     }
                     if (!client?.id) return;
@@ -972,7 +974,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     if (res.ok) {
                       setShowAddProjet(false);
                       setNewProjetForm({ nom: "", qualification: "", chargeeId: "" });
-                      guide.showSuggestion("nouveau-projet");
+                      guide.showSuggestion("nouveau-projet"); toast("Projet cree");
                       // Refresh data
                       fetch(`/api/entreprises/${client.id}`).then((r) => r.ok ? r.json() : null).then((data) => {
                         if (data?.projets) setProjets(data.projets);
@@ -1175,7 +1177,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                           body: JSON.stringify({ terminee: newDone }),
                         }).catch(() => {});
                       }
-                      if (newDone) guide.showSuggestion("etape-terminee");
+                      if (newDone) guide.showSuggestion("etape-terminee"); toast("Etape terminee");
                     }}
                     style={{
                       width: 28, height: 28, borderRadius: "50%",
@@ -1410,7 +1412,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setTaches((prev) => [...prev, { id: `demo-tache-${Date.now()}`, titre: newTache.titre, statut: "A_FAIRE", type: newTache.type, dateEcheance: newTache.dateEcheance || null, enRetard: false }]);
                     setNewTache({ titre: "", type: "AUTRE", dateEcheance: "" });
                     setShowAddTache(false);
-                    guide.showSuggestion("tache-creee");
+                    guide.showSuggestion("tache-creee"); toast("Tache creee");
                     return;
                   }
                   if (!client?.id) return;
@@ -1423,7 +1425,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setTaches((prev) => [...prev, t]);
                     setNewTache({ titre: "", type: "AUTRE", dateEcheance: "" });
                     setShowAddTache(false);
-                    guide.showSuggestion("tache-creee");
+                    guide.showSuggestion("tache-creee"); toast("Tache creee");
                   }
                 }} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                   Créer
@@ -1585,7 +1587,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     handleDemoAction("Note ajoutee");
                     setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote || `[Piece jointe : ${noteFile?.name}]`, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" } }, ...prev]);
                     setNewNote(""); setNoteFile(null);
-                    guide.showSuggestion("note-ajoutee");
+                    guide.showSuggestion("note-ajoutee"); toast("Note ajoutee");
                     return;
                   }
                   if (!client?.id) return;
@@ -1617,7 +1619,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     const note = await res.json();
                     setNotes((prev) => [note, ...prev]);
                     setNewNote(""); setNoteFile(null);
-                    guide.showSuggestion("note-ajoutee");
+                    guide.showSuggestion("note-ajoutee"); toast("Note ajoutee");
                   }
                 }}
                 style={{

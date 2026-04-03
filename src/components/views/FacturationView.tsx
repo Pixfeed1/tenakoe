@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, Search, FileText, Check, Clock, AlertTriangle, ExternalLink, Send, Plus, X } from "lucide-react";
+import { CreditCard, Search, FileText, Check, Clock, AlertTriangle, ExternalLink, Send, Plus, X, Circle, GripVertical } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
+import { useToast } from "@/components/ui/Toast";
+import type { PipelineColumn } from "@/lib/data";
 
 interface Entreprise {
   id: string;
@@ -57,6 +59,10 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
   const [abbyAction, setAbbyAction] = useState<string | null>(null);
   const [abbyMsg, setAbbyMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [statutsConfig, setStatutsConfig] = useState<FactStatutConfig[]>([]);
+  const [factuPipeline, setFactuPipeline] = useState<PipelineColumn[]>([]);
+  const [dragging, setDragging] = useState<{ itemId: string; colId: string } | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetch("/api/entreprises")
@@ -66,6 +72,10 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
     fetch("/api/pipeline-config")
       .then((r) => r.json())
       .then((data) => { if (data.statutsFacturation) setStatutsConfig(data.statutsFacturation.filter((s: FactStatutConfig) => s.actif)); })
+      .catch(() => {});
+    fetch("/api/pipeline-data")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => setFactuPipeline((data as PipelineColumn[]).filter((c) => c.pipelineType === "facturation")))
       .catch(() => {});
   }, []);
 
@@ -147,6 +157,76 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
         }}>
           {abbyMsg.msg}
           <X size={14} style={{ cursor: "pointer" }} onClick={() => setAbbyMsg(null)} />
+        </div>
+      )}
+
+      {/* Pipeline Kanban */}
+      {factuPipeline.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, margin: "0 0 12px", color: C.text }}>Pipeline facturation</h2>
+          <div className="pipeline-columns" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+            {factuPipeline.map((col) => (
+              <div key={col.id} style={{
+                flex: 1, minWidth: 180, padding: 8, borderRadius: 12,
+                background: dragOver === col.id ? C.accentDim : "transparent",
+                border: `2px dashed ${dragOver === col.id ? C.accent : "transparent"}`,
+                transition: "all 0.2s",
+              }}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(col.id); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (!dragging || dragging.colId === col.id) { setDragOver(null); setDragging(null); return; }
+                  const itemId = dragging.itemId;
+                  setFactuPipeline((prev) => {
+                    const next = prev.map((c) => ({ ...c, items: [...c.items] }));
+                    const src = next.find((c) => c.id === dragging.colId);
+                    const dst = next.find((c) => c.id === col.id);
+                    if (src && dst) { const idx = src.items.findIndex((i) => i.id === itemId); if (idx >= 0) { const [item] = src.items.splice(idx, 1); dst.items.push(item); } }
+                    return next;
+                  });
+                  const targetCode = col.statutCode || col.id.toUpperCase();
+                  fetch(`/api/entreprises/${itemId}/statut`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statutFacturation: targetCode }) }).catch(() => {});
+                  const movedItem = factuPipeline.flatMap((c) => c.items).find((i) => i.id === itemId);
+                  if (movedItem) toast(`${movedItem.nom} → ${col.status}`);
+                  setDragOver(null); setDragging(null);
+                }}
+                onDragLeave={() => setDragOver(null)}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "0 4px" }}>
+                  <Circle size={8} fill={col.colorKey} color={col.colorKey} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{col.status}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: col.colorKey, background: col.colorKey + "18", padding: "1px 8px", borderRadius: 6 }}>{col.items.length}</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, minHeight: 40 }}>
+                  {col.items.slice(0, 3).map((item) => (
+                    <div key={item.id} draggable
+                      onDragStart={(e) => { setDragging({ itemId: item.id, colId: col.id }); e.dataTransfer.effectAllowed = "move"; }}
+                      onClick={() => onSelectClient({ id: item.id, nom: item.nom, siret: item.siret })}
+                      style={{
+                        background: C.surface, borderRadius: 8, padding: "8px 10px",
+                        border: `1px solid ${C.border}`, cursor: "grab",
+                        borderLeft: `3px solid ${col.colorKey}`, boxShadow: C.shadow,
+                        transition: "all 0.15s", userSelect: "none", fontSize: 12,
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLElement).style.boxShadow = C.shadowHover; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = C.shadow; }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <GripVertical size={10} color={C.textDim} />
+                        <span style={{ fontWeight: 600, color: C.text }}>{item.nom}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {col.items.length > 3 && (
+                    <div style={{ fontSize: 11, color: C.textDim, textAlign: "center", padding: 4 }}>+{col.items.length - 3} autres</div>
+                  )}
+                  {col.items.length === 0 && (
+                    <div style={{ padding: 12, textAlign: "center", fontSize: 11, color: C.textDim, border: `1px dashed ${C.border}`, borderRadius: 8 }}>Deposer ici</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
