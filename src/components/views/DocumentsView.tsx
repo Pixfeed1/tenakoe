@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Search, Check, Clock } from "lucide-react";
+import { FileText, Search, Check, Clock, ChevronRight } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Button } from "@/components/ui/Button";
 
 interface Doc {
   id: string;
@@ -23,6 +24,7 @@ export function DocumentsView({ C }: { C: Theme }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterRecu, setFilterRecu] = useState<string>("");
+  const [expandedEnts, setExpandedEnts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/documents")
@@ -106,49 +108,83 @@ export function DocumentsView({ C }: { C: Theme }) {
           style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
       </div>
 
-      {/* Grouped by entreprise */}
+      {/* Grouped by entreprise — collapsible, sorted by progress */}
       {loading ? (
         <div style={{ padding: 40, textAlign: "center", color: C.textDim, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>Chargement...</div>
       ) : byEntreprise.size === 0 ? (
-        <div style={{ padding: 40, textAlign: "center", color: C.textDim, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>Aucun document trouvé</div>
+        <div style={{ padding: 40, textAlign: "center", color: C.textDim, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>Aucun document trouve</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {Array.from(byEntreprise.entries()).map(([entId, { nom, docs }]) => {
-            const recu = docs.filter((d) => d.recu).length;
-            return (
-              <div key={entId} style={{
-                background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-                padding: "16px 20px", boxShadow: C.shadow,
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{nom}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <ProgressBar value={Math.round((recu / docs.length) * 100)} C={C} />
-                    <span style={{ fontSize: 11, color: C.textDim }}>{recu}/{docs.length}</span>
-                  </div>
-                </div>
-                {docs.map((d) => (
-                  <div key={d.id} style={{
-                    display: "flex", alignItems: "center", gap: 10, padding: "6px 0",
-                    borderBottom: `1px solid ${C.border}`,
+        <>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <Button C={C} variant="ghost" size="sm" onClick={() => setExpandedEnts(new Set(Array.from(byEntreprise.keys())))}>Tout deplier</Button>
+            <Button C={C} variant="ghost" size="sm" onClick={() => setExpandedEnts(new Set())}>Tout replier</Button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {Array.from(byEntreprise.entries())
+              .sort(([, a], [, b]) => {
+                const pA = a.docs.filter((d) => d.recu).length / a.docs.length;
+                const pB = b.docs.filter((d) => d.recu).length / b.docs.length;
+                return pA - pB;
+              })
+              .map(([entId, { nom, docs }]) => {
+                const recu = docs.filter((d) => d.recu).length;
+                const isExpanded = expandedEnts.has(entId);
+                const allDone = recu === docs.length && docs.length > 0;
+                return (
+                  <div key={entId} style={{
+                    background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
+                    padding: "14px 20px", boxShadow: C.shadow,
                   }}>
-                    <div style={{
-                      width: 18, height: 18, borderRadius: 5,
-                      border: `2px solid ${d.recu ? C.accent : C.border}`,
-                      background: d.recu ? C.accent : "transparent",
-                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    <div onClick={() => {
+                      setExpandedEnts((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(entId)) next.delete(entId); else next.add(entId);
+                        return next;
+                      });
+                    }} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      cursor: "pointer",
                     }}>
-                      {d.recu && <Check size={11} color="#fff" strokeWidth={3} />}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <ChevronRight size={14} color={C.textDim} style={{
+                          transform: isExpanded ? "rotate(90deg)" : "rotate(0)",
+                          transition: "transform 0.2s",
+                        }} />
+                        <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{nom}</span>
+                        {allDone && <Badge color={C.accentText} bg={C.accentDim}>Complet</Badge>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <ProgressBar value={Math.round((recu / docs.length) * 100)} C={C} />
+                        <span style={{ fontSize: 11, color: C.textDim }}>{recu}/{docs.length}</span>
+                      </div>
                     </div>
-                    <span style={{ fontSize: 12, color: d.recu ? C.text : C.textMuted, flex: 1 }}>{d.nom}</span>
-                    {d.dateReception && <span style={{ fontSize: 11, color: C.textDim }}>Reçu le {new Date(d.dateReception).toLocaleDateString("fr-FR")}</span>}
-                    {!d.recu && <Badge color={C.warning} bg={C.warningDim}>En attente</Badge>}
+                    {isExpanded && (
+                      <div style={{ marginTop: 10 }}>
+                        {docs.map((d) => (
+                          <div key={d.id} style={{
+                            display: "flex", alignItems: "center", gap: 10, padding: "6px 0",
+                            borderBottom: `1px solid ${C.border}`,
+                          }}>
+                            <div style={{
+                              width: 18, height: 18, borderRadius: 5,
+                              border: `2px solid ${d.recu ? C.accent : C.border}`,
+                              background: d.recu ? C.accent : "transparent",
+                              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                            }}>
+                              {d.recu && <Check size={11} color="#fff" strokeWidth={3} />}
+                            </div>
+                            <span style={{ fontSize: 12, color: d.recu ? C.text : C.textMuted, flex: 1 }}>{d.nom}</span>
+                            {d.dateReception && <span style={{ fontSize: 11, color: C.textDim }}>Recu le {new Date(d.dateReception).toLocaleDateString("fr-FR")}</span>}
+                            {!d.recu && <Badge color={C.warning} bg={C.warningDim}>En attente</Badge>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+          </div>
+        </>
       )}
     </>
   );

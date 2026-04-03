@@ -18,6 +18,7 @@ const getLabelStyle = (C: typeof LIGHT): React.CSSProperties => ({
 export default function FormulairePrescripteur({ paramsPromise }: { paramsPromise?: Promise<{ prescripteur: string }> }) {
   // ALL hooks at the top, before any conditional return
   const [dark, setDark] = useState(false);
+  const [ready, setReady] = useState(false);
   const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
   const [choosingPrescripteur, setChoosingPrescripteur] = useState(false);
   const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; actif: boolean }>>([]);
@@ -32,7 +33,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => { setDark(localStorage.getItem("tenakoe-dark") === "true"); }, []);
+  useEffect(() => { setDark(localStorage.getItem("tenakoe-dark") === "true"); setReady(true); }, []);
 
   useEffect(() => {
     fetch("/api/prescripteur-config")
@@ -99,9 +100,12 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     setSubmitting(false);
   };
 
-  const fontLink = <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet" />;
-
   // ========== CONDITIONAL RETURNS (after all hooks) ==========
+
+  // Loading state — prevent FOUC
+  if (!ready) {
+    return <div style={{ minHeight: "100vh", background: "#f8f9fb" }} />;
+  }
 
   // Step 1: Choose prescripteur
   if (choosingPrescripteur && !resolvedPrescripteur) {
@@ -110,7 +114,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
         minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
         background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif", padding: "40px 16px",
       }}>
-        {fontLink}
+
         <div style={{ width: 480, maxWidth: "100%" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
@@ -154,7 +158,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
         minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
         background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif",
       }}>
-        {fontLink}
+
         <div style={{
           width: 480, background: C.surface, borderRadius: 16, padding: "48px 40px",
           boxShadow: C.shadowHover, border: `1px solid ${C.border}`, textAlign: "center",
@@ -201,7 +205,6 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
       background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif",
       padding: "40px 16px",
     }}>
-      {fontLink}
       <div style={{ width: 560, maxWidth: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
