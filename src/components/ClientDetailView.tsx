@@ -15,9 +15,11 @@ import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACT, DEMO_DOCUMENTS, D
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
+  APPEL: Phone, TELEPHONE: Phone, NOTE: FileText, TACHE: ClipboardList,
 };
 const ACTIVITY_COLORS: Record<string, string> = {
   EMAIL: "blue", SMS: "purple", DOC: "accent", STATUT: "warning", LEAD: "blue",
+  APPEL: "accent", TELEPHONE: "accent", NOTE: "purple", TACHE: "warning",
 };
 
 interface ClientDetailViewProps {
@@ -1170,8 +1172,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucune activité pour cette entreprise</div>
           )}
           {historique.slice(0, 10).map((a, i) => {
-            const ActIcon = ACTIVITY_ICONS[a.type];
-            const actColor = ACTIVITY_COLORS[a.type];
+            const ActIcon = ACTIVITY_ICONS[a.type] || FileText;
+            const actColor = ACTIVITY_COLORS[a.type] || "textDim";
             return (
               <div
                 key={i}

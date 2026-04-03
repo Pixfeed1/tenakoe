@@ -107,26 +107,32 @@ export function CRMShell({
     if (typeof window === "undefined") return "Dashboard";
     const params = new URLSearchParams(window.location.search);
     const v = params.get("view");
-    if (v && ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Facturation", "Intégrations", "Paramètres"].includes(v)) {
+    if (v && ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Facturation", "Intégrations", "Paramètres", "ClientDetail"].includes(v)) {
       return v as View;
     }
     return "Dashboard";
   };
 
-  const [view, setView] = useState<View>("Dashboard");
-  const [activeNav, setActiveNav] = useState<string>("Dashboard");
-
-  useEffect(() => {
+  const [view, setView] = useState<View>(() => getViewFromURL());
+  const [activeNav, setActiveNav] = useState<string>(() => {
     const v = getViewFromURL();
-    setView(v);
-    setActiveNav(v);
-  }, []);
+    return v === "ClientDetail" ? "Dashboard" : v;
+  });
+
   const [selectedClient, setSelectedClient] = useState<{
     id?: string;
     nom: string;
     siret?: string;
     prescripteur?: string;
-  } | null>(null);
+  } | null>(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get("clientId");
+    if (clientId && params.get("view") === "ClientDetail") {
+      return { id: clientId, nom: "Chargement..." };
+    }
+    return null;
+  });
   const C = dark ? DARK : LIGHT;
   const firstName = user.name.split(" ")[0];
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
