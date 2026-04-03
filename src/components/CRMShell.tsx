@@ -78,6 +78,8 @@ interface CRMShellProps {
   initialClients: Client[] | null;
   initialActivites: Activite[] | null;
   initialAlertes?: AlerteData[] | null;
+  initialView?: string;
+  initialClientId?: string;
 }
 
 export function CRMShell({
@@ -87,6 +89,8 @@ export function CRMShell({
   initialClients,
   initialActivites,
   initialAlertes,
+  initialView,
+  initialClientId,
 }: CRMShellProps) {
   const [dark, setDark] = useState(false);
 
@@ -102,37 +106,26 @@ export function CRMShell({
     });
   };
 
-  // Read initial view from URL
-  const getViewFromURL = (): View => {
-    if (typeof window === "undefined") return "Dashboard";
-    const params = new URLSearchParams(window.location.search);
-    const v = params.get("view");
-    if (v && ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Facturation", "Intégrations", "Paramètres", "ClientDetail"].includes(v)) {
-      return v as View;
-    }
-    return "Dashboard";
-  };
+  const VALID_VIEWS = ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Facturation", "Intégrations", "Paramètres", "ClientDetail"];
+  const startView = (initialView && VALID_VIEWS.includes(initialView) ? initialView : "Dashboard") as View;
 
-  const [view, setView] = useState<View>(() => getViewFromURL());
-  const [activeNav, setActiveNav] = useState<string>(() => {
-    const v = getViewFromURL();
-    return v === "ClientDetail" ? "Dashboard" : v;
-  });
+  const [view, setView] = useState<View>(startView);
+  const [activeNav, setActiveNav] = useState<string>(startView === "ClientDetail" ? "Dashboard" : startView);
 
   const [selectedClient, setSelectedClient] = useState<{
     id?: string;
     nom: string;
     siret?: string;
     prescripteur?: string;
-  } | null>(() => {
-    if (typeof window === "undefined") return null;
+  } | null>(initialClientId ? { id: initialClientId, nom: "Chargement..." } : null);
+
+  const getViewFromURL = (): View => {
+    if (typeof window === "undefined") return "Dashboard";
     const params = new URLSearchParams(window.location.search);
-    const clientId = params.get("clientId");
-    if (clientId && params.get("view") === "ClientDetail") {
-      return { id: clientId, nom: "Chargement..." };
-    }
-    return null;
-  });
+    const v = params.get("view");
+    if (v && VALID_VIEWS.includes(v)) return v as View;
+    return "Dashboard";
+  };
   const C = dark ? DARK : LIGHT;
   const firstName = user.name.split(" ")[0];
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

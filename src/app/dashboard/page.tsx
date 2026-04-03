@@ -12,7 +12,8 @@ import type { CurrentUser } from "@/lib/rbac";
 import { CRMShell } from "@/components/CRMShell";
 import { PrescripteurView } from "@/components/PrescripteurView";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ view?: string; clientId?: string }> }) {
+  const params = await searchParams;
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
@@ -57,6 +58,8 @@ export default async function DashboardPage() {
       initialClients={clients}
       initialActivites={activites}
       initialAlertes={alertes}
+      initialView={params.view}
+      initialClientId={params.clientId}
     />
   );
 }
