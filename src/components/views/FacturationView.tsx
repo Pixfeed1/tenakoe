@@ -65,18 +65,21 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch("/api/entreprises")
+    // Single call: pipeline-data has everything we need for the kanban
+    fetch("/api/pipeline-data")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: PipelineColumn[]) => {
+        const factCols = data.filter((c) => c.pipelineType === "facturation");
+        setFactuPipeline(factCols);
+        // Build statuts config from pipeline data (avoids extra API call)
+        setStatutsConfig(factCols.map((c) => ({ code: c.statutCode || c.id.toUpperCase(), nom: c.status, couleur: c.colorKey, actif: true })));
+      })
+      .catch(() => {});
+    // Entreprises for the table — only those with statutFacturation
+    fetch("/api/entreprises?facturation=true")
       .then((r) => r.json())
       .then((data) => { setEntreprises(data); setLoading(false); })
       .catch(() => setLoading(false));
-    fetch("/api/pipeline-config")
-      .then((r) => r.json())
-      .then((data) => { if (data.statutsFacturation) setStatutsConfig(data.statutsFacturation.filter((s: FactStatutConfig) => s.actif)); })
-      .catch(() => {});
-    fetch("/api/pipeline-data")
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => setFactuPipeline((data as PipelineColumn[]).filter((c) => c.pipelineType === "facturation")))
-      .catch(() => {});
   }, []);
 
   // Build dynamic label/style maps

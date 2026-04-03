@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   const rbacFilter = getEntrepriseFilter(user);
 
   const showArchived = searchParams.get("archived") === "true";
+  const facturationOnly = searchParams.get("facturation") === "true";
 
   const entreprises = await prisma.entreprise.findMany({
     where: {
@@ -26,17 +27,19 @@ export async function GET(request: NextRequest) {
         ],
       }),
       ...(statut && { statutPrise: statut }),
+      ...(facturationOnly && { statutFacturation: { not: null } }),
     },
     include: {
-      contacts: true,
+      contacts: facturationOnly ? false : true,
       projets: {
         include: {
-          qualifications: true,
+          qualifications: facturationOnly ? false : true,
           chargee: { select: { id: true, prenom: true } },
         },
+        ...(facturationOnly ? { take: 1 } : {}),
       },
-      documents: { select: { recu: true } },
-      _count: { select: { documents: true, taches: true } },
+      documents: facturationOnly ? false : { select: { recu: true } },
+      ...(!facturationOnly ? { _count: { select: { documents: true, taches: true } } } : {}),
     },
     orderBy: { updatedAt: "desc" },
   });
