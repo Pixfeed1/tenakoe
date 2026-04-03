@@ -130,7 +130,8 @@ async function main() {
   ];
   for (const s of statutsFacturation) {
     await prisma.statutFacturationConfig.upsert({
-      where: { code: s.code }, update: {},
+      where: { code: s.code },
+      update: { declencheConversion: (s as Record<string, unknown>).declencheConversion ? true : false },
       create: { code: s.code, nom: s.nom, couleur: s.couleur, ordre: s.ordre, parDefaut: (s as Record<string, unknown>).parDefaut ? true : false, declencheConversion: (s as Record<string, unknown>).declencheConversion ? true : false },
     });
   }

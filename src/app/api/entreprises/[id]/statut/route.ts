@@ -76,12 +76,14 @@ export async function PATCH(
       const statutConfig = await prisma.statutFacturationConfig.findFirst({
         where: { code: statutFacturation },
       });
-      if (statutConfig?.declencheConversion) {
+      // Trigger conversion if config says so, OR if code is FACTURE_PAYEE (safety fallback)
+      const shouldConvert = statutConfig?.declencheConversion || statutFacturation === "FACTURE_PAYEE";
+      if (shouldConvert) {
         const { convertToClient } = await import("@/lib/conversion");
         await convertToClient(id);
       }
-    } catch {
-      // Conversion non-bloquante
+    } catch (error) {
+      console.error("Conversion error for", entreprise.nom, ":", error);
     }
   }
 
