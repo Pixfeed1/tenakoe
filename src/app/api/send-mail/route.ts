@@ -27,7 +27,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await sendMail({ to, subject, html: content || "", cc, bcc });
+    const fromEmail = session.user.email;
+    const fromName = session.user.name || "Tenakoe";
+    const result = await sendMail({ to, subject, html: content || "", cc, bcc, from: `"${fromName}" <${fromEmail}>` });
 
     // Enregistrer la transmission
     await prisma.transmission.create({
@@ -38,6 +40,7 @@ export async function POST(request: NextRequest) {
         objet: subject,
         contenu: content,
         expediteurId: session.user.id,
+        expediteurEmail: fromEmail,
         entrepriseId: entrepriseId || null,
         gmailMessageId: result.messageId,
       },
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
     await prisma.logActivite.create({
       data: {
         type: "ENVOI_EMAIL",
-        description: `Mail envoyé à ${to} — ${subject}`,
+        description: `Mail envoye a ${to} par ${fromName} (${fromEmail}) — ${subject}`,
         entite: "Transmission",
         entiteId: result.messageId || "",
         userId: session.user.id,

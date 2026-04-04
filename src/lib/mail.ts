@@ -30,9 +30,11 @@ interface SendMailOptions {
 export async function sendMail({ to, subject, html, from, cc, bcc }: SendMailOptions) {
   const transport = getTransporter();
   const fromAddress = from || process.env.SMTP_FROM || process.env.SMTP_USER;
+  // If from already contains a name like '"Kelly" <kelly@tenakoe.fr>', use as-is
+  const fromHeader = fromAddress && fromAddress.includes("<") ? fromAddress : `"Tenakoe" <${fromAddress}>`;
 
   const info = await transport.sendMail({
-    from: `"Tenakoe" <${fromAddress}>`,
+    from: fromHeader,
     to,
     cc: cc || undefined,
     bcc: bcc || undefined,

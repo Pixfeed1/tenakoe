@@ -277,11 +277,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     // Fetch transmissions as historique
     fetch(`/api/transmissions?entrepriseId=${client.id}`)
       .then((r) => (r.ok ? r.json() : []))
-      .then((data: Array<{ canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string } | null }>) => {
+      .then((data: Array<{ canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null }>) => {
         setHistorique(data.map((t) => ({
           type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
-          message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoyé" : "reçu"} — ${t.objet || t.destinataire}`,
-          chargee: t.expediteur?.prenom || "—",
+          message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoye" : "recu"} — ${t.objet || t.destinataire}`,
+          chargee: t.expediteur ? `${t.expediteur.prenom}${t.expediteurEmail ? ` (${t.expediteurEmail})` : ""}` : "—",
           time: formatRelativeTime(new Date(t.dateEnvoi)),
         })));
       })
