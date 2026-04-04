@@ -69,19 +69,20 @@ async function main() {
   // TEMPLATES DOCUMENTS (tronc commun)
   // ========================
   const docsCommuns = [
+    "MANDAT",
     "EXTRAIT KBIS",
     "FICHE INSEE",
-    "ATTESTATION RC PROFESSIONNELLE",
-    "ATTESTATION DÉCENNALE",
-    "ASSURANCE SINISTRALITÉ 4 ANS",
+    "ATTESTATION DE RESPONSABILITE CIVILE",
+    "ATTESTATION DECENNALE",
+    "ASSURANCE SINISTRALITE SUR 4 ANS",
     "ATTESTATION URSSAF",
-    "ATTESTATION SÉCU INDÉPENDANTS",
-    "ATTESTATION CONGÉS PAYÉS (CIBTP)",
-    "DIPLÔMES ET FORMATIONS",
+    "ATTESTATION SECURITE SOCIALE DES INDEPENDANT",
+    "ATTESTATION CAISSE DE CONGES PAYES (CIBTP)",
+    "DIPLOMES ET FORMATIONS",
     "DOSSIER BROUILLON QUALIBAT",
-    "DEVIS CONFORME",
-    "FACTURE CONFORME",
-    "ATTESTATION RÉUSSITE RGE",
+    "DEVIS CONFORME - Renseignement administratif obligatoire",
+    "FACTURE CONFORME - Renseignement obligatoire",
+    "ATTESTATION DE REUSSITE RGE (SCORE: 24 et plus)",
   ];
 
   // ========================
@@ -380,7 +381,7 @@ async function main() {
 
   // Documents pour GR 24
   for (let i = 0; i < docsCommuns.length; i++) {
-    const recu = i < 9 && i !== 4; // 9 sur 13 reçus, sauf l'index 4
+    const recu = i < 10 && i !== 5; // 10 sur 14 recus, sauf l'index 5
     await prisma.document.create({
       data: {
         nom: docsCommuns[i],
