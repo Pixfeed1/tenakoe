@@ -39,6 +39,10 @@ model User {
   guideProgression   String?       // JSON: { aOuvertFiche: bool, aEnvoyeMail: bool, ... }
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+  smtpHost         String?
+  smtpPort         Int?
+  smtpUser         String?
+  smtpPass         String?
 
   projets       Projet[]       @relation("ChargeeProjet")
   transmissions Transmission[]

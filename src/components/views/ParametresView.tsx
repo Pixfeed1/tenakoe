@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import DOMPurify from "dompurify";
 import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
 import {
   Settings, Users, Columns3, Building2, Mail, ClipboardList, FileText,
   Bell, Download, Upload, Shield, Plus, Trash2, Check, X, Save, Eye, EyeOff,
@@ -11,7 +12,7 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { GuideTooltip } from "@/components/GuideSystem";
 
-type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "notifications" | "import" | "securite";
+type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "notifications" | "import" | "securite" | "compte";
 
 const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }> = [
   { id: "utilisateurs", label: "Utilisateurs", Icon: Users },
@@ -22,7 +23,8 @@ const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: n
   { id: "documents", label: "Documents", Icon: FileText },
   { id: "notifications", label: "Notifications", Icon: Bell },
   { id: "import", label: "Import / Export", Icon: Download },
-  { id: "securite", label: "Sécurité", Icon: Shield },
+  { id: "securite", label: "Securite", Icon: Shield },
+  { id: "compte", label: "Mon compte", Icon: Users },
 ];
 
 const inputStyle = (C: Theme): React.CSSProperties => ({
@@ -65,6 +67,7 @@ export function ParametresView({ C }: { C: Theme }) {
       {tab === "notifications" && <GuideTooltip id="param-notifs" C={C}><NotificationsTab C={C} /></GuideTooltip>}
       {tab === "import" && <ImportExportTab C={C} />}
       {tab === "securite" && <SecuriteTab C={C} />}
+      {tab === "compte" && <MonCompteTab C={C} />}
     </>
   );
 }
@@ -1075,7 +1078,83 @@ function SecuriteTab({ C }: { C: Theme }) {
       <div style={{ marginTop: 30, paddingTop: 20, borderTop: `1px solid ${C.border}` }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 8px", color: C.text }}>Authentification à deux facteurs (2FA)</h3>
         <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 12px" }}>Ajoutez une couche de sécurité supplémentaire à votre compte.</p>
-        <Badge color={C.warning} bg={C.warningDim}>Bientôt disponible</Badge>
+        <Badge color={C.warning} bg={C.warningDim}>Bientot disponible</Badge>
+      </div>
+    </div>
+  );
+}
+
+// ===================== MON COMPTE =====================
+function MonCompteTab({ C }: { C: Theme }) {
+  const { toast } = useToast();
+  const [smtp, setSmtp] = useState({ host: "", port: "587", user: "", pass: "" });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [userInfo, setUserInfo] = useState({ email: "", nom: "", prenom: "" });
+
+  useEffect(() => {
+    fetch("/api/users/me").then((r) => r.ok ? r.json() : null).then((data) => {
+      if (data) {
+        setUserInfo({ email: data.email, nom: data.nom, prenom: data.prenom });
+        setSmtp({
+          host: data.smtpHost || "",
+          port: String(data.smtpPort || 587),
+          user: data.smtpUser || "",
+          pass: data.smtpPass || "",
+        });
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    await fetch("/api/users/me", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        smtpHost: smtp.host || null,
+        smtpPort: smtp.port ? Number(smtp.port) : null,
+        smtpUser: smtp.user || null,
+        smtpPass: smtp.pass || null,
+      }),
+    });
+    setSaving(false);
+    toast("Configuration SMTP sauvegardee");
+  };
+
+  const iStyle = inputStyle(C);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Mon compte</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prenom</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.prenom}</div></div>
+          <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Nom</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.nom}</div></div>
+          <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Email (login)</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.email}</div></div>
+        </div>
+      </div>
+
+      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 6px", color: C.text }}>Configuration SMTP (envoi de mails)</h3>
+        <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 14px" }}>
+          Configurez votre propre serveur SMTP pour envoyer les mails depuis votre adresse. Si vide, le SMTP global Tenakoe est utilise.
+        </p>
+        {loading ? (
+          <div style={{ color: C.textDim, fontSize: 13 }}>Chargement...</div>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Serveur SMTP</label><input style={iStyle} placeholder="smtp.gmail.com" value={smtp.host} onChange={(e) => setSmtp({ ...smtp, host: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Port</label><input style={iStyle} placeholder="587" value={smtp.port} onChange={(e) => setSmtp({ ...smtp, port: e.target.value })} /></div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Identifiant (email)</label><input style={iStyle} placeholder="kelly@tenakoe.fr" value={smtp.user} onChange={(e) => setSmtp({ ...smtp, user: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Mot de passe (App Password)</label><input type="password" style={iStyle} placeholder="xxxx xxxx xxxx xxxx" value={smtp.pass} onChange={(e) => setSmtp({ ...smtp, pass: e.target.value })} /></div>
+            </div>
+            <Button C={C} variant="primary" onClick={save} loading={saving}>Sauvegarder</Button>
+          </>
+        )}
       </div>
     </div>
   );

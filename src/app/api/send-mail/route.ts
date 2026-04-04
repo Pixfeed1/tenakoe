@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { sendMail } from "@/lib/mail";
+import { sendMail, type SmtpConfig } from "@/lib/mail";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
@@ -29,7 +29,22 @@ export async function POST(request: NextRequest) {
   try {
     const fromEmail = session.user.email;
     const fromName = session.user.name || "Tenakoe";
-    const result = await sendMail({ to, subject, html: content || "", cc, bcc, from: `"${fromName}" <${fromEmail}>` });
+
+    // Load per-user SMTP config if exists
+    let userSmtp: SmtpConfig | null = null;
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { smtpHost: true, smtpPort: true, smtpUser: true, smtpPass: true },
+    });
+    if (dbUser?.smtpHost && dbUser?.smtpUser && dbUser?.smtpPass) {
+      userSmtp = { host: dbUser.smtpHost, port: dbUser.smtpPort || 587, user: dbUser.smtpUser, pass: dbUser.smtpPass };
+    }
+
+    const result = await sendMail({
+      to, subject, html: content || "", cc, bcc,
+      from: `"${fromName}" <${userSmtp?.user || fromEmail}>`,
+      smtp: userSmtp,
+    });
 
     // Enregistrer la transmission
     await prisma.transmission.create({
