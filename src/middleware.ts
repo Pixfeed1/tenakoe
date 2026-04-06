@@ -45,6 +45,19 @@ export default withAuth(
 );
 
 export const config = {
-  // Exclude /api/auth and /api/leads (public form submission) from auth
-  matcher: ["/dashboard/:path*", "/api/((?!auth|leads|prescripteur-config|depot-config).*)"],
+  // Protect ALL pages and API routes except:
+  // - /api/auth (NextAuth endpoints)
+  // - /api/leads (public POST for prescripteur form — GET has its own auth check)
+  // - /api/prescripteur-config (public GET for prescripteur form)
+  // - /api/depot-config (public GET for prescripteur form)
+  // - /api/webhooks (external webhook receivers)
+  // - /_next, /favicon.ico, static assets
+  matcher: [
+    "/dashboard/:path*",
+    "/contacts/:path*",
+    "/entreprises/:path*",
+    "/projets/:path*",
+    "/parametres/:path*",
+    "/api/((?!auth|leads|prescripteur-config|depot-config|webhooks).*)",
+  ],
 };
