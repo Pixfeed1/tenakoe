@@ -19,8 +19,13 @@
 .DS_Store
 *.pem
 
-# debug
+# debug / logs
 npm-debug.log*
+*.log
+
+# databases
+*.db
+*.sqlite
 
 # env files
 .env
