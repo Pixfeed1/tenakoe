@@ -12,16 +12,16 @@ export async function PATCH(
   const { id } = await params;
   const body = await request.json();
 
-  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const etape = await prisma.etape.findUnique({
     where: { id },
     include: { projet: { select: { chargeeId: true } } },
   });
-  if (!etape) return NextResponse.json({ error: "Etape non trouvee" }, { status: 404 });
+  if (!etape) return NextResponse.json({ error: "Étape non trouvée" }, { status: 404 });
 
   if (user.role === "CHARGEE" && etape.projet.chargeeId !== user.id) {
-    return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
   const data: Record<string, unknown> = {};

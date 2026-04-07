@@ -64,7 +64,7 @@ export async function PATCH(
 
   // Log tracked field changes
   const logs: string[] = [];
-  if (body.interesseTNK !== undefined && body.interesseTNK !== existing?.interesseTNK) logs.push(`Interesse TNK : ${body.interesseTNK}`);
+  if (body.interesseTNK !== undefined && body.interesseTNK !== existing?.interesseTNK) logs.push(`Intéressé TNK : ${body.interesseTNK}`);
   if (body.miseEnRelation !== undefined && body.miseEnRelation !== existing?.miseEnRelation) logs.push(`Mise en relation : ${body.miseEnRelation}`);
   if (logs.length > 0) {
     await prisma.logActivite.create({
