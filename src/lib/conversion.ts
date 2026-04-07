@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import type { TypeQualification } from "@prisma/client";
 
 /**
  * Convertit un prospect en client quand le statut passe à FACTURE_PAYEE.
@@ -59,7 +58,7 @@ export async function convertToClient(entrepriseId: string) {
   // Specifiques a la qualification
   if (qualification) {
     const specifiques = await prisma.documentTemplate.findMany({
-      where: { type: "SPECIFIQUE", qualification: qualification as TypeQualification },
+      where: { type: "SPECIFIQUE", qualification },
       orderBy: { ordre: "asc" },
     });
 
@@ -74,7 +73,7 @@ export async function convertToClient(entrepriseId: string) {
           type: "SPECIFIQUE",
           entrepriseId,
           projetId: projet.id,
-          qualificationAssociee: qualification as TypeQualification,
+          qualificationAssociee: qualification,
           dateDemande: new Date(),
         },
       });
@@ -85,17 +84,9 @@ export async function convertToClient(entrepriseId: string) {
   // 3. Generer la feuille de route depuis le template
   let etapesCreated = 0;
   if (projet.etapes.length === 0) {
-    // Chercher un template qui correspond à la qualification
-    const qualifLabel: Record<string, string> = {
-      QUALIBAT_RGE: "Qualibat RGE",
-      CERTIBAT: "Certibat",
-      QUALIFELEC: "Qualifelec",
-    };
-
+    // Tous les codes Qualibat utilisent le meme template
     const trackTemplate = await prisma.trackTemplate.findFirst({
-      where: qualification
-        ? { nom: { contains: qualifLabel[qualification] || "", mode: "insensitive" } }
-        : {},
+      where: { nom: { contains: "Qualibat RGE", mode: "insensitive" } },
       include: { etapes: { orderBy: { ordre: "asc" } } },
     });
 

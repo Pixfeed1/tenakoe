@@ -166,17 +166,6 @@ enum SourceImport {
 // 4. PROJETS & QUALIFICATIONS
 // ============================================================
 
-enum TypeQualification {
-  QUALIBAT_RGE
-  CERTIBAT
-  QUALIFELEC
-  QUALIT_ENR
-  QUALIPAC
-  QUALIPV
-  QUALIBOIS
-  QUALISOL
-}
-
 model Projet {
   id           String  @id @default(cuid())
   nom          String
@@ -199,14 +188,14 @@ model Projet {
 }
 
 model ProjetQualification {
-  id                  String            @id @default(cuid())
+  id                  String   @id @default(cuid())
   projetId            String
-  projet              Projet            @relation(fields: [projetId], references: [id], onDelete: Cascade)
-  type                TypeQualification
-  formationITI        Boolean           @default(false)
-  formationITE        Boolean           @default(false)
-  formationMenuiserie Boolean           @default(false)
-  formationQUALIPAC   Boolean           @default(false)
+  projet              Projet   @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  type                String
+  formationITI        Boolean  @default(false)
+  formationITE        Boolean  @default(false)
+  formationMenuiserie Boolean  @default(false)
+  formationQUALIPAC   Boolean  @default(false)
   formationAutre      String?
 
   @@unique([projetId, type])
@@ -280,16 +269,16 @@ model Document {
   entreprise            Entreprise         @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
   projetId              String?
   projet                Projet?            @relation(fields: [projetId], references: [id], onDelete: SetNull)
-  qualificationAssociee TypeQualification?
+  qualificationAssociee String?
 }
 
 model DocumentTemplate {
-  id            String             @id @default(cuid())
+  id            String       @id @default(cuid())
   nom           String
-  type          TypeDocument       @default(TRONC_COMMUN)
-  qualification TypeQualification?
-  obligatoire   Boolean            @default(true)
-  ordre         Int                @default(0)
+  type          TypeDocument @default(TRONC_COMMUN)
+  qualification String?
+  obligatoire   Boolean      @default(true)
+  ordre         Int          @default(0)
 }
 
 // ============================================================

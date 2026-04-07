@@ -76,19 +76,9 @@ export async function POST(
 
   // 3. Feuille de route (si aucune etape existante)
   if (projet.etapes.length === 0 && projet.qualifications.length > 0) {
-    const qualifType = projet.qualifications[0].type;
-    const qualifLabel: Record<string, string> = {
-      QUALIBAT_RGE: "Qualibat RGE", CERTIBAT: "Certibat",
-      QUALIFELEC: "Qualifelec", QUALIPAC: "QualiPAC",
-    };
-
+    // Tous les codes Qualibat utilisent le meme template
     const trackTemplate = await prisma.trackTemplate.findFirst({
-      where: {
-        OR: [
-          { nom: { contains: qualifLabel[qualifType] || qualifType, mode: "insensitive" } },
-          { nom: { contains: qualifType.replace(/_/g, " "), mode: "insensitive" } },
-        ],
-      },
+      where: { nom: { contains: "Qualibat RGE", mode: "insensitive" } },
       include: { etapes: { orderBy: { ordre: "asc" } } },
     });
 

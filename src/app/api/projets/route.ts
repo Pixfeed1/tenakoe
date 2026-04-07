@@ -100,19 +100,9 @@ export async function POST(request: NextRequest) {
 
   // ===== AUTO-GENERATION DE LA FEUILLE DE ROUTE =====
   if (body.qualifications?.length > 0) {
-    const qualifType = body.qualifications[0].type;
-    const qualifLabel: Record<string, string> = {
-      QUALIBAT_RGE: "Qualibat RGE", CERTIBAT: "Certibat",
-      QUALIFELEC: "Qualifelec", QUALIPAC: "QualiPAC",
-    };
-
+    // Tous les codes Qualibat utilisent le meme template
     const trackTemplate = await prisma.trackTemplate.findFirst({
-      where: {
-        OR: [
-          { nom: { contains: qualifLabel[qualifType] || qualifType, mode: "insensitive" } },
-          { nom: { contains: qualifType.replace(/_/g, " "), mode: "insensitive" } },
-        ],
-      },
+      where: { nom: { contains: "Qualibat RGE", mode: "insensitive" } },
       include: { etapes: { orderBy: { ordre: "asc" } } },
     });
 
