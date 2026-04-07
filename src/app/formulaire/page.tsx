@@ -79,7 +79,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     e.preventDefault();
     setError("");
     if (!form.nomArtisan || !form.prenomArtisan) {
-      setError("Nom et prenom de l'artisan sont obligatoires");
+      setError("Nom et prénom de l'artisan sont obligatoires");
       return;
     }
     setSubmitting(true);
@@ -96,7 +96,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
         setError(data.error || "Erreur lors de l'envoi");
       }
     } catch {
-      setError("Erreur reseau, veuillez reessayer");
+      setError("Erreur réseau, veuillez réessayer");
     }
     setSubmitting(false);
   };
@@ -126,7 +126,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               </div>
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 6px" }}>Transmission d&apos;un artisan</h1>
-            <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>Selectionnez votre enseigne pour commencer</p>
+            <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>Sélectionnez votre enseigne pour commencer</p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {prescripteurConfigs.map((config) => (
@@ -172,11 +172,11 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             <CheckCircle2 size={32} color={C.accent} />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 10px" }}>
-            Transmission recue
+            Transmission reçue
           </h1>
           <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6, margin: 0 }}>
-            Les coordonnees de <strong>{form.prenomArtisan} {form.nomArtisan}</strong> ont bien ete transmises
-            a l&apos;equipe Tenakoe. Une chargee de projet prendra contact sous 48h.
+            Les coordonnées de <strong>{form.prenomArtisan} {form.nomArtisan}</strong> ont bien été transmises
+            à l&apos;équipe Tenakoe. Une chargée de projet prendra contact sous 48h.
           </p>
           <button
             onClick={() => { setSubmitted(false); setForm({
@@ -221,7 +221,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             Transmission d&apos;un artisan
           </h1>
           <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>
-            Remplissez ce formulaire pour transmettre les coordonnees d&apos;un artisan a l&apos;equipe Tenakoe
+            Remplissez ce formulaire pour transmettre les coordonnées d&apos;un artisan à l&apos;équipe Tenakoe
           </p>
         </div>
 
@@ -230,13 +230,13 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <UserCircle size={16} color={C.accent} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Vos coordonnees (conseiller)</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Vos coordonnées (conseiller)</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
               <div><label style={labelStyle}>Votre nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomConseiller} onChange={(e) => set("nomConseiller", e.target.value)} required /></div>
-              <div><label style={labelStyle}>Votre prenom *</label><input style={inputStyle} placeholder="Prenom" value={form.prenomConseiller} onChange={(e) => set("prenomConseiller", e.target.value)} required /></div>
+              <div><label style={labelStyle}>Votre prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomConseiller} onChange={(e) => set("prenomConseiller", e.target.value)} required /></div>
               <div><label style={labelStyle}>Votre email *</label><input type="email" style={inputStyle} placeholder="email@laplateforme.com" value={form.emailConseiller} onChange={(e) => set("emailConseiller", e.target.value)} required /></div>
-              <div><label style={labelStyle}>Votre telephone</label><input style={inputStyle} placeholder="06 12 34 56 78" value={form.telephoneConseiller} onChange={(e) => set("telephoneConseiller", e.target.value)} /></div>
+              <div><label style={labelStyle}>Votre téléphone</label><input style={inputStyle} placeholder="06 12 34 56 78" value={form.telephoneConseiller} onChange={(e) => set("telephoneConseiller", e.target.value)} /></div>
             </div>
           </div>
 
@@ -259,10 +259,10 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 </div>
               )}
               <div>
-                <label style={labelStyle}>Depot</label>
+                <label style={labelStyle}>Dépôt</label>
                 {depots.length > 0 ? (
                   <select style={inputStyle} value={form.depot} onChange={(e) => set("depot", e.target.value)}>
-                    <option value="">Selectionnez votre depot...</option>
+                    <option value="">Sélectionnez votre dépôt...</option>
                     {depots.map((d) => <option key={d.id} value={d.nom}>{d.nom}</option>)}
                   </select>
                 ) : (
@@ -270,8 +270,8 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 )}
               </div>
               <div>
-                <label style={labelStyle}>N carte</label>
-                <input style={inputStyle} placeholder="N carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} />
+                <label style={labelStyle}>N° carte</label>
+                <input style={inputStyle} placeholder="N° carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} />
               </div>
             </div>
           </div>
@@ -283,16 +283,16 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
               <div><label style={labelStyle}>Nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomArtisan} onChange={(e) => set("nomArtisan", e.target.value)} required /></div>
-              <div><label style={labelStyle}>Prenom *</label><input style={inputStyle} placeholder="Prenom" value={form.prenomArtisan} onChange={(e) => set("prenomArtisan", e.target.value)} required /></div>
+              <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomArtisan} onChange={(e) => set("prenomArtisan", e.target.value)} required /></div>
               <div><label style={labelStyle}>Entreprise</label><input style={inputStyle} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value)} /></div>
-              <div><label style={labelStyle}>SIRET</label><input style={inputStyle} placeholder="N SIRET" value={form.siret} onChange={(e) => set("siret", e.target.value)} /></div>
+              <div><label style={labelStyle}>SIRET</label><input style={inputStyle} placeholder="N° SIRET" value={form.siret} onChange={(e) => set("siret", e.target.value)} /></div>
             </div>
           </div>
 
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <Phone size={16} color={C.purple} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Coordonnees</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Coordonnées</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
               <div>
@@ -303,7 +303,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Telephone</label>
+                <label style={labelStyle}>Téléphone</label>
                 <div style={{ position: "relative" }}>
                   <Phone size={14} color={C.textDim} style={{ position: "absolute", left: 12, top: 13 }} />
                   <input style={{ ...inputStyle, paddingLeft: 34 }} placeholder="06 12 34 56 78" value={form.telephone} onChange={(e) => set("telephone", e.target.value)} />
@@ -322,11 +322,11 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <FileText size={16} color={C.warning} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Informations complementaires</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Informations complémentaires</span>
             </div>
             <div style={{ marginBottom: 12 }}>
               <label style={labelStyle}>Commentaires</label>
-              <textarea rows={3} style={{ ...inputStyle, resize: "vertical" }} placeholder="Precisions sur l'artisan, son besoin..." value={form.commentaires} onChange={(e) => set("commentaires", e.target.value)} />
+              <textarea rows={3} style={{ ...inputStyle, resize: "vertical" }} placeholder="Précisions sur l'artisan, son besoin..." value={form.commentaires} onChange={(e) => set("commentaires", e.target.value)} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <label style={{
@@ -335,7 +335,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 background: form.dejaReferentRGE ? C.accentDim : "transparent", transition: "all 0.15s",
               }}>
                 <input type="checkbox" checked={form.dejaReferentRGE} onChange={(e) => set("dejaReferentRGE", e.target.checked)} style={{ width: 16, height: 16, accentColor: C.accent }} />
-                <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>L&apos;artisan est deja referent RGE</span>
+                <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>L&apos;artisan est déjà référent RGE</span>
               </label>
               <label style={{
                 display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
@@ -343,7 +343,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 background: form.acceptePartage ? C.blueDim : "transparent", transition: "all 0.15s",
               }}>
                 <input type="checkbox" checked={form.acceptePartage} onChange={(e) => set("acceptePartage", e.target.checked)} style={{ width: 16, height: 16, accentColor: C.blue, marginTop: 2 }} />
-                <span style={{ fontSize: 13, color: C.text, fontWeight: 500, lineHeight: 1.5 }}>L&apos;artisan accepte le partage de ses coordonnees avec l&apos;equipe Tenakoe</span>
+                <span style={{ fontSize: 13, color: C.text, fontWeight: 500, lineHeight: 1.5 }}>L&apos;artisan accepte le partage de ses coordonnées avec l&apos;équipe Tenakoe</span>
               </label>
             </div>
           </div>
@@ -366,8 +366,8 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           </button>
 
           <p style={{ fontSize: 11, color: C.textDim, textAlign: "center", marginTop: 12, lineHeight: 1.5 }}>
-            Les informations transmises sont traitees par Tenakoe dans le cadre de l&apos;accompagnement
-            a la qualification RGE. Elles ne sont pas partagees avec des tiers.
+            Les informations transmises sont traitées par Tenakoe dans le cadre de l&apos;accompagnement
+            à la qualification RGE. Elles ne sont pas partagées avec des tiers.
           </p>
         </form>
       </div>

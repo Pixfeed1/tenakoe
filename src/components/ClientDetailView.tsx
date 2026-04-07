@@ -98,8 +98,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       if (res.ok) {
         const data = await res.json();
-        setUploadMsg({ type: "success", msg: `${data.nom} uploade` });
-        toast("Fichier uploade");
+        setUploadMsg({ type: "success", msg: `${data.nom} uploadé` });
+        toast("Fichier uploadé");
         // Refresh docs list
         if (client?.id) {
           fetch(`/api/documents?entrepriseId=${client.id}`)
@@ -286,7 +286,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       .then((data: Array<{ canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null }>) => {
         setHistorique(data.map((t) => ({
           type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
-          message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoye" : "recu"} — ${t.objet || t.destinataire}`,
+          message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoyé" : "reçu"} — ${t.objet || t.destinataire}`,
           chargee: t.expediteur ? `${t.expediteur.prenom}${t.expediteurEmail ? ` (${t.expediteurEmail})` : ""}` : "—",
           time: formatRelativeTime(new Date(t.dateEnvoi)),
         })));
@@ -307,9 +307,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     if (newRecu) {
       const allReceived = n.every((d) => d.recu);
       if (allReceived && n.length > 0) {
-        guide.showSuggestion("tous-docs-recus"); toast("Tous les documents recus !");
+        guide.showSuggestion("tous-docs-recus"); toast("Tous les documents reçus !");
       } else {
-        guide.showSuggestion("document-recu"); toast("Document mis a jour");
+        guide.showSuggestion("document-recu"); toast("Document mis à jour");
       }
       window.dispatchEvent(new CustomEvent("tenakoe:document-received"));
     }
@@ -344,12 +344,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: "#7c3aed" }}>
-            Mode demo — Les actions sont simulees, aucune donnee reelle n&apos;est modifiee
+            Mode démo — Les actions sont simulées, aucune donnée réelle n&apos;est modifiée
           </span>
           <Button C={C} variant="ghost" onClick={() => onBack()} style={{
             fontSize: 11, color: "#7c3aed", textDecoration: "underline",
           }}>
-            Quitter la demo
+            Quitter la démo
           </Button>
         </div>
       )}
@@ -416,7 +416,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 11, color: C.textDim, marginBottom: 2, display: "block" }}>CCi (copie cachee)</label>
+              <label style={{ fontSize: 11, color: C.textDim, marginBottom: 2, display: "block" }}>CCi (copie cachée)</label>
               <input placeholder="email@test.fr"
                 value={mailBcc} onChange={(e) => setMailBcc(e.target.value)}
                 style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
@@ -477,7 +477,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 }
               }}
             >
-              <option value="">Modele...</option>
+              <option value="">Modèle...</option>
               {(() => {
                 const grouped: Record<string, typeof mailTemplates> = {};
                 for (const t of mailTemplates) {
