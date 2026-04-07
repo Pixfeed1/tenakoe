@@ -53,7 +53,7 @@ export function TransmissionsView({ C }: { C: Theme }) {
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const { toast } = useToast();
-  const [mailTemplates, setMailTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string }>>([]);
+  const [mailTemplates, setMailTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string; categorie: string | null }>>([]);
   const [entreprises, setEntreprises] = useState<Array<{ id: string; nom: string; email: string | null }>>([]);
 
   const fetchData = () => {

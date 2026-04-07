@@ -14,7 +14,7 @@ import { GuideTooltip, useGuide } from "@/components/GuideSystem";
 import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACT, DEMO_DOCUMENTS, DEMO_ETAPES, DEMO_HISTORIQUE, DEMO_NOTES, demoBadgeStyle, handleDemoAction } from "@/lib/demo";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-import { formatPhone, formatContactName } from "@/lib/format";
+import { formatPhone, formatContactName, hydrateTemplate } from "@/lib/format";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -57,7 +57,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [mailTemplates, setMailTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string }>>([]);
+  const [mailTemplates, setMailTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string; categorie: string | null }>>([]);
   const [contacts, setContacts] = useState<Array<{ id: string; nom: string; prenom: string; email: string | null; telephone: string | null; fonction: string | null }>>([]);
   const [taches, setTaches] = useState<Array<{ id: string; titre: string; statut: string; type: string; dateEcheance: string | null; enRetard: boolean }>>([]);
   const [showAddContact, setShowAddContact] = useState(false);
@@ -457,15 +457,36 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               onChange={(e) => {
                 const tpl = mailTemplates.find((t) => t.id === e.target.value);
                 if (tpl) {
+                  const firstContact = contacts[0];
+                  const hydrated = hydrateTemplate(tpl.contenu.replace(/<[^>]*>/g, ""), {
+                    civilite: "", // chargee saisit manuellement si besoin
+                    nom: firstContact ? `${firstContact.prenom} ${firstContact.nom}` : (entrepriseData?.nom || ""),
+                    chargee: entrepriseData?.chargee || "",
+                    expediteur: "", // remplie cote serveur via session
+                    expediteur_email: "",
+                    expediteur_tel: "",
+                  });
                   setMailSubject(tpl.objet);
-                  setMailBody(tpl.contenu.replace(/<[^>]*>/g, ""));
+                  setMailBody(hydrated);
                 }
               }}
             >
-              <option value="">Modèle...</option>
-              {mailTemplates.map((t) => (
-                <option key={t.id} value={t.id}>{t.nom}</option>
-              ))}
+              <option value="">Modele...</option>
+              {(() => {
+                const grouped: Record<string, typeof mailTemplates> = {};
+                for (const t of mailTemplates) {
+                  const cat = t.categorie || "Autre";
+                  if (!grouped[cat]) grouped[cat] = [];
+                  grouped[cat].push(t);
+                }
+                return Object.entries(grouped).map(([cat, items]) => (
+                  <optgroup key={cat} label={cat}>
+                    {items.map((t) => (
+                      <option key={t.id} value={t.id}>{t.nom}</option>
+                    ))}
+                  </optgroup>
+                ));
+              })()}
             </select>
             <Button
               C={C}

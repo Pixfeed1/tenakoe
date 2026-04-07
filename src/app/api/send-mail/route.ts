@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendMail, type SmtpConfig } from "@/lib/mail";
 import { prisma } from "@/lib/prisma";
+import { hydrateTemplate } from "@/lib/format";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -30,14 +31,23 @@ export async function POST(request: NextRequest) {
     const fromEmail = session.user.email;
     const fromName = session.user.name || "Tenakoe";
 
-    // Load per-user SMTP config if exists
+    // Load per-user SMTP config + telephone if exists
     let userSmtp: SmtpConfig | null = null;
     const dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { smtpHost: true, smtpPort: true, smtpUser: true, smtpPass: true },
+      select: { smtpHost: true, smtpPort: true, smtpUser: true, smtpPass: true, telephone: true },
     });
     if (dbUser?.smtpHost && dbUser?.smtpUser && dbUser?.smtpPass) {
       userSmtp = { host: dbUser.smtpHost, port: dbUser.smtpPort || 587, user: dbUser.smtpUser, pass: dbUser.smtpPass };
+    }
+
+    // Server-side hydration of expediteur fields
+    if (content) {
+      content = hydrateTemplate(content, {
+        expediteur: fromName,
+        expediteur_email: fromEmail || "",
+        expediteur_tel: dbUser?.telephone || "",
+      });
     }
 
     const result = await sendMail({

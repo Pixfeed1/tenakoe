@@ -264,52 +264,184 @@ async function main() {
   console.log("Nomenclature Qualibat seeded:", nomenclature.length, "qualifications");
 
   // ========================
-  // TEMPLATES MAILS
+  // TEMPLATES MAILS (8 templates Elise)
   // ========================
-  await prisma.mailTemplate.upsert({
-    where: { id: "mail-relance-docs" },
-    update: {},
-    create: {
-      id: "mail-relance-docs",
-      nom: "Relance documents",
-      objet: "Rappel — Documents en attente pour votre dossier",
-      contenu: `<p>Bonjour,</p>
-<p>Nous revenons vers vous concernant votre dossier de qualification. Certains documents sont encore en attente de réception.</p>
-<p>Pourriez-vous nous les transmettre dans les meilleurs délais ?</p>
-<p>Cordialement,<br>L'équipe Tenakoe</p>`,
-    },
-  });
+  const mailTemplates = [
+    {
+      nom: "Paiement recu - Contact chargee de projet",
+      objet: "Paiement recu - Contact de votre chargee de projet",
+      categorie: "SUIVI",
+      ordre: 1,
+      contenu: `Bonjour {{civilite}} {{nom}},
 
-  await prisma.mailTemplate.upsert({
-    where: { id: "mail-bienvenue" },
-    update: {},
-    create: {
-      id: "mail-bienvenue",
-      nom: "Bienvenue client",
-      objet: "Bienvenue chez Tenakoe — Votre accompagnement RGE",
-      contenu: `<p>Bonjour,</p>
-<p>Nous avons bien pris en charge votre dossier de qualification RGE.</p>
-<p>Votre chargée de projet vous contactera sous 48h pour lancer la collecte des documents nécessaires.</p>
-<p>Cordialement,<br>L'équipe Tenakoe</p>`,
-    },
-  });
+Je vous remercie pour le paiement de votre prestation d'accompagnement au montage de votre dossier de candidature Qualibat-RGE.
 
-  await prisma.mailTemplate.upsert({
-    where: { id: "mail-suivi-dossier" },
-    update: {},
-    create: {
-      id: "mail-suivi-dossier",
-      nom: "Suivi dossier",
-      objet: "Point d'avancement — Votre dossier de qualification",
-      contenu: `<p>Bonjour,</p>
-<p>Voici un point d'avancement sur votre dossier de qualification :</p>
-<p>[COMPLETER]</p>
-<p>N'hésitez pas à nous contacter si vous avez des questions.</p>
-<p>Cordialement,<br>L'équipe Tenakoe</p>`,
-    },
-  });
+Votre chargee de projet va tres prochainement vous contacter pour demarrer la prestation.
 
-  console.log("Mail templates created: 3");
+Votre chargee de projet est : {{chargee}}
+
+Merci pour votre confiance !
+
+Cordialement,
+{{expediteur}}
+{{expediteur_tel}} - {{expediteur_email}}`,
+    },
+    {
+      nom: "Bon de commande Qualibat a regler",
+      objet: "Merci de payer votre bon de commande qualification",
+      categorie: "SUIVI",
+      ordre: 2,
+      contenu: `Bonjour {{civilite}} {{nom}},
+
+Qualibat vient de vous transmettre le bon de commande pour votre demande de qualification RGE.
+
+Il s'agit des frais d'instruction de l'organisme certificateur.
+
+Je vous remercie de bien vouloir regler ce bon de commande :
+- soit en vous rendant sur votre espace entreprise
+- soit en direct par telephone avec votre chargee de projet Tenakoe qui realisera le paiement avec vous sur votre espace entreprise.
+
+L'organisme certificateur vous adressera egalement une facture acquittee.
+
+Votre bon de commande est valable 1 an.
+
+Cordialement,
+{{expediteur}}
+{{expediteur_tel}} - {{expediteur_email}}`,
+    },
+    {
+      nom: "Dossier depose",
+      objet: "Votre dossier qualification est depose",
+      categorie: "SUIVI",
+      ordre: 3,
+      contenu: `Bonjour {{civilite}} {{nom}},
+
+Nous avons depose votre dossier de candidature sur la plate-forme dematerialisee QUALIBAT.
+
+Votre dossier peut faire l'objet de demande de complements avant son passage en Commission. Cette demande de complement vous sera directement adressee : surveillez vos mails et avertissez votre chargee de projet !
+
+Le depot de candidature ne vaut pas automatiquement qualification. La Commission d'attribution est seule decisionnaire, au regard de la completude, la conformite et la qualite de votre dossier.
+
+A cette etape, la date de passage de votre dossier ne nous a pas encore ete communiquee.
+
+Cordialement,
+{{expediteur}}
+{{expediteur_tel}} - {{expediteur_email}}`,
+    },
+    {
+      nom: "Date de passage en commission",
+      objet: "Date de votre passage en commission",
+      categorie: "SUIVI",
+      ordre: 4,
+      contenu: `Bonjour {{civilite}} {{nom}},
+
+La date de passage de votre dossier en Commission est le {{date_commission}}.
+
+Vous serez informe par courrier de la decision de la Commission, dans un delai maximum d'1 mois (plus generalement, sous quinzaine).
+
+Le depot de candidature ne vaut pas automatiquement qualification. La Commission d'attribution est seule decisionnaire, au regard de la completude, la conformite et la qualite de votre dossier.
+
+Je vous remercie de bien vouloir me transmettre copie de la decision de la Commission des reception.
+
+Cordialement,
+{{expediteur}}
+{{expediteur_tel}} - {{expediteur_email}}`,
+    },
+    {
+      nom: "Entreprise qualifiee - Felicitations",
+      objet: "Votre entreprise est qualifiee - Les etapes suivantes",
+      categorie: "SUIVI",
+      ordre: 5,
+      contenu: `Bonjour {{civilite}} {{nom}},
+
+Felicitations !
+
+Votre entreprise est desormais qualifiee, et figure sur l'annuaire France Renov' des professionnels RGE.
+https://france-renov.gouv.fr/annuaires-professionnels/artisan-rge-architecte
+
+Vous pouvez desormais communiquer sur votre qualification aupres de vos clients, et apposer le signe sur tous vos documents, vos reseaux sociaux et vos vehicules en suivant les regles d'usage de l'organisme certificateur.
+
+Les etapes suivantes de votre qualification :
+- chaque annee : actualisation de votre qualification (verification de la conformite assurance, URSSAF, etc) => surveillez vos mails !
+- a mi-parcours de votre qualification : audit sur site => surveillez vos mails !
+
+Anticipez vos demarches pour ne pas perdre votre qualification.
+
+Faites appel a Tenakoe pour votre declaration annuelle et la preparation de vos audits !
+
+Cordialement,
+{{expediteur}}
+{{expediteur_tel}} - {{expediteur_email}}`,
+    },
+    {
+      nom: "Alerte fermeture dossier #1",
+      objet: "Alerte avant fermeture de votre dossier",
+      categorie: "RELANCE",
+      ordre: 6,
+      contenu: `Bonjour {{civilite}} {{nom}},
+
+Vous avez confie a Tenakoe une prestation d'accompagnement au montage de votre dossier qualification mention RGE.
+
+Sauf erreur de ma part, vous n'avez pas donne suite aux demandes de documents et aux differentes relances de votre chargee de projet.
+
+En l'etat, nous ne sommes donc pas en mesure de mener a bien votre prestation.
+
+Sans retour de votre part avant le {{date_limite}}, votre dossier sera ferme en l'etat.
+
+Cordialement,
+{{expediteur}}
+{{expediteur_tel}} - {{expediteur_email}}`,
+    },
+    {
+      nom: "Alerte fermeture dossier #2",
+      objet: "URGENT - Derniere relance avant fermeture de votre dossier",
+      categorie: "RELANCE",
+      ordre: 7,
+      contenu: `Bonjour {{civilite}} {{nom}},
+
+Vous avez confie a Tenakoe une prestation d'accompagnement au montage de votre dossier qualification mention RGE.
+
+Sauf erreur de ma part, vous n'avez pas donne suite aux demandes de documents et aux differentes relances de votre chargee de projet.
+
+En l'etat, nous ne sommes donc pas en mesure de mener a bien votre prestation.
+
+Sans retour de votre part avant le {{date_limite}}, votre dossier sera ferme en l'etat.
+
+Cordialement,
+{{expediteur}}
+{{expediteur_tel}} - {{expediteur_email}}`,
+    },
+    {
+      nom: "Fermeture de dossier",
+      objet: "Fermeture de votre dossier",
+      categorie: "CLOTURE",
+      ordre: 8,
+      contenu: `Bonjour {{civilite}} {{nom}},
+
+Vous avez confie a Tenakoe une prestation d'accompagnement au montage de votre dossier qualification mention RGE.
+
+Sauf erreur de ma part, vous n'avez pas donne suite aux demandes de documents et aux differentes relances de votre chargee de projet.
+
+En l'etat, nous ne sommes donc pas en mesure de mener a bien votre prestation.
+
+Votre dossier est ferme en l'etat.
+
+Je reste a votre ecoute pour toute precision.
+
+Cordialement,
+{{expediteur}}
+{{expediteur_tel}} - {{expediteur_email}}`,
+    },
+  ];
+
+  for (const tpl of mailTemplates) {
+    await prisma.mailTemplate.upsert({
+      where: { nom: tpl.nom },
+      update: { objet: tpl.objet, contenu: tpl.contenu, categorie: tpl.categorie, ordre: tpl.ordre },
+      create: tpl,
+    });
+  }
+  console.log("Mail templates created:", mailTemplates.length);
 
   // ========================
   // ENTREPRISES EXEMPLES
