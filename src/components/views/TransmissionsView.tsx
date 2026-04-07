@@ -114,8 +114,8 @@ export function TransmissionsView({ C }: { C: Theme }) {
     try {
       const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (res.ok) {
-        setSendMsg({ type: "success", msg: `${composeType === "EMAIL" ? "Email" : "SMS"} envoye` });
-        toast(`${composeType === "EMAIL" ? "Email" : "SMS"} envoye`);
+        setSendMsg({ type: "success", msg: `${composeType === "EMAIL" ? "Email" : "SMS"} envoyé` });
+        toast(`${composeType === "EMAIL" ? "Email" : "SMS"} envoyé`);
         setComposeTo(""); setComposeSubject(""); setComposeBody(""); setComposeCc(""); setComposeBcc(""); setComposeEntrepriseId("");
         setTimeout(() => { setShowCompose(false); setSendMsg(null); fetchData(); }, 1500);
       } else {
@@ -244,7 +244,7 @@ export function TransmissionsView({ C }: { C: Theme }) {
               }}
               style={{ ...inputStyle, cursor: "pointer" }}
             >
-              <option value="">Lier a un client (optionnel)...</option>
+              <option value="">Lier à un client (optionnel)...</option>
               {entreprises.map((e) => (
                 <option key={e.id} value={e.id}>{e.nom}{e.email ? ` — ${e.email}` : ""}</option>
               ))}
@@ -270,7 +270,7 @@ export function TransmissionsView({ C }: { C: Theme }) {
           )}
 
           <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-            <input placeholder={composeType === "EMAIL" ? "Email destinataire" : "Numero de telephone"}
+            <input placeholder={composeType === "EMAIL" ? "Email destinataire" : "Numéro de téléphone"}
               value={composeTo} onChange={(e) => setComposeTo(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
             {composeType === "EMAIL" && (
               <input placeholder="Objet" value={composeSubject} onChange={(e) => setComposeSubject(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
@@ -287,7 +287,7 @@ export function TransmissionsView({ C }: { C: Theme }) {
                   style={inputStyle} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 11, color: C.textDim, marginBottom: 2, display: "block" }}>CCi (copie cachee)</label>
+                <label style={{ fontSize: 11, color: C.textDim, marginBottom: 2, display: "block" }}>CCi (copie cachée)</label>
                 <input placeholder="email@test.fr"
                   value={composeBcc} onChange={(e) => setComposeBcc(e.target.value)}
                   style={inputStyle} />

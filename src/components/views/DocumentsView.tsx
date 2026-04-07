@@ -112,11 +112,11 @@ export function DocumentsView({ C }: { C: Theme }) {
       {loading ? (
         <div style={{ padding: 40, textAlign: "center", color: C.textDim, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>Chargement...</div>
       ) : byEntreprise.size === 0 ? (
-        <div style={{ padding: 40, textAlign: "center", color: C.textDim, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>Aucun document trouve</div>
+        <div style={{ padding: 40, textAlign: "center", color: C.textDim, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}` }}>Aucun document trouvé</div>
       ) : (
         <>
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <Button C={C} variant="ghost" size="sm" onClick={() => setExpandedEnts(new Set(Array.from(byEntreprise.keys())))}>Tout deplier</Button>
+            <Button C={C} variant="ghost" size="sm" onClick={() => setExpandedEnts(new Set(Array.from(byEntreprise.keys())))}>Tout déplier</Button>
             <Button C={C} variant="ghost" size="sm" onClick={() => setExpandedEnts(new Set())}>Tout replier</Button>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -174,7 +174,7 @@ export function DocumentsView({ C }: { C: Theme }) {
                               {d.recu && <Check size={11} color="#fff" strokeWidth={3} />}
                             </div>
                             <span style={{ fontSize: 12, color: d.recu ? C.text : C.textMuted, flex: 1 }}>{d.nom}</span>
-                            {d.dateReception && <span style={{ fontSize: 11, color: C.textDim }}>Recu le {new Date(d.dateReception).toLocaleDateString("fr-FR")}</span>}
+                            {d.dateReception && <span style={{ fontSize: 11, color: C.textDim }}>Reçu le {new Date(d.dateReception).toLocaleDateString("fr-FR")}</span>}
                             {!d.recu && <Badge color={C.warning} bg={C.warningDim}>En attente</Badge>}
                           </div>
                         ))}

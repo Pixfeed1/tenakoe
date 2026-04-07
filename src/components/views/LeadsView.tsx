@@ -83,7 +83,7 @@ export function LeadsView({ C }: { C: Theme }) {
         depot: "", numeroCarte: "", dejaReferentRGE: false, commentaires: "",
       });
       fetchLeads();
-      toast("Lead cree");
+      toast("Lead créé");
     }
   };
 
@@ -117,7 +117,7 @@ export function LeadsView({ C }: { C: Theme }) {
             prenom: lead.prenomArtisan || "?",
             email: lead.email,
             telephone: lead.telephone,
-            fonction: "Gerant",
+            fonction: "Gérant",
             entrepriseId: entreprise.id,
           }),
         }).catch(() => {});
@@ -262,7 +262,7 @@ export function LeadsView({ C }: { C: Theme }) {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                {["Artisan", "Conseiller", "Depot", "Prescripteur", "Statut", "Date transmission", "Actions"].map((h) => (
+                {["Artisan", "Conseiller", "Dépôt", "Prescripteur", "Statut", "Date transmission", "Actions"].map((h) => (
                   <th key={h} style={{
                     textAlign: "left", padding: "12px 14px", fontSize: 11, fontWeight: 600,
                     color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em",

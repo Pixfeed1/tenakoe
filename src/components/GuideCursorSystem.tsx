@@ -164,7 +164,7 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     steps: [
       {
         title: "1/6 — Glisser un lead",
-        text: "Glissez-deposez une carte de la colonne 'Nouveau' vers 'Prise en charge' pour prendre en charge ce lead.",
+        text: "Glissez-déposez une carte de la colonne 'Nouveau' vers 'Prise en charge' pour prendre en charge ce lead.",
         cursorAction: { type: "drag", from: "[data-guide='pipeline-card-first']", to: "[data-guide='pipeline-col-2']" },
         waitEvent: "tenakoe:pipeline-drop",
       },
@@ -176,7 +176,7 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
       },
       {
         title: "3/6 — Choisir un template",
-        text: "Selectionnez le modele 'Bienvenue — premier contact' dans le menu deroulant. L'objet et le message se pre-remplissent automatiquement.",
+        text: "Sélectionnez le modèle 'Bienvenue — premier contact' dans le menu déroulant. L'objet et le message se pré-remplissent automatiquement.",
         cursorAction: { type: "click", target: "[data-guide='template-select']" },
       },
       {
@@ -185,13 +185,13 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
         cursorAction: { type: "click", target: "[data-guide='tab-notes']" },
       },
       {
-        title: "5/6 — Creer une tache de relance",
-        text: "Creez une tache pour ne pas oublier de relancer le client dans 3 jours. Vous recevrez un rappel par email si la tache est en retard.",
+        title: "5/6 — Créer une tâche de relance",
+        text: "Créez une tâche pour ne pas oublier de relancer le client dans 3 jours. Vous recevrez un rappel par email si la tâche est en retard.",
         cursorAction: { type: "click", target: "[data-guide='btn-nouvelle-tache']" },
       },
       {
-        title: "6/6 — Termine !",
-        text: "Le lead est pris en charge, contacte, et une relance est programmee. Vous pouvez suivre l'avancement dans le pipeline et l'historique.",
+        title: "6/6 — Terminé !",
+        text: "Le lead est pris en charge, contacté, et une relance est programmée. Vous pouvez suivre l'avancement dans le pipeline et l'historique.",
         cursorAction: { type: "hover", target: "[data-guide='kpi']" },
       },
     ],
@@ -200,30 +200,30 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     title: "Envoyer un mail avec template",
     steps: [
       {
-        title: "1/5 — Ouvrir l'editeur de mail",
-        text: "Cliquez sur le bouton 'Envoyer mail'. Le champ destinataire est pre-rempli avec l'email du client.",
+        title: "1/5 — Ouvrir l'éditeur de mail",
+        text: "Cliquez sur le bouton 'Envoyer mail'. Le champ destinataire est pré-rempli avec l'email du client.",
         cursorAction: { type: "click", target: "[data-guide='btn-mail']" },
         waitEvent: "tenakoe:mail-opened",
       },
       {
-        title: "2/5 — Choisir un modele",
-        text: "Selectionnez un template dans le menu deroulant. L'objet et le corps du mail se pre-remplissent automatiquement.",
+        title: "2/5 — Choisir un modèle",
+        text: "Sélectionnez un template dans le menu déroulant. L'objet et le corps du mail se pré-remplissent automatiquement.",
         cursorAction: { type: "click", target: "[data-guide='template-select']" },
       },
       {
         title: "3/5 — Personnaliser le message",
-        text: "Vous pouvez modifier le message avant d'envoyer. Ajoutez des details specifiques au client si necessaire.",
+        text: "Vous pouvez modifier le message avant d'envoyer. Ajoutez des détails spécifiques au client si nécessaire.",
         cursorAction: { type: "hover", target: "[data-guide='mail-body']" },
       },
       {
         title: "4/5 — Envoyer",
-        text: "Cliquez sur Envoyer. Le mail part depuis contact.tenakoe@gmail.com et sera trace dans l'historique de la fiche.",
+        text: "Cliquez sur Envoyer. Le mail part depuis contact.tenakoe@gmail.com et sera tracé dans l'historique de la fiche.",
         cursorAction: { type: "click", target: "[data-guide='btn-send-mail']" },
         waitEvent: "tenakoe:mail-sent",
       },
       {
-        title: "5/5 — Verifier dans l'historique",
-        text: "Le mail apparait dans l'onglet Historique avec la date, l'objet et le destinataire. La direction peut voir tous les echanges sans vous deranger.",
+        title: "5/5 — Vérifier dans l'historique",
+        text: "Le mail apparaît dans l'onglet Historique avec la date, l'objet et le destinataire. La direction peut voir tous les échanges sans vous déranger.",
         cursorAction: { type: "click", target: "[data-guide='tab-historique']" },
       },
     ],
@@ -233,33 +233,33 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     steps: [
       {
         title: "1/6 — Ouvrir l'onglet Documents",
-        text: "Cliquez sur l'onglet Documents pour voir la checklist des pieces a fournir par le client.",
+        text: "Cliquez sur l'onglet Documents pour voir la checklist des pièces à fournir par le client.",
         cursorAction: { type: "click", target: "[data-guide='tab-docs']" },
       },
       {
         title: "2/6 — Comprendre la checklist",
-        text: "Chaque ligne est un document attendu. Les cases non cochees sont en attente, les cochees sont recues. La barre de progression en haut montre l'avancement global.",
+        text: "Chaque ligne est un document attendu. Les cases non cochées sont en attente, les cochées sont reçues. La barre de progression en haut montre l'avancement global.",
         cursorAction: { type: "hover", target: "[data-guide='docs-progress']" },
       },
       {
-        title: "3/6 — Cocher un document recu",
-        text: "Quand vous recevez un document du client, cochez la case correspondante. La date de reception s'inscrit automatiquement.",
+        title: "3/6 — Cocher un document reçu",
+        text: "Quand vous recevez un document du client, cochez la case correspondante. La date de réception s'inscrit automatiquement.",
         cursorAction: { type: "click", target: "[data-guide='doc-checkbox-first']" },
         waitEvent: "tenakoe:document-received",
       },
       {
         title: "4/6 — Uploader le fichier",
-        text: "Glissez-deposez le fichier PDF ou image dans la zone d'upload ci-dessous. Ou cliquez pour parcourir vos fichiers.",
+        text: "Glissez-déposez le fichier PDF ou image dans la zone d'upload ci-dessous. Ou cliquez pour parcourir vos fichiers.",
         cursorAction: { type: "click", target: "[data-guide='upload']" },
       },
       {
         title: "5/6 — Relancer les documents manquants",
-        text: "Si des documents tardent a arriver, envoyez un mail de relance au client. Utilisez le template 'Relance documents' pour gagner du temps.",
+        text: "Si des documents tardent à arriver, envoyez un mail de relance au client. Utilisez le template 'Relance documents' pour gagner du temps.",
         cursorAction: { type: "click", target: "[data-guide='btn-mail']" },
       },
       {
-        title: "6/6 — Termine !",
-        text: "Quand tous les documents sont recus (barre a 100%), vous pouvez passer a l'etape suivante de la feuille de route. Une alerte automatique se declenche si un document est en attente depuis plus de 15 jours.",
+        title: "6/6 — Terminé !",
+        text: "Quand tous les documents sont reçus (barre à 100%), vous pouvez passer à l'étape suivante de la feuille de route. Une alerte automatique se déclenche si un document est en attente depuis plus de 15 jours.",
         cursorAction: { type: "hover", target: "[data-guide='docs-progress']" },
       },
     ],
@@ -269,28 +269,28 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
     steps: [
       {
         title: "1/5 — Ouvrir la feuille de route",
-        text: "Cliquez sur l'onglet Feuille de route pour voir les etapes du dossier de qualification.",
+        text: "Cliquez sur l'onglet Feuille de route pour voir les étapes du dossier de qualification.",
         cursorAction: { type: "click", target: "[data-guide='tab-track']" },
       },
       {
         title: "2/5 — Comprendre la timeline",
-        text: "Chaque etape a un delai prevu en jours. Les etapes terminees sont en vert, l'etape en cours est en bleu avec sa date objectif. Les etapes futures sont en gris.",
+        text: "Chaque étape a un délai prévu en jours. Les étapes terminées sont en vert, l'étape en cours est en bleu avec sa date objectif. Les étapes futures sont en gris.",
         cursorAction: { type: "hover", target: "[data-guide='track-timeline']" },
       },
       {
-        title: "3/5 — Terminer une etape",
-        text: "Cliquez sur le cercle de l'etape en cours pour la marquer comme terminee. L'etape suivante s'active automatiquement et sa date objectif se calcule.",
+        title: "3/5 — Terminer une étape",
+        text: "Cliquez sur le cercle de l'étape en cours pour la marquer comme terminée. L'étape suivante s'active automatiquement et sa date objectif se calcule.",
         cursorAction: { type: "click", target: "[data-guide='track-active-step']" },
         waitEvent: "tenakoe:etape-terminee",
       },
       {
         title: "4/5 — Alertes de retard",
-        text: "Si une etape depasse sa date objectif, une alerte apparait dans le dashboard et un email de rappel est envoye a la chargee de projet. Vous n'avez rien a configurer, c'est automatique.",
+        text: "Si une étape dépasse sa date objectif, une alerte apparaît dans le dashboard et un email de rappel est envoyé à la chargée de projet. Vous n'avez rien à configurer, c'est automatique.",
         cursorAction: { type: "hover", target: "[data-guide='track-timeline']" },
       },
       {
-        title: "5/5 — Termine !",
-        text: "Quand toutes les etapes sont terminees, le dossier est pret. Passez le statut a 'Qualifie' dans le pipeline. Le prescripteur pourra voir le resultat dans son acces.",
+        title: "5/5 — Terminé !",
+        text: "Quand toutes les étapes sont terminées, le dossier est prêt. Passez le statut à 'Qualifié' dans le pipeline. Le prescripteur pourra voir le résultat dans son accès.",
         cursorAction: { type: "hover", target: "[data-guide='track-timeline']" },
       },
     ],
@@ -305,13 +305,13 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
       },
       {
         title: "2/4 — Changer le statut",
-        text: "Glissez une carte vers 'Devis envoye' pour faire avancer le statut de facturation",
+        text: "Glissez une carte vers 'Devis envoyé' pour faire avancer le statut de facturation",
         cursorAction: { type: "drag", from: "[data-guide='factu-card-first']", to: "[data-guide='factu-col-devis-envoye']" },
         waitEvent: "tenakoe:factu-drop",
       },
       {
-        title: "3/4 — Creer dans Abby",
-        text: "Cliquez sur 'Creer dans Abby' pour envoyer automatiquement les infos client vers Abby. Le devis sera cree dans Abby, plus de double saisie.",
+        title: "3/4 — Créer dans Abby",
+        text: "Cliquez sur 'Créer dans Abby' pour envoyer automatiquement les infos client vers Abby. Le devis sera créé dans Abby, plus de double saisie.",
         cursorAction: { type: "click", target: "[data-guide='btn-abby']" },
       },
       {
@@ -442,10 +442,10 @@ export function WalkthroughPlayer({ C, walkthroughId, onFinish }: {
           }}>
             <PartyPopper size={36} color={C.accent} style={{ marginBottom: 12 }} />
             <h3 style={{ fontSize: 18, fontWeight: 700, color: C.text, margin: "0 0 8px" }}>
-              Parcours termine !
+              Parcours terminé !
             </h3>
             <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 20px", lineHeight: 1.5 }}>
-              Vous maitrisez maintenant cette fonctionnalite. Essayez avec vos vraies donnees !
+              Vous maîtrisez maintenant cette fonctionnalité. Essayez avec vos vraies données !
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
               <button onClick={onFinish} style={{
@@ -585,15 +585,15 @@ export const ACTION_SUGGESTIONS: Record<string, { title: string; message: string
     ],
   },
   "mail-envoye": {
-    title: "Mail envoye",
-    message: "Le mail est trace dans l'historique.",
+    title: "Mail envoyé",
+    message: "Le mail est tracé dans l'historique.",
     options: [
-      { label: "Creer une tache de relance", icon: ClipboardList, targetSelector: "[data-guide='tab-taches']" },
+      { label: "Créer une tâche de relance", icon: ClipboardList, targetSelector: "[data-guide='tab-taches']" },
       { label: "Voir l'historique", icon: ArrowUpRight, targetSelector: "[data-guide='tab-historique']" },
     ],
   },
   "document-recu": {
-    title: "Document recu",
+    title: "Document reçu",
     message: "Continuez la collecte.",
     options: [
       { label: "Relancer les docs manquants", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
@@ -601,7 +601,7 @@ export const ACTION_SUGGESTIONS: Record<string, { title: string; message: string
     ],
   },
   "lead-a-relancer": {
-    title: "Lead marque a relancer",
+    title: "Lead marqué à relancer",
     message: "Contactez-le rapidement.",
     options: [
       { label: "Envoyer un SMS de relance", icon: MessageSquare, targetSelector: "[data-guide='btn-sms']" },
@@ -610,69 +610,69 @@ export const ACTION_SUGGESTIONS: Record<string, { title: string; message: string
     ],
   },
   "devis-envoye": {
-    title: "Statut passe a Devis envoye",
-    message: "Creez le devis dans Abby.",
+    title: "Statut passé à Devis envoyé",
+    message: "Créez le devis dans Abby.",
     options: [
-      { label: "Creer le devis dans Abby", icon: FileText, targetSelector: "[data-guide='btn-abby']" },
+      { label: "Créer le devis dans Abby", icon: FileText, targetSelector: "[data-guide='btn-abby']" },
       { label: "Envoyer le devis par mail", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
     ],
   },
   "facture-payee": {
     title: "Prospect converti en client !",
-    message: "La checklist docs et la feuille de route ont ete generees automatiquement.",
+    message: "La checklist docs et la feuille de route ont été générées automatiquement.",
     options: [
       { label: "Voir la checklist documents", icon: FileText, targetSelector: "[data-guide='tab-docs']" },
-      { label: "Envoyer la liste des docs a fournir", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
+      { label: "Envoyer la liste des docs à fournir", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
       { label: "Voir la feuille de route", icon: ClipboardList, targetSelector: "[data-guide='tab-track']" },
     ],
   },
   "sms-envoye": {
-    title: "SMS envoye",
-    message: "Le SMS est trace dans l'historique.",
+    title: "SMS envoyé",
+    message: "Le SMS est tracé dans l'historique.",
     options: [
       { label: "Loguer un appel si rappel", icon: Phone, targetSelector: "[data-guide='btn-appeler']" },
-      { label: "Creer une tache de relance", icon: ClipboardList, targetSelector: "[data-guide='tab-taches']" },
+      { label: "Créer une tâche de relance", icon: ClipboardList, targetSelector: "[data-guide='tab-taches']" },
     ],
   },
   "appel-logue": {
-    title: "Appel enregistre",
-    message: "Pensez a noter un resume.",
+    title: "Appel enregistré",
+    message: "Pensez à noter un résumé.",
     options: [
-      { label: "Envoyer un mail recapitulatif", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
+      { label: "Envoyer un mail récapitulatif", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
       { label: "Ajouter une note interne", icon: StickyNote, targetSelector: "[data-guide='tab-notes']" },
     ],
   },
   "etape-terminee": {
-    title: "Etape terminee",
-    message: "L'etape suivante est maintenant active.",
+    title: "Étape terminée",
+    message: "L'étape suivante est maintenant active.",
     options: [
       { label: "Voir la feuille de route", icon: ClipboardList, targetSelector: "[data-guide='tab-track']" },
       { label: "Envoyer un mail au client", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
     ],
   },
   "tous-docs-recus": {
-    title: "Tous les documents sont recus !",
-    message: "Vous pouvez passer a la verification.",
+    title: "Tous les documents sont reçus !",
+    message: "Vous pouvez passer à la vérification.",
     options: [
       { label: "Voir la feuille de route", icon: ClipboardList, targetSelector: "[data-guide='tab-track']" },
       { label: "Envoyer un mail de confirmation", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
     ],
   },
   "nouveau-projet": {
-    title: "Nouveau projet cree",
-    message: "Le dossier est pret.",
+    title: "Nouveau projet créé",
+    message: "Le dossier est prêt.",
     options: [
       { label: "Voir la checklist documents", icon: FileText, targetSelector: "[data-guide='tab-docs']" },
       { label: "Voir la feuille de route", icon: ClipboardList, targetSelector: "[data-guide='tab-track']" },
     ],
   },
   "note-ajoutee": {
-    title: "Note ajoutee",
-    message: "Epinglez-la pour la garder visible en haut.",
+    title: "Note ajoutée",
+    message: "Épinglez-la pour la garder visible en haut.",
     options: [],
   },
   "tache-creee": {
-    title: "Tache creee",
+    title: "Tâche créée",
     message: "Vous recevrez un rappel si elle est en retard.",
     options: [],
   },

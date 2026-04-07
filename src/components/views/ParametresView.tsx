@@ -24,7 +24,7 @@ const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: n
   { id: "antennes", label: "Antennes Qualibat", Icon: Building2 },
   { id: "notifications", label: "Notifications", Icon: Bell },
   { id: "import", label: "Import / Export", Icon: Download },
-  { id: "securite", label: "Securite", Icon: Shield },
+  { id: "securite", label: "Sécurité", Icon: Shield },
   { id: "compte", label: "Mon compte", Icon: Users },
 ];
 
@@ -480,7 +480,7 @@ function PrescripteursTab({ C }: { C: Theme }) {
       const created = await res.json();
       setConfigs((p) => [...p, created]);
       setNewNom("");
-      toast("Prescripteur ajoute");
+      toast("Prescripteur ajouté");
     }
   };
 
@@ -523,7 +523,7 @@ function PrescripteursTab({ C }: { C: Theme }) {
               padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`, fontSize: 11, fontWeight: 600, cursor: "pointer",
               background: expandedDepots === p.type ? C.blueDim : "transparent", color: expandedDepots === p.type ? C.blue : C.textDim,
             }}>
-              Depots ({expandedDepots === p.type ? depots.length : "..."})
+              Dépôts ({expandedDepots === p.type ? depots.length : "..."})
             </button>
             <Badge color={C.textDim} bg={C.surfaceHover}>{p.type}</Badge>
             <button onClick={() => toggleActif(p.id, p.actif)} style={{
@@ -531,7 +531,7 @@ function PrescripteursTab({ C }: { C: Theme }) {
               background: p.actif ? C.dangerDim : C.accentDim,
               color: p.actif ? C.danger : C.accentText,
             }}>
-              {p.actif ? "Archiver" : "Reactiver"}
+              {p.actif ? "Archiver" : "Réactiver"}
             </button>
           </div>
           {expandedDepots === p.type && (
@@ -549,10 +549,10 @@ function PrescripteursTab({ C }: { C: Theme }) {
                     </button>
                   </div>
                 ))}
-                {depots.length === 0 && <div style={{ fontSize: 12, color: C.textDim, padding: 8 }}>Aucun depot</div>}
+                {depots.length === 0 && <div style={{ fontSize: 12, color: C.textDim, padding: 8 }}>Aucun dépôt</div>}
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                <input placeholder="Nouveau depot..." value={newDepotNom} onChange={(e) => setNewDepotNom(e.target.value)}
+                <input placeholder="Nouveau dépôt..." value={newDepotNom} onChange={(e) => setNewDepotNom(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && newDepotNom.trim() && (async () => {
                     const res = await fetch("/api/depot-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nom: newDepotNom.trim(), prescripteurType: p.type }) });
                     if (res.ok) { const d = await res.json(); setDepots((prev) => [...prev, d]); setNewDepotNom(""); }
@@ -1080,7 +1080,7 @@ function SecuriteTab({ C }: { C: Theme }) {
       <div style={{ marginTop: 30, paddingTop: 20, borderTop: `1px solid ${C.border}` }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 8px", color: C.text }}>Authentification à deux facteurs (2FA)</h3>
         <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 12px" }}>Ajoutez une couche de sécurité supplémentaire à votre compte.</p>
-        <Badge color={C.warning} bg={C.warningDim}>Bientot disponible</Badge>
+        <Badge color={C.warning} bg={C.warningDim}>Bientôt disponible</Badge>
       </div>
     </div>
   );
@@ -1121,7 +1121,7 @@ function MonCompteTab({ C }: { C: Theme }) {
       }),
     });
     setSaving(false);
-    toast("Configuration SMTP sauvegardee");
+    toast("Configuration SMTP sauvegardée");
   };
 
   const iStyle = inputStyle(C);
@@ -1131,7 +1131,7 @@ function MonCompteTab({ C }: { C: Theme }) {
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Mon compte</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-          <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prenom</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.prenom}</div></div>
+          <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prénom</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.prenom}</div></div>
           <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Nom</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.nom}</div></div>
           <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Email (login)</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.email}</div></div>
         </div>
@@ -1140,7 +1140,7 @@ function MonCompteTab({ C }: { C: Theme }) {
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 6px", color: C.text }}>Configuration SMTP (envoi de mails)</h3>
         <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 14px" }}>
-          Configurez votre propre serveur SMTP pour envoyer les mails depuis votre adresse. Si vide, le SMTP global Tenakoe est utilise.
+          Configurez votre propre serveur SMTP pour envoyer les mails depuis votre adresse. Si vide, le SMTP global Tenakoe est utilisé.
         </p>
         {loading ? (
           <div style={{ color: C.textDim, fontSize: 13 }}>Chargement...</div>
@@ -1196,7 +1196,7 @@ function AntennesQualibatTab({ C }: { C: Theme }) {
       setAntennes((p) => [...p, a].sort((x, y) => x.nom.localeCompare(y.nom)));
       setForm({ nom: "", delegation: "", delegue: "", adresse: "", telephone: "", email: "" });
       setShowAdd(false);
-      toast("Antenne ajoutee");
+      toast("Antenne ajoutée");
     }
   };
 
@@ -1222,7 +1222,7 @@ function AntennesQualibatTab({ C }: { C: Theme }) {
       </div>
 
       <input
-        placeholder="Rechercher par nom ou delegation..."
+        placeholder="Rechercher par nom ou délégation..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{ ...iStyle, marginBottom: 12 }}
@@ -1232,15 +1232,15 @@ function AntennesQualibatTab({ C }: { C: Theme }) {
         <div style={{ padding: 14, borderRadius: 10, background: C.bg, border: `1px dashed ${C.border}`, marginBottom: 14 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
             <input placeholder="Nom *" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} style={iStyle} />
-            <input placeholder="Delegation" value={form.delegation} onChange={(e) => setForm({ ...form, delegation: e.target.value })} style={iStyle} />
-            <input placeholder="Delegue" value={form.delegue} onChange={(e) => setForm({ ...form, delegue: e.target.value })} style={iStyle} />
+            <input placeholder="Délégation" value={form.delegation} onChange={(e) => setForm({ ...form, delegation: e.target.value })} style={iStyle} />
+            <input placeholder="Délégué" value={form.delegue} onChange={(e) => setForm({ ...form, delegue: e.target.value })} style={iStyle} />
             <input placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={iStyle} />
-            <input placeholder="Telephone" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} style={iStyle} />
+            <input placeholder="Téléphone" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} style={iStyle} />
             <input placeholder="Adresse" value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} style={iStyle} />
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <Button C={C} variant="ghost" size="sm" onClick={() => setShowAdd(false)}>Annuler</Button>
-            <Button C={C} variant="primary" size="sm" onClick={addAntenne} disabled={!form.nom.trim()}>Creer</Button>
+            <Button C={C} variant="primary" size="sm" onClick={addAntenne} disabled={!form.nom.trim()}>Créer</Button>
           </div>
         </div>
       )}
@@ -1262,7 +1262,7 @@ function AntennesQualibatTab({ C }: { C: Theme }) {
                 {a.adresse && <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>{a.adresse}</div>}
               </div>
               <Button C={C} variant={a.actif ? "ghost" : "primary"} size="sm" onClick={() => toggleActif(a)}>
-                {a.actif ? "Archiver" : "Reactiver"}
+                {a.actif ? "Archiver" : "Réactiver"}
               </Button>
             </div>
           </div>

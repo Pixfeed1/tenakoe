@@ -20,15 +20,15 @@ interface Entreprise {
 
 // Fallback labels/styles (used before config loads)
 const FALLBACK_LABELS: Record<string, string> = {
-  DEVIS_A_FAIRE: "Devis a faire",
-  DEVIS_ENVOYE: "Devis envoye",
-  DEVIS_SIGNE: "Devis signe",
-  FACTURE_ENVOYEE: "Facture envoyee",
-  FACTURE_PAYEE: "Facture payee",
-  DOSSIER_DEPOSE: "Dossier depose",
-  DOSSIER_COMPLEMENT: "Complement demande",
-  QUALIFIE: "Qualifie",
-  REFUSE: "Refuse",
+  DEVIS_A_FAIRE: "Devis à faire",
+  DEVIS_ENVOYE: "Devis envoyé",
+  DEVIS_SIGNE: "Devis signé",
+  FACTURE_ENVOYEE: "Facture envoyée",
+  FACTURE_PAYEE: "Facture payée",
+  DOSSIER_DEPOSE: "Dossier déposé",
+  DOSSIER_COMPLEMENT: "Complément demandé",
+  QUALIFIE: "Qualifié",
+  REFUSE: "Refusé",
   DOSSIER_EN_APPEL: "En appel",
 };
 
@@ -221,7 +221,7 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
                     <div style={{ fontSize: 11, color: C.textDim, textAlign: "center", padding: 4 }}>+{col.items.length - 3} autres</div>
                   )}
                   {col.items.length === 0 && (
-                    <div style={{ padding: 12, textAlign: "center", fontSize: 11, color: C.textDim, border: `1px dashed ${C.border}`, borderRadius: 8 }}>Deposer ici</div>
+                    <div style={{ padding: 12, textAlign: "center", fontSize: 11, color: C.textDim, border: `1px dashed ${C.border}`, borderRadius: 8 }}>Déposer ici</div>
                   )}
                 </div>
               </div>
@@ -233,10 +233,10 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
       {/* Stats */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         {[
-          { label: "Devis a faire", count: devisAFaire, Icon: FileText, color: "warning", filter: "DEVIS_A_FAIRE", guide: "" },
-          { label: "Devis envoyes", count: devisEnvoye, Icon: Clock, color: "blue", filter: "DEVIS_ENVOYE", guide: "factu-col-devis-envoye" },
+          { label: "Devis à faire", count: devisAFaire, Icon: FileText, color: "warning", filter: "DEVIS_A_FAIRE", guide: "" },
+          { label: "Devis envoyés", count: devisEnvoye, Icon: Clock, color: "blue", filter: "DEVIS_ENVOYE", guide: "factu-col-devis-envoye" },
           { label: "Factures en cours", count: factureEnCours, Icon: CreditCard, color: "purple", filter: "FACTURE_ENVOYEE", guide: "" },
-          { label: "Factures payees", count: facturePayee, Icon: Check, color: "accent", filter: "FACTURE_PAYEE", guide: "" },
+          { label: "Factures payées", count: facturePayee, Icon: Check, color: "accent", filter: "FACTURE_PAYEE", guide: "" },
         ].map((s) => (
           <div key={s.filter}
             {...(s.guide ? { "data-guide": s.guide } : {})}

@@ -450,7 +450,7 @@ function GmailOAuthSection({ C }: { C: Theme }) {
   };
 
   const disconnect = async () => {
-    if (!window.confirm("Deconnecter Gmail ?")) return;
+    if (!window.confirm("Déconnecter Gmail ?")) return;
     await fetch("/api/auth/gmail", { method: "DELETE" });
     setStatus({ connected: false });
   };

@@ -365,7 +365,7 @@ export function DashboardView({
               padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
               background: "transparent", color: C.blue, fontSize: 12, fontWeight: 600, cursor: "pointer",
             }}>
-              Voir le detail
+              Voir le détail
             </button>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

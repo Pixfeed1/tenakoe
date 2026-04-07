@@ -29,7 +29,7 @@ export const DEMO_CONTACT = {
   prenom: "Pierre",
   email: "pierre.martin@demo.fr",
   telephone: "06 00 00 00 00",
-  fonction: "Gerant",
+  fonction: "Gérant",
   isDemo: true,
 };
 
@@ -49,26 +49,26 @@ export const DEMO_DOCUMENTS = [
   { id: "demo-doc-1", nom: "EXTRAIT KBIS", recu: false, date: null as string | null, isDemo: true },
   { id: "demo-doc-2", nom: "FICHE INSEE", recu: false, date: null as string | null, isDemo: true },
   { id: "demo-doc-3", nom: "ATTESTATION RC PROFESSIONNELLE", recu: false, date: null as string | null, isDemo: true },
-  { id: "demo-doc-4", nom: "ATTESTATION DECENNALE", recu: true, date: "01/04/2026" as string | null, isDemo: true },
+  { id: "demo-doc-4", nom: "ATTESTATION DÉCENNALE", recu: true, date: "01/04/2026" as string | null, isDemo: true },
   { id: "demo-doc-5", nom: "ATTESTATION URSSAF", recu: false, date: null as string | null, isDemo: true },
-  { id: "demo-doc-6", nom: "DIPLOMES ET FORMATIONS", recu: true, date: "28/03/2026" as string | null, isDemo: true },
+  { id: "demo-doc-6", nom: "DIPLÔMES ET FORMATIONS", recu: true, date: "28/03/2026" as string | null, isDemo: true },
 ];
 
 export const DEMO_ETAPES = [
   { id: "demo-etape-1", nom: "Prise de contact", delai: 2, done: true, active: false, isDemo: true },
   { id: "demo-etape-2", nom: "Collecte documents", delai: 14, done: false, active: true, isDemo: true },
-  { id: "demo-etape-3", nom: "Verification conformite", delai: 7, done: false, active: false, isDemo: true },
-  { id: "demo-etape-4", nom: "Depot dossier certificateur", delai: 3, done: false, active: false, isDemo: true },
+  { id: "demo-etape-3", nom: "Vérification conformité", delai: 7, done: false, active: false, isDemo: true },
+  { id: "demo-etape-4", nom: "Dépôt dossier certificateur", delai: 3, done: false, active: false, isDemo: true },
 ];
 
 export const DEMO_HISTORIQUE = [
-  { type: "EMAIL", message: "Mail envoye — Bienvenue chez Tenakoe", chargee: "Kelly", time: "Il y a 2 jours", isDemo: true },
+  { type: "EMAIL", message: "Mail envoyé — Bienvenue chez Tenakoe", chargee: "Kelly", time: "Il y a 2 jours", isDemo: true },
   { type: "STATUT", message: "MARTIN RENOVATION — Prise en charge", chargee: "Kelly", time: "Il y a 3 jours", isDemo: true },
   { type: "LEAD", message: "Nouveau lead — MARTIN RENOVATION via PDB", chargee: "—", time: "Il y a 4 jours", isDemo: true },
 ];
 
 export const DEMO_NOTES = [
-  { id: "demo-note-1", contenu: "Artisan motive, a des chantiers en cours. Relancer dans 3 jours si pas de retour.", auteur: { id: "demo", prenom: "Kelly", nom: "Demo" }, createdAt: "2026-03-29T10:00:00Z", epinglee: true, isDemo: true },
+  { id: "demo-note-1", contenu: "Artisan motivé, a des chantiers en cours. Relancer dans 3 jours si pas de retour.", auteur: { id: "demo", prenom: "Kelly", nom: "Démo" }, createdAt: "2026-03-29T10:00:00Z", epinglee: true, isDemo: true },
 ];
 
 // ========================
@@ -103,7 +103,7 @@ export function setDemoNotificationCallback(cb: (msg: string) => void) {
 
 export function handleDemoAction(actionName: string): boolean {
   if (demoNotificationCallback) {
-    demoNotificationCallback(`${actionName} (mode demo — donnees simulees)`);
+    demoNotificationCallback(`${actionName} (mode démo — données simulées)`);
   }
   return true;
 }

@@ -503,9 +503,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               icon={<Send size={13} />}
               onClick={async () => {
                 if (isDemoMode) {
-                  handleDemoAction("Mail envoye");
-                  setSendStatus({ type: "success", msg: "Mail envoye (demo)" }); toast("Mail envoye");
-                  setHistorique((prev) => [{ type: "EMAIL", message: `Mail envoye — ${mailSubject}`, chargee: "Vous", time: "A l'instant" }, ...prev]);
+                  handleDemoAction("Mail envoyé");
+                  setSendStatus({ type: "success", msg: "Mail envoyé (démo)" }); toast("Mail envoyé");
+                  setHistorique((prev) => [{ type: "EMAIL", message: `Mail envoyé — ${mailSubject}`, chargee: "Vous", time: "À l'instant" }, ...prev]);
                   guide.showSuggestion("mail-envoye");
                   window.dispatchEvent(new CustomEvent("tenakoe:mail-sent"));
                   setMailSubject(""); setMailBody(""); setMailCc(""); setMailBcc("");
@@ -529,7 +529,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     }),
                   });
                   if (res.ok) {
-                    setSendStatus({ type: "success", msg: "Mail envoye" }); toast("Mail envoye");
+                    setSendStatus({ type: "success", msg: "Mail envoyé" }); toast("Mail envoyé");
                     fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeMail" }) }).catch(() => {});
                     guide.showSuggestion("mail-envoye");
                     window.dispatchEvent(new CustomEvent("tenakoe:mail-sent"));
@@ -602,8 +602,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               icon={<MessageSquare size={13} />}
               onClick={async () => {
                 if (isDemoMode) {
-                  handleDemoAction("SMS envoye");
-                  setSendStatus({ type: "success", msg: "SMS envoye (demo)" }); toast("SMS envoye");
+                  handleDemoAction("SMS envoyé");
+                  setSendStatus({ type: "success", msg: "SMS envoyé (démo)" }); toast("SMS envoyé");
                   guide.showSuggestion("sms-envoye");
                   setSmsBody("");
                   return;
@@ -621,7 +621,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     }),
                   });
                   if (res.ok) {
-                    setSendStatus({ type: "success", msg: "SMS envoye" }); toast("SMS envoye");
+                    setSendStatus({ type: "success", msg: "SMS envoyé" }); toast("SMS envoyé");
                     fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeSms" }) }).catch(() => {});
                     guide.showSuggestion("sms-envoye");
                     setSmsBody("");
@@ -744,10 +744,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               icon={<Phone size={13} />}
               onClick={async () => {
                 if (isDemoMode) {
-                  handleDemoAction("Appel enregistre");
+                  handleDemoAction("Appel enregistré");
                   setShowCallLog(false);
                   setCallNote("");
-                  setSendStatus({ type: "success", msg: "Appel logue (demo)" }); toast("Appel enregistre");
+                  setSendStatus({ type: "success", msg: "Appel logué (démo)" }); toast("Appel enregistré");
                   guide.showSuggestion("appel-logue");
                   return;
                 }
@@ -771,7 +771,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 });
                 setShowCallLog(false);
                 setCallNote("");
-                setSendStatus({ type: "success", msg: "Appel enregistre" }); toast("Appel enregistre");
+                setSendStatus({ type: "success", msg: "Appel enregistré" }); toast("Appel enregistré");
                 guide.showSuggestion("appel-logue");
               }}
               style={{
@@ -794,11 +794,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "SIRET", key: "siret", value: entrepriseData?.siret || client?.siret || "—", Icon: FileText },
               { label: "Contact", key: "contact", value: entrepriseData?.contact || "—", Icon: UserCircle },
               { label: "Email", key: "email", value: entrepriseData?.email || "—", Icon: Mail },
-              { label: "Telephone", key: "telephone", value: formatPhone(entrepriseData?.telephone), Icon: Phone },
+              { label: "Téléphone", key: "telephone", value: formatPhone(entrepriseData?.telephone), Icon: Phone },
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "Prescripteur", key: "prescripteur", value: entrepriseData?.prescripteur || client?.prescripteur || "—", Icon: Building2 },
-              { label: "Depot", key: "depot", value: entrepriseData?.depot || "—", Icon: Building2 },
-              { label: "N carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
+              { label: "Dépôt", key: "depot", value: entrepriseData?.depot || "—", Icon: Building2 },
+              { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
             ].map((f, i) => {
               const saveField = async (val: string) => {
                 const original = f.value === "\u2014" ? "" : f.value;
@@ -871,7 +871,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>
             {[
-              { label: "Interesse TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
+              { label: "Intéressé TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
               { label: "Mise en relation", key: "miseEnRelation", dateKey: "dateMiseEnRelation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation), raw: entrepriseData?.miseEnRelation, options: [{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }] },
             ].map((f, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
@@ -894,7 +894,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 </select>
                 {entrepriseData?.[f.dateKey] && (
                   <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
-                    Modifie le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
+                    Modifié le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
                   </div>
                 )}
                 </div>
@@ -911,7 +911,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
                   {entrepriseData?.[f.dateKey] && (
                     <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
-                      Modifie le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
+                      Modifié le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
                     </div>
                   )}
                 </div>
@@ -985,7 +985,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       disabled={!currentProjet}
                       style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
                     >
-                      <option value="">-- Selectionner --</option>
+                      <option value="">-- Sélectionner --</option>
                       {antennes.map((a) => (
                         <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>
                       ))}
@@ -1080,7 +1080,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   </div>
                   <select value={newProjetForm.chargeeId} onChange={(e) => setNewProjetForm({ ...newProjetForm, chargeeId: e.target.value })}
                     style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
-                    <option value="">Chargee (moi par defaut)</option>
+                    <option value="">Chargée (moi par défaut)</option>
                     {mentionUsers.map((u) => (
                       <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
                     ))}
@@ -1091,11 +1091,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <Button C={C} variant="primary" disabled={!newProjetForm.nom} onClick={async () => {
                     if (!newProjetForm.nom) return;
                     if (isDemoMode) {
-                      handleDemoAction("Projet cree");
+                      handleDemoAction("Projet créé");
                       setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualification ? [{ type: newProjetForm.qualification }] : [], etapes: [] }]);
                       setShowAddProjet(false);
                       setNewProjetForm({ nom: "", qualification: "", chargeeId: "" });
-                      guide.showSuggestion("nouveau-projet"); toast("Projet cree");
+                      guide.showSuggestion("nouveau-projet"); toast("Projet créé");
                       return;
                     }
                     if (!client?.id) return;
@@ -1106,7 +1106,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     if (res.ok) {
                       setShowAddProjet(false);
                       setNewProjetForm({ nom: "", qualification: "", chargeeId: "" });
-                      guide.showSuggestion("nouveau-projet"); toast("Projet cree");
+                      guide.showSuggestion("nouveau-projet"); toast("Projet créé");
                       // Refresh data
                       fetch(`/api/entreprises/${client.id}`).then((r) => r.ok ? r.json() : null).then((data) => {
                         if (data?.projets) setProjets(data.projets);
@@ -1145,8 +1145,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div>
-              <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Documents a fournir</h3>
-              <span style={{ fontSize: 12, color: C.textDim }}>{docsRecu}/{docs.length} recus</span>
+              <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Documents à fournir</h3>
+              <span style={{ fontSize: 12, color: C.textDim }}>{docsRecu}/{docs.length} reçus</span>
             </div>
             {docs.length > 0 && (
               <div data-guide="docs-progress">
@@ -1175,7 +1175,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             }} style={{
               marginBottom: 16, width: "100%", textAlign: "center",
             }}>
-              Generer la checklist documents
+              Générer la checklist documents
             </Button>
           )}
           {docs.map((d, i) => (
@@ -1288,8 +1288,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: activeStep ? C.blue : C.textMuted }}>
-                  Etape {doneCount + (activeStep ? 1 : 0)}/{tracks.length}
-                  {activeStep ? ` — ${activeStep.nom}` : doneCount === tracks.length ? " — Termine" : ""}
+                  Étape {doneCount + (activeStep ? 1 : 0)}/{tracks.length}
+                  {activeStep ? ` — ${activeStep.nom}` : doneCount === tracks.length ? " — Terminé" : ""}
                 </span>
                 <span style={{ fontSize: 11, color: C.textDim }}>{progress}%</span>
               </div>
@@ -1305,7 +1305,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               width: "100%", border: `1px dashed ${C.border}`,
               color: C.textMuted, marginBottom: 12, textAlign: "left",
             }}>
-              {expandedCols.trackDone ? "Masquer" : "Voir"} les {doneCount} etapes terminees
+              {expandedCols.trackDone ? "Masquer" : "Voir"} les {doneCount} étapes terminées
             </Button>
           )}
 
@@ -1340,7 +1340,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                           body: JSON.stringify({ terminee: newDone }),
                         }).catch(() => {});
                       }
-                      if (newDone) { guide.showSuggestion("etape-terminee"); toast("Etape terminee"); }
+                      if (newDone) { guide.showSuggestion("etape-terminee"); toast("Étape terminée"); }
                     }}
                     style={{
                       width: 28, height: 28, borderRadius: "50%",
@@ -1373,13 +1373,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                     <span style={{ fontSize: 11, color: t.active ? C.blue : C.textDim }}>
-                      {t.delai > 0 ? `${t.delai}j` : "Duree variable"}
+                      {t.delai > 0 ? `${t.delai}j` : "Durée variable"}
                       {t.active && " — En cours"}
                     </span>
                   </div>
                   {t.active && t.delai > 0 && (
                     <div style={{ marginTop: 6, padding: "6px 10px", borderRadius: 8, background: C.blueDim, fontSize: 11, color: C.blue }}>
-                      Delai estime {t.delai} jours — alerte si depassement
+                      Délai estimé {t.delai} jours — alerte si dépassement
                     </div>
                   )}
                 </div>
@@ -1465,7 +1465,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setContacts((prev) => [...prev, c]);
                     setNewContact({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
                     setShowAddContact(false);
-                    toast("Contact ajoute");
+                    toast("Contact ajouté");
                   }
                 }}>
                   Créer
@@ -1483,11 +1483,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     <input placeholder="Nom" value={editContact.nom} onChange={(e) => setEditContact({ ...editContact, nom: e.target.value })}
                       style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }} />
-                    <input placeholder="Prenom" value={editContact.prenom} onChange={(e) => setEditContact({ ...editContact, prenom: e.target.value })}
+                    <input placeholder="Prénom" value={editContact.prenom} onChange={(e) => setEditContact({ ...editContact, prenom: e.target.value })}
                       style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }} />
                     <input placeholder="Email" value={editContact.email} onChange={(e) => setEditContact({ ...editContact, email: e.target.value })}
                       style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }} />
-                    <input placeholder="Telephone" value={editContact.telephone} onChange={(e) => setEditContact({ ...editContact, telephone: e.target.value })}
+                    <input placeholder="Téléphone" value={editContact.telephone} onChange={(e) => setEditContact({ ...editContact, telephone: e.target.value })}
                       style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }} />
                     <input placeholder="Fonction" value={editContact.fonction} onChange={(e) => setEditContact({ ...editContact, fonction: e.target.value })}
                       style={{ padding: "7px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", gridColumn: "1 / -1" }} />
@@ -1495,11 +1495,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, marginTop: 8 }}>
                     <Button C={C} variant="ghost" onClick={() => setEditingContactId(null)}>Annuler</Button>
                     <Button C={C} variant="primary" onClick={async () => {
-                      if (isDemoMode) { handleDemoAction("Contact modifie"); setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x)); setEditingContactId(null); toast("Contact modifie"); return; }
+                      if (isDemoMode) { handleDemoAction("Contact modifié"); setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x)); setEditingContactId(null); toast("Contact modifié"); return; }
                       await fetch(`/api/contacts/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editContact) });
                       setContacts((prev) => prev.map((x) => x.id === c.id ? { ...x, nom: editContact.nom, prenom: editContact.prenom, email: editContact.email || null, telephone: editContact.telephone || null, fonction: editContact.fonction || null } : x));
                       setEditingContactId(null);
-                      toast("Contact modifie");
+                      toast("Contact modifié");
                     }}>Enregistrer</Button>
                   </div>
                 </div>
@@ -1517,7 +1517,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   </Button>
                   <Button C={C} variant="danger" size="sm" onClick={async () => {
                     if (!window.confirm("Supprimer ce contact ?")) return;
-                    if (isDemoMode) { handleDemoAction("Contact supprime"); setContacts((prev) => prev.filter((x) => x.id !== c.id)); return; }
+                    if (isDemoMode) { handleDemoAction("Contact supprimé"); setContacts((prev) => prev.filter((x) => x.id !== c.id)); return; }
                     await fetch(`/api/contacts/${c.id}`, { method: "DELETE" });
                     setContacts((prev) => prev.filter((x) => x.id !== c.id));
                   }}>
@@ -1562,11 +1562,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <Button C={C} variant="primary" onClick={async () => {
                   if (!newTache.titre) return;
                   if (isDemoMode) {
-                    handleDemoAction("Tache creee");
+                    handleDemoAction("Tâche créée");
                     setTaches((prev) => [...prev, { id: `demo-tache-${Date.now()}`, titre: newTache.titre, statut: "A_FAIRE", type: newTache.type, dateEcheance: newTache.dateEcheance || null, enRetard: false }]);
                     setNewTache({ titre: "", type: "AUTRE", dateEcheance: "" });
                     setShowAddTache(false);
-                    guide.showSuggestion("tache-creee"); toast("Tache creee");
+                    guide.showSuggestion("tache-creee"); toast("Tâche créée");
                     return;
                   }
                   if (!client?.id) return;
@@ -1579,7 +1579,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setTaches((prev) => [...prev, t]);
                     setNewTache({ titre: "", type: "AUTRE", dateEcheance: "" });
                     setShowAddTache(false);
-                    guide.showSuggestion("tache-creee"); toast("Tache creee");
+                    guide.showSuggestion("tache-creee"); toast("Tâche créée");
                   }
                 }}>
                   Créer
@@ -1627,7 +1627,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
               <Button C={C} variant="danger" size="sm" onClick={async (e) => {
                 e?.stopPropagation();
-                if (!window.confirm("Supprimer cette tache ?")) return;
+                if (!window.confirm("Supprimer cette tâche ?")) return;
                 await fetch(`/api/taches/${t.id}`, { method: "DELETE" });
                 setTaches((prev) => prev.filter((x) => x.id !== t.id));
               }}>
@@ -1741,10 +1741,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 onClick={async () => {
                   if (!newNote.trim() && !noteFile) return;
                   if (isDemoMode) {
-                    handleDemoAction("Note ajoutee");
-                    setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote || `[Piece jointe : ${noteFile?.name}]`, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" } }, ...prev]);
+                    handleDemoAction("Note ajoutée");
+                    setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote || `[Pièce jointe : ${noteFile?.name}]`, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" } }, ...prev]);
                     setNewNote(""); setNoteFile(null);
-                    guide.showSuggestion("note-ajoutee"); toast("Note ajoutee");
+                    guide.showSuggestion("note-ajoutee"); toast("Note ajoutée");
                     return;
                   }
                   if (!client?.id) return;
@@ -1767,7 +1767,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      contenu: newNote || `[Piece jointe : ${fichierNom}]`,
+                      contenu: newNote || `[Pièce jointe : ${fichierNom}]`,
                       entrepriseId: client.id,
                       fichierUrl, fichierNom, fichierTaille,
                     }),
@@ -1776,7 +1776,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     const note = await res.json();
                     setNotes((prev) => [note, ...prev]);
                     setNewNote(""); setNoteFile(null);
-                    guide.showSuggestion("note-ajoutee"); toast("Note ajoutee");
+                    guide.showSuggestion("note-ajoutee"); toast("Note ajoutée");
                   }
                 }}
                 style={{
@@ -1940,7 +1940,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                           fontSize: 12, color: C.blue, textDecoration: "none",
                         }}>
                           <Paperclip size={12} />
-                          {note.fichierNom || "Piece jointe"}
+                          {note.fichierNom || "Pièce jointe"}
                           {note.fichierTaille && (
                             <span style={{ color: C.textDim }}>
                               ({(note.fichierTaille / 1024).toFixed(0)} Ko)

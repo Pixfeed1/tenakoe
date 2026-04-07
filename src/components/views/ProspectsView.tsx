@@ -23,7 +23,7 @@ interface Entreprise {
 const FALLBACK_LABELS: Record<string, string> = {
   NOUVEAU: "Nouveau",
   PRISE_EN_CHARGE: "Prise en charge",
-  PRISE_EN_CHARGE_A_RELANCER: "A relancer",
+  PRISE_EN_CHARGE_A_RELANCER: "À relancer",
 };
 const FALLBACK_COLORS: Record<string, { color: string; bg: string }> = {
   NOUVEAU: { color: "blue", bg: "blueDim" },
@@ -114,7 +114,7 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
           }}
         >
           <option value="">Tous les statuts</option>
-          {(statutsPrise.length > 0 ? statutsPrise : [{ code: "NOUVEAU", nom: "Nouveau" }, { code: "PRISE_EN_CHARGE", nom: "Prise en charge" }, { code: "PRISE_EN_CHARGE_A_RELANCER", nom: "A relancer" }]).map((s) => (
+          {(statutsPrise.length > 0 ? statutsPrise : [{ code: "NOUVEAU", nom: "Nouveau" }, { code: "PRISE_EN_CHARGE", nom: "Prise en charge" }, { code: "PRISE_EN_CHARGE_A_RELANCER", nom: "À relancer" }]).map((s) => (
             <option key={s.code} value={s.code}>{s.nom}</option>
           ))}
         </select>
