@@ -67,7 +67,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newProjetForm, setNewProjetForm] = useState({ nom: "", qualification: "", chargeeId: "" });
   const [qualifSearch, setQualifSearch] = useState("");
   const [qualifResults, setQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
-  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }> }>>([]);
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null }>>([]);
+  const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
   const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
   const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
   const [showCallLog, setShowCallLog] = useState(false);
@@ -272,6 +273,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     fetch("/api/users")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setMentionUsers(data))
+      .catch(() => {});
+
+    fetch("/api/antennes-qualibat")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setAntennes(data))
       .catch(() => {});
 
     // Fetch transmissions as historique
@@ -952,6 +958,70 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 })}
               </div>
             </div>
+          </div>
+
+          {/* Certificateur (Antenne Qualibat) */}
+          <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Certificateur</h3>
+            {(() => {
+              const currentProjet = projets[0];
+              const currentAntenneId = currentProjet?.antenneQualibatId || "";
+              const selectedAntenne = antennes.find((a) => a.id === currentAntenneId);
+              const updateProjet = async (patch: Record<string, unknown>) => {
+                if (!currentProjet?.id || isDemoMode) return;
+                await fetch(`/api/projets/${currentProjet.id}`, {
+                  method: "PATCH", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(patch),
+                });
+                setProjets((prev) => prev.map((p) => p.id === currentProjet.id ? { ...p, ...patch } : p));
+              };
+              return (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Antenne Qualibat</label>
+                    <select
+                      value={currentAntenneId}
+                      onChange={(e) => updateProjet({ antenneQualibatId: e.target.value || null })}
+                      disabled={!currentProjet}
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+                    >
+                      <option value="">-- Selectionner --</option>
+                      {antennes.map((a) => (
+                        <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>
+                      ))}
+                    </select>
+                    {selectedAntenne && (
+                      <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>
+                        {selectedAntenne.email && <div>{selectedAntenne.email}</div>}
+                        {selectedAntenne.telephone && <div>{formatPhone(selectedAntenne.telephone)}</div>}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Interlocuteur</label>
+                    <input
+                      type="text"
+                      value={currentProjet?.interlocuteurQualibat || ""}
+                      onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, interlocuteurQualibat: e.target.value } : p))}
+                      onBlur={(e) => updateProjet({ interlocuteurQualibat: e.target.value || null })}
+                      disabled={!currentProjet}
+                      placeholder="Nom de l'instructeur"
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Date commission</label>
+                    <input
+                      type="date"
+                      value={currentProjet?.dateCommission ? new Date(currentProjet.dateCommission).toISOString().slice(0, 10) : ""}
+                      onChange={(e) => updateProjet({ dateCommission: e.target.value || null })}
+                      disabled={!currentProjet}
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Projets */}

@@ -178,6 +178,10 @@ model Projet {
   entreprise   Entreprise @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
   chargeeId    String?
   chargee      User?   @relation("ChargeeProjet", fields: [chargeeId], references: [id])
+  antenneQualibatId     String?
+  antenneQualibat       AntenneQualibat? @relation(fields: [antenneQualibatId], references: [id])
+  interlocuteurQualibat String?
+  dateCommission        DateTime?
 
   qualifications ProjetQualification[]
   etapes         Etape[]
@@ -185,6 +189,19 @@ model Projet {
   taches         Tache[]
   sourceImport   SourceImport? @default(MANUEL)
   sourceId       String?
+}
+
+model AntenneQualibat {
+  id         String   @id @default(cuid())
+  nom        String   @unique
+  delegation String?
+  delegue    String?
+  adresse    String?
+  telephone  String?
+  email      String?
+  actif      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  projets    Projet[]
 }
 
 model ProjetQualification {

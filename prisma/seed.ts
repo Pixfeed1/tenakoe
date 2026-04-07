@@ -444,6 +444,56 @@ Cordialement,
   console.log("Mail templates created:", mailTemplates.length);
 
   // ========================
+  // ANTENNES QUALIBAT (35 agences)
+  // ========================
+  const antennesQualibat = [
+    { nom: "Agence Paris", delegation: "ILE DE FRANCE", delegue: "Didier LEFEBVRE", adresse: "20 bis rue Boissiere Rdc 75016 PARIS CEDEX 16", telephone: "01 41 19 70 00", email: "agenceparis@qualibat.com" },
+    { nom: "Agence d'Amiens", delegation: "NORD-EST", delegue: "Mylene MOREL", adresse: "2eme etage - Immeuble Le Tanin 34 avenue d'Allemagne 80090 AMIENS", telephone: "03 44 52 79 79", email: "amiens@qualibat.com" },
+    { nom: "Agence d'Angers", delegation: "OUEST", delegue: "Eric GACOGNE", adresse: "81 rue des Ponts de Ce 49000 ANGERS", telephone: "02 41 88 49 38", email: "angers@qualibat.com" },
+    { nom: "Agence d'Angouleme", delegation: "AQUITAINE", delegue: "Sebastien CAVAREC", adresse: "91 boulevard de Bretagne 16710 SAINT-YRIEIX-SUR-CHARENTE", telephone: "05 45 92 15 10", email: "angouleme@qualibat.com" },
+    { nom: "Agence d'Orleans", delegation: "CENTRE VAL DE LOIRE", delegue: "Diego BALADO", adresse: "959 rue de la Bergeresse CS 70606 45166 OLIVET CEDEX", telephone: "02 38 53 43 35", email: "orleans@qualibat.com" },
+    { nom: "Agence de Bellegarde", delegation: "RHONE ALPES", delegue: "Bruno CHAPOUAN", adresse: "188 route de croix Jean Jacques CS0013 01204 VALSERHONE", telephone: "04 50 48 58 35", email: "bellegarde@qualibat.com" },
+    { nom: "Agence de Besancon", delegation: "CENTRE EST", delegue: "Guillaume GRAND", adresse: "Espace Valentin Est Valparc 10 Rue de Franche Comte 25480 ECOLE VALENTIN", telephone: "03 81 47 03 56", email: "besancon@qualibat.com" },
+    { nom: "Agence de Bordeaux", delegation: "AQUITAINE", delegue: "Sebastien CAVAREC", adresse: "Les Bureaux de Bordeaux Lac Batiment 8 4 avenue de Chavailles 33525 BRUGES CEDEX", telephone: "05 56 39 63 65", email: "bordeaux@qualibat.com" },
+    { nom: "Agence de Caen", delegation: "NORMANDIE", delegue: "Vanessa MARIN-COLINO", adresse: "Zone Object'Ifs Sud 1109 Boulevard Charles CROS B.P. 4 14123 IFS", telephone: "02 31 23 84 07", email: "caen@qualibat.com" },
+    { nom: "Agence de Clermont-Ferrand", delegation: "AUVERGNE", delegue: "Jean-Francois REBEYROLE", adresse: "9 Allee Evariste Galois 63170 AUBIERE", telephone: "04 73 35 41 79", email: "clermont-ferrand@qualibat.com" },
+    { nom: "Agence de Dijon", delegation: "CENTRE EST", delegue: "Guillaume GRAND", adresse: "Batiment Le Major 170 Avenue Jean Jaures 21000 DIJON", telephone: "03 80 63 91 90", email: "dijon@qualibat.com" },
+    { nom: "Agence de Grenoble", delegation: "RHONE ALPES", delegue: "Bruno CHAPOUAN", adresse: "23 Avenue Doyen Louis Weil 38000 GRENOBLE", telephone: "04 76 87 39 08", email: "grenoble@qualibat.com" },
+    { nom: "Agence de La Roche-sur-Yon", delegation: "OUEST", delegue: "Eric GACOGNE", adresse: "18 IMPASSE GASTON CHAVATTE 85000 LA-ROCHE-SUR-YON", telephone: "02 51 07 06 85", email: "la-roche-sur-yon@qualibat.com" },
+    { nom: "Agence de Lieusaint", delegation: "ILE DE FRANCE", delegue: "Didier LEFEBVRE", adresse: "13 Avenue Pierre POINT 77127 LIEUSAINT", telephone: "01 82 74 00 18", email: "lieusaint@qualibat.com" },
+    { nom: "Agence de Lille", delegation: "NORD-EST", delegue: "Mylene MOREL", adresse: "272 boulevard Georges Clemenceau B.P. 16013 59706 MARCQ-EN-BAROEUL CEDEX", telephone: "03 20 65 72 60", email: "lille@qualibat.com" },
+    { nom: "Agence de Limoges", delegation: "AQUITAINE", delegue: "Sebastien CAVAREC", adresse: "Centre Regional du Batiment 6 Allee Duke Ellington B.P. 40012 87067 LIMOGES CEDEX 3", telephone: "05 55 11 21 88", email: "limoges@qualibat.com" },
+    { nom: "Agence de Loudeac", delegation: "OUEST", delegue: "Eric GACOGNE", adresse: "2 rue Charles Lansard 22600 LOUDEAC", telephone: "02 96 28 11 75", email: "loudeac@qualibat.com" },
+    { nom: "Agence de Lyon", delegation: "RHONE ALPES", delegue: "Bruno CHAPOUAN", adresse: "16 rue des Brosses Batiment A 1er etage 69100 VILLEURBANNE", telephone: "04 72 44 01 69", email: "lyon@qualibat.com" },
+    { nom: "Agence de Marseille", delegation: "SUD-EST", delegue: "Sabine LERAY-PERIGOT", adresse: "Immeuble Le Prado Farges 2 bis rue Farges 13008 MARSEILLE", telephone: "04 91 71 90 89", email: "marseille@qualibat.com" },
+    { nom: "Agence de Metz", delegation: "EST", delegue: "Jean-Philippe SIBLER", adresse: "1 Rue Pierre Simon De Laplace 57070 METZ", telephone: "03 87 36 38 99", email: "metz@qualibat.com" },
+    { nom: "Agence de Montpellier", delegation: "OCCITANIE", delegue: "Regis DEJEAN", adresse: "61 rue Jacques Fouroux 2e etage 34070 MONTPELLIER", telephone: "04 67 92 15 63", email: "montpellier@qualibat.com" },
+    { nom: "Agence de Mulhouse", delegation: "EST", delegue: "Jean-Philippe SIBLER", adresse: "Maison du Batiment 12 allee Nathan Katz 68086 MULHOUSE CEDEX", telephone: "03 89 36 30 53", email: "mulhouse@qualibat.com" },
+    { nom: "Agence de Macon", delegation: "CENTRE EST", delegue: "Guillaume GRAND", adresse: "94 rue de Lyon 71000 MACON", telephone: "03 85 20 45 60", email: "macon@qualibat.com" },
+    { nom: "Agence de Nancy", delegation: "EST", delegue: "Jean-Philippe SIBLER", adresse: "18 Allee de Longchamp 54600 VILLERS LES NANCY", telephone: "03 83 35 18 17", email: "nancy@qualibat.com" },
+    { nom: "Agence de Nantes", delegation: "OUEST", delegue: "Eric GACOGNE", adresse: "Z.I. de la Vertonne 1 ter Avenue de la Vertonne 44120 VERTOU", telephone: "02 40 12 07 98", email: "nantes@qualibat.com" },
+    { nom: "Agence de Nice", delegation: "SUD-EST", delegue: "Sabine LERAY-PERIGOT", adresse: "208 boulevard du Mercantour Space B B.P. 3076 06202 NICE CEDEX", telephone: "04 93 18 08 29", email: "nice@qualibat.com" },
+    { nom: "Agence de Pau", delegation: "AQUITAINE", delegue: "Sebastien CAVAREC", adresse: "TECHNOPOLE HELIOPARC 2 AVENUE PIERRE ANGOT CS 8011 64053 PAU CEDEX 09", telephone: "05 59 84 29 44", email: "pau@qualibat.com" },
+    { nom: "Agence de Reims", delegation: "EST", delegue: "Jean-Philippe SIBLER", adresse: "9 rue Roland Coffignot 51100 REIMS", telephone: "03 26 88 93 56", email: "reims@qualibat.com" },
+    { nom: "Agence de Rennes", delegation: "OUEST", delegue: "Eric GACOGNE", adresse: "Parc Monier Immeuble Cassiopee 167 Rue de Lorient 35000 RENNES", telephone: "02 99 38 54 25", email: "rennes@qualibat.com" },
+    { nom: "Agence de Rouen", delegation: "NORMANDIE", delegue: "Vanessa MARIN-COLINO", adresse: "Parc des Competences Batiment New Largo Rue des Bois Rond 76410 CLEON", telephone: "02 35 88 03 09", email: "rouen@qualibat.com" },
+    { nom: "Agence de Strasbourg", delegation: "EST", delegue: "Jean-Philippe SIBLER", adresse: "Batiment H22 1er etage 15 rue Jacobi-Netter 67200 STRASBOURG CEDEX", telephone: "03 88 22 94 84", email: "strasbourg@qualibat.com" },
+    { nom: "Agence de Toulon", delegation: "SUD-EST", delegue: "Sabine LERAY-PERIGOT", adresse: "PARC TERTIAIRE VALGORA Bat. C Avenue Alfred Kastler B.P. 70531 83041 TOULON CEDEX 9", telephone: "04 22 07 01 05", email: "toulon@qualibat.com" },
+    { nom: "Agence de Toulouse", delegation: "OCCITANIE", delegue: "Regis DEJEAN", adresse: "109 rue Jean Bart 31670 LABEGE", telephone: "05 34 31 40 66", email: "toulouse@qualibat.com" },
+    { nom: "Agence de Valence", delegation: "RHONE ALPES", delegue: "Bruno CHAPOUAN", adresse: "Immeuble le Sud Batiment A 497 avenue Victor Hugo B.P. 102 26904 VALENCE CEDEX 9", telephone: "04 75 60 02 61", email: "valence@qualibat.com" },
+    { nom: "QUALIBAT REUNION", delegation: "REUNION", delegue: "", adresse: "C/O FRBTP Rue du PONT CS 41051 97404 SAINT-DENIS CEDEX", telephone: "02 62 41 52 45", email: "qualibat-reunion@qualibat.com" },
+  ];
+
+  for (const a of antennesQualibat) {
+    await prisma.antenneQualibat.upsert({
+      where: { nom: a.nom },
+      update: { delegation: a.delegation, delegue: a.delegue, adresse: a.adresse, telephone: a.telephone, email: a.email },
+      create: a,
+    });
+  }
+  console.log("Antennes Qualibat seeded:", antennesQualibat.length);
+
+  // ========================
   // ENTREPRISES EXEMPLES
   // ========================
   const gr24 = await prisma.entreprise.upsert({

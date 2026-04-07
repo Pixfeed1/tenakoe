@@ -12,7 +12,7 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { GuideTooltip } from "@/components/GuideSystem";
 
-type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "notifications" | "import" | "securite" | "compte";
+type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "antennes" | "notifications" | "import" | "securite" | "compte";
 
 const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }> = [
   { id: "utilisateurs", label: "Utilisateurs", Icon: Users },
@@ -21,6 +21,7 @@ const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: n
   { id: "templates", label: "Templates mails", Icon: Mail },
   { id: "tracks", label: "Feuilles de route", Icon: ClipboardList },
   { id: "documents", label: "Documents", Icon: FileText },
+  { id: "antennes", label: "Antennes Qualibat", Icon: Building2 },
   { id: "notifications", label: "Notifications", Icon: Bell },
   { id: "import", label: "Import / Export", Icon: Download },
   { id: "securite", label: "Securite", Icon: Shield },
@@ -66,6 +67,7 @@ export function ParametresView({ C }: { C: Theme }) {
       {tab === "documents" && <GuideTooltip id="param-docs" C={C}><DocumentsTab C={C} /></GuideTooltip>}
       {tab === "notifications" && <GuideTooltip id="param-notifs" C={C}><NotificationsTab C={C} /></GuideTooltip>}
       {tab === "import" && <ImportExportTab C={C} />}
+      {tab === "antennes" && <AntennesQualibatTab C={C} />}
       {tab === "securite" && <SecuriteTab C={C} />}
       {tab === "compte" && <MonCompteTab C={C} />}
     </>
@@ -1155,6 +1157,117 @@ function MonCompteTab({ C }: { C: Theme }) {
             <Button C={C} variant="primary" onClick={save} loading={saving}>Sauvegarder</Button>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ===================== ANTENNES QUALIBAT =====================
+interface Antenne {
+  id: string;
+  nom: string;
+  delegation: string | null;
+  delegue: string | null;
+  adresse: string | null;
+  telephone: string | null;
+  email: string | null;
+  actif: boolean;
+}
+
+function AntennesQualibatTab({ C }: { C: Theme }) {
+  const { toast } = useToast();
+  const [antennes, setAntennes] = useState<Antenne[]>([]);
+  const [search, setSearch] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ nom: "", delegation: "", delegue: "", adresse: "", telephone: "", email: "" });
+
+  useEffect(() => {
+    fetch("/api/antennes-qualibat").then((r) => r.ok ? r.json() : []).then(setAntennes).catch(() => {});
+  }, []);
+
+  const addAntenne = async () => {
+    if (!form.nom.trim()) return;
+    const res = await fetch("/api/antennes-qualibat", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    if (res.ok) {
+      const a = await res.json();
+      setAntennes((p) => [...p, a].sort((x, y) => x.nom.localeCompare(y.nom)));
+      setForm({ nom: "", delegation: "", delegue: "", adresse: "", telephone: "", email: "" });
+      setShowAdd(false);
+      toast("Antenne ajoutee");
+    }
+  };
+
+  const toggleActif = async (a: Antenne) => {
+    const res = await fetch("/api/antennes-qualibat", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: a.id, actif: !a.actif }),
+    });
+    if (res.ok) setAntennes((p) => p.map((x) => x.id === a.id ? { ...x, actif: !a.actif } : x));
+  };
+
+  const filtered = search
+    ? antennes.filter((a) => a.nom.toLowerCase().includes(search.toLowerCase()) || (a.delegation || "").toLowerCase().includes(search.toLowerCase()))
+    : antennes;
+
+  const iStyle = inputStyle(C);
+
+  return (
+    <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Antennes Qualibat ({antennes.length})</h3>
+        <Button C={C} variant="primary" size="sm" onClick={() => setShowAdd(!showAdd)} icon={<Plus size={12} />}>Ajouter</Button>
+      </div>
+
+      <input
+        placeholder="Rechercher par nom ou delegation..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ ...iStyle, marginBottom: 12 }}
+      />
+
+      {showAdd && (
+        <div style={{ padding: 14, borderRadius: 10, background: C.bg, border: `1px dashed ${C.border}`, marginBottom: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+            <input placeholder="Nom *" value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })} style={iStyle} />
+            <input placeholder="Delegation" value={form.delegation} onChange={(e) => setForm({ ...form, delegation: e.target.value })} style={iStyle} />
+            <input placeholder="Delegue" value={form.delegue} onChange={(e) => setForm({ ...form, delegue: e.target.value })} style={iStyle} />
+            <input placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={iStyle} />
+            <input placeholder="Telephone" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} style={iStyle} />
+            <input placeholder="Adresse" value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} style={iStyle} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <Button C={C} variant="ghost" size="sm" onClick={() => setShowAdd(false)}>Annuler</Button>
+            <Button C={C} variant="primary" size="sm" onClick={addAntenne} disabled={!form.nom.trim()}>Creer</Button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ maxHeight: 600, overflowY: "auto" }}>
+        {filtered.map((a) => (
+          <div key={a.id} style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, opacity: a.actif ? 1 : 0.5 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{a.nom}</div>
+                <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>
+                  {a.delegation && <span>{a.delegation}</span>}
+                  {a.delegue && <span> · {a.delegue}</span>}
+                </div>
+                <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+                  {a.email && <span>{a.email}</span>}
+                  {a.telephone && <span> · {a.telephone}</span>}
+                </div>
+                {a.adresse && <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>{a.adresse}</div>}
+              </div>
+              <Button C={C} variant={a.actif ? "ghost" : "primary"} size="sm" onClick={() => toggleActif(a)}>
+                {a.actif ? "Archiver" : "Reactiver"}
+              </Button>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucune antenne</div>}
       </div>
     </div>
   );
