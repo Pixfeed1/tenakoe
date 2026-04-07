@@ -56,6 +56,10 @@ export async function POST(
       orderBy: { ordre: "asc" },
     });
     for (const tpl of docsSpecifiques) {
+      const exists = await prisma.document.findFirst({
+        where: { entrepriseId: projet.entrepriseId, nom: tpl.nom },
+      });
+      if (exists) continue;
       await prisma.document.create({
         data: {
           nom: tpl.nom,

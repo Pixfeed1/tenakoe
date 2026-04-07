@@ -33,50 +33,56 @@ export async function convertToClient(entrepriseId: string) {
 
   // 2. Générer les documents depuis les templates
   let docsCreated = 0;
-  if (entreprise.documents.length === 0) {
-    // Tronc commun
-    const troncCommun = await prisma.documentTemplate.findMany({
-      where: { type: "TRONC_COMMUN" },
+  // Tronc commun
+  const troncCommun = await prisma.documentTemplate.findMany({
+    where: { type: "TRONC_COMMUN" },
+    orderBy: { ordre: "asc" },
+  });
+
+  for (const tpl of troncCommun) {
+    const exists = await prisma.document.findFirst({
+      where: { entrepriseId, nom: tpl.nom },
+    });
+    if (exists) continue;
+    await prisma.document.create({
+      data: {
+        nom: tpl.nom,
+        type: "TRONC_COMMUN",
+        entrepriseId,
+        projetId: projet.id,
+        dateDemande: new Date(),
+      },
+    });
+    docsCreated++;
+  }
+
+  // Specifiques a la qualification
+  if (qualification) {
+    const specifiques = await prisma.documentTemplate.findMany({
+      where: { type: "SPECIFIQUE", qualification: qualification as TypeQualification },
       orderBy: { ordre: "asc" },
     });
 
-    for (const tpl of troncCommun) {
+    for (const tpl of specifiques) {
+      const exists = await prisma.document.findFirst({
+        where: { entrepriseId, nom: tpl.nom },
+      });
+      if (exists) continue;
       await prisma.document.create({
         data: {
           nom: tpl.nom,
-          type: "TRONC_COMMUN",
+          type: "SPECIFIQUE",
           entrepriseId,
           projetId: projet.id,
+          qualificationAssociee: qualification as TypeQualification,
           dateDemande: new Date(),
         },
       });
       docsCreated++;
     }
-
-    // Spécifiques à la qualification
-    if (qualification) {
-      const specifiques = await prisma.documentTemplate.findMany({
-        where: { type: "SPECIFIQUE", qualification: qualification as TypeQualification },
-        orderBy: { ordre: "asc" },
-      });
-
-      for (const tpl of specifiques) {
-        await prisma.document.create({
-          data: {
-            nom: tpl.nom,
-            type: "SPECIFIQUE",
-            entrepriseId,
-            projetId: projet.id,
-            qualificationAssociee: qualification as TypeQualification,
-            dateDemande: new Date(),
-          },
-        });
-        docsCreated++;
-      }
-    }
   }
 
-  // 3. Générer la feuille de route depuis le template
+  // 3. Generer la feuille de route depuis le template
   let etapesCreated = 0;
   if (projet.etapes.length === 0) {
     // Chercher un template qui correspond à la qualification
