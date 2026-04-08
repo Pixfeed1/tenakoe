@@ -237,6 +237,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           miseEnRelation: data.miseEnRelation || "SANS_OBJET",
           miseEnRelationAutre: data.miseEnRelationAutre || "",
           formationsCommentaire: data.formationsCommentaire || "",
+          alerte1Envoyee: data.alerte1Envoyee ? "true" : "false",
+          dateAlerte1: data.dateAlerte1 || "",
+          alerte2Envoyee: data.alerte2Envoyee ? "true" : "false",
+          dateAlerte2: data.dateAlerte2 || "",
+          mailAbandonEnvoye: data.mailAbandonEnvoye ? "true" : "false",
+          dateMailAbandon: data.dateMailAbandon || "",
           depot: data.depot || "",
           numeroCarte: data.numeroCarte || "",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
@@ -1087,6 +1093,55 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 </div>
               );
             })()}
+          </div>
+
+          {/* Procédure alerte avant abandon */}
+          <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Procédure alerte avant abandon</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                { key: "alerte1Envoyee", dateKey: "dateAlerte1", label: "Alerte 1 envoyée" },
+                { key: "alerte2Envoyee", dateKey: "dateAlerte2", label: "Alerte 2 envoyée" },
+                { key: "mailAbandonEnvoye", dateKey: "dateMailAbandon", label: "Mail abandon envoyé" },
+              ].map((f) => {
+                const checked = entrepriseData?.[f.key] === "true";
+                const date = entrepriseData?.[f.dateKey];
+                return (
+                  <label key={f.key} onClick={async () => {
+                    if (!client?.id || isDemoMode) return;
+                    const newVal = !checked;
+                    const newDate = newVal ? new Date().toISOString() : "";
+                    setEntrepriseData((prev) => prev ? { ...prev, [f.key]: String(newVal), [f.dateKey]: newDate } : prev);
+                    await fetch(`/api/entreprises/${client.id}`, {
+                      method: "PATCH", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ [f.key]: newVal }),
+                    }).catch(() => {});
+                  }} style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                    borderRadius: 8, cursor: "pointer",
+                    background: checked ? C.accentDim : C.bg,
+                    border: `1px solid ${checked ? C.accent + "40" : C.border}`,
+                    transition: "all 0.15s",
+                  }}>
+                    <div style={{
+                      width: 16, height: 16, borderRadius: 4,
+                      border: `2px solid ${checked ? C.accent : C.border}`,
+                      background: checked ? C.accent : "transparent",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      {checked && <Check size={10} color="#fff" strokeWidth={3} />}
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text, flex: 1 }}>{f.label}</span>
+                    {date && (
+                      <span style={{ fontSize: 11, color: C.textDim }}>
+                        le {new Date(date).toLocaleDateString("fr-FR")}
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
           </div>
 
           {/* Projets */}

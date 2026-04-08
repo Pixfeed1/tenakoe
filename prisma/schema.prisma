@@ -89,6 +89,12 @@ model Entreprise {
   miseEnRelation     MiseEnRelation?    @default(SANS_OBJET)
   miseEnRelationAutre String?
   formationsCommentaire String?
+  alerte1Envoyee     Boolean            @default(false)
+  dateAlerte1        DateTime?
+  alerte2Envoyee     Boolean            @default(false)
+  dateAlerte2        DateTime?
+  mailAbandonEnvoye  Boolean            @default(false)
+  dateMailAbandon    DateTime?
   statutPrise        String             @default("NOUVEAU")
   statutFacturation  String?            @default("DEVIS_A_FAIRE")
   dejaReferentRGE    Boolean            @default(false)
