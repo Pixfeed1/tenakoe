@@ -236,6 +236,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           statutFacturation: data.statutFacturation || "",
           miseEnRelation: data.miseEnRelation || "SANS_OBJET",
           miseEnRelationAutre: data.miseEnRelationAutre || "",
+          formationsCommentaire: data.formationsCommentaire || "",
           depot: data.depot || "",
           numeroCarte: data.numeroCarte || "",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
@@ -977,6 +978,25 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   );
                 })}
               </div>
+              <textarea
+                key={`formationsCommentaire-${entrepriseData?.formationsCommentaire || ""}`}
+                placeholder="Autres formations / commentaires"
+                defaultValue={entrepriseData?.formationsCommentaire || ""}
+                onBlur={async (e) => {
+                  if (!client?.id) return;
+                  const val = e.target.value;
+                  await fetch(`/api/entreprises/${client.id}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ formationsCommentaire: val }),
+                  });
+                  setEntrepriseData((prev) => prev ? { ...prev, formationsCommentaire: val } : prev);
+                }}
+                style={{
+                  marginTop: 10, width: "100%", minHeight: 60, padding: "8px 10px",
+                  borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg,
+                  color: C.text, fontSize: 12, fontFamily: "inherit", resize: "vertical",
+                }}
+              />
             </div>
           </div>
 

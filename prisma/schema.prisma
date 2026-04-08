@@ -88,6 +88,7 @@ model Entreprise {
   interesseTNK       InteretTNK?        @default(NSP)
   miseEnRelation     MiseEnRelation?    @default(SANS_OBJET)
   miseEnRelationAutre String?
+  formationsCommentaire String?
   statutPrise        String             @default("NOUVEAU")
   statutFacturation  String?            @default("DEVIS_A_FAIRE")
   dejaReferentRGE    Boolean            @default(false)

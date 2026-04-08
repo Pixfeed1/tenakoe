@@ -56,6 +56,7 @@ export async function PATCH(
   if (body.interesseTNK !== undefined) { data.interesseTNK = body.interesseTNK; data.dateInteresseTNK = new Date(); }
   if (body.miseEnRelation !== undefined) { data.miseEnRelation = body.miseEnRelation; data.dateMiseEnRelation = new Date(); }
   if (body.miseEnRelationAutre !== undefined) data.miseEnRelationAutre = body.miseEnRelationAutre;
+  if (body.formationsCommentaire !== undefined) data.formationsCommentaire = body.formationsCommentaire;
   if (body.dejaReferentRGE !== undefined) data.dejaReferentRGE = body.dejaReferentRGE;
   if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
   if (body.depot !== undefined) data.depot = body.depot;
