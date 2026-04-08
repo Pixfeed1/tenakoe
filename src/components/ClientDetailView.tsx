@@ -59,7 +59,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mailTemplates, setMailTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string; categorie: string | null }>>([]);
   const [contacts, setContacts] = useState<Array<{ id: string; nom: string; prenom: string; email: string | null; telephone: string | null; fonction: string | null }>>([]);
-  const [taches, setTaches] = useState<Array<{ id: string; titre: string; statut: string; type: string; dateEcheance: string | null; enRetard: boolean }>>([]);
+  const [taches, setTaches] = useState<Array<{ id: string; titre: string; statut: string; type: string; dateEcheance: string | null; enRetard: boolean; assignee?: { id: string; prenom: string; nom: string } | null }>>([]);
   const [showAddContact, setShowAddContact] = useState(false);
   const [newContact, setNewContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [showAddTache, setShowAddTache] = useState(false);
@@ -69,7 +69,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [qualifResults, setQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
   const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null }>>([]);
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
-  const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
+  const [newTache, setNewTache] = useState<{ titre: string; type: string; dateEcheance: string; assigneeId: string }>({ titre: "", type: "AUTRE", dateEcheance: "", assigneeId: "" });
   const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
   const [showCallLog, setShowCallLog] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -1662,7 +1662,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
           {showAddTache && (
             <div style={{ padding: 16, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 16 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 10 }}>
                 <input placeholder="Titre de la tâche *" value={newTache.titre} onChange={(e) => setNewTache({ ...newTache, titre: e.target.value })}
                   style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
                 <select value={newTache.type} onChange={(e) => setNewTache({ ...newTache, type: e.target.value })}
@@ -1674,6 +1674,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <option value="SUIVI">Suivi</option>
                   <option value="AUTRE">Autre</option>
                 </select>
+                <select value={newTache.assigneeId} onChange={(e) => setNewTache({ ...newTache, assigneeId: e.target.value })}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
+                  <option value="">Assigner à…</option>
+                  {mentionUsers.map((u) => (
+                    <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+                  ))}
+                </select>
                 <input type="date" value={newTache.dateEcheance} onChange={(e) => setNewTache({ ...newTache, dateEcheance: e.target.value })}
                   style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }} />
               </div>
@@ -1683,8 +1690,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   if (!newTache.titre) return;
                   if (isDemoMode) {
                     handleDemoAction("Tâche créée");
-                    setTaches((prev) => [...prev, { id: `demo-tache-${Date.now()}`, titre: newTache.titre, statut: "A_FAIRE", type: newTache.type, dateEcheance: newTache.dateEcheance || null, enRetard: false }]);
-                    setNewTache({ titre: "", type: "AUTRE", dateEcheance: "" });
+                    const demoAssignee = newTache.assigneeId ? mentionUsers.find((u) => u.id === newTache.assigneeId) : null;
+                    setTaches((prev) => [...prev, { id: `demo-tache-${Date.now()}`, titre: newTache.titre, statut: "A_FAIRE", type: newTache.type, dateEcheance: newTache.dateEcheance || null, enRetard: false, assignee: demoAssignee || null }]);
+                    setNewTache({ titre: "", type: "AUTRE", dateEcheance: "", assigneeId: "" });
                     setShowAddTache(false);
                     guide.showSuggestion("tache-creee"); toast("Tâche créée");
                     return;
@@ -1692,12 +1700,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   if (!client?.id) return;
                   const res = await fetch("/api/taches", {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ...newTache, entrepriseId: client.id, dateEcheance: newTache.dateEcheance || null }),
+                    body: JSON.stringify({ ...newTache, entrepriseId: client.id, dateEcheance: newTache.dateEcheance || null, assigneeId: newTache.assigneeId || null }),
                   });
                   if (res.ok) {
                     const t = await res.json();
                     setTaches((prev) => [...prev, t]);
-                    setNewTache({ titre: "", type: "AUTRE", dateEcheance: "" });
+                    setNewTache({ titre: "", type: "AUTRE", dateEcheance: "", assigneeId: "" });
                     setShowAddTache(false);
                     guide.showSuggestion("tache-creee"); toast("Tâche créée");
                   }
@@ -1741,7 +1749,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   {t.titre}
                 </div>
                 <div style={{ fontSize: 11, color: C.textDim }}>
-                  {t.type}{t.dateEcheance ? ` · Échéance : ${new Date(t.dateEcheance).toLocaleDateString("fr-FR")}` : ""}
+                  {t.type}
+                  {t.assignee ? ` · Assignée à ${t.assignee.prenom} ${t.assignee.nom}` : ""}
+                  {t.dateEcheance ? ` · Échéance : ${new Date(t.dateEcheance).toLocaleDateString("fr-FR")}` : ""}
                   {t.enRetard && <span style={{ color: C.danger, fontWeight: 600 }}> · En retard</span>}
                 </div>
               </div>

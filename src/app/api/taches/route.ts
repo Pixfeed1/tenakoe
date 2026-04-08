@@ -45,6 +45,9 @@ export async function POST(request: NextRequest) {
       entrepriseId: body.entrepriseId,
       projetId: body.projetId,
     },
+    include: {
+      assignee: { select: { id: true, nom: true, prenom: true } },
+    },
   });
 
   return NextResponse.json(tache, { status: 201 });
