@@ -87,6 +87,7 @@ model Entreprise {
   depot              String?
   interesseTNK       InteretTNK?        @default(NSP)
   miseEnRelation     MiseEnRelation?    @default(SANS_OBJET)
+  miseEnRelationAutre String?
   statutPrise        String             @default("NOUVEAU")
   statutFacturation  String?            @default("DEVIS_A_FAIRE")
   dejaReferentRGE    Boolean            @default(false)
@@ -152,6 +153,8 @@ enum MiseEnRelation {
   APEE
   CEEF
   HORMEE
+  FORMATION_RENOPERF
+  AUTRE
 }
 
 enum SourceImport {

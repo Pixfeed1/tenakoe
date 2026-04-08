@@ -1,0 +1,3 @@
+ALTER TYPE "MiseEnRelation" ADD VALUE 'FORMATION_RENOPERF';
+ALTER TYPE "MiseEnRelation" ADD VALUE 'AUTRE';
+ALTER TABLE "Entreprise" ADD COLUMN "miseEnRelationAutre" TEXT;

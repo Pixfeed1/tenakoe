@@ -235,6 +235,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           interesseTNK: data.interesseTNK || "NSP",
           statutFacturation: data.statutFacturation || "",
           miseEnRelation: data.miseEnRelation || "SANS_OBJET",
+          miseEnRelationAutre: data.miseEnRelationAutre || "",
           depot: data.depot || "",
           numeroCarte: data.numeroCarte || "",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
@@ -872,26 +873,45 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>
             {[
               { label: "Intéressé TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
-              { label: "Mise en relation", key: "miseEnRelation", dateKey: "dateMiseEnRelation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation), raw: entrepriseData?.miseEnRelation, options: [{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }] },
+              { label: "Mise en relation", key: "miseEnRelation", dateKey: "dateMiseEnRelation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation), raw: entrepriseData?.miseEnRelation, options: [{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }, { v: "FORMATION_RENOPERF", l: "Formation Renoperf" }, { v: "AUTRE", l: "Autre" }] },
             ].map((f, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
                 <span style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
                 <div>
-                <select
-                  value={f.raw || ""}
-                  onChange={async (e) => {
-                    if (!client?.id) return;
-                    const val = e.target.value;
-                    await fetch(`/api/entreprises/${client.id}`, {
-                      method: "PATCH", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ [f.key]: val }),
-                    });
-                    setEntrepriseData((prev) => prev ? { ...prev, [f.key]: val, [f.dateKey]: new Date().toISOString() } : prev);
-                  }}
-                  style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
-                >
-                  {f.options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
-                </select>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <select
+                    value={f.raw || ""}
+                    onChange={async (e) => {
+                      if (!client?.id) return;
+                      const val = e.target.value;
+                      await fetch(`/api/entreprises/${client.id}`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ [f.key]: val }),
+                      });
+                      setEntrepriseData((prev) => prev ? { ...prev, [f.key]: val, [f.dateKey]: new Date().toISOString() } : prev);
+                    }}
+                    style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
+                  >
+                    {f.options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+                  </select>
+                  {f.key === "miseEnRelation" && f.raw === "AUTRE" && (
+                    <input
+                      type="text"
+                      placeholder="Préciser…"
+                      defaultValue={entrepriseData?.miseEnRelationAutre || ""}
+                      onBlur={async (e) => {
+                        if (!client?.id) return;
+                        const val = e.target.value;
+                        await fetch(`/api/entreprises/${client.id}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ miseEnRelationAutre: val }),
+                        });
+                        setEntrepriseData((prev) => prev ? { ...prev, miseEnRelationAutre: val } : prev);
+                      }}
+                      style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, width: 140 }}
+                    />
+                  )}
+                </div>
                 {entrepriseData?.[f.dateKey] && (
                   <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
                     Modifié le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
@@ -2014,6 +2034,8 @@ function formatMiseEnRelation(val?: string): string {
     APEE: "APEE",
     CEEF: "CEEF",
     HORMEE: "HORMEE",
+    FORMATION_RENOPERF: "Formation Renoperf",
+    AUTRE: "Autre",
   };
   return map[val || ""] || "—";
 }
