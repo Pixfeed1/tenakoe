@@ -586,6 +586,10 @@ Cordialement,
   // Documents pour GR 24
   for (let i = 0; i < docsCommuns.length; i++) {
     const recu = i < 10 && i !== 5; // 10 sur 14 recus, sauf l'index 5
+    const exists = await prisma.document.findFirst({
+      where: { entrepriseId: gr24.id, nom: docsCommuns[i] },
+    });
+    if (exists) continue;
     await prisma.document.create({
       data: {
         nom: docsCommuns[i],

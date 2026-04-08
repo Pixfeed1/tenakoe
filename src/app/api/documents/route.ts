@@ -35,6 +35,15 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
+  if (body.entrepriseId && body.nom) {
+    const exists = await prisma.document.findFirst({
+      where: { entrepriseId: body.entrepriseId, nom: body.nom },
+    });
+    if (exists) {
+      return NextResponse.json({ error: "Un document avec ce nom existe déjà", document: exists }, { status: 409 });
+    }
+  }
+
   const document = await prisma.document.create({
     data: {
       nom: body.nom,
