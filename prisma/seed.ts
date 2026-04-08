@@ -155,6 +155,28 @@ async function main() {
   console.log("Document templates created:", docsCommuns.length);
 
   // ========================
+  // DOCUMENTS SPÉCIFIQUES PAR QUALIFICATION QUALIBAT
+  // ========================
+  const { DOCS_SPECIFIQUES } = await import("./docs-specifiques-qualibat");
+  for (const doc of DOCS_SPECIFIQUES) {
+    const slug = doc.nom.slice(0, 30).replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
+    const id = `dt-spec-${doc.qualification}-${slug}`;
+    await prisma.documentTemplate.upsert({
+      where: { id },
+      update: { nom: doc.nom, qualification: doc.qualification, obligatoire: doc.obligatoire },
+      create: {
+        id,
+        nom: doc.nom,
+        type: "SPECIFIQUE",
+        qualification: doc.qualification,
+        obligatoire: doc.obligatoire,
+        ordre: 0,
+      },
+    });
+  }
+  console.log("Documents spécifiques seeded:", DOCS_SPECIFIQUES.length);
+
+  // ========================
   // TEMPLATE FEUILLE DE ROUTE (Qualibat RGE — 22 etapes)
   // ========================
   // Clean old etapes if re-running seed
