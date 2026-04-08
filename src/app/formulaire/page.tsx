@@ -140,7 +140,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadow; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  {config.logoUrl && <img src={config.logoUrl} alt={config.nom} style={{ width: 40, height: 40, objectFit: "contain" }} />}
+                  {config.logoUrl && <img src={config.logoUrl} alt={config.nom} style={{ width: 48, height: 48, objectFit: "contain" }} />}
                   <div>
                     <div style={{ fontSize: 16, fontWeight: 600, color: C.text }}>{config.nom}</div>
                     <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>{config.type}</div>
@@ -235,7 +235,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               {(() => {
                 const cfg = prescripteurConfigs.find((c) => c.type === resolvedPrescripteur);
                 if (cfg?.logoUrl) {
-                  return <img src={cfg.logoUrl} alt={cfg.nom} style={{ width: 32, height: 32, objectFit: "contain" }} />;
+                  return <img src={cfg.logoUrl} alt={cfg.nom} style={{ width: 48, height: 48, objectFit: "contain" }} />;
                 }
                 return <Building2 size={16} color={C.blue} />;
               })()}
