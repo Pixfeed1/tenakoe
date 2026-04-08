@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const type = body.nom.toUpperCase().replace(/[^A-Z0-9]/g, "_").replace(/_+/g, "_");
 
   const config = await prisma.prescripteurConfig.create({
-    data: { type, nom: body.nom },
+    data: { type, nom: body.nom, logoUrl: body.logoUrl || null },
   });
   return NextResponse.json(config, { status: 201 });
 }
@@ -35,6 +35,7 @@ export async function PATCH(request: NextRequest) {
   const data: Record<string, unknown> = {};
   if (body.actif !== undefined) data.actif = body.actif;
   if (body.nom !== undefined) data.nom = body.nom;
+  if (body.logoUrl !== undefined) data.logoUrl = body.logoUrl;
 
   const config = await prisma.prescripteurConfig.update({ where: { id: body.id }, data });
   return NextResponse.json(config);

@@ -446,6 +446,7 @@ model LeadFormulaire {
   siret            String?
   email            String?
   telephone        String?
+  telephone2       String?
   adresse          String?
   prescripteur     String
   depot            String?
@@ -541,10 +542,11 @@ model WebhookEvenement {
 // ============================================================
 
 model PrescripteurConfig {
-  id     String       @id @default(cuid())
-  type   String @unique
-  nom    String
-  actif  Boolean      @default(true)
+  id      String  @id @default(cuid())
+  type    String  @unique
+  nom     String
+  logoUrl String?
+  actif   Boolean @default(true)
 }
 
 model DepotConfig {

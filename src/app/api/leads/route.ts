@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
       siret: body.siret || null,
       email: body.email || null,
       telephone: body.telephone || null,
+      telephone2: body.telephone2 || null,
       adresse: body.adresse || null,
       prescripteur: body.prescripteur,
       depot: body.depot || null,

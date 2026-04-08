@@ -21,11 +21,11 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [ready, setReady] = useState(false);
   const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
   const [choosingPrescripteur, setChoosingPrescripteur] = useState(false);
-  const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; actif: boolean }>>([]);
+  const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>>([]);
   const [depots, setDepots] = useState<Array<{ id: string; nom: string }>>([]);
   const [form, setForm] = useState({
     nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
-    email: "", telephone: "", adresse: "", prescripteur: "PDB",
+    email: "", telephone: "", telephone2: "", adresse: "", prescripteur: "PDB",
     depot: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false,
     nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
@@ -139,9 +139,12 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadowHover; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadow; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
               >
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: C.text }}>{config.nom}</div>
-                  <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>{config.type}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  {config.logoUrl && <img src={config.logoUrl} alt={config.nom} style={{ width: 40, height: 40, objectFit: "contain" }} />}
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: C.text }}>{config.nom}</div>
+                    <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>{config.type}</div>
+                  </div>
                 </div>
                 <ChevronRight size={18} color={C.textDim} />
               </button>
@@ -181,7 +184,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           <button
             onClick={() => { setSubmitted(false); setForm({
               nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
-              email: "", telephone: "", adresse: "", prescripteur: form.prescripteur,
+              email: "", telephone: "", telephone2: "", adresse: "", prescripteur: form.prescripteur,
               depot: form.depot, numeroCarte: form.numeroCarte, dejaReferentRGE: false,
               commentaires: "", acceptePartage: false,
               nomConseiller: form.nomConseiller, prenomConseiller: form.prenomConseiller,
@@ -226,39 +229,35 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Conseiller */}
+          {/* Enseigne + coordonnées conseiller (fusionné) */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <UserCircle size={16} color={C.accent} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Vos coordonnées (conseiller)</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              {(() => {
+                const cfg = prescripteurConfigs.find((c) => c.type === resolvedPrescripteur);
+                if (cfg?.logoUrl) {
+                  return <img src={cfg.logoUrl} alt={cfg.nom} style={{ width: 32, height: 32, objectFit: "contain" }} />;
+                }
+                return <Building2 size={16} color={C.blue} />;
+              })()}
+              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
+                {resolvedPrescripteur ? `${getPrescripteurName(resolvedPrescripteur)} — Coordonnées conseiller` : "Votre enseigne — Coordonnées conseiller"}
+              </span>
             </div>
+            {!resolvedPrescripteur && (
+              <div style={{ marginBottom: 12 }}>
+                <label style={labelStyle}>Prescripteur *</label>
+                <select style={inputStyle} value={form.prescripteur} onChange={(e) => set("prescripteur", e.target.value)}>
+                  <option value="">Choisir...</option>
+                  {prescripteurConfigs.map((c) => <option key={c.type} value={c.type}>{c.nom}</option>)}
+                </select>
+              </div>
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
               <div><label style={labelStyle}>Votre nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomConseiller} onChange={(e) => set("nomConseiller", e.target.value)} required /></div>
               <div><label style={labelStyle}>Votre prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomConseiller} onChange={(e) => set("prenomConseiller", e.target.value)} required /></div>
               <div><label style={labelStyle}>Votre email *</label><input type="email" style={inputStyle} placeholder="email@laplateforme.com" value={form.emailConseiller} onChange={(e) => set("emailConseiller", e.target.value)} required /></div>
               <div><label style={labelStyle}>Votre téléphone</label><input style={inputStyle} placeholder="06 12 34 56 78" value={form.telephoneConseiller} onChange={(e) => set("telephoneConseiller", e.target.value)} /></div>
-            </div>
-          </div>
-
-          {/* Prescripteur */}
-          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <Building2 size={16} color={C.blue} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>
-                {resolvedPrescripteur ? getPrescripteurName(resolvedPrescripteur) : "Votre enseigne"}
-              </span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
-              {!resolvedPrescripteur && (
-                <div>
-                  <label style={labelStyle}>Prescripteur *</label>
-                  <select style={inputStyle} value={form.prescripteur} onChange={(e) => set("prescripteur", e.target.value)}>
-                    <option value="">Choisir...</option>
-                    {prescripteurConfigs.map((c) => <option key={c.type} value={c.type}>{c.nom}</option>)}
-                  </select>
-                </div>
-              )}
-              <div>
+              <div style={{ gridColumn: "1 / -1" }}>
                 <label style={labelStyle}>Dépôt</label>
                 {depots.length > 0 ? (
                   <select style={inputStyle} value={form.depot} onChange={(e) => set("depot", e.target.value)}>
@@ -269,13 +268,10 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                   <input style={inputStyle} placeholder="Ex: Paris 15" value={form.depot} onChange={(e) => set("depot", e.target.value)} />
                 )}
               </div>
-              <div>
-                <label style={labelStyle}>N° carte</label>
-                <input style={inputStyle} placeholder="N° carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} />
-              </div>
             </div>
           </div>
 
+          {/* Artisan */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <UserCircle size={16} color={C.accent} />
@@ -286,9 +282,11 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomArtisan} onChange={(e) => set("prenomArtisan", e.target.value)} required /></div>
               <div><label style={labelStyle}>Entreprise</label><input style={inputStyle} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value)} /></div>
               <div><label style={labelStyle}>SIRET</label><input style={inputStyle} placeholder="N° SIRET" value={form.siret} onChange={(e) => set("siret", e.target.value)} /></div>
+              <div><label style={labelStyle}>N° carte</label><input style={inputStyle} placeholder="N° carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} /></div>
             </div>
           </div>
 
+          {/* Coordonnées artisan */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <Phone size={16} color={C.purple} />
@@ -307,6 +305,13 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 <div style={{ position: "relative" }}>
                   <Phone size={14} color={C.textDim} style={{ position: "absolute", left: 12, top: 13 }} />
                   <input style={{ ...inputStyle, paddingLeft: 34 }} placeholder="06 12 34 56 78" value={form.telephone} onChange={(e) => set("telephone", e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Téléphone 2</label>
+                <div style={{ position: "relative" }}>
+                  <Phone size={14} color={C.textDim} style={{ position: "absolute", left: 12, top: 13 }} />
+                  <input style={{ ...inputStyle, paddingLeft: 34 }} placeholder="06 12 34 56 78" value={form.telephone2} onChange={(e) => set("telephone2", e.target.value)} />
                 </div>
               </div>
               <div style={{ gridColumn: "1 / -1" }}>

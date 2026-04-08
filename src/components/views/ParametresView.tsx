@@ -452,7 +452,9 @@ function PipelineTab({ C }: { C: Theme }) {
 // ===================== PRESCRIPTEURS =====================
 function PrescripteursTab({ C }: { C: Theme }) {
   const { toast } = useToast();
-  const [configs, setConfigs] = useState<Array<{ id: string; type: string; nom: string; actif: boolean }>>([]);
+  const [configs, setConfigs] = useState<Array<{ id: string; type: string; nom: string; logoUrl: string | null; actif: boolean }>>([]);
+  const [editLogoId, setEditLogoId] = useState<string | null>(null);
+  const [editLogoUrl, setEditLogoUrl] = useState("");
   const [newNom, setNewNom] = useState("");
   const [expandedDepots, setExpandedDepots] = useState<string | null>(null);
   const [depots, setDepots] = useState<Array<{ id: string; nom: string; prescripteurType: string }>>([]);
@@ -500,7 +502,11 @@ function PrescripteursTab({ C }: { C: Theme }) {
       {configs.map((p) => (
         <div key={p.id} style={{ borderBottom: `1px solid ${C.border}`, opacity: p.actif ? 1 : 0.5 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 12px" }}>
-            <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.actif ? C.accent : C.border }} />
+            {p.logoUrl ? (
+              <img src={p.logoUrl} alt={p.nom} style={{ width: 32, height: 32, objectFit: "contain" }} />
+            ) : (
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.actif ? C.accent : C.border }} />
+            )}
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -515,6 +521,16 @@ function PrescripteursTab({ C }: { C: Theme }) {
                 </button>
               </div>
             </div>
+            <button onClick={() => {
+              if (editLogoId === p.id) { setEditLogoId(null); return; }
+              setEditLogoId(p.id);
+              setEditLogoUrl(p.logoUrl || "");
+            }} style={{
+              padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`, fontSize: 11, fontWeight: 600, cursor: "pointer",
+              background: editLogoId === p.id ? C.blueDim : "transparent", color: editLogoId === p.id ? C.blue : C.textDim,
+            }}>
+              Logo
+            </button>
             <button onClick={() => {
               if (expandedDepots === p.type) { setExpandedDepots(null); return; }
               setExpandedDepots(p.type);
@@ -534,6 +550,32 @@ function PrescripteursTab({ C }: { C: Theme }) {
               {p.actif ? "Archiver" : "Réactiver"}
             </button>
           </div>
+          {editLogoId === p.id && (
+            <div style={{ padding: "0 12px 12px 34px" }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input
+                  placeholder="URL du logo (ex: /logos/pdb.png)"
+                  value={editLogoUrl}
+                  onChange={(e) => setEditLogoUrl(e.target.value)}
+                  style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+                />
+                <button onClick={async () => {
+                  const res = await fetch("/api/prescripteur-config", {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: p.id, logoUrl: editLogoUrl || null }),
+                  });
+                  if (res.ok) {
+                    setConfigs((prev) => prev.map((c) => c.id === p.id ? { ...c, logoUrl: editLogoUrl || null } : c));
+                    setEditLogoId(null);
+                    toast("Logo mis à jour");
+                  }
+                }} style={{
+                  padding: "6px 12px", borderRadius: 6, border: "none",
+                  background: C.accent, color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer",
+                }}>Enregistrer</button>
+              </div>
+            </div>
+          )}
           {expandedDepots === p.type && (
             <div style={{ padding: "0 12px 12px 34px" }}>
               <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 8 }}>
