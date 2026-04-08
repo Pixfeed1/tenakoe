@@ -27,6 +27,8 @@ export async function PATCH(
   if (body.antenneQualibatId !== undefined) data.antenneQualibatId = body.antenneQualibatId;
   if (body.interlocuteurQualibat !== undefined) data.interlocuteurQualibat = body.interlocuteurQualibat;
   if (body.dateCommission !== undefined) data.dateCommission = body.dateCommission ? new Date(body.dateCommission) : null;
+  if (body.identifiantQualibat !== undefined) data.identifiantQualibat = body.identifiantQualibat;
+  if (body.motDePasseQualibat !== undefined) data.motDePasseQualibat = body.motDePasseQualibat;
 
   const updated = await prisma.projet.update({ where: { id }, data });
   return NextResponse.json(updated);

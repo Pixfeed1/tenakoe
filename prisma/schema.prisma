@@ -186,6 +186,8 @@ model Projet {
   antenneQualibat       AntenneQualibat? @relation(fields: [antenneQualibatId], references: [id])
   interlocuteurQualibat String?
   dateCommission        DateTime?
+  identifiantQualibat   String?
+  motDePasseQualibat    String?
 
   qualifications ProjetQualification[]
   etapes         Etape[]

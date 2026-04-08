@@ -67,7 +67,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newProjetForm, setNewProjetForm] = useState({ nom: "", qualification: "", chargeeId: "" });
   const [qualifSearch, setQualifSearch] = useState("");
   const [qualifResults, setQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
-  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null }>>([]);
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null }>>([]);
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
   const [newTache, setNewTache] = useState({ titre: "", type: "AUTRE", dateEcheance: "" });
   const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
@@ -1015,27 +1015,52 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 });
                 setProjets((prev) => prev.map((p) => p.id === currentProjet.id ? { ...p, ...patch } : p));
               };
+              const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" as const };
               return (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+                  <div style={{ gridColumn: "1 / -1" }}>
                     <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Antenne Qualibat</label>
                     <select
                       value={currentAntenneId}
                       onChange={(e) => updateProjet({ antenneQualibatId: e.target.value || null })}
                       disabled={!currentProjet}
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+                      style={inputStyle}
                     >
                       <option value="">-- Sélectionner --</option>
                       {antennes.map((a) => (
                         <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>
                       ))}
                     </select>
-                    {selectedAntenne && (
-                      <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>
-                        {selectedAntenne.email && <div>{selectedAntenne.email}</div>}
-                        {selectedAntenne.telephone && <div>{formatPhone(selectedAntenne.telephone)}</div>}
+                    {selectedAntenne && (selectedAntenne.email || selectedAntenne.telephone) && (
+                      <div style={{ fontSize: 11, color: C.textDim, marginTop: 6, display: "flex", gap: 14, flexWrap: "wrap" }}>
+                        {selectedAntenne.email && <span>{selectedAntenne.email}</span>}
+                        {selectedAntenne.telephone && <span>{formatPhone(selectedAntenne.telephone)}</span>}
                       </div>
                     )}
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Identifiant</label>
+                    <input
+                      type="text"
+                      value={currentProjet?.identifiantQualibat || ""}
+                      onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, identifiantQualibat: e.target.value } : p))}
+                      onBlur={(e) => updateProjet({ identifiantQualibat: e.target.value || null })}
+                      disabled={!currentProjet}
+                      placeholder="Identifiant espace Qualibat"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Mot de passe</label>
+                    <input
+                      type="text"
+                      value={currentProjet?.motDePasseQualibat || ""}
+                      onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, motDePasseQualibat: e.target.value } : p))}
+                      onBlur={(e) => updateProjet({ motDePasseQualibat: e.target.value || null })}
+                      disabled={!currentProjet}
+                      placeholder="Mot de passe espace Qualibat"
+                      style={inputStyle}
+                    />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Interlocuteur</label>
@@ -1046,17 +1071,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       onBlur={(e) => updateProjet({ interlocuteurQualibat: e.target.value || null })}
                       disabled={!currentProjet}
                       placeholder="Nom de l'instructeur"
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+                      style={inputStyle}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Date commission</label>
+                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Date de commission</label>
                     <input
                       type="date"
                       value={currentProjet?.dateCommission ? new Date(currentProjet.dateCommission).toISOString().slice(0, 10) : ""}
                       onChange={(e) => updateProjet({ dateCommission: e.target.value || null })}
                       disabled={!currentProjet}
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+                      style={inputStyle}
                     />
                   </div>
                 </div>
