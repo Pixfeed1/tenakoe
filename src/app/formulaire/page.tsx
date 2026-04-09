@@ -164,7 +164,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
       }}>
 
         <div style={{
-          width: 480, background: C.surface, borderRadius: 16, padding: "48px 40px",
+          width: 480, maxWidth: "100%", boxSizing: "border-box" as const, background: C.surface, borderRadius: 16, padding: "48px 40px",
           boxShadow: C.shadowHover, border: `1px solid ${C.border}`, textAlign: "center",
         }}>
           <div style={{
@@ -252,7 +252,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 </select>
               </div>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
               <div><label style={labelStyle}>Votre nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomConseiller} onChange={(e) => set("nomConseiller", e.target.value)} required /></div>
               <div><label style={labelStyle}>Votre prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomConseiller} onChange={(e) => set("prenomConseiller", e.target.value)} required /></div>
               <div><label style={labelStyle}>Votre email *</label><input type="email" style={inputStyle} placeholder="email@laplateforme.com" value={form.emailConseiller} onChange={(e) => set("emailConseiller", e.target.value)} required /></div>
@@ -277,7 +277,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <UserCircle size={16} color={C.accent} />
               <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Artisan</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
               <div><label style={labelStyle}>Nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomArtisan} onChange={(e) => set("nomArtisan", e.target.value)} required /></div>
               <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomArtisan} onChange={(e) => set("prenomArtisan", e.target.value)} required /></div>
               <div><label style={labelStyle}>Entreprise</label><input style={inputStyle} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value)} /></div>
@@ -292,7 +292,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <Phone size={16} color={C.purple} />
               <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Coordonnées</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
               <div>
                 <label style={labelStyle}>Email</label>
                 <div style={{ position: "relative" }}>

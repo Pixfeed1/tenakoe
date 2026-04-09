@@ -185,7 +185,7 @@ export function LeadsView({ C }: { C: Theme }) {
             <h3 style={{ fontSize: 15, fontWeight: 600, margin: 0, color: C.text }}>Nouveau lead</h3>
             <X size={16} color={C.textDim} style={{ cursor: "pointer" }} onClick={() => setShowForm(false)} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
               <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Nom *</label>
               <input style={inputStyle} value={form.nomArtisan} onChange={(e) => setForm({ ...form, nomArtisan: e.target.value })} />
@@ -350,15 +350,15 @@ export function LeadsView({ C }: { C: Theme }) {
                     <td colSpan={7} style={{ padding: "12px 14px" }}>
                       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                         <input placeholder="Prénom" value={editForm.prenomArtisan} onChange={(e) => setEditForm({ ...editForm, prenomArtisan: e.target.value })}
-                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 120 }} />
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", flex: 1, minWidth: 100 }} />
                         <input placeholder="Nom" value={editForm.nomArtisan} onChange={(e) => setEditForm({ ...editForm, nomArtisan: e.target.value })}
-                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 120 }} />
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", flex: 1, minWidth: 100 }} />
                         <input placeholder="Entreprise" value={editForm.nomEntreprise} onChange={(e) => setEditForm({ ...editForm, nomEntreprise: e.target.value })}
-                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 140 }} />
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", flex: 1, minWidth: 100 }} />
                         <input placeholder="Email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 160 }} />
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", flex: 1, minWidth: 120 }} />
                         <input placeholder="Téléphone" value={editForm.telephone} onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })}
-                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", width: 120 }} />
+                          style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", flex: 1, minWidth: 100 }} />
                         <button onClick={async () => {
                           await fetch(`/api/leads/${lead.id}`, {
                             method: "PATCH", headers: { "Content-Type": "application/json" },

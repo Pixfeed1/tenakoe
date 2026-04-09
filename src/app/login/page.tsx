@@ -48,13 +48,16 @@ export default function LoginPage() {
       }}
     >
       <div
+        className="login-card"
         style={{
           width: 400,
+          maxWidth: "calc(100vw - 32px)",
           background: C.surface,
           borderRadius: 16,
           padding: "40px 36px",
           boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
           border: `1px solid ${C.border}`,
+          boxSizing: "border-box",
         }}
       >
         {/* Logo */}

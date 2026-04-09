@@ -697,7 +697,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{formatPhone(entrepriseData?.telephone)}</span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
+          <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
             <div>
               <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Date et heure</label>
               <input type="datetime-local" defaultValue={new Date().toISOString().slice(0, 16)}
@@ -825,6 +825,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               return (
               <div
                 key={i}
+                className="info-row"
                 style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "8px 0",
                   borderBottom: i < 7 ? `1px solid ${C.border}` : "none",
@@ -882,10 +883,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Intéressé TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
               { label: "Mise en relation", key: "miseEnRelation", dateKey: "dateMiseEnRelation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation), raw: entrepriseData?.miseEnRelation, options: [{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }, { v: "FORMATION_RENOPERF", l: "Formation Renoperf" }, { v: "AUTRE", l: "Autre" }] },
             ].map((f, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-                <span style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
+              <div key={i} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+                <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
                 <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <select
                     value={f.raw || ""}
                     onChange={async (e) => {
@@ -932,8 +933,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation), dateKey: "dateStatutFacturation" },
               { label: "Qualification", value: entrepriseData?.qualification || "—", dateKey: "dateQualification" },
             ].map((f, i) => (
-              <div key={`s${i}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-                <span style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
+              <div key={`s${i}`} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+                <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
                 <div>
                   <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
                   {entrepriseData?.[f.dateKey] && (
@@ -1023,7 +1024,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               };
               const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" as const };
               return (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+                <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
                   <div style={{ gridColumn: "1 / -1" }}>
                     <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Antenne Qualibat</label>
                     <select
@@ -1155,7 +1156,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
             {showAddProjet && (
               <div style={{ padding: 14, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 14 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                   <input placeholder="Nom du projet *" value={newProjetForm.nom} onChange={(e) => setNewProjetForm({ ...newProjetForm, nom: e.target.value })}
                     style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
                   <div style={{ position: "relative" }}>
@@ -1662,7 +1663,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
           {showAddTache && (
             <div style={{ padding: 16, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 16 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 10 }}>
+              <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 10 }}>
                 <input placeholder="Titre de la tâche *" value={newTache.titre} onChange={(e) => setNewTache({ ...newTache, titre: e.target.value })}
                   style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
                 <select value={newTache.type} onChange={(e) => setNewTache({ ...newTache, type: e.target.value })}
@@ -1802,11 +1803,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             />
             {/* Mention dropdown */}
             {showMentionMenu && (
-              <div style={{
+              <div className="dropdown-menu" style={{
                 position: "absolute", zIndex: 50, background: C.surface,
                 border: `1px solid ${C.border}`, borderRadius: 10,
                 boxShadow: C.shadowHover, maxHeight: 160, overflowY: "auto",
-                width: 200, bottom: "100%", marginBottom: 4,
+                width: 200, maxWidth: "calc(100vw - 32px)", bottom: "100%", marginBottom: 4,
               }}>
                 {mentionUsers
                   .filter((u) => u.prenom.toLowerCase().includes(mentionFilter) || u.nom.toLowerCase().includes(mentionFilter))

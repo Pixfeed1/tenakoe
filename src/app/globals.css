@@ -319,6 +319,47 @@ body {
     grid-template-columns: 1fr !important;
   }
 
+  /* All inner grids in fiche client: stack on mobile */
+  .grid-responsive {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Statut labels: full width on mobile */
+  .label-statut {
+    width: auto !important;
+    min-width: 90px;
+  }
+
+  /* Dropdown menus: constrain to viewport */
+  .dropdown-menu {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  /* Login form: add side padding */
+  .login-card {
+    width: 100% !important;
+    margin: 0 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Formulaire grids */
+  .form-grid-auto {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Info fields: wrap label + value */
+  .info-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  /* Mise en relation input */
+  .input-autre {
+    width: 100% !important;
+    margin-top: 6px;
+  }
+
   /* Action buttons wrap */
   .fiche-actions {
     flex-wrap: wrap !important;
@@ -377,6 +418,11 @@ body {
 
   .pipeline-columns > div {
     min-width: 180px !important;
+  }
+
+  /* Inner grids: 2 columns on tablet */
+  .grid-responsive {
+    grid-template-columns: 1fr 1fr !important;
   }
 }
 
