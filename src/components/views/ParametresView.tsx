@@ -11,6 +11,7 @@ import {
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { GuideTooltip } from "@/components/GuideSystem";
+import { getStatusIcon, AVAILABLE_ICONS } from "@/lib/icons";
 
 type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "antennes" | "notifications" | "import" | "securite" | "compte";
 
@@ -278,8 +279,8 @@ function UsersTab({ C }: { C: Theme }) {
 // ===================== PIPELINE =====================
 function PipelineTab({ C }: { C: Theme }) {
   const { toast } = useToast();
-  const [statutsPrise, setStatutsPrise] = useState<Array<{ id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean }>>([]);
-  const [statutsFacturation, setStatutsFacturation] = useState<Array<{ id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean; declencheConversion: boolean }>>([]);
+  const [statutsPrise, setStatutsPrise] = useState<Array<{ id: string; nom: string; code: string; couleur: string; icone: string; ordre: number; actif: boolean; parDefaut: boolean }>>([]);
+  const [statutsFacturation, setStatutsFacturation] = useState<Array<{ id: string; nom: string; code: string; couleur: string; icone: string; ordre: number; actif: boolean; parDefaut: boolean; declencheConversion: boolean }>>([]);
   const [newPrise, setNewPrise] = useState({ nom: "", couleur: "#3b82f6" });
   const [newFact, setNewFact] = useState({ nom: "", couleur: "#7c3aed", declencheConversion: false });
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -330,7 +331,7 @@ function PipelineTab({ C }: { C: Theme }) {
     if (res.ok) { const s = await res.json(); setStatutsFacturation((p) => [...p, s]); setNewFact({ nom: "", couleur: "#7c3aed", declencheConversion: false }); }
   };
 
-  const renderStatutRow = (s: { id: string; nom: string; code: string; couleur: string; ordre: number; actif: boolean; parDefaut: boolean }, type: "prise" | "facturation", declencheConversion?: boolean) => (
+  const renderStatutRow = (s: { id: string; nom: string; code: string; couleur: string; icone: string; ordre: number; actif: boolean; parDefaut: boolean }, type: "prise" | "facturation", declencheConversion?: boolean) => (
     <div
       key={s.id}
       draggable
@@ -363,6 +364,19 @@ function PipelineTab({ C }: { C: Theme }) {
           onChange={(e) => updateStatut(s.id, type, { couleur: e.target.value })}
           style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0, opacity: 0 }} />
       </div>
+
+      {/* Icône */}
+      <select
+        value={s.icone || "circle"}
+        onChange={(e) => updateStatut(s.id, type, { icone: e.target.value })}
+        style={{ padding: "4px 6px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, width: 120 }}
+      >
+        {AVAILABLE_ICONS.map((icon) => {
+          const Icon = getStatusIcon(icon);
+          return <option key={icon} value={icon}>{icon}</option>;
+        })}
+      </select>
+      {(() => { const Icon = getStatusIcon(s.icone); return <Icon size={16} color={s.couleur} />; })()}
 
       {/* Nom */}
       <input value={s.nom}

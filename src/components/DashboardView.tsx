@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { GuideTooltip, useGuide } from "@/components/GuideSystem";
+import { getStatusIcon } from "@/lib/icons";
 import { isDemo, demoBadgeStyle, demoCardStyle, DEMO_PIPELINE_ITEMS, handleDemoAction } from "@/lib/demo";
 import { useToast } from "@/components/ui/Toast";
 import type { PipelineColumn, PipelineItem, Client } from "@/lib/data";
@@ -272,7 +273,7 @@ export function DashboardView({
               onDragLeave={() => setDragOver(null)}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "0 4px" }}>
-                <Circle size={8} fill={col.colorKey} color={col.colorKey} />
+                {(() => { const Icon = getStatusIcon(col.icone); return <Icon size={14} color={col.colorKey} />; })()}
                 <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{col.status}</span>
                 <span
                   style={{
@@ -375,7 +376,7 @@ export function DashboardView({
                 padding: "8px 14px", borderRadius: 10,
                 background: C.bg, border: `1px solid ${C.border}`,
               }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: col.colorKey || C.textDim }} />
+                {(() => { const Icon = getStatusIcon(col.icone); return <Icon size={12} color={col.colorKey || C.textDim} />; })()}
                 <span style={{ fontSize: 12, color: C.textMuted }}>{col.status}</span>
                 <span style={{
                   fontSize: 12, fontWeight: 700, color: C.text,

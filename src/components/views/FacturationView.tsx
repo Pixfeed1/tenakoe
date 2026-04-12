@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import type { PipelineColumn } from "@/lib/data";
+import { getStatusIcon } from "@/lib/icons";
 
 interface Entreprise {
   id: string;
@@ -193,7 +194,7 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
                 onDragLeave={() => setDragOver(null)}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "0 4px" }}>
-                  <Circle size={8} fill={col.colorKey} color={col.colorKey} />
+                  {(() => { const Icon = getStatusIcon(col.icone); return <Icon size={13} color={col.colorKey} />; })()}
                   <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{col.status}</span>
                   <span style={{ fontSize: 11, fontWeight: 700, color: col.colorKey, background: col.colorKey + "18", padding: "1px 8px", borderRadius: 6 }}>{col.items.length}</span>
                 </div>

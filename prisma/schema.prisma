@@ -131,6 +131,7 @@ model StatutPriseConfig {
   nom       String
   code      String   @unique // Ex: "NOUVEAU", "PRISE_EN_CHARGE"
   couleur   String   @default("#3b82f6")
+  icone     String?  @default("circle")
   ordre     Int
   actif     Boolean  @default(true)
   parDefaut Boolean  @default(false)
@@ -143,6 +144,7 @@ model StatutFacturationConfig {
   nom                 String
   code                String   @unique
   couleur             String   @default("#7c3aed")
+  icone               String?  @default("circle")
   ordre               Int
   actif               Boolean  @default(true)
   parDefaut           Boolean  @default(false)
