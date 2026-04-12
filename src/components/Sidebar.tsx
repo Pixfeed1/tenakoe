@@ -2,7 +2,7 @@
 
 import {
   LayoutDashboard, Zap, Target, Users, FolderOpen,
-  Send, File, CreditCard, Plug, Settings, Sun, Moon, LogOut, Lightbulb,
+  Send, File, CreditCard, Handshake, Plug, Settings, Sun, Moon, LogOut, Lightbulb,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { SearchBar } from "@/components/SearchBar";
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { Icon: Send, label: "Transmissions", guide: "nav-transmissions" },
   { Icon: File, label: "Documents", guide: "nav-documents" },
   { Icon: CreditCard, label: "Facturation", guide: "nav-facturation" },
+  { Icon: Handshake, label: "Apporteurs", guide: "nav-apporteurs" },
 ];
 
 const NAV_BOTTOM = [

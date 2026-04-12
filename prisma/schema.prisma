@@ -116,6 +116,8 @@ model Entreprise {
   taches        Tache[]
   notes         Note[]
   alertes       Alerte[]
+  apporteurId   String?
+  apporteur     ApporteurAffaires? @relation(fields: [apporteurId], references: [id])
 }
 
 // ============================================================
@@ -600,4 +602,29 @@ model LogActivite {
   @@index([entite, entiteId])
   @@index([userId])
   @@index([createdAt])
+}
+
+// ============================================================
+// APPORTEURS D'AFFAIRES
+// ============================================================
+
+enum StatutApporteur {
+  ACTIF
+  INACTIF
+  A_CONTACTER
+}
+
+model ApporteurAffaires {
+  id          String           @id @default(cuid())
+  nom         String
+  prenom      String?
+  structure   String?
+  email       String?
+  telephone   String?
+  statut      StatutApporteur  @default(A_CONTACTER)
+  commentaire String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  entreprises Entreprise[]
 }

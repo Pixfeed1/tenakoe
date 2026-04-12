@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
-  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip,
+  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip, Handshake,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -79,6 +79,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [callNote, setCallNote] = useState("");
   const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
   const [depotConfigs, setDepotConfigs] = useState<Array<{ id: string; nom: string }>>([]);
+  const [apporteurs, setApporteurs] = useState<Array<{ id: string; nom: string; prenom: string | null; structure: string | null }>>([]);
   const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
   const [showMentionMenu, setShowMentionMenu] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
@@ -138,6 +139,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       miseEnRelation: DEMO_ENTREPRISE.miseEnRelation,
       depotId: DEMO_ENTREPRISE.depotId || "",
       depotNom: DEMO_ENTREPRISE.depotConfig?.nom || "",
+      apporteurId: "",
+      apporteurNom: "",
       numeroCarte: DEMO_ENTREPRISE.numeroCarte,
       qualification: "Qualibat RGE",
       qualificationId: "",
@@ -247,6 +250,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           dateMailAbandon: data.dateMailAbandon || "",
           depotId: data.depotId || "",
           depotNom: data.depotConfig?.nom || "",
+          apporteurId: data.apporteurId || "",
+          apporteurNom: data.apporteur ? `${data.apporteur.prenom ? data.apporteur.prenom + " " : ""}${data.apporteur.nom}${data.apporteur.structure ? " (" + data.apporteur.structure + ")" : ""}` : "",
           numeroCarte: data.numeroCarte || "",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
           qualificationId: firstQualif?.id || "",
@@ -289,6 +294,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     fetch("/api/depot-config")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setDepotConfigs(data))
+      .catch(() => {});
+
+    fetch("/api/apporteurs")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setApporteurs(data))
       .catch(() => {});
 
     fetch("/api/antennes-qualibat")
@@ -814,6 +824,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "Prescripteur", key: "prescripteur", value: entrepriseData?.prescripteur || client?.prescripteur || "—", Icon: Building2 },
               { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
+              { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
               { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
             ].map((f, i) => {
               const saveField = async (val: string) => {
@@ -889,6 +900,33 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   >
                     <option value="">-- Aucun --</option>
                     {depotConfigs.map((d) => <option key={d.id} value={d.id}>{d.nom}</option>)}
+                  </select>
+                ) : editingField === f.key && f.key === "apporteurId" ? (
+                  <select
+                    autoFocus
+                    value={entrepriseData?.apporteurId || ""}
+                    onChange={async (e) => {
+                      const apporteurId = e.target.value || null;
+                      const sel = apporteurs.find((a) => a.id === apporteurId);
+                      const apporteurNom = sel ? `${sel.prenom ? sel.prenom + " " : ""}${sel.nom}${sel.structure ? " (" + sel.structure + ")" : ""}` : "";
+                      setEntrepriseData((prev) => prev ? { ...prev, apporteurId: apporteurId || "", apporteurNom } : prev);
+                      if (client?.id && !isDemoMode) {
+                        await fetch(`/api/entreprises/${client.id}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ apporteurId }),
+                        });
+                      }
+                      setEditingField(null);
+                    }}
+                    onBlur={() => setEditingField(null)}
+                    style={{
+                      flex: 1, padding: "4px 8px", borderRadius: 6,
+                      border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
+                      fontSize: 13, fontWeight: 500, outline: "none",
+                    }}
+                  >
+                    <option value="">-- Aucun --</option>
+                    {apporteurs.map((a) => <option key={a.id} value={a.id}>{a.prenom ? a.prenom + " " : ""}{a.nom}{a.structure ? ` (${a.structure})` : ""}</option>)}
                   </select>
                 ) : editingField === f.key ? (
                   <input

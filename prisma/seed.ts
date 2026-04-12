@@ -272,6 +272,34 @@ async function main() {
   console.log("Depots PDB created:", depotsPDB.length);
 
   // ========================
+  // APPORTEURS D'AFFAIRES
+  // ========================
+  await prisma.apporteurAffaires.upsert({
+    where: { id: "apporteur-cedric" },
+    update: {},
+    create: {
+      id: "apporteur-cedric",
+      nom: "CÉDRIC",
+      structure: "HORMEE",
+      statut: "ACTIF",
+    },
+  });
+  await prisma.apporteurAffaires.upsert({
+    where: { id: "apporteur-kelly" },
+    update: {},
+    create: {
+      id: "apporteur-kelly",
+      nom: "COQUILLAS",
+      prenom: "Kelly",
+      structure: "Kelly secrétariat",
+      email: "contact.kellysecretariat@gmail.com",
+      telephone: "0787950637",
+      statut: "ACTIF",
+    },
+  });
+  console.log("Apporteurs created: 2");
+
+  // ========================
   // NOMENCLATURE QUALIBAT (400+ qualifications)
   // ========================
   const { parseNomenclature } = await import("./nomenclature-qualibat");

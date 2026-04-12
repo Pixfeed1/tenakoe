@@ -201,6 +201,7 @@ export async function getEntrepriseDetail(id: string) {
     include: {
       contacts: true,
       depotConfig: { select: { id: true, nom: true } },
+      apporteur: { select: { id: true, nom: true, prenom: true, structure: true } },
       projets: {
         include: {
           chargee: { select: { id: true, prenom: true, nom: true } },
