@@ -356,27 +356,17 @@ function PipelineTab({ C }: { C: Theme }) {
       {/* Ordre */}
       <span style={{ fontSize: 11, fontWeight: 700, color: C.textDim, width: 18, textAlign: "center" }}>{s.ordre}</span>
 
-      {/* Couleur */}
-      <div style={{ position: "relative" }}>
-        <div style={{ width: 28, height: 28, borderRadius: 8, background: s.couleur, border: `2px solid ${C.border}`, cursor: "pointer" }}
-          onClick={() => (document.getElementById(`color-${s.id}`) as HTMLInputElement)?.click()} />
-        <input id={`color-${s.id}`} type="color" value={s.couleur}
-          onChange={(e) => updateStatut(s.id, type, { couleur: e.target.value })}
-          style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0, opacity: 0 }} />
-      </div>
-
       {/* Icône */}
+      {(() => { const Icon = getStatusIcon(s.icone); return <Icon size={18} color={s.couleur} />; })()}
       <select
         value={s.icone || "circle"}
         onChange={(e) => updateStatut(s.id, type, { icone: e.target.value })}
         style={{ padding: "4px 6px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, width: 120 }}
       >
-        {AVAILABLE_ICONS.map((icon) => {
-          const Icon = getStatusIcon(icon);
-          return <option key={icon} value={icon}>{icon}</option>;
-        })}
+        {AVAILABLE_ICONS.map((icon) => (
+          <option key={icon} value={icon}>{icon}</option>
+        ))}
       </select>
-      {(() => { const Icon = getStatusIcon(s.icone); return <Icon size={16} color={s.couleur} />; })()}
 
       {/* Nom */}
       <input value={s.nom}
@@ -441,13 +431,6 @@ function PipelineTab({ C }: { C: Theme }) {
           border: `1px solid ${C.border}`, background: C.surface, color: C.text, outline: "none",
         }}
       />
-      <div style={{ position: "relative" }}>
-        <div style={{ width: 28, height: 28, borderRadius: 8, background: form.couleur, border: `2px solid ${C.border}`, cursor: "pointer" }}
-          onClick={() => (document.getElementById(`color-new-${type}`) as HTMLInputElement)?.click()} />
-        <input id={`color-new-${type}`} type="color" value={form.couleur}
-          onChange={(e) => setForm({ ...form, couleur: e.target.value })}
-          style={{ position: "absolute", top: 0, left: 0, width: 0, height: 0, opacity: 0 }} />
-      </div>
       {type === "facturation" && (
         <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textDim, whiteSpace: "nowrap" }}>
           <input type="checkbox" checked={form.declencheConversion || false}
