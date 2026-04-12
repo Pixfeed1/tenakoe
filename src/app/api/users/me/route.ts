@@ -23,6 +23,7 @@ export async function PATCH(request: NextRequest) {
 
   const body = await request.json();
   const data: Record<string, unknown> = {};
+  if (body.telephone !== undefined) data.telephone = body.telephone || null;
   if (body.smtpHost !== undefined) data.smtpHost = body.smtpHost;
   if (body.smtpPort !== undefined) data.smtpPort = body.smtpPort;
   if (body.smtpUser !== undefined) data.smtpUser = body.smtpUser;

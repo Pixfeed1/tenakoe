@@ -308,7 +308,7 @@ export function CRMShell({
         {view === "Facturation" && <FacturationView key={navKey} C={C} onSelectClient={openClient} />}
         {view === "Apporteurs" && <ApporteursView key={navKey} C={C} />}
         {view === "Intégrations" && <IntegrationsView key={navKey} C={C} />}
-        {view === "Paramètres" && <ParametresView key={navKey} C={C} />}
+        {view === "Paramètres" && <ParametresView key={navKey} C={C} role={user.role} />}
       </main>
     </div>
     </GuideProvider>

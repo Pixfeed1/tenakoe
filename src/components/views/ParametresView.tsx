@@ -34,8 +34,9 @@ const inputStyle = (C: Theme): React.CSSProperties => ({
   fontSize: 13, outline: "none", boxSizing: "border-box",
 });
 
-export function ParametresView({ C }: { C: Theme }) {
-  const [tab, setTab] = useState<Tab>("utilisateurs");
+export function ParametresView({ C, role }: { C: Theme; role?: string }) {
+  const isAdmin = role === "ADMIN";
+  const [tab, setTab] = useState<Tab>(isAdmin ? "utilisateurs" : "compte");
 
   return (
     <>
@@ -46,7 +47,7 @@ export function ParametresView({ C }: { C: Theme }) {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, overflowX: "auto", paddingBottom: 1, borderBottom: `1px solid ${C.border}` }}>
-        {TABS.map((t) => (
+        {TABS.filter((t) => isAdmin || t.id === "compte" || t.id === "securite").map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "9px 14px", borderRadius: "8px 8px 0 0", border: "none", cursor: "pointer",
             background: tab === t.id ? C.surface : "transparent",
@@ -109,7 +110,7 @@ function UsersTab({ C }: { C: Theme }) {
 
   const saveEdit = async () => {
     if (!editingUser || !editForm.nom.trim() || !editForm.prenom.trim() || !editForm.email.trim()) return;
-    const res = await fetch("/api/users", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingUser, ...editForm }) });
+    const res = await fetch(`/api/users/${editingUser}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editForm) });
     if (res.ok) {
       setUsers((p) => p.map((u) => u.id === editingUser ? { ...u, nom: editForm.nom, prenom: editForm.prenom, email: editForm.email, telephone: editForm.telephone || null } : u));
       setEditingUser(null);
@@ -1173,12 +1174,12 @@ function MonCompteTab({ C }: { C: Theme }) {
   const [smtp, setSmtp] = useState({ host: "", port: "587", user: "", pass: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [userInfo, setUserInfo] = useState({ email: "", nom: "", prenom: "" });
+  const [userInfo, setUserInfo] = useState({ email: "", nom: "", prenom: "", telephone: "" });
 
   useEffect(() => {
     fetch("/api/users/me").then((r) => r.ok ? r.json() : null).then((data) => {
       if (data) {
-        setUserInfo({ email: data.email, nom: data.nom, prenom: data.prenom });
+        setUserInfo({ email: data.email, nom: data.nom, prenom: data.prenom, telephone: data.telephone || "" });
         setSmtp({
           host: data.smtpHost || "",
           port: String(data.smtpPort || 587),
@@ -1211,11 +1212,28 @@ function MonCompteTab({ C }: { C: Theme }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Mon compte</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+        <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
           <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prénom</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.prenom}</div></div>
           <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Nom</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.nom}</div></div>
           <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Email (login)</label><div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{userInfo.email}</div></div>
+          <div>
+            <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Téléphone</label>
+            <input
+              style={iStyle}
+              placeholder="06 12 34 56 78"
+              value={userInfo.telephone}
+              onChange={(e) => setUserInfo({ ...userInfo, telephone: e.target.value })}
+              onBlur={async () => {
+                await fetch("/api/users/me", {
+                  method: "PATCH", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ telephone: userInfo.telephone || null }),
+                });
+                toast("Téléphone mis à jour");
+              }}
+            />
+          </div>
         </div>
+        <p style={{ fontSize: 11, color: C.textDim, margin: "8px 0 0" }}>Prénom, nom et email sont modifiables par un administrateur.</p>
       </div>
 
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>

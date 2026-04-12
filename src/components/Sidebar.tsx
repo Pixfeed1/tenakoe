@@ -150,7 +150,11 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+          onClick={() => { onNav("Paramètres"); if (onNavMobile) onNavMobile(); }}
+          title="Mon compte"
+        >
           <div
             style={{
               width: 34, height: 34, borderRadius: 10,
