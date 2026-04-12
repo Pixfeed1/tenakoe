@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       ...(facturationOnly && { statutFacturation: { not: null } }),
     },
     include: {
+      depotConfig: { select: { id: true, nom: true } },
       contacts: facturationOnly ? false : true,
       projets: {
         include: {
@@ -53,6 +54,15 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
+  // Resolve depot name string to depotId (fallback for lead conversion)
+  let depotId = body.depotId || null;
+  if (!depotId && body.depot) {
+    const depotConfig = await prisma.depotConfig.findFirst({
+      where: { nom: { equals: body.depot, mode: "insensitive" } },
+    });
+    if (depotConfig) depotId = depotConfig.id;
+  }
+
   const entreprise = await prisma.entreprise.create({
     data: {
       nom: body.nom,
@@ -64,7 +74,7 @@ export async function POST(request: NextRequest) {
       telephone: body.telephone,
       prescripteur: body.prescripteur,
       numeroCarte: body.numeroCarte,
-      depot: body.depot,
+      depotId,
       interesseTNK: body.interesseTNK,
       miseEnRelation: body.miseEnRelation,
       dejaReferentRGE: body.dejaReferentRGE ?? false,

@@ -133,6 +133,7 @@ interface ExtractedData {
   siret: string | null;
   adresse: string | null;
   depot: string | null;
+  depotId: string | null;
   numeroCarte: string | null;
   statut: string | null;
   statutPaiement: string | null;
@@ -144,7 +145,7 @@ interface ExtractedData {
 
 const EMPTY_DATA: ExtractedData = {
   nom: null, nomArtisan: null, prenomArtisan: null, email: null,
-  telephone: null, siret: null, adresse: null, depot: null,
+  telephone: null, siret: null, adresse: null, depot: null, depotId: null,
   numeroCarte: null, statut: null, statutPaiement: null,
   referentRGE: false, prescripteurRelationId: null, prescripteurDirect: null,
   commentaire: null,
@@ -201,7 +202,7 @@ function extractFromClientBase(props: Record<string, unknown>): ExtractedData {
     telephone,
     siret,
     adresse,
-    depot: null,
+    depot: null, depotId: null,
     numeroCarte: null,
     statut: statutDossier,
     statutPaiement,
@@ -259,7 +260,7 @@ function extractFromLeadBase(props: Record<string, unknown>): ExtractedData {
     telephone,
     siret,
     adresse,
-    depot,
+    depot, depotId: null,
     numeroCarte,
     statut,
     statutPaiement: null,
@@ -421,6 +422,14 @@ export async function POST(request: NextRequest) {
           prescripteur = mapPrescripteur(artisan.prescripteurDirect);
         }
 
+        // Resolve depot name to depotId
+        if (artisan.depot && !artisan.depotId) {
+          const depotConfig = await prisma.depotConfig.findFirst({
+            where: { nom: { equals: artisan.depot, mode: "insensitive" } },
+          });
+          if (depotConfig) artisan.depotId = depotConfig.id;
+        }
+
         // Check 4 : same name (case-insensitive, trim)
         const byNom = await prisma.entreprise.findFirst({
           where: { nom: { equals: artisan.nom.trim(), mode: "insensitive" } },
@@ -482,7 +491,7 @@ export async function POST(request: NextRequest) {
             siret: artisan.siret,
             adresse: artisan.adresse,
             prescripteur,
-            depot: artisan.depot,
+            depotId: artisan.depotId || null,
             numeroCarte: artisan.numeroCarte,
             statutPrise,
             dejaReferentRGE: artisan.referentRGE,

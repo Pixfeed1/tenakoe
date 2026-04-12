@@ -260,7 +260,10 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={labelStyle}>Dépôt</label>
                 {depots.length > 0 ? (
-                  <select style={inputStyle} value={form.depot} onChange={(e) => set("depot", e.target.value)}>
+                  <select style={inputStyle} value={form.depot} onChange={(e) => {
+                    const sel = depots.find((d) => d.nom === e.target.value);
+                    setForm((prev) => ({ ...prev, depot: e.target.value, depotConfigId: sel?.id || "" }));
+                  }}>
                     <option value="">Sélectionnez votre dépôt...</option>
                     {depots.map((d) => <option key={d.id} value={d.nom}>{d.nom}</option>)}
                   </select>

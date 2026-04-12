@@ -62,7 +62,7 @@ export async function PATCH(
   if (body.mailAbandonEnvoye !== undefined) { data.mailAbandonEnvoye = body.mailAbandonEnvoye; data.dateMailAbandon = body.mailAbandonEnvoye ? new Date() : null; }
   if (body.dejaReferentRGE !== undefined) data.dejaReferentRGE = body.dejaReferentRGE;
   if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
-  if (body.depot !== undefined) data.depot = body.depot;
+  if (body.depotId !== undefined) data.depotId = body.depotId || null;
   if (body.numeroCarte !== undefined) data.numeroCarte = body.numeroCarte;
 
   const updated = await prisma.entreprise.update({ where: { id }, data });

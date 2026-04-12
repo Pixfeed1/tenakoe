@@ -100,6 +100,7 @@ export function LeadsView({ C }: { C: Theme }) {
         adresse: lead.adresse,
         prescripteur: lead.prescripteur,
         depot: lead.depot,
+        depotId: (lead as unknown as Record<string, unknown>).depotConfigId || null,
         numeroCarte: lead.numeroCarte,
         dejaReferentRGE: lead.dejaReferentRGE,
       }),

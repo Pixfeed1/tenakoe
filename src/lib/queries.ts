@@ -45,6 +45,7 @@ export async function getPipelineData(user?: CurrentUser | null) {
         },
         take: 1,
       },
+      depotConfig: { select: { id: true, nom: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -109,6 +110,7 @@ export async function getClientsWithProgress(user?: CurrentUser | null) {
         },
         take: 1,
       },
+      depotConfig: { select: { id: true, nom: true } },
       documents: { select: { recu: true } },
     },
     orderBy: { updatedAt: "desc" },
@@ -198,6 +200,7 @@ export async function getEntrepriseDetail(id: string) {
     where: { id },
     include: {
       contacts: true,
+      depotConfig: { select: { id: true, nom: true } },
       projets: {
         include: {
           chargee: { select: { id: true, prenom: true, nom: true } },

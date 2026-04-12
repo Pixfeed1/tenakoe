@@ -78,6 +78,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [editContact, setEditContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [callNote, setCallNote] = useState("");
   const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
+  const [depotConfigs, setDepotConfigs] = useState<Array<{ id: string; nom: string }>>([]);
   const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
   const [showMentionMenu, setShowMentionMenu] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
@@ -135,7 +136,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       interesseTNK: DEMO_ENTREPRISE.interesseTNK,
       statutFacturation: DEMO_ENTREPRISE.statutFacturation,
       miseEnRelation: DEMO_ENTREPRISE.miseEnRelation,
-      depot: DEMO_ENTREPRISE.depot,
+      depotId: DEMO_ENTREPRISE.depotId || "",
+      depotNom: DEMO_ENTREPRISE.depotConfig?.nom || "",
       numeroCarte: DEMO_ENTREPRISE.numeroCarte,
       qualification: "Qualibat RGE",
       qualificationId: "",
@@ -243,7 +245,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           dateAlerte2: data.dateAlerte2 || "",
           mailAbandonEnvoye: data.mailAbandonEnvoye ? "true" : "false",
           dateMailAbandon: data.dateMailAbandon || "",
-          depot: data.depot || "",
+          depotId: data.depotId || "",
+          depotNom: data.depotConfig?.nom || "",
           numeroCarte: data.numeroCarte || "",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
           qualificationId: firstQualif?.id || "",
@@ -281,6 +284,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     fetch("/api/users")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setMentionUsers(data))
+      .catch(() => {});
+
+    fetch("/api/depot-config")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setDepotConfigs(data))
       .catch(() => {});
 
     fetch("/api/antennes-qualibat")
@@ -805,7 +813,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Téléphone", key: "telephone", value: formatPhone(entrepriseData?.telephone), Icon: Phone },
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "Prescripteur", key: "prescripteur", value: entrepriseData?.prescripteur || client?.prescripteur || "—", Icon: Building2 },
-              { label: "Dépôt", key: "depot", value: entrepriseData?.depot || "—", Icon: Building2 },
+              { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
             ].map((f, i) => {
               const saveField = async (val: string) => {
@@ -855,6 +863,32 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     <option value="PDB">PDB</option>
                     <option value="POINT_P">Point P</option>
                     <option value="BIGMAT">Big Mat</option>
+                  </select>
+                ) : editingField === f.key && f.key === "depotId" ? (
+                  <select
+                    autoFocus
+                    value={entrepriseData?.depotId || ""}
+                    onChange={async (e) => {
+                      const depotId = e.target.value || null;
+                      const depotNom = depotConfigs.find((d) => d.id === depotId)?.nom || "";
+                      setEntrepriseData((prev) => prev ? { ...prev, depotId: depotId || "", depotNom } : prev);
+                      if (client?.id && !isDemoMode) {
+                        await fetch(`/api/entreprises/${client.id}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ depotId }),
+                        });
+                      }
+                      setEditingField(null);
+                    }}
+                    onBlur={() => setEditingField(null)}
+                    style={{
+                      flex: 1, padding: "4px 8px", borderRadius: 6,
+                      border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
+                      fontSize: 13, fontWeight: 500, outline: "none",
+                    }}
+                  >
+                    <option value="">-- Aucun --</option>
+                    {depotConfigs.map((d) => <option key={d.id} value={d.id}>{d.nom}</option>)}
                   </select>
                 ) : editingField === f.key ? (
                   <input

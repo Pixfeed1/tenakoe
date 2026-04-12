@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       adresse: body.adresse || null,
       prescripteur: body.prescripteur,
       depot: body.depot || null,
+      depotConfigId: body.depotConfigId || null,
       numeroCarte: body.numeroCarte || null,
       dejaReferentRGE: body.dejaReferentRGE ?? false,
       commentaires: body.commentaires || null,

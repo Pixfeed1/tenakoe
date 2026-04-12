@@ -84,7 +84,8 @@ model Entreprise {
   updatedAt          DateTime           @updatedAt
   prescripteur       String?            @default("PDB")
   numeroCarte        String?
-  depot              String?
+  depotId            String?
+  depotConfig        DepotConfig?       @relation(fields: [depotId], references: [id])
   interesseTNK       InteretTNK?        @default(NSP)
   miseEnRelation     MiseEnRelation?    @default(SANS_OBJET)
   miseEnRelationAutre String?
@@ -462,6 +463,8 @@ model LeadFormulaire {
   adresse          String?
   prescripteur     String
   depot            String?
+  depotConfigId    String?
+  depotConfig      DepotConfig?   @relation(fields: [depotConfigId], references: [id])
   numeroCarte      String?
   dejaReferentRGE  Boolean      @default(false)
   commentaires     String?
@@ -568,6 +571,9 @@ model DepotConfig {
   actif            Boolean  @default(true)
   ordre            Int      @default(0)
   createdAt        DateTime @default(now())
+
+  entreprises      Entreprise[]
+  leads            LeadFormulaire[]
 
   @@unique([nom, prescripteurType])
 }
