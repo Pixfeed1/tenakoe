@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import type { DocCheck, TrackStep } from "@/lib/data";
 import { GuideTooltip, useGuide } from "@/components/GuideSystem";
-import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACT, DEMO_DOCUMENTS, DEMO_ETAPES, DEMO_HISTORIQUE, DEMO_NOTES, demoBadgeStyle, handleDemoAction } from "@/lib/demo";
+import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACTS, DEMO_DOCUMENTS, DEMO_ETAPES, DEMO_HISTORIQUE, DEMO_NOTES, DEMO_PROJETS, DEMO_TACHES, DEMO_TRANSMISSIONS, DEMO_MAIL_TEMPLATES, demoBadgeStyle, handleDemoAction } from "@/lib/demo";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { formatPhone, formatContactName, hydrateTemplate } from "@/lib/format";
@@ -125,6 +125,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   // Initialize demo data
   useEffect(() => {
     if (!isDemoMode) return;
+    const firstContact = DEMO_CONTACTS[0];
+    const firstProjet = DEMO_PROJETS[0];
+    const firstQualif = firstProjet?.qualifications[0];
     setEntrepriseData({
       nom: DEMO_ENTREPRISE.nom,
       siret: DEMO_ENTREPRISE.siret,
@@ -132,30 +135,51 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       telephone: DEMO_ENTREPRISE.telephone,
       adresse: DEMO_ENTREPRISE.adresse,
       prescripteur: DEMO_ENTREPRISE.prescripteur,
-      contact: `${DEMO_CONTACT.prenom} ${DEMO_CONTACT.nom}`,
+      contact: `${firstContact.prenom} ${firstContact.nom}`,
       statutPrise: DEMO_ENTREPRISE.statutPrise,
       interesseTNK: DEMO_ENTREPRISE.interesseTNK,
       statutFacturation: DEMO_ENTREPRISE.statutFacturation,
       miseEnRelation: DEMO_ENTREPRISE.miseEnRelation,
+      miseEnRelationAutre: DEMO_ENTREPRISE.miseEnRelationAutre || "",
+      formationsCommentaire: DEMO_ENTREPRISE.formationsCommentaire || "",
+      alerte1Envoyee: DEMO_ENTREPRISE.alerte1Envoyee ? "true" : "false",
+      dateAlerte1: DEMO_ENTREPRISE.dateAlerte1 || "",
+      alerte2Envoyee: DEMO_ENTREPRISE.alerte2Envoyee ? "true" : "false",
+      dateAlerte2: DEMO_ENTREPRISE.dateAlerte2 || "",
+      mailAbandonEnvoye: DEMO_ENTREPRISE.mailAbandonEnvoye ? "true" : "false",
+      dateMailAbandon: DEMO_ENTREPRISE.dateMailAbandon || "",
       depotId: DEMO_ENTREPRISE.depotId || "",
       depotNom: DEMO_ENTREPRISE.depotConfig?.nom || "",
-      apporteurId: "",
-      apporteurNom: "",
+      apporteurId: DEMO_ENTREPRISE.apporteurId || "",
+      apporteurNom: DEMO_ENTREPRISE.apporteur ? `${DEMO_ENTREPRISE.apporteur.nom}${DEMO_ENTREPRISE.apporteur.structure ? " (" + DEMO_ENTREPRISE.apporteur.structure + ")" : ""}` : "",
       numeroCarte: DEMO_ENTREPRISE.numeroCarte,
-      qualification: "Qualibat RGE",
+      qualification: firstQualif ? "Qualibat RGE" : "",
       qualificationId: "",
-      formation: "",
-      formationITI: "false",
-      formationITE: "false",
-      formationMenuiserie: "false",
-      formationQUALIPAC: "false",
-      chargee: "Kelly",
+      formation: firstQualif?.formationITI ? "ITI" : "",
+      formationITI: firstQualif?.formationITI ? "true" : "false",
+      formationITE: firstQualif?.formationITE ? "true" : "false",
+      formationMenuiserie: firstQualif?.formationMenuiserie ? "true" : "false",
+      formationQUALIPAC: firstQualif?.formationQUALIPAC ? "true" : "false",
+      chargee: firstProjet?.chargee?.prenom || "Kelly",
+      dateStatutPrise: DEMO_ENTREPRISE.dateStatutPrise || "",
+      dateStatutFacturation: DEMO_ENTREPRISE.dateStatutFacturation || "",
+      dateInteresseTNK: DEMO_ENTREPRISE.dateInteresseTNK || "",
+      dateMiseEnRelation: DEMO_ENTREPRISE.dateMiseEnRelation || "",
+      dateQualification: DEMO_ENTREPRISE.dateQualification || "",
     });
     setDocs(DEMO_DOCUMENTS.map((d) => ({ id: d.id, nom: d.nom, recu: d.recu, date: d.date })));
     setTracks(DEMO_ETAPES.map((e) => ({ id: e.id, nom: e.nom, delai: e.delai, done: e.done, active: e.active })));
-    setContacts([{ id: DEMO_CONTACT.id, nom: DEMO_CONTACT.nom, prenom: DEMO_CONTACT.prenom, email: DEMO_CONTACT.email, telephone: DEMO_CONTACT.telephone, fonction: DEMO_CONTACT.fonction }]);
-    setHistorique(DEMO_HISTORIQUE.map((h) => ({ type: h.type, message: h.message, chargee: h.chargee, time: h.time })));
+    setContacts(DEMO_CONTACTS.map((c) => ({ id: c.id, nom: c.nom, prenom: c.prenom, email: c.email, telephone: c.telephone, fonction: c.fonction })));
+    setProjets(DEMO_PROJETS.map((p) => ({ id: p.id, nom: p.nom, qualifications: p.qualifications.map((q) => ({ type: q.type })), etapes: p.etapes.map((e) => ({ terminee: e.terminee, active: e.active, nom: e.nom })), antenneQualibatId: p.antenneQualibatId, interlocuteurQualibat: p.interlocuteurQualibat, dateCommission: p.dateCommission, identifiantQualibat: p.identifiantQualibat, motDePasseQualibat: p.motDePasseQualibat })));
+    setTaches(DEMO_TACHES.map((t) => ({ id: t.id, titre: t.titre, statut: t.statut, type: t.type, dateEcheance: t.dateEcheance, enRetard: t.enRetard, assignee: t.assignee })));
+    setHistorique(DEMO_TRANSMISSIONS.map((t) => ({
+      type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
+      message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoyé" : "reçu"} — ${t.objet || t.destinataire}`,
+      chargee: t.expediteur ? `${t.expediteur.prenom}` : "—",
+      time: formatRelativeTime(new Date(t.dateEnvoi)),
+    })));
     setNotes(DEMO_NOTES.map((n) => ({ id: n.id, contenu: n.contenu, epinglee: n.epinglee, createdAt: n.createdAt, auteur: n.auteur })));
+    setMailTemplates(DEMO_MAIL_TEMPLATES);
   }, [isDemoMode]);
 
   // Track fiche opened for guide progression
