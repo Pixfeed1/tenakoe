@@ -29,7 +29,7 @@ async function main() {
     update: {},
     create: {
       email: "kelly@tenakoe.fr",
-      nom: "Martin",
+      nom: "COQUILLAS",
       prenom: "Kelly",
       role: "CHARGEE",
       password: passwordHash,

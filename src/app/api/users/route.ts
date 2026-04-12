@@ -39,7 +39,11 @@ export async function PATCH(request: NextRequest) {
   const data: Record<string, unknown> = {};
   if (body.nom !== undefined) data.nom = body.nom;
   if (body.prenom !== undefined) data.prenom = body.prenom;
-  if (body.email !== undefined) data.email = body.email;
+  if (body.email !== undefined) {
+    const existing = await prisma.user.findFirst({ where: { email: body.email, id: { not: body.id } } });
+    if (existing) return NextResponse.json({ error: "Cet email est déjà utilisé par un autre utilisateur" }, { status: 409 });
+    data.email = body.email;
+  }
   if (body.telephone !== undefined) data.telephone = body.telephone;
   if (body.role !== undefined) data.role = body.role;
   if (body.actif !== undefined) data.actif = body.actif;
