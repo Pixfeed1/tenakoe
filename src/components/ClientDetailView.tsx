@@ -15,6 +15,7 @@ import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACTS, DEMO_DOCUMENTS, 
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { formatPhone, formatContactName, hydrateTemplate } from "@/lib/format";
+import { TransmissionDetailModal } from "@/components/TransmissionDetailModal";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -78,7 +79,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
   const [newTache, setNewTache] = useState<{ titre: string; type: string; dateEcheance: string; assigneeId: string }>({ titre: "", type: "AUTRE", dateEcheance: "", assigneeId: "" });
-  const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string; automatique?: boolean; statutEnvoi?: string | null }>>([]);
+  const [historique, setHistorique] = useState<Array<{ id?: string; type: string; message: string; chargee: string; time: string; automatique?: boolean; statutEnvoi?: string | null }>>([]);
+  const [viewingTransmissionId, setViewingTransmissionId] = useState<string | null>(null);
   const [showCallLog, setShowCallLog] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editFieldValue, setEditFieldValue] = useState("");
@@ -360,8 +362,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     // Fetch transmissions as historique
     fetch(`/api/transmissions?entrepriseId=${client.id}`)
       .then((r) => (r.ok ? r.json() : []))
-      .then((data: Array<{ canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null; automatique?: boolean; statutEnvoi?: string | null }>) => {
+      .then((data: Array<{ id: string; canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null; automatique?: boolean; statutEnvoi?: string | null }>) => {
         setHistorique(data.map((t) => ({
+          id: t.id,
           type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
           message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoyé" : "reçu"} — ${t.objet || t.destinataire}`,
           chargee: t.expediteur ? `${t.expediteur.prenom}${t.expediteurEmail ? ` (${t.expediteurEmail})` : ""}` : "—",
@@ -2061,10 +2064,15 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             return (
               <div
                 key={i}
+                onClick={() => { if (a.id && ["EMAIL", "SMS", "APPEL"].includes(a.type)) setViewingTransmissionId(a.id); }}
                 style={{
                   display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 8px",
                   borderBottom: `1px solid ${C.border}`,
+                  cursor: a.id && ["EMAIL", "SMS", "APPEL"].includes(a.type) ? "pointer" : "default",
+                  transition: "background 0.1s",
                 }}
+                onMouseEnter={(e) => { if (a.id) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
               >
                 <div
                   style={{
@@ -2088,6 +2096,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             );
           })}
         </div>
+      )}
+
+      {viewingTransmissionId && (
+        <TransmissionDetailModal C={C} transmissionId={viewingTransmissionId} onClose={() => setViewingTransmissionId(null)} />
       )}
 
       {/* Tab: Contacts */}

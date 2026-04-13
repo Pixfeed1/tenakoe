@@ -5,6 +5,7 @@ import { Clock, Mail, MessageSquare, Phone, FileText, Zap, StickyNote, Clipboard
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { TransmissionDetailModal } from "@/components/TransmissionDetailModal";
 
 interface Activity {
   id: string;
@@ -53,6 +54,7 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
   const [filterSearch, setFilterSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [filterAutoOnly, setFilterAutoOnly] = useState(false);
+  const [selectedTransmissionId, setSelectedTransmissionId] = useState<string | null>(null);
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -178,7 +180,8 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
               const cfg = TYPE_CONFIG[a.type] || TYPE_CONFIG.STATUT;
               const Icon = cfg.Icon;
               return (
-                <tr key={a.id} style={{ borderBottom: `1px solid ${C.border}`, transition: "background 0.1s" }}
+                <tr key={a.id} style={{ borderBottom: `1px solid ${C.border}`, transition: "background 0.1s", cursor: ["EMAIL", "SMS", "APPEL"].includes(a.type) && !a.id.startsWith("log-") ? "pointer" : "default" }}
+                  onClick={() => { if (["EMAIL", "SMS", "APPEL"].includes(a.type) && !a.id.startsWith("log-")) setSelectedTransmissionId(a.id); }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
                   <td style={{ padding: "10px 14px", fontSize: 12, color: C.textDim, whiteSpace: "nowrap" }}>{formatDate(a.time)}</td>
@@ -232,6 +235,9 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
             Suivant <ChevronRight size={14} />
           </Button>
         </div>
+      )}
+      {selectedTransmissionId && (
+        <TransmissionDetailModal C={C} transmissionId={selectedTransmissionId} onClose={() => setSelectedTransmissionId(null)} />
       )}
     </div>
   );
