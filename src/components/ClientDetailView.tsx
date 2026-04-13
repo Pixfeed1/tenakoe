@@ -998,11 +998,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               );
             })}
           </div>
+          {/* BLOC 1 — Statut & Facturation (allégé) */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>
             {[
               { label: "Intéressé TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
-              { label: "Mise en relation", key: "miseEnRelation", dateKey: "dateMiseEnRelation", value: formatMiseEnRelation(entrepriseData?.miseEnRelation), raw: entrepriseData?.miseEnRelation, options: [{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }, { v: "FORMATION_RENOPERF", l: "Formation Renoperf" }, { v: "AUTRE", l: "Autre" }] },
             ].map((f, i) => (
               <div key={i} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
                 <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
@@ -1023,23 +1023,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   >
                     {f.options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
                   </select>
-                  {f.key === "miseEnRelation" && f.raw === "AUTRE" && (
-                    <input
-                      type="text"
-                      placeholder="Préciser…"
-                      defaultValue={entrepriseData?.miseEnRelationAutre || ""}
-                      onBlur={async (e) => {
-                        if (!client?.id) return;
-                        const val = e.target.value;
-                        await fetch(`/api/entreprises/${client.id}`, {
-                          method: "PATCH", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ miseEnRelationAutre: val }),
-                        });
-                        setEntrepriseData((prev) => prev ? { ...prev, miseEnRelationAutre: val } : prev);
-                      }}
-                      style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, width: 140 }}
-                    />
-                  )}
                 </div>
                 {entrepriseData?.[f.dateKey] && (
                   <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
@@ -1066,7 +1049,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
             ))}
             {/* Qualifications (all from all projects) */}
-            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
               <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Qualifications</span>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                 {projets.flatMap((p) => p.qualifications).length > 0
@@ -1079,9 +1062,62 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 }
               </div>
             </div>
-            {/* Formations checkboxes */}
-            <div style={{ padding: "10px 0" }}>
-              <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8 }}>Formations</span>
+          </div>
+
+          {/* BLOC 2 — Mise en relation */}
+          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Mise en relation</h3>
+            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
+              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Organisme</span>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <select
+                    value={entrepriseData?.miseEnRelation || "SANS_OBJET"}
+                    onChange={async (e) => {
+                      if (!client?.id) return;
+                      const val = e.target.value;
+                      await fetch(`/api/entreprises/${client.id}`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ miseEnRelation: val }),
+                      });
+                      setEntrepriseData((prev) => prev ? { ...prev, miseEnRelation: val, dateMiseEnRelation: new Date().toISOString() } : prev);
+                    }}
+                    style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
+                  >
+                    {[{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }, { v: "FORMATION_RENOPERF", l: "Formation Renoperf" }, { v: "AUTRE", l: "Autre" }].map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+                  </select>
+                  {entrepriseData?.miseEnRelation === "AUTRE" && (
+                    <input
+                      type="text"
+                      placeholder="Préciser…"
+                      defaultValue={entrepriseData?.miseEnRelationAutre || ""}
+                      onBlur={async (e) => {
+                        if (!client?.id) return;
+                        const val = e.target.value;
+                        await fetch(`/api/entreprises/${client.id}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ miseEnRelationAutre: val }),
+                        });
+                        setEntrepriseData((prev) => prev ? { ...prev, miseEnRelationAutre: val } : prev);
+                      }}
+                      style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, width: 140 }}
+                    />
+                  )}
+                </div>
+                {entrepriseData?.dateMiseEnRelation && (
+                  <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                    Modifié le {new Date(entrepriseData.dateMiseEnRelation).toLocaleDateString("fr-FR")}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* BLOC 3 — Formation */}
+          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Formation</h3>
+            <div style={{ marginBottom: 12 }}>
+              <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8 }}>Formations Renoperf</span>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {[
                   { key: "formationITI", label: "ITI" },
@@ -1119,9 +1155,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   );
                 })}
               </div>
+            </div>
+            <div>
+              <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8 }}>Formations complémentaires à réaliser</span>
               <textarea
                 key={`formationsCommentaire-${entrepriseData?.formationsCommentaire || ""}`}
-                placeholder="Autres formations / commentaires"
+                placeholder="Notes sur les autres formations prévues ou réalisées..."
                 defaultValue={entrepriseData?.formationsCommentaire || ""}
                 onBlur={async (e) => {
                   if (!client?.id) return;
@@ -1133,7 +1172,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   setEntrepriseData((prev) => prev ? { ...prev, formationsCommentaire: val } : prev);
                 }}
                 style={{
-                  marginTop: 10, width: "100%", minHeight: 60, padding: "8px 10px",
+                  width: "100%", minHeight: 60, padding: "8px 10px",
                   borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg,
                   color: C.text, fontSize: 12, fontFamily: "inherit", resize: "vertical",
                 }}
