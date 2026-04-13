@@ -28,7 +28,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
     email: "", telephone: "", telephone2: "", prescripteur: "PDB",
     depot: "", numeroCarte: "", dejaReferentRGE: false,
-    commentaires: "", acceptePartage: false,
+    commentaires: "", acceptePartage: false, interesseAccompagnement: "",
     nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -194,7 +194,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
               email: "", telephone: "", telephone2: "", prescripteur: form.prescripteur,
               depot: form.depot, numeroCarte: form.numeroCarte, dejaReferentRGE: false,
-              commentaires: "", acceptePartage: false,
+              commentaires: "", acceptePartage: false, interesseAccompagnement: "",
               nomConseiller: form.nomConseiller, prenomConseiller: form.prenomConseiller,
               emailConseiller: form.emailConseiller, telephoneConseiller: form.telephoneConseiller,
             }); }}
@@ -329,23 +329,79 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <label style={labelStyle}>Commentaires</label>
               <textarea rows={3} style={{ ...inputStyle, resize: "vertical" }} placeholder="Précisions sur l'artisan, son besoin..." value={form.commentaires} onChange={(e) => set("commentaires", e.target.value)} />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <label style={{
-                display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
-                padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`,
-                background: form.dejaReferentRGE ? C.accentDim : "transparent", transition: "all 0.15s",
-              }}>
-                <input type="checkbox" checked={form.dejaReferentRGE} onChange={(e) => set("dejaReferentRGE", e.target.checked)} style={{ width: 16, height: 16, accentColor: C.accent }} />
-                <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>L&apos;artisan est déjà référent RGE</span>
-              </label>
-              <label style={{
-                display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
-                padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`,
-                background: form.acceptePartage ? C.blueDim : "transparent", transition: "all 0.15s",
-              }}>
-                <input type="checkbox" checked={form.acceptePartage} onChange={(e) => set("acceptePartage", e.target.checked)} style={{ width: 16, height: 16, accentColor: C.blue, marginTop: 2 }} />
-                <span style={{ fontSize: 13, color: C.text, fontWeight: 500, lineHeight: 1.5 }}>L&apos;artisan accepte le partage de ses coordonnées avec l&apos;équipe Tenakoe *</span>
-              </label>
+
+            {/* Déjà Référent RGE RENOPERF */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Déjà Référent RGE RENOPERF *</label>
+              <p style={{ fontSize: 11, color: C.textDim, margin: "0 0 8px", lineHeight: 1.5 }}>
+                L&apos;artisan ou un de ses salariés a passé et réussi une formation Feebat Renoperf après le 1er octobre 2025
+              </p>
+              <div style={{ display: "flex", gap: 10 }}>
+                {[{ v: true, l: "Oui" }, { v: false, l: "Non" }].map((o) => (
+                  <label key={String(o.v)} onClick={() => set("dejaReferentRGE", o.v)} style={{
+                    display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 10,
+                    border: `1px solid ${form.dejaReferentRGE === o.v ? C.accent : C.border}`,
+                    background: form.dejaReferentRGE === o.v ? C.accentDim : "transparent",
+                    cursor: "pointer", transition: "all 0.15s",
+                  }}>
+                    <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${form.dejaReferentRGE === o.v ? C.accent : C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {form.dejaReferentRGE === o.v && <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.accent }} />}
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>{o.l}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Intéressé accompagnement Tenakoe */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Artisan intéressé par un accompagnement au montage de dossier par Tenakoe <span style={{ fontSize: 11, color: C.textDim }}>(prestation payante)</span></label>
+              <div style={{ display: "flex", gap: 10 }}>
+                {[{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "Ne sait pas" }].map((o) => (
+                  <label key={o.v} onClick={() => set("interesseAccompagnement", o.v)} style={{
+                    display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 10,
+                    border: `1px solid ${form.interesseAccompagnement === o.v ? C.blue : C.border}`,
+                    background: form.interesseAccompagnement === o.v ? C.blueDim : "transparent",
+                    cursor: "pointer", transition: "all 0.15s",
+                  }}>
+                    <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${form.interesseAccompagnement === o.v ? C.blue : C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {form.interesseAccompagnement === o.v && <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.blue }} />}
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: C.text }}>{o.l}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Accepte partage */}
+            <div>
+              <label style={labelStyle}>Partage des coordonnées *</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <label onClick={() => set("acceptePartage", true)} style={{
+                  display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
+                  padding: "10px 14px", borderRadius: 10, border: `1px solid ${form.acceptePartage ? C.accent : C.border}`,
+                  background: form.acceptePartage ? C.accentDim : "transparent", transition: "all 0.15s",
+                }}>
+                  <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${form.acceptePartage ? C.accent : C.border}`, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2, flexShrink: 0 }}>
+                    {form.acceptePartage && <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.accent }} />}
+                  </div>
+                  <span style={{ fontSize: 12, color: C.text, fontWeight: 500, lineHeight: 1.5 }}>
+                    Oui, l&apos;artisan accepte que ses coordonnées soient transmises aux partenaires de LA PLATEFORME DU BÂTIMENT dans le cadre de son projet de qualification
+                  </span>
+                </label>
+                <label onClick={() => set("acceptePartage", false)} style={{
+                  display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer",
+                  padding: "10px 14px", borderRadius: 10, border: `1px solid ${!form.acceptePartage ? C.border : "transparent"}`,
+                  background: !form.acceptePartage ? "transparent" : "transparent", transition: "all 0.15s",
+                }}>
+                  <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${!form.acceptePartage ? C.textDim : C.border}`, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2, flexShrink: 0 }}>
+                    {!form.acceptePartage && <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.textDim }} />}
+                  </div>
+                  <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 500, lineHeight: 1.5 }}>
+                    Non, l&apos;artisan n&apos;accepte pas le partage de ses coordonnées
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
 

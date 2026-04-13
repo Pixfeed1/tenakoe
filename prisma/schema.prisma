@@ -545,6 +545,7 @@ model LeadFormulaire {
   dejaReferentRGE  Boolean      @default(false)
   commentaires     String?
   acceptePartage   Boolean      @default(false)
+  interesseAccompagnement String?
   dateTransmission DateTime     @default(now())
   createdAt        DateTime     @default(now())
   statut           String       @default("NOUVEAU")
