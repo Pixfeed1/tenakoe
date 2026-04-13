@@ -25,10 +25,8 @@ export async function PATCH(
   const body = await request.json();
 
   const data: Record<string, unknown> = {};
-  if (body.formationITI !== undefined) data.formationITI = body.formationITI;
-  if (body.formationITE !== undefined) data.formationITE = body.formationITE;
-  if (body.formationMenuiserie !== undefined) data.formationMenuiserie = body.formationMenuiserie;
-  if (body.formationQUALIPAC !== undefined) data.formationQUALIPAC = body.formationQUALIPAC;
+  const boolFields = ["formationITI", "formationITE", "formationMenuiserie", "formationQUALIPAC", "formationTR", "formationMenuiserieExt", "formationVMC", "formationToituresVelux", "formationToituresTerrasses", "formationEmetteursElec", "formationChaudiereCogen", "formationBT"];
+  for (const f of boolFields) { if (body[f] !== undefined) data[f] = body[f]; }
   if (body.formationAutre !== undefined) data.formationAutre = body.formationAutre;
 
   const updated = await prisma.projetQualification.update({ where: { id }, data });

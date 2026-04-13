@@ -169,6 +169,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       formationITE: firstQualif?.formationITE ? "true" : "false",
       formationMenuiserie: firstQualif?.formationMenuiserie ? "true" : "false",
       formationQUALIPAC: firstQualif?.formationQUALIPAC ? "true" : "false",
+      formationTR: "false", formationMenuiserieExt: "false", formationVMC: "false",
+      formationToituresVelux: "false", formationToituresTerrasses: "false",
+      formationEmetteursElec: "false", formationChaudiereCogen: "false", formationBT: "false",
       chargee: firstProjet?.chargee?.prenom || "Kelly",
       dateStatutPrise: DEMO_ENTREPRISE.dateStatutPrise || "",
       dateStatutFacturation: DEMO_ENTREPRISE.dateStatutFacturation || "",
@@ -290,6 +293,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           formationITE: firstQualif?.formationITE ? "true" : "false",
           formationMenuiserie: firstQualif?.formationMenuiserie ? "true" : "false",
           formationQUALIPAC: firstQualif?.formationQUALIPAC ? "true" : "false",
+          formationTR: firstQualif?.formationTR ? "true" : "false",
+          formationMenuiserieExt: firstQualif?.formationMenuiserieExt ? "true" : "false",
+          formationVMC: firstQualif?.formationVMC ? "true" : "false",
+          formationToituresVelux: firstQualif?.formationToituresVelux ? "true" : "false",
+          formationToituresTerrasses: firstQualif?.formationToituresTerrasses ? "true" : "false",
+          formationEmetteursElec: firstQualif?.formationEmetteursElec ? "true" : "false",
+          formationChaudiereCogen: firstQualif?.formationChaudiereCogen ? "true" : "false",
+          formationBT: firstQualif?.formationBT ? "true" : "false",
           chargee: firstProjet?.chargee?.prenom || "",
           dateStatutPrise: data.dateStatutPrise || "",
           dateStatutFacturation: data.dateStatutFacturation || "",
@@ -1079,120 +1090,101 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             })()}
           </div>
 
-          {/* BLOC 2 — Mise en relation */}
-          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Mise en relation</h3>
-            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
-              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Organisme</span>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <select
-                    value={entrepriseData?.miseEnRelation || "SANS_OBJET"}
-                    onChange={async (e) => {
-                      if (!client?.id) return;
-                      const val = e.target.value;
-                      await fetch(`/api/entreprises/${client.id}`, {
-                        method: "PATCH", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ miseEnRelation: val }),
-                      });
-                      setEntrepriseData((prev) => prev ? { ...prev, miseEnRelation: val, dateMiseEnRelation: new Date().toISOString() } : prev);
-                    }}
-                    style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
-                  >
-                    {[{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }, { v: "FORMATION_RENOPERF", l: "Formation Renoperf" }, { v: "AUTRE", l: "Autre" }].map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
-                  </select>
-                  {entrepriseData?.miseEnRelation === "AUTRE" && (
-                    <input
-                      type="text"
-                      placeholder="Préciser…"
-                      defaultValue={entrepriseData?.miseEnRelationAutre || ""}
-                      onBlur={async (e) => {
-                        if (!client?.id) return;
-                        const val = e.target.value;
-                        await fetch(`/api/entreprises/${client.id}`, {
-                          method: "PATCH", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ miseEnRelationAutre: val }),
-                        });
-                        setEntrepriseData((prev) => prev ? { ...prev, miseEnRelationAutre: val } : prev);
-                      }}
-                      style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, width: 140 }}
-                    />
-                  )}
-                </div>
-                {entrepriseData?.dateMiseEnRelation && (
-                  <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
-                    Modifié le {new Date(entrepriseData.dateMiseEnRelation).toLocaleDateString("fr-FR")}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* BLOC 3 — Formation */}
+          {/* Formation (unifié) */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Formation</h3>
-            <div style={{ marginBottom: 12 }}>
-              <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8 }}>Formations Renoperf</span>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {[
-                  { key: "formationITI", label: "ITI" },
-                  { key: "formationITE", label: "ITE" },
-                  { key: "formationMenuiserie", label: "Menuiserie" },
-                  { key: "formationQUALIPAC", label: "QUALIPAC" },
-                ].map((f) => {
-                  const checked = entrepriseData?.[f.key] === "true";
-                  return (
-                    <label key={f.key} onClick={async () => {
-                      if (!entrepriseData?.qualificationId) return;
-                      const newVal = !checked;
-                      setEntrepriseData((prev) => prev ? { ...prev, [f.key]: String(newVal) } : prev);
-                      fetch(`/api/qualifications/${entrepriseData.qualificationId}`, {
-                        method: "PATCH", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ [f.key]: newVal }),
-                      }).catch(() => {});
-                    }} style={{
-                      display: "flex", alignItems: "center", gap: 6, padding: "5px 12px",
-                      borderRadius: 8, cursor: entrepriseData?.qualificationId ? "pointer" : "default",
-                      background: checked ? C.accentDim : C.bg,
-                      border: `1px solid ${checked ? C.accent + "40" : C.border}`,
-                      transition: "all 0.15s",
-                    }}>
-                      <div style={{
-                        width: 14, height: 14, borderRadius: 3,
-                        border: `2px solid ${checked ? C.accent : C.border}`,
-                        background: checked ? C.accent : "transparent",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                      }}>
-                        {checked && <Check size={9} color="#fff" strokeWidth={3} />}
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.textMuted }}>{f.label}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-            <div>
-              <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8 }}>Formations complémentaires à réaliser</span>
-              <textarea
-                key={`formationsCommentaire-${entrepriseData?.formationsCommentaire || ""}`}
-                placeholder="Notes sur les autres formations prévues ou réalisées..."
-                defaultValue={entrepriseData?.formationsCommentaire || ""}
-                onBlur={async (e) => {
-                  if (!client?.id) return;
-                  const val = e.target.value;
-                  await fetch(`/api/entreprises/${client.id}`, {
-                    method: "PATCH", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ formationsCommentaire: val }),
-                  });
-                  setEntrepriseData((prev) => prev ? { ...prev, formationsCommentaire: val } : prev);
-                }}
-                style={{
-                  width: "100%", minHeight: 60, padding: "8px 10px",
-                  borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg,
-                  color: C.text, fontSize: 12, fontFamily: "inherit", resize: "vertical",
-                }}
-              />
-            </div>
+            {(() => {
+              const qualifId = entrepriseData?.qualificationId;
+              const toggleFormation = async (key: string) => {
+                if (!qualifId) return;
+                const checked = entrepriseData?.[key] === "true";
+                const newVal = !checked;
+                setEntrepriseData((prev) => prev ? { ...prev, [key]: String(newVal) } : prev);
+                fetch(`/api/qualifications/${qualifId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [key]: newVal }) }).catch(() => {});
+              };
+              const renderCheckbox = (key: string, label: string) => {
+                const checked = entrepriseData?.[key] === "true";
+                return (
+                  <label key={key} onClick={() => toggleFormation(key)} style={{
+                    display: "flex", alignItems: "center", gap: 6, padding: "5px 10px",
+                    borderRadius: 8, cursor: qualifId ? "pointer" : "default",
+                    background: checked ? C.accentDim : C.bg,
+                    border: `1px solid ${checked ? C.accent + "40" : C.border}`,
+                    transition: "all 0.15s", fontSize: 11,
+                  }}>
+                    <div style={{ width: 14, height: 14, borderRadius: 3, border: `2px solid ${checked ? C.accent : C.border}`, background: checked ? C.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {checked && <Check size={9} color="#fff" strokeWidth={3} />}
+                    </div>
+                    <span style={{ fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.textMuted }}>{label}</span>
+                  </label>
+                );
+              };
+              return (
+                <>
+                  {/* Sous-section 1 : Modules RENOPERF */}
+                  <div style={{ marginBottom: 16 }}>
+                    <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8, fontWeight: 600 }}>Modules RENOPERF nécessaires</span>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6 }}>
+                      {renderCheckbox("formationTR", "TR")}
+                      {renderCheckbox("formationITI", "ITI")}
+                      {renderCheckbox("formationITE", "ITE")}
+                      {renderCheckbox("formationMenuiserieExt", "Menuiserie Ext")}
+                      {renderCheckbox("formationVMC", "VMC")}
+                      {renderCheckbox("formationToituresVelux", "Toitures Ext-Velux")}
+                      {renderCheckbox("formationToituresTerrasses", "Toitures Terrasses")}
+                      {renderCheckbox("formationEmetteursElec", "Émetteurs Élec")}
+                      {renderCheckbox("formationChaudiereCogen", "Chaudière cogén")}
+                      {renderCheckbox("formationBT", "BT")}
+                    </div>
+                  </div>
+
+                  {/* Sous-section 2 : RENOPERF mise en relation */}
+                  <div style={{ marginBottom: 16, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+                    <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8, fontWeight: 600 }}>RENOPERF mise en relation</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <select
+                        value={entrepriseData?.miseEnRelation || "SANS_OBJET"}
+                        onChange={async (e) => {
+                          if (!client?.id) return;
+                          const val = e.target.value;
+                          await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ miseEnRelation: val }) });
+                          setEntrepriseData((prev) => prev ? { ...prev, miseEnRelation: val, dateMiseEnRelation: new Date().toISOString() } : prev);
+                        }}
+                        style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
+                      >
+                        {[{ v: "SANS_OBJET", l: "Sans objet" }, { v: "APEE", l: "APEE" }, { v: "CEEF", l: "CEEF" }, { v: "HORMEE", l: "HORMEE" }, { v: "AUTRE", l: "Autre" }].map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+                      </select>
+                      {entrepriseData?.miseEnRelation === "AUTRE" && (
+                        <input type="text" placeholder="Préciser…" defaultValue={entrepriseData?.miseEnRelationAutre || ""}
+                          onBlur={async (e) => { if (!client?.id) return; const val = e.target.value; await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ miseEnRelationAutre: val }) }); setEntrepriseData((prev) => prev ? { ...prev, miseEnRelationAutre: val } : prev); }}
+                          style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, width: 140 }} />
+                      )}
+                      {entrepriseData?.dateMiseEnRelation && (
+                        <span style={{ fontSize: 10, color: C.textDim }}>Modifié le {new Date(entrepriseData.dateMiseEnRelation).toLocaleDateString("fr-FR")}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Sous-section 3 : Autres formations hors Renoperf */}
+                  <div style={{ paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+                    <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8, fontWeight: 600 }}>Autres formations hors Renoperf</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                      {renderCheckbox("formationITI", "ITI")}
+                      {renderCheckbox("formationITE", "ITE")}
+                      {renderCheckbox("formationMenuiserie", "Menuiserie")}
+                      {renderCheckbox("formationQUALIPAC", "QUALIPAC")}
+                    </div>
+                    <textarea
+                      key={`formationsCommentaire-${entrepriseData?.formationsCommentaire || ""}`}
+                      placeholder="Notes sur les autres formations prévues ou réalisées..."
+                      defaultValue={entrepriseData?.formationsCommentaire || ""}
+                      onBlur={async (e) => { if (!client?.id) return; const val = e.target.value; await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ formationsCommentaire: val }) }); setEntrepriseData((prev) => prev ? { ...prev, formationsCommentaire: val } : prev); }}
+                      style={{ width: "100%", minHeight: 60, padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, fontFamily: "inherit", resize: "vertical" }}
+                    />
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Chantiers de référence */}

@@ -235,10 +235,18 @@ model ProjetQualification {
   projet              Projet   @relation(fields: [projetId], references: [id], onDelete: Cascade)
   type                String
   formationITI        Boolean  @default(false)
-  formationITE        Boolean  @default(false)
-  formationMenuiserie Boolean  @default(false)
-  formationQUALIPAC   Boolean  @default(false)
-  formationAutre      String?
+  formationITE              Boolean  @default(false)
+  formationMenuiserie       Boolean  @default(false)
+  formationQUALIPAC         Boolean  @default(false)
+  formationTR               Boolean  @default(false)
+  formationMenuiserieExt    Boolean  @default(false)
+  formationVMC              Boolean  @default(false)
+  formationToituresVelux    Boolean  @default(false)
+  formationToituresTerrasses Boolean @default(false)
+  formationEmetteursElec    Boolean  @default(false)
+  formationChaudiereCogen   Boolean  @default(false)
+  formationBT               Boolean  @default(false)
+  formationAutre            String?
 
   @@unique([projetId, type])
 }
