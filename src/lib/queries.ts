@@ -210,6 +210,7 @@ export async function getEntrepriseDetail(id: string) {
           qualifications: true,
           etapes: { orderBy: { ordre: "asc" } },
           bonsDeCommande: { orderBy: { createdAt: "desc" } },
+          chantiers: { include: { documents: true }, orderBy: { numero: "asc" } },
         },
       },
       documents: { orderBy: [{ recu: "asc" }, { nom: "asc" }] },

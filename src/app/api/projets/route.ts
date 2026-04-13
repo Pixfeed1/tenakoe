@@ -128,6 +128,18 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // ===== AUTO-GENERATION DES CHANTIERS =====
+  if (body.qualifications?.length > 0) {
+    const existingChantiers = await prisma.chantier.count({ where: { projetId: projet.id } });
+    if (existingChantiers === 0) {
+      for (let i = 1; i <= 4; i++) {
+        await prisma.chantier.create({
+          data: { projetId: projet.id, numero: i, nom: i === 4 ? "Chantier supplémentaire" : null },
+        });
+      }
+    }
+  }
+
   // Recharger le projet complet
   const projetComplet = await prisma.projet.findUnique({
     where: { id: projet.id },
@@ -135,6 +147,8 @@ export async function POST(request: NextRequest) {
       qualifications: true,
       etapes: { orderBy: { ordre: "asc" } },
       documents: true,
+      chantiers: { include: { documents: true }, orderBy: { numero: "asc" } },
+      bonsDeCommande: true,
     },
   });
 

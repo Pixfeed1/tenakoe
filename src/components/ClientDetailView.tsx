@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
-  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip, Handshake, CheckCircle, XCircle,
+  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip, Handshake, CheckCircle, XCircle, Circle, Clock,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -71,7 +71,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [qualifResults, setQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
   const [nomenclatureMap, setNomenclatureMap] = useState<Record<string, string>>({});
   interface BonDeCommande { id: string; qualificationCode: string; reference: string | null; montant: number | null; paye: boolean; datePaiement: string | null; dateEmission: string | null; commentaire: string | null }
-  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null }>>([]);
+  interface ChantierDoc { id: string; nom: string; fichierUrl: string | null; fichierNom: string | null; fichierTaille: number | null }
+  interface ChantierData { id: string; numero: number; nom: string | null; description: string | null; devisRecu: boolean; devisFichierUrl: string | null; devisFichierNom: string | null; dateDevis: string | null; factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null; attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null; documents: ChantierDoc[] }
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; chantiers?: ChantierData[]; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null }>>([]);
   const [showAddBon, setShowAddBon] = useState<string | null>(null);
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
@@ -1179,6 +1181,166 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               />
             </div>
           </div>
+
+          {/* Chantiers de référence */}
+          {projets.some((p) => p.qualifications.length > 0) && (() => {
+            const currentProjet = projets[0];
+            const chantiers = (currentProjet?.chantiers || []) as ChantierData[];
+            const chantiersComplets = chantiers.filter((c) => c.numero <= 3 ? (c.devisRecu && c.factureRecue && c.attestationRecue) : c.documents.length > 0).length;
+            const chantiersMain = chantiers.filter((c) => c.numero <= 3);
+
+            const updateChantier = async (chantierId: string, patch: Record<string, unknown>) => {
+              if (isDemoMode) return;
+              const res = await fetch(`/api/chantiers/${chantierId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+              if (res.ok) {
+                const updated = await res.json();
+                setProjets((prev) => prev.map((pr) => pr.id === currentProjet?.id ? { ...pr, chantiers: (pr.chantiers || []).map((c: ChantierData) => c.id === chantierId ? updated : c) } : pr));
+              }
+            };
+
+            const uploadChantierDoc = async (chantierId: string, file: File) => {
+              const formData = new FormData();
+              formData.append("file", file);
+              const res = await fetch(`/api/chantiers/${chantierId}/documents`, { method: "POST", body: formData });
+              if (res.ok) {
+                const doc = await res.json();
+                setProjets((prev) => prev.map((pr) => pr.id === currentProjet?.id ? { ...pr, chantiers: (pr.chantiers || []).map((c: ChantierData) => c.id === chantierId ? { ...c, documents: [doc, ...c.documents] } : c) } : pr));
+                toast("Document uploadé");
+              }
+            };
+
+            const deleteChantierDoc = async (chantierId: string, docId: string) => {
+              await fetch(`/api/chantiers/${chantierId}/documents?docId=${docId}`, { method: "DELETE" });
+              setProjets((prev) => prev.map((pr) => pr.id === currentProjet?.id ? { ...pr, chantiers: (pr.chantiers || []).map((c: ChantierData) => c.id === chantierId ? { ...c, documents: c.documents.filter((d) => d.id !== docId) } : c) } : pr));
+            };
+
+            const getChantierStatus = (c: ChantierData) => {
+              if (c.numero <= 3) {
+                if (c.devisRecu && c.factureRecue && c.attestationRecue) return "complet";
+                if (c.devisRecu || c.factureRecue || c.attestationRecue || c.documents.length > 0) return "en-cours";
+                return "vide";
+              }
+              return c.documents.length > 0 ? "complet" : "vide";
+            };
+
+            const statusColor = (s: string) => s === "complet" ? "#16a34a" : s === "en-cours" ? "#f59e0b" : C.textDim;
+
+            return (
+              <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Chantiers de référence</h3>
+                  <span style={{ fontSize: 12, color: C.textDim }}>{chantiersComplets}/{chantiersMain.length} complets</span>
+                </div>
+
+                {chantiers.length === 0 && (
+                  <p style={{ fontSize: 12, color: C.textDim, textAlign: "center", padding: 16 }}>
+                    Les chantiers seront créés automatiquement lors de la génération des documents.
+                  </p>
+                )}
+
+                {chantiers.map((c) => {
+                  const status = getChantierStatus(c);
+                  const isOpen = expandedCols[`chantier-${c.id}`] !== false;
+                  const title = c.numero <= 3 ? `Chantier ${c.numero}` : "Chantier supplémentaire";
+
+                  return (
+                    <div key={c.id} style={{ marginBottom: 8, borderRadius: 10, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+                      {/* Header */}
+                      <div
+                        onClick={() => setExpandedCols((prev) => ({ ...prev, [`chantier-${c.id}`]: !isOpen }))}
+                        style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: C.bg, cursor: "pointer" }}
+                      >
+                        <ChevronRight size={14} color={C.textDim} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform 0.15s" }} />
+                        {status === "complet" ? <CheckCircle size={14} color="#16a34a" /> : status === "en-cours" ? <Clock size={14} color="#f59e0b" /> : <Circle size={14} color={C.textDim} />}
+                        <span style={{ fontSize: 13, fontWeight: 600, color: statusColor(status), flex: 1 }}>{title}</span>
+                        <input
+                          value={c.nom || ""}
+                          placeholder="Nom / adresse..."
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setProjets((prev) => prev.map((pr) => pr.id === currentProjet?.id ? { ...pr, chantiers: (pr.chantiers || []).map((ch: ChantierData) => ch.id === c.id ? { ...ch, nom: e.target.value } : ch) } : pr))}
+                          onBlur={(e) => updateChantier(c.id, { nom: e.target.value || null })}
+                          style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, width: 180, outline: "none" }}
+                        />
+                      </div>
+
+                      {isOpen && (
+                        <div style={{ padding: "12px 14px" }}>
+                          {/* Obligatory docs for chantiers 1-3 */}
+                          {c.numero <= 3 && [
+                            { key: "devis", label: "Devis", recu: c.devisRecu, fichierUrl: c.devisFichierUrl, fichierNom: c.devisFichierNom, date: c.dateDevis, recuKey: "devisRecu", urlKey: "devisFichierUrl", nomKey: "devisFichierNom" },
+                            { key: "facture", label: "Facture", recu: c.factureRecue, fichierUrl: c.factureFichierUrl, fichierNom: c.factureFichierNom, date: c.dateFacture, recuKey: "factureRecue", urlKey: "factureFichierUrl", nomKey: "factureFichierNom" },
+                            { key: "attestation", label: "Attestation de travaux", recu: c.attestationRecue, fichierUrl: c.attestationFichierUrl, fichierNom: c.attestationFichierNom, date: c.dateAttestation, recuKey: "attestationRecue", urlKey: "attestationFichierUrl", nomKey: "attestationFichierNom" },
+                          ].map((doc) => (
+                            <div key={doc.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+                              <div onClick={() => updateChantier(c.id, { [doc.recuKey]: !doc.recu })} style={{
+                                width: 20, height: 20, borderRadius: 5,
+                                border: `2px solid ${doc.recu ? C.accent : C.border}`,
+                                background: doc.recu ? C.accent : "transparent",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                cursor: "pointer", flexShrink: 0,
+                              }}>
+                                {doc.recu && <Check size={11} color="#fff" strokeWidth={3} />}
+                              </div>
+                              <span style={{ fontSize: 12, color: doc.recu ? C.text : C.textMuted, fontWeight: doc.recu ? 500 : 400, flex: 1 }}>{doc.label}</span>
+                              {doc.date && <span style={{ fontSize: 10, color: C.textDim }}>{new Date(doc.date).toLocaleDateString("fr-FR")}</span>}
+                              {doc.fichierUrl ? (
+                                <a href={doc.fichierUrl} download={doc.fichierNom || doc.label} onClick={(e) => e.stopPropagation()}
+                                  style={{ padding: "2px 8px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 10, fontWeight: 600, textDecoration: "none" }}>
+                                  <Download size={10} /> {doc.fichierNom || "Fichier"}
+                                </a>
+                              ) : doc.recu ? (
+                                <label style={{ padding: "2px 8px", borderRadius: 6, background: C.accentDim, color: C.accentText, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>
+                                  <Upload size={10} /> Uploader
+                                  <input type="file" style={{ display: "none" }} onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const formData = new FormData();
+                                    formData.append("file", file);
+                                    const res = await fetch("/api/upload", { method: "POST", body: formData });
+                                    if (res.ok) {
+                                      const { url } = await res.json();
+                                      updateChantier(c.id, { [doc.urlKey]: url, [doc.nomKey]: file.name });
+                                    }
+                                  }} />
+                                </label>
+                              ) : null}
+                            </div>
+                          ))}
+
+                          {/* Free documents */}
+                          <div style={{ marginTop: 10 }}>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 6 }}>Documents complémentaires</div>
+                            {c.documents.map((d) => (
+                              <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", fontSize: 11 }}>
+                                <Paperclip size={11} color={C.textDim} />
+                                <span style={{ flex: 1, color: C.text }}>{d.fichierNom || d.nom}</span>
+                                {d.fichierUrl && (
+                                  <a href={d.fichierUrl} download={d.fichierNom || d.nom} style={{ color: C.blue, textDecoration: "none", fontSize: 10 }}>
+                                    <Download size={10} />
+                                  </a>
+                                )}
+                                <button onClick={() => deleteChantierDoc(c.id, d.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}>
+                                  <Trash2 size={10} color={C.textDim} />
+                                </button>
+                              </div>
+                            ))}
+                            <label style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer", marginTop: 6 }}>
+                              <Plus size={11} /> Ajouter un document
+                              <input type="file" style={{ display: "none" }} accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx" onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) uploadChantierDoc(c.id, file);
+                                e.target.value = "";
+                              }} />
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* Certificateur (Antenne Qualibat) */}
           <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
