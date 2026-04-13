@@ -243,7 +243,8 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               {(() => {
                 const cfg = prescripteurConfigs.find((c) => c.type === resolvedPrescripteur);
                 if (cfg?.logoUrl) {
-                  return <img src={cfg.logoUrl} alt={cfg.nom} style={{ width: 48, height: 48, objectFit: "contain" }} />;
+                  const logoSrc = cfg.logoUrl.startsWith("http") || cfg.logoUrl.startsWith("/") ? cfg.logoUrl : `/${cfg.logoUrl}`;
+                  return <img src={logoSrc} alt={cfg.nom} style={{ width: 48, height: 48, objectFit: "contain" }} />;
                 }
                 return <Building2 size={16} color={C.blue} />;
               })()}
