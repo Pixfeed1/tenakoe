@@ -66,10 +66,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newContact, setNewContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [showAddTache, setShowAddTache] = useState(false);
   const [showAddProjet, setShowAddProjet] = useState(false);
-  const [newProjetForm, setNewProjetForm] = useState({ nom: "", qualification: "", chargeeId: "" });
+  const [newProjetForm, setNewProjetForm] = useState<{ nom: string; qualifications: Array<{ code: string; nom: string }>; chargeeId: string }>({ nom: "", qualifications: [], chargeeId: "" });
   const [qualifSearch, setQualifSearch] = useState("");
   const [qualifResults, setQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
-  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null }>>([]);
+  const [nomenclatureMap, setNomenclatureMap] = useState<Record<string, string>>({});
+  interface BonDeCommande { id: string; qualificationCode: string; reference: string | null; montant: number | null; paye: boolean; datePaiement: string | null; dateEmission: string | null; commentaire: string | null }
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null }>>([]);
+  const [showAddBon, setShowAddBon] = useState<string | null>(null);
+  const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
   const [newTache, setNewTache] = useState<{ titre: string; type: string; dateEcheance: string; assigneeId: string }>({ titre: "", type: "AUTRE", dateEcheance: "", assigneeId: "" });
   const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
@@ -313,6 +317,16 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     fetch("/api/users")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setMentionUsers(data))
+      .catch(() => {});
+
+    // Load nomenclature map for qualification name display
+    fetch("/api/nomenclature-qualibat?limit=500")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: Array<{ code: string; nom: string }>) => {
+        const map: Record<string, string> = {};
+        data.forEach((q) => { map[q.code] = q.nom; });
+        setNomenclatureMap(map);
+      })
       .catch(() => {});
 
     fetch("/api/depot-config")
@@ -1038,7 +1052,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             {[
               { label: "Statut", value: formatStatutPrise(entrepriseData?.statutPrise), dateKey: "dateStatutPrise" },
               { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation), dateKey: "dateStatutFacturation" },
-              { label: "Qualification", value: entrepriseData?.qualification || "—", dateKey: "dateQualification" },
             ].map((f, i) => (
               <div key={`s${i}`} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
                 <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
@@ -1052,6 +1065,20 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 </div>
               </div>
             ))}
+            {/* Qualifications (all from all projects) */}
+            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Qualifications</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {projets.flatMap((p) => p.qualifications).length > 0
+                  ? projets.flatMap((p) => p.qualifications).map((q) => (
+                    <Badge key={q.type} color={C.blue} bg={C.blueDim}>
+                      {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
+                    </Badge>
+                  ))
+                  : <span style={{ fontSize: 13, color: C.textDim }}>—</span>
+                }
+              </div>
+            </div>
             {/* Formations checkboxes */}
             <div style={{ padding: "10px 0" }}>
               <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8 }}>Formations</span>
@@ -1263,12 +1290,22 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
             {showAddProjet && (
               <div style={{ padding: 14, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 14 }}>
-                <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   <input placeholder="Nom du projet *" value={newProjetForm.nom} onChange={(e) => setNewProjetForm({ ...newProjetForm, nom: e.target.value })}
                     style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
+                  <select value={newProjetForm.chargeeId} onChange={(e) => setNewProjetForm({ ...newProjetForm, chargeeId: e.target.value })}
+                    style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
+                    <option value="">Chargée (moi par défaut)</option>
+                    {mentionUsers.map((u) => (
+                      <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* Multi-qualification search + list */}
+                <div style={{ marginBottom: 10 }}>
                   <div style={{ position: "relative" }}>
                     <input
-                      placeholder="Rechercher qualification (code ou nom)..."
+                      placeholder="+ Ajouter une qualification (code ou nom)..."
                       value={qualifSearch}
                       onChange={(e) => {
                         setQualifSearch(e.target.value);
@@ -1280,21 +1317,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }}
                     />
                     {qualifResults.length > 0 && (
-                      <div style={{
-                        position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50,
-                        background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8,
-                        boxShadow: C.shadowHover, maxHeight: 180, overflowY: "auto",
-                      }}>
-                        {qualifResults.map((q) => (
+                      <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadowHover, maxHeight: 180, overflowY: "auto" }}>
+                        {qualifResults.filter((q) => !newProjetForm.qualifications.some((s) => s.code === q.code)).map((q) => (
                           <button key={q.code} onClick={() => {
-                            setNewProjetForm({ ...newProjetForm, qualification: q.code });
-                            setQualifSearch(`${q.code} — ${q.nom}`);
-                            setQualifResults([]);
-                          }} style={{
-                            width: "100%", padding: "6px 10px", border: "none",
-                            background: "transparent", cursor: "pointer", textAlign: "left",
-                            fontSize: 11, color: C.text, borderBottom: `1px solid ${C.border}`,
-                          }}
+                            setNewProjetForm({ ...newProjetForm, qualifications: [...newProjetForm.qualifications, { code: q.code, nom: q.nom }] });
+                            setQualifSearch(""); setQualifResults([]);
+                          }} style={{ width: "100%", padding: "6px 10px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", fontSize: 11, color: C.text, borderBottom: `1px solid ${C.border}` }}
                             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                           >
@@ -1306,36 +1334,38 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       </div>
                     )}
                   </div>
-                  <select value={newProjetForm.chargeeId} onChange={(e) => setNewProjetForm({ ...newProjetForm, chargeeId: e.target.value })}
-                    style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
-                    <option value="">Chargée (moi par défaut)</option>
-                    {mentionUsers.map((u) => (
-                      <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
-                    ))}
-                  </select>
+                  {newProjetForm.qualifications.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                      {newProjetForm.qualifications.map((q) => (
+                        <span key={q.code} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 8, background: C.blueDim, color: C.blue, fontSize: 11, fontWeight: 600 }}>
+                          {q.code} — {q.nom}
+                          <X size={11} style={{ cursor: "pointer" }} onClick={() => setNewProjetForm({ ...newProjetForm, qualifications: newProjetForm.qualifications.filter((s) => s.code !== q.code) })} />
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
                   <Button C={C} variant="ghost" onClick={() => setShowAddProjet(false)}>Annuler</Button>
                   <Button C={C} variant="primary" disabled={!newProjetForm.nom} onClick={async () => {
                     if (!newProjetForm.nom) return;
                     if (isDemoMode) {
                       handleDemoAction("Projet créé");
-                      setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualification ? [{ type: newProjetForm.qualification }] : [], etapes: [] }]);
+                      setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualifications.map((q) => ({ type: q.code })), etapes: [] }]);
                       setShowAddProjet(false);
-                      setNewProjetForm({ nom: "", qualification: "", chargeeId: "" });
+                      setNewProjetForm({ nom: "", qualifications: [], chargeeId: "" });
                       guide.showSuggestion("nouveau-projet"); toast("Projet créé");
                       return;
                     }
                     if (!client?.id) return;
                     const payload: Record<string, unknown> = { nom: newProjetForm.nom, entrepriseId: client.id };
-                    if (newProjetForm.qualification) payload.qualifications = [{ type: newProjetForm.qualification }];
+                    if (newProjetForm.qualifications.length > 0) payload.qualifications = newProjetForm.qualifications.map((q) => ({ type: q.code }));
                     if (newProjetForm.chargeeId) payload.chargeeId = newProjetForm.chargeeId;
                     const res = await fetch("/api/projets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                     if (res.ok) {
                       setShowAddProjet(false);
-                      setNewProjetForm({ nom: "", qualification: "", chargeeId: "" });
+                      setNewProjetForm({ nom: "", qualifications: [], chargeeId: "" });
                       guide.showSuggestion("nouveau-projet"); toast("Projet créé");
-                      // Refresh data
                       fetch(`/api/entreprises/${client.id}`).then((r) => r.ok ? r.json() : null).then((data) => {
                         if (data?.projets) setProjets(data.projets);
                       }).catch(() => {});
@@ -1347,19 +1377,91 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
             {projets.length === 0 ? (
               <div style={{ padding: 16, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun projet</div>
-            ) : projets.map((p: { id: string; nom: string; qualifications: Array<{ type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }> }) => {
+            ) : projets.map((p) => {
               const etapesDone = p.etapes?.filter((e) => e.terminee).length || 0;
               const etapesTotal = p.etapes?.length || 0;
-              const qualif = p.qualifications?.[0]?.type;
-              const qualifLabel: Record<string, string> = { QUALIBAT_RGE: "Qualibat RGE", CERTIBAT: "Certibat", QUALIFELEC: "Qualifelec", QUALIPAC: "QualiPAC" };
+              const bons = (p.bonsDeCommande || []) as BonDeCommande[];
               return (
-                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
-                  <FolderOpen size={16} color={C.purple} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
-                    <div style={{ fontSize: 11, color: C.textDim }}>
-                      {qualif ? qualifLabel[qualif] || qualif : "—"} · {etapesDone}/{etapesTotal} étapes
+                <div key={p.id} style={{ padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <FolderOpen size={16} color={C.purple} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                        {p.qualifications.map((q) => (
+                          <Badge key={q.type} color={C.blue} bg={C.blueDim}>
+                            {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
+                          </Badge>
+                        ))}
+                        {p.qualifications.length === 0 && <span style={{ fontSize: 11, color: C.textDim }}>Aucune qualification</span>}
+                      </div>
+                      <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>{etapesDone}/{etapesTotal} étapes</div>
                     </div>
+                  </div>
+                  {/* Bons de commande */}
+                  {bons.length > 0 && (
+                    <div style={{ marginTop: 10, marginLeft: 28 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 6 }}>Bons de commande</div>
+                      {bons.map((b) => (
+                        <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", fontSize: 12, borderBottom: `1px solid ${C.border}` }}>
+                          <span style={{ color: C.textDim }}>{b.qualificationCode}</span>
+                          <span style={{ color: C.text, fontWeight: 500, flex: 1 }}>{b.reference || "—"}</span>
+                          {b.montant != null && <span style={{ color: C.text }}>{b.montant.toFixed(2)} €</span>}
+                          <Badge color={b.paye ? "#16a34a" : "#ef4444"} bg={b.paye ? "rgba(22,163,74,0.1)" : "rgba(239,68,68,0.1)"}>
+                            {b.paye ? "Payé" : "Non payé"}
+                          </Badge>
+                          {b.paye && b.datePaiement && <span style={{ fontSize: 10, color: C.textDim }}>{new Date(b.datePaiement).toLocaleDateString("fr-FR")}</span>}
+                          {!b.paye && (
+                            <button onClick={async () => {
+                              await fetch(`/api/bons-de-commande/${b.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paye: true }) });
+                              setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, bonsDeCommande: (pr.bonsDeCommande || []).map((x: BonDeCommande) => x.id === b.id ? { ...x, paye: true, datePaiement: new Date().toISOString() } : x) } : pr));
+                              toast("Bon marqué comme payé");
+                            }} style={{ padding: "2px 8px", borderRadius: 4, border: "none", background: C.accentDim, color: C.accentText, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>
+                              Marquer payé
+                            </button>
+                          )}
+                          <button onClick={async () => {
+                            await fetch(`/api/bons-de-commande/${b.id}`, { method: "DELETE" });
+                            setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, bonsDeCommande: (pr.bonsDeCommande || []).filter((x: BonDeCommande) => x.id !== b.id) } : pr));
+                          }} style={{ padding: 2, background: "none", border: "none", cursor: "pointer" }}>
+                            <Trash2 size={11} color={C.textDim} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* Add bon de commande */}
+                  <div style={{ marginTop: 6, marginLeft: 28 }}>
+                    {showAddBon === p.id ? (
+                      <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginTop: 6 }}>
+                        <select value={newBonForm.qualificationCode} onChange={(e) => setNewBonForm({ ...newBonForm, qualificationCode: e.target.value })}
+                          style={{ padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11 }}>
+                          <option value="">Qualification...</option>
+                          {p.qualifications.map((q) => <option key={q.type} value={q.type}>{q.type}</option>)}
+                        </select>
+                        <input placeholder="Référence" value={newBonForm.reference} onChange={(e) => setNewBonForm({ ...newBonForm, reference: e.target.value })}
+                          style={{ padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11 }} />
+                        <input placeholder="Montant (€)" type="number" value={newBonForm.montant} onChange={(e) => setNewBonForm({ ...newBonForm, montant: e.target.value })}
+                          style={{ padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11 }} />
+                        <div style={{ display: "flex", gap: 4 }}>
+                          <button onClick={async () => {
+                            if (!newBonForm.qualificationCode) return;
+                            const res = await fetch("/api/bons-de-commande", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projetId: p.id, ...newBonForm, montant: newBonForm.montant ? Number(newBonForm.montant) : null }) });
+                            if (res.ok) {
+                              const bon = await res.json();
+                              setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, bonsDeCommande: [bon, ...(pr.bonsDeCommande || [])] } : pr));
+                              setShowAddBon(null); setNewBonForm({ qualificationCode: "", reference: "", montant: "", dateEmission: "" }); toast("Bon de commande créé");
+                            }
+                          }} style={{ padding: "6px 10px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>Ajouter</button>
+                          <button onClick={() => setShowAddBon(null)} style={{ padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 10, cursor: "pointer" }}>Annuler</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setShowAddBon(p.id); setNewBonForm({ qualificationCode: p.qualifications[0]?.type || "", reference: "", montant: "", dateEmission: "" }); }}
+                        style={{ padding: "4px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer", marginTop: 4 }}>
+                        + Bon de commande
+                      </button>
+                    )}
                   </div>
                 </div>
               );

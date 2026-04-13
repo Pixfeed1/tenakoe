@@ -204,6 +204,7 @@ model Projet {
   etapes         Etape[]
   documents      Document[]
   taches         Tache[]
+  bonsDeCommande BonDeCommande[]
   sourceImport   SourceImport? @default(MANUEL)
   sourceId       String?
 }
@@ -233,6 +234,21 @@ model ProjetQualification {
   formationAutre      String?
 
   @@unique([projetId, type])
+}
+
+model BonDeCommande {
+  id                String    @id @default(cuid())
+  projetId          String
+  projet            Projet    @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  qualificationCode String
+  reference         String?
+  montant           Float?
+  paye              Boolean   @default(false)
+  datePaiement      DateTime?
+  dateEmission      DateTime?
+  commentaire       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 // ============================================================

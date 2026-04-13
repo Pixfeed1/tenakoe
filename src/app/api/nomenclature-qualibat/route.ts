@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         : {}),
     },
     orderBy: { code: "asc" },
-    take: 50,
+    take: Number(request.nextUrl.searchParams.get("limit")) || 50,
   });
   return NextResponse.json(qualifs);
 }

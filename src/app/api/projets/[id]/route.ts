@@ -31,5 +31,28 @@ export async function PATCH(
   if (body.motDePasseQualibat !== undefined) data.motDePasseQualibat = body.motDePasseQualibat;
 
   const updated = await prisma.projet.update({ where: { id }, data });
-  return NextResponse.json(updated);
+
+  // Add qualifications
+  if (body.addQualifications?.length > 0) {
+    for (const q of body.addQualifications) {
+      await prisma.projetQualification.upsert({
+        where: { projetId_type: { projetId: id, type: q.type } },
+        update: {},
+        create: { projetId: id, type: q.type },
+      });
+    }
+  }
+
+  // Remove qualifications
+  if (body.removeQualifications?.length > 0) {
+    await prisma.projetQualification.deleteMany({
+      where: { projetId: id, type: { in: body.removeQualifications } },
+    });
+  }
+
+  const full = await prisma.projet.findUnique({
+    where: { id },
+    include: { qualifications: true, etapes: { orderBy: { ordre: "asc" } }, bonsDeCommande: true },
+  });
+  return NextResponse.json(full);
 }

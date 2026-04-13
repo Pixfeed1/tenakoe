@@ -209,6 +209,7 @@ export async function getEntrepriseDetail(id: string) {
           chargee: { select: { id: true, prenom: true, nom: true } },
           qualifications: true,
           etapes: { orderBy: { ordre: "asc" } },
+          bonsDeCommande: { orderBy: { createdAt: "desc" } },
         },
       },
       documents: { orderBy: [{ recu: "asc" }, { nom: "asc" }] },
