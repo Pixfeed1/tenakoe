@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Send, Building2, CheckCircle2, UserCircle, Phone, Mail, MapPin, FileText, ChevronRight } from "lucide-react";
+import { Send, Building2, CheckCircle2, UserCircle, Phone, Mail, FileText, ChevronRight } from "lucide-react";
 import { LIGHT, DARK } from "@/lib/theme";
 
 const getInputStyle = (C: typeof LIGHT): React.CSSProperties => ({
@@ -26,7 +26,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [depots, setDepots] = useState<Array<{ id: string; nom: string }>>([]);
   const [form, setForm] = useState({
     nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
-    email: "", telephone: "", telephone2: "", adresse: "", prescripteur: "PDB",
+    email: "", telephone: "", telephone2: "", prescripteur: "PDB",
     depot: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false,
     nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
@@ -87,8 +87,26 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!form.nomArtisan || !form.prenomArtisan) {
-      setError("Nom et prénom de l'artisan sont obligatoires");
+    const required = [
+      ["nomConseiller", "Nom du conseiller"],
+      ["prenomConseiller", "Prénom du conseiller"],
+      ["emailConseiller", "Email du conseiller"],
+      ["telephoneConseiller", "Téléphone du conseiller"],
+      ["nomArtisan", "Nom de l'artisan"],
+      ["prenomArtisan", "Prénom de l'artisan"],
+      ["nomEntreprise", "Nom de l'entreprise"],
+      ["siret", "SIRET"],
+      ["numeroCarte", "Numéro de carte"],
+      ["email", "Email de l'artisan"],
+      ["telephone", "Téléphone de l'artisan"],
+    ];
+    const missing = required.filter(([key]) => !form[key as keyof typeof form]);
+    if (missing.length > 0) {
+      setError(`Champs obligatoires manquants : ${missing.map(([, l]) => l).join(", ")}`);
+      return;
+    }
+    if (!form.acceptePartage) {
+      setError("L'artisan doit accepter le partage de ses coordonnées");
       return;
     }
     setSubmitting(true);
@@ -174,7 +192,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           <button
             onClick={() => { setSubmitted(false); setForm({
               nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
-              email: "", telephone: "", telephone2: "", adresse: "", prescripteur: form.prescripteur,
+              email: "", telephone: "", telephone2: "", prescripteur: form.prescripteur,
               depot: form.depot, numeroCarte: form.numeroCarte, dejaReferentRGE: false,
               commentaires: "", acceptePartage: false,
               nomConseiller: form.nomConseiller, prenomConseiller: form.prenomConseiller,
@@ -237,7 +255,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <div><label style={labelStyle}>Votre nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomConseiller} onChange={(e) => set("nomConseiller", e.target.value)} required /></div>
               <div><label style={labelStyle}>Votre prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomConseiller} onChange={(e) => set("prenomConseiller", e.target.value)} required /></div>
               <div><label style={labelStyle}>Votre email *</label><input type="email" style={inputStyle} placeholder="email@laplateforme.com" value={form.emailConseiller} onChange={(e) => set("emailConseiller", e.target.value)} required /></div>
-              <div><label style={labelStyle}>Votre téléphone</label><input style={inputStyle} placeholder="06 12 34 56 78" value={form.telephoneConseiller} onChange={(e) => set("telephoneConseiller", e.target.value)} /></div>
+              <div><label style={labelStyle}>Votre téléphone *</label><input style={inputStyle} placeholder="06 12 34 56 78" value={form.telephoneConseiller} onChange={(e) => set("telephoneConseiller", e.target.value)} required /></div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={labelStyle}>Dépôt</label>
                 {depots.length > 0 ? (
@@ -264,9 +282,9 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
               <div><label style={labelStyle}>Nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomArtisan} onChange={(e) => set("nomArtisan", e.target.value)} required /></div>
               <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomArtisan} onChange={(e) => set("prenomArtisan", e.target.value)} required /></div>
-              <div><label style={labelStyle}>Entreprise</label><input style={inputStyle} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value)} /></div>
-              <div><label style={labelStyle}>SIRET</label><input style={inputStyle} placeholder="N° SIRET" value={form.siret} onChange={(e) => set("siret", e.target.value)} /></div>
-              <div><label style={labelStyle}>N° carte</label><input style={inputStyle} placeholder="N° carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} /></div>
+              <div><label style={labelStyle}>Entreprise *</label><input style={inputStyle} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value)} required /></div>
+              <div><label style={labelStyle}>SIRET *</label><input style={inputStyle} placeholder="N° SIRET" value={form.siret} onChange={(e) => set("siret", e.target.value)} required /></div>
+              <div><label style={labelStyle}>N° carte *</label><input style={inputStyle} placeholder="N° carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} required /></div>
             </div>
           </div>
 
@@ -278,17 +296,17 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
               <div>
-                <label style={labelStyle}>Email</label>
+                <label style={labelStyle}>Email *</label>
                 <div style={{ position: "relative" }}>
                   <Mail size={14} color={C.textDim} style={{ position: "absolute", left: 12, top: 13 }} />
-                  <input type="email" style={{ ...inputStyle, paddingLeft: 34 }} placeholder="email@exemple.com" value={form.email} onChange={(e) => set("email", e.target.value)} />
+                  <input type="email" style={{ ...inputStyle, paddingLeft: 34 }} placeholder="email@exemple.com" value={form.email} onChange={(e) => set("email", e.target.value)} required />
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>Téléphone</label>
+                <label style={labelStyle}>Téléphone *</label>
                 <div style={{ position: "relative" }}>
                   <Phone size={14} color={C.textDim} style={{ position: "absolute", left: 12, top: 13 }} />
-                  <input style={{ ...inputStyle, paddingLeft: 34 }} placeholder="06 12 34 56 78" value={form.telephone} onChange={(e) => set("telephone", e.target.value)} />
+                  <input style={{ ...inputStyle, paddingLeft: 34 }} placeholder="06 12 34 56 78" value={form.telephone} onChange={(e) => set("telephone", e.target.value)} required />
                 </div>
               </div>
               <div>
@@ -296,13 +314,6 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 <div style={{ position: "relative" }}>
                   <Phone size={14} color={C.textDim} style={{ position: "absolute", left: 12, top: 13 }} />
                   <input style={{ ...inputStyle, paddingLeft: 34 }} placeholder="06 12 34 56 78" value={form.telephone2} onChange={(e) => set("telephone2", e.target.value)} />
-                </div>
-              </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={labelStyle}>Adresse</label>
-                <div style={{ position: "relative" }}>
-                  <MapPin size={14} color={C.textDim} style={{ position: "absolute", left: 12, top: 13 }} />
-                  <input style={{ ...inputStyle, paddingLeft: 34 }} placeholder="Adresse de l'artisan" value={form.adresse} onChange={(e) => set("adresse", e.target.value)} />
                 </div>
               </div>
             </div>
@@ -332,7 +343,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 background: form.acceptePartage ? C.blueDim : "transparent", transition: "all 0.15s",
               }}>
                 <input type="checkbox" checked={form.acceptePartage} onChange={(e) => set("acceptePartage", e.target.checked)} style={{ width: 16, height: 16, accentColor: C.blue, marginTop: 2 }} />
-                <span style={{ fontSize: 13, color: C.text, fontWeight: 500, lineHeight: 1.5 }}>L&apos;artisan accepte le partage de ses coordonnées avec l&apos;équipe Tenakoe</span>
+                <span style={{ fontSize: 13, color: C.text, fontWeight: 500, lineHeight: 1.5 }}>L&apos;artisan accepte le partage de ses coordonnées avec l&apos;équipe Tenakoe *</span>
               </label>
             </div>
           </div>

@@ -41,9 +41,17 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  if (!body.nomArtisan || !body.prenomArtisan || !body.prescripteur) {
+  const requiredFields = ["nomArtisan", "prenomArtisan", "prescripteur", "nomEntreprise", "siret", "numeroCarte", "email", "telephone", "nomConseiller", "prenomConseiller", "emailConseiller", "telephoneConseiller"];
+  const missingFields = requiredFields.filter((f) => !body[f]);
+  if (missingFields.length > 0) {
     return NextResponse.json(
-      { error: "Nom, prénom et prescripteur sont obligatoires" },
+      { error: `Champs obligatoires manquants : ${missingFields.join(", ")}` },
+      { status: 400 }
+    );
+  }
+  if (!body.acceptePartage) {
+    return NextResponse.json(
+      { error: "L'artisan doit accepter le partage de ses coordonnées" },
       { status: 400 }
     );
   }
