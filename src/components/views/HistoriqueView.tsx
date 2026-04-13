@@ -15,6 +15,9 @@ interface Activity {
   chargeeId: string | null;
   entreprise: string | null;
   entrepriseId: string | null;
+  automatique: boolean;
+  statutEnvoi: string | null;
+  erreur: string | null;
   time: string;
 }
 
@@ -49,6 +52,7 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
   const [filterDateTo, setFilterDateTo] = useState("");
   const [filterSearch, setFilterSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [filterAutoOnly, setFilterAutoOnly] = useState(false);
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -63,6 +67,7 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
       if (filterDateTo) params.set("dateTo", filterDateTo);
     }
     if (filterSearch) params.set("search", filterSearch);
+    if (filterAutoOnly) params.set("automatique", "true");
 
     fetch(`/api/activite?${params}`)
       .then((r) => r.ok ? r.json() : { activities: [], chargees: [], total: 0, totalPages: 1 })
@@ -74,16 +79,16 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [page, filterType, filterChargee, filterDateFrom, filterDateTo, filterSearch]);
+  }, [page, filterType, filterChargee, filterDateFrom, filterDateTo, filterSearch, filterAutoOnly]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const clearFilters = () => {
     setFilterType(""); setFilterChargee(""); setFilterDateFrom(""); setFilterDateTo("");
-    setFilterSearch(""); setSearchInput(""); setPage(1);
+    setFilterSearch(""); setSearchInput(""); setFilterAutoOnly(false); setPage(1);
   };
 
-  const hasFilters = filterType || filterChargee || filterDateFrom || filterDateTo || filterSearch;
+  const hasFilters = filterType || filterChargee || filterDateFrom || filterDateTo || filterSearch || filterAutoOnly;
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);
@@ -146,6 +151,12 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
             </div>
           </div>
         </div>
+        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, color: filterAutoOnly ? "#7c3aed" : C.textDim, fontWeight: filterAutoOnly ? 600 : 400 }}>
+            <input type="checkbox" checked={filterAutoOnly} onChange={(e) => { setFilterAutoOnly(e.target.checked); setPage(1); }} style={{ accentColor: "#7c3aed" }} />
+            Automatisations uniquement
+          </label>
+        </div>
       </div>
 
       {/* Table */}
@@ -153,16 +164,16 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: `2px solid ${C.border}` }}>
-              {["Date / Heure", "Type", "Description", "Entreprise", "Chargée"].map((h) => (
+              {["Date / Heure", "Type", "Source", "Description", "Entreprise", "Chargée", "Statut"].map((h) => (
                 <th key={h} style={{ padding: "10px 14px", fontSize: 11, fontWeight: 700, color: C.textDim, textAlign: "left", textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} style={{ padding: 30, textAlign: "center", color: C.textDim, fontSize: 13 }}>Chargement...</td></tr>
+              <tr><td colSpan={7} style={{ padding: 30, textAlign: "center", color: C.textDim, fontSize: 13 }}>Chargement...</td></tr>
             ) : activities.length === 0 ? (
-              <tr><td colSpan={5} style={{ padding: 30, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucune activité trouvée</td></tr>
+              <tr><td colSpan={7} style={{ padding: 30, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucune activité trouvée</td></tr>
             ) : activities.map((a) => {
               const cfg = TYPE_CONFIG[a.type] || TYPE_CONFIG.STATUT;
               const Icon = cfg.Icon;
@@ -176,6 +187,11 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
                       <Icon size={10} style={{ marginRight: 4, verticalAlign: "-1px" }} />{cfg.label}
                     </Badge>
                   </td>
+                  <td style={{ padding: "10px 14px" }}>
+                    <Badge color={a.automatique ? "#7c3aed" : "#94a3b8"} bg={a.automatique ? "rgba(124,58,237,0.1)" : "rgba(148,163,184,0.1)"}>
+                      {a.automatique ? "Auto" : "Manuel"}
+                    </Badge>
+                  </td>
                   <td style={{ padding: "10px 14px", fontSize: 12, color: C.text, maxWidth: 400 }}>{a.message}</td>
                   <td style={{ padding: "10px 14px" }}>
                     {a.entreprise && a.entrepriseId ? (
@@ -186,6 +202,18 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
                     ) : <span style={{ fontSize: 12, color: C.textDim }}>—</span>}
                   </td>
                   <td style={{ padding: "10px 14px", fontSize: 12, color: C.textMuted }}>{a.chargee}</td>
+                  <td style={{ padding: "10px 14px" }}>
+                    {a.statutEnvoi && (
+                      <span title={a.erreur || ""} style={{ cursor: a.erreur ? "help" : "default" }}>
+                        <Badge
+                          color={a.statutEnvoi === "ENVOYE" ? "#16a34a" : a.statutEnvoi === "DELIVRE" ? "#3b82f6" : a.statutEnvoi === "ECHEC" ? "#ef4444" : "#f59e0b"}
+                          bg={a.statutEnvoi === "ENVOYE" ? "rgba(22,163,74,0.1)" : a.statutEnvoi === "DELIVRE" ? "rgba(59,130,246,0.1)" : a.statutEnvoi === "ECHEC" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)"}
+                        >
+                          {a.statutEnvoi === "ENVOYE" ? "Envoyé" : a.statutEnvoi === "DELIVRE" ? "Délivré" : a.statutEnvoi === "ECHEC" ? "Échec" : "En attente"}
+                        </Badge>
+                      </span>
+                    )}
+                  </td>
                 </tr>
               );
             })}

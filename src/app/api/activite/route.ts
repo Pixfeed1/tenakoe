@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const dateTo = p.get("dateTo");
   const typeActivite = p.get("type"); // EMAIL, SMS, APPEL, STATUT, DOC, LEAD
   const search = p.get("search") || "";
+  const autoOnly = p.get("automatique") === "true";
   const limit = Number(p.get("limit")) || 30;
   const page = Number(p.get("page")) || 1;
 
@@ -49,6 +50,7 @@ export async function GET(request: NextRequest) {
       ...(typeActivite && typeActivite !== "STATUT" && typeActivite !== "DOC" && typeActivite !== "LEAD" && {
         canal: typeActivite === "APPEL" ? "TELEPHONE" : typeActivite as never,
       }),
+      ...(autoOnly && { automatique: true }),
     },
     include: {
       expediteur: { select: { id: true, prenom: true, nom: true } },
@@ -94,6 +96,9 @@ export async function GET(request: NextRequest) {
     chargeeId: t.expediteurId,
     entreprise: t.entreprise?.nom || null,
     entrepriseId: t.entrepriseId,
+    automatique: t.automatique,
+    statutEnvoi: t.statutEnvoi || "ENVOYE",
+    erreur: t.erreur || null,
     time: t.dateEnvoi.toISOString(),
     _ts: t.dateEnvoi.getTime(),
   }));
@@ -107,6 +112,9 @@ export async function GET(request: NextRequest) {
     chargeeId: l.userId,
     entreprise: null,
     entrepriseId: null,
+    automatique: false,
+    statutEnvoi: null,
+    erreur: null,
     time: l.createdAt.toISOString(),
     _ts: l.createdAt.getTime(),
   }));

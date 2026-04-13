@@ -78,7 +78,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
   const [newTache, setNewTache] = useState<{ titre: string; type: string; dateEcheance: string; assigneeId: string }>({ titre: "", type: "AUTRE", dateEcheance: "", assigneeId: "" });
-  const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string }>>([]);
+  const [historique, setHistorique] = useState<Array<{ type: string; message: string; chargee: string; time: string; automatique?: boolean; statutEnvoi?: string | null }>>([]);
   const [showCallLog, setShowCallLog] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editFieldValue, setEditFieldValue] = useState("");
@@ -360,12 +360,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     // Fetch transmissions as historique
     fetch(`/api/transmissions?entrepriseId=${client.id}`)
       .then((r) => (r.ok ? r.json() : []))
-      .then((data: Array<{ canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null }>) => {
+      .then((data: Array<{ canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null; automatique?: boolean; statutEnvoi?: string | null }>) => {
         setHistorique(data.map((t) => ({
           type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
           message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoyé" : "reçu"} — ${t.objet || t.destinataire}`,
           chargee: t.expediteur ? `${t.expediteur.prenom}${t.expediteurEmail ? ` (${t.expediteurEmail})` : ""}` : "—",
           time: formatRelativeTime(new Date(t.dateEnvoi)),
+          automatique: t.automatique || false,
+          statutEnvoi: t.statutEnvoi || null,
         })));
       })
       .catch(() => {});
@@ -2074,7 +2076,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <ActIcon size={14} color={C[actColor as keyof Theme] as string} strokeWidth={2} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, color: C.text }}>{a.message}</div>
+                  <div style={{ fontSize: 13, color: C.text, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    {a.message}
+                    {a.automatique && <Badge color="#7c3aed" bg="rgba(124,58,237,0.1)">Auto</Badge>}
+                    {a.statutEnvoi === "ECHEC" && <Badge color="#ef4444" bg="rgba(239,68,68,0.1)">Échec</Badge>}
+                    {a.statutEnvoi === "ENVOYE" && a.automatique && <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Envoyé</Badge>}
+                  </div>
                   <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>{a.chargee} · {a.time}</div>
                 </div>
               </div>

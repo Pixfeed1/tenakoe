@@ -416,6 +416,9 @@ model Transmission {
   expediteur      User?                 @relation(fields: [expediteurId], references: [id])
   entrepriseId    String?
   entreprise      Entreprise?           @relation(fields: [entrepriseId], references: [id])
+  automatique     Boolean               @default(false)
+  statutEnvoi     String?               @default("ENVOYE")
+  erreur          String?
 }
 
 model MailTemplate {
