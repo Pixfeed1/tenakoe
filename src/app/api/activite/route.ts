@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
   const dateFrom = p.get("dateFrom");
   const dateTo = p.get("dateTo");
   const typeActivite = p.get("type"); // EMAIL, SMS, APPEL, STATUT, DOC, LEAD
+  const search = p.get("search") || "";
   const limit = Number(p.get("limit")) || 30;
+  const page = Number(p.get("page")) || 1;
 
   // Calculate date range
   let dateGte: Date | undefined;
@@ -114,8 +116,15 @@ export async function GET(request: NextRequest) {
   if (typeActivite) {
     merged = merged.filter((a) => a.type === typeActivite);
   }
+  if (search) {
+    const s = search.toLowerCase();
+    merged = merged.filter((a) => a.message.toLowerCase().includes(s) || (a.entreprise && a.entreprise.toLowerCase().includes(s)));
+  }
 
   merged.sort((a, b) => b._ts - a._ts);
+  const total = merged.length;
+  const offset = (page - 1) * limit;
+  const paginated = merged.slice(offset, offset + limit);
 
   // Also fetch list of chargées for the filter dropdown
   const chargees = await prisma.user.findMany({
@@ -125,7 +134,10 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json({
-    activities: merged.slice(0, limit).map(({ _ts, ...rest }) => rest),
+    activities: paginated.map(({ _ts, ...rest }) => rest),
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
     chargees,
   });
 }

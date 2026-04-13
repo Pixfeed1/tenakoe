@@ -460,7 +460,7 @@ export function DashboardView({
         {/* Activity */}
         <GuideTooltip id="historique" C={C}>
           <div data-guide="historique">
-            <ActivityFeed C={C} compact />
+            <ActivityFeed C={C} compact onNavigate={onNavigate} />
           </div>
         </GuideTooltip>
       </div>

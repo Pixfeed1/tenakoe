@@ -17,6 +17,7 @@ import { TransmissionsView } from "@/components/views/TransmissionsView";
 import { DocumentsView } from "@/components/views/DocumentsView";
 import { FacturationView } from "@/components/views/FacturationView";
 import { ApporteursView } from "@/components/views/ApporteursView";
+import { HistoriqueView } from "@/components/views/HistoriqueView";
 import { ParametresView } from "@/components/views/ParametresView";
 import { IntegrationsView } from "@/components/views/IntegrationsView";
 import { AlertesDropdown } from "@/components/AlertesDropdown";
@@ -33,6 +34,7 @@ type View =
   | "Transmissions"
   | "Documents"
   | "Facturation"
+  | "Historique"
   | "Apporteurs"
   | "Intégrations"
   | "Paramètres"
@@ -47,6 +49,7 @@ const VIEW_TITLES: Record<View, string> = {
   Transmissions: "Transmissions",
   Documents: "Documents",
   Facturation: "Facturation",
+  Historique: "Historique d'activité",
   Apporteurs: "Apporteurs d'affaires",
   "Intégrations": "Intégrations",
   "Paramètres": "Paramètres",
@@ -110,7 +113,7 @@ export function CRMShell({
     });
   };
 
-  const VALID_VIEWS = ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Facturation", "Apporteurs", "Intégrations", "Paramètres", "ClientDetail"];
+  const VALID_VIEWS = ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Facturation", "Historique", "Apporteurs", "Intégrations", "Paramètres", "ClientDetail"];
   const startView = (initialView && VALID_VIEWS.includes(initialView) ? initialView : "Dashboard") as View;
 
   const [view, setView] = useState<View>(startView);
@@ -306,6 +309,7 @@ export function CRMShell({
         {view === "Transmissions" && <TransmissionsView key={navKey} C={C} />}
         {view === "Documents" && <DocumentsView key={navKey} C={C} />}
         {view === "Facturation" && <FacturationView key={navKey} C={C} onSelectClient={openClient} />}
+        {view === "Historique" && <HistoriqueView key={navKey} C={C} onSelectClient={openClient} />}
         {view === "Apporteurs" && <ApporteursView key={navKey} C={C} />}
         {view === "Intégrations" && <IntegrationsView key={navKey} C={C} />}
         {view === "Paramètres" && <ParametresView key={navKey} C={C} role={user.role} />}

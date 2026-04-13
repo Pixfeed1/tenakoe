@@ -36,9 +36,10 @@ const TYPE_COLORS: Record<string, string> = {
 interface ActivityFeedProps {
   C: Theme;
   compact?: boolean;
+  onNavigate?: (view: string) => void;
 }
 
-export function ActivityFeed({ C, compact = false }: ActivityFeedProps) {
+export function ActivityFeed({ C, compact = false, onNavigate }: ActivityFeedProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [chargees, setChargees] = useState<Chargee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -275,6 +276,16 @@ export function ActivityFeed({ C, compact = false }: ActivityFeedProps) {
           );
         })}
       </div>
+      {compact && onNavigate && (
+        <button onClick={() => onNavigate("Historique")} style={{
+          width: "100%", padding: "10px 0", marginTop: 10, borderRadius: 8,
+          border: `1px solid ${C.border}`, background: "transparent",
+          color: C.blue, fontSize: 12, fontWeight: 600, cursor: "pointer",
+          textAlign: "center",
+        }}>
+          Voir tout l&apos;historique →
+        </button>
+      )}
     </div>
   );
 }
