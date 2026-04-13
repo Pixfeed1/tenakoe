@@ -63,17 +63,19 @@ export async function PATCH(request: NextRequest) {
 
   const body = await request.json();
 
-  const document = await prisma.document.update({
-    where: { id: body.id },
-    data: {
-      recu: body.recu,
-      dateReception: body.recu ? new Date() : null,
-      fichierUrl: body.fichierUrl,
-      fichierNom: body.fichierNom,
-      fichierTaille: body.fichierTaille,
-      notes: body.notes,
-    },
-  });
+  const data: Record<string, unknown> = {};
+  if (body.recu !== undefined) { data.recu = body.recu; data.dateReception = body.recu ? new Date() : null; }
+  if (body.fichierUrl !== undefined) data.fichierUrl = body.fichierUrl;
+  if (body.fichierNom !== undefined) data.fichierNom = body.fichierNom;
+  if (body.fichierTaille !== undefined) data.fichierTaille = body.fichierTaille;
+  if (body.notes !== undefined) data.notes = body.notes;
+  if (body.conformite !== undefined) {
+    data.conformite = body.conformite;
+    if (body.conformite === "CONFORME") data.notes = null;
+    if (body.conformite === "NON_CONFORME" && body.notes !== undefined) data.notes = body.notes;
+  }
+
+  const document = await prisma.document.update({ where: { id: body.id }, data });
 
   return NextResponse.json(document);
 }

@@ -297,6 +297,7 @@ model Document {
   fichierNom            String?
   fichierTaille         Int?
   notes                 String?
+  conformite            String?
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   entrepriseId          String

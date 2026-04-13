@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
-  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip, Handshake,
+  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip, Handshake, CheckCircle, XCircle,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -56,6 +56,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [editContent, setEditContent] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [nonConformeDocId, setNonConformeDocId] = useState<string | null>(null);
+  const [nonConformeMotif, setNonConformeMotif] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mailTemplates, setMailTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string; categorie: string | null }>>([]);
   const [contacts, setContacts] = useState<Array<{ id: string; nom: string; prenom: string; email: string | null; telephone: string | null; fonction: string | null }>>([]);
@@ -106,8 +108,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         if (client?.id) {
           fetch(`/api/documents?entrepriseId=${client.id}`)
             .then((r) => r.ok ? r.json() : [])
-            .then((freshDocs) => setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; fichierUrl?: string | null; fichierNom?: string | null }) => ({
+            .then((freshDocs) => setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; conformite?: string | null; notes?: string | null; fichierUrl?: string | null; fichierNom?: string | null }) => ({
               id: d.id, nom: d.nom, recu: d.recu, type: d.type || "TRONC_COMMUN", qualificationAssociee: d.qualificationAssociee || null,
+              conformite: d.conformite || null, notes: d.notes || null,
               date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null, fichierUrl: d.fichierUrl || null, fichierNom: d.fichierNom || null,
             }))))
             .catch(() => {});
@@ -201,17 +204,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         // Load real documents
         if (data.documents?.length > 0) {
           setDocs(
-            data.documents.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; fichierUrl: string | null; fichierNom: string | null }) => ({
-              id: d.id,
-              nom: d.nom,
-              recu: d.recu,
-              type: d.type || "TRONC_COMMUN",
-              qualificationAssociee: d.qualificationAssociee || null,
-              date: d.dateReception
-                ? new Date(d.dateReception).toLocaleDateString("fr-FR")
-                : null,
-              fichierUrl: d.fichierUrl,
-              fichierNom: d.fichierNom,
+            data.documents.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; conformite?: string | null; notes?: string | null; fichierUrl: string | null; fichierNom: string | null }) => ({
+              id: d.id, nom: d.nom, recu: d.recu,
+              type: d.type || "TRONC_COMMUN", qualificationAssociee: d.qualificationAssociee || null,
+              conformite: d.conformite || null, notes: d.notes || null,
+              date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null,
+              fichierUrl: d.fichierUrl, fichierNom: d.fichierNom,
             }))
           );
         }
@@ -376,6 +374,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     }
   };
   const docsRecu = docs.filter((d) => d.recu).length;
+  const docsConformes = docs.filter((d) => d.conformite === "CONFORME").length;
+
+  const updateConformite = async (docId: string, conformite: string | null, notes?: string | null) => {
+    setDocs((prev) => prev.map((d) => d.id === docId ? { ...d, conformite, notes: notes ?? d.notes } : d));
+    if (!isDemoMode) {
+      await fetch("/api/documents", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: docId, conformite, ...(notes !== undefined ? { notes } : {}) }),
+      }).catch(() => {});
+    }
+  };
 
   return (
     <>
@@ -1364,7 +1373,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         const docsCommuns = docs.filter((d) => d.type !== "SPECIFIQUE");
         const docsSpecifiques = docs.filter((d) => d.type === "SPECIFIQUE");
         const communsRecu = docsCommuns.filter((d) => d.recu).length;
+        const communsConformes = docsCommuns.filter((d) => d.conformite === "CONFORME").length;
         const specifiquesRecu = docsSpecifiques.filter((d) => d.recu).length;
+        const specifiquesConformes = docsSpecifiques.filter((d) => d.conformite === "CONFORME").length;
         const qualifCode = docsSpecifiques[0]?.qualificationAssociee || projets[0]?.qualifications?.[0]?.type || "";
 
         const reloadDocs = async () => {
@@ -1375,8 +1386,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           const r = await fetch(`/api/documents?entrepriseId=${client.id}`);
           if (r.ok) {
             const freshDocs = await r.json();
-            setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; fichierUrl?: string | null; fichierNom?: string | null }) => ({
+            setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; conformite?: string | null; notes?: string | null; fichierUrl?: string | null; fichierNom?: string | null }) => ({
               id: d.id, nom: d.nom, recu: d.recu, type: d.type || "TRONC_COMMUN", qualificationAssociee: d.qualificationAssociee || null,
+              conformite: d.conformite || null, notes: d.notes || null,
               date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null, fichierUrl: d.fichierUrl || null, fichierNom: d.fichierNom || null,
             })));
             toast("Documents mis à jour");
@@ -1384,39 +1396,82 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         };
 
         const renderDocRow = (d: typeof docs[0], globalIdx: number) => (
-          <div
-            key={d.id || globalIdx}
-            style={{
-              display: "flex", alignItems: "center", gap: 12, padding: "10px 8px",
-              borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-            onClick={() => toggleDoc(globalIdx)}
-          >
+          <div key={d.id || globalIdx}>
             <div
-              {...(globalIdx === 0 ? { "data-guide": "doc-checkbox-first" } : {})}
               style={{
-                width: 22, height: 22, borderRadius: 6,
-                border: `2px solid ${d.recu ? C.accent : C.border}`,
-                background: d.recu ? C.accent : "transparent",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.2s", flexShrink: 0,
+                display: "flex", alignItems: "center", gap: 12, padding: "10px 8px",
+                borderBottom: (nonConformeDocId === d.id || (d.conformite === "NON_CONFORME" && d.notes)) ? "none" : `1px solid ${C.border}`,
+                cursor: "pointer", transition: "background 0.15s",
               }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              onClick={() => toggleDoc(globalIdx)}
             >
-              {d.recu && <Check size={13} color="#fff" strokeWidth={3} />}
+              <div
+                {...(globalIdx === 0 ? { "data-guide": "doc-checkbox-first" } : {})}
+                style={{
+                  width: 22, height: 22, borderRadius: 6,
+                  border: `2px solid ${d.recu ? (d.conformite === "NON_CONFORME" ? "#ef4444" : C.accent) : C.border}`,
+                  background: d.recu ? (d.conformite === "NON_CONFORME" ? "#ef4444" : C.accent) : "transparent",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.2s", flexShrink: 0,
+                }}
+              >
+                {d.recu && <Check size={13} color="#fff" strokeWidth={3} />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 13, color: d.recu ? C.text : C.textMuted, fontWeight: d.recu ? 500 : 400 }}>
+                  {d.nom}
+                </span>
+                {d.conformite === "NON_CONFORME" && d.notes && (
+                  <div style={{ fontSize: 11, color: "#ef4444", fontStyle: "italic", marginTop: 2 }}>{d.notes}</div>
+                )}
+              </div>
+              {d.date && <span style={{ fontSize: 11, color: C.textDim, flexShrink: 0 }}>Reçu le {d.date}</span>}
+              {d.fichierUrl && (
+                <a href={d.fichierUrl} download={d.fichierNom || d.nom} onClick={(e) => e.stopPropagation()}
+                  style={{ padding: "3px 8px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 11, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                  <Download size={11} /> Fichier
+                </a>
+              )}
+              {!d.recu && <Badge color={C.warning} bg={C.warningDim}>En attente</Badge>}
+              {d.recu && d.conformite === "CONFORME" && (
+                <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Conforme</Badge>
+              )}
+              {d.recu && d.conformite === "NON_CONFORME" && (
+                <Badge color="#ef4444" bg="rgba(239,68,68,0.1)">Non conforme</Badge>
+              )}
+              {d.recu && !d.conformite && d.id && (
+                <div style={{ display: "flex", gap: 4, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                  <button onClick={() => { if (d.id) updateConformite(d.id, "CONFORME"); }} title="Conforme" style={{ padding: 3, borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex" }}>
+                    <CheckCircle size={14} color="#16a34a" />
+                  </button>
+                  <button onClick={() => { if (d.id) { setNonConformeDocId(d.id); setNonConformeMotif(""); } }} title="Non conforme" style={{ padding: 3, borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex" }}>
+                    <XCircle size={14} color="#ef4444" />
+                  </button>
+                </div>
+              )}
             </div>
-            <span style={{ fontSize: 13, color: d.recu ? C.text : C.textMuted, fontWeight: d.recu ? 500 : 400, flex: 1 }}>
-              {d.nom}
-            </span>
-            {d.date && <span style={{ fontSize: 11, color: C.textDim }}>Reçu le {d.date}</span>}
-            {d.fichierUrl && (
-              <a href={d.fichierUrl} download={d.fichierNom || d.nom} onClick={(e) => e.stopPropagation()}
-                style={{ padding: "3px 8px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 11, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>
-                <Download size={11} /> Fichier
-              </a>
+            {nonConformeDocId === d.id && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 8px 10px 46px", borderBottom: `1px solid ${C.border}`, background: "rgba(239,68,68,0.04)" }} onClick={(e) => e.stopPropagation()}>
+                <input
+                  autoFocus
+                  value={nonConformeMotif}
+                  onChange={(e) => setNonConformeMotif(e.target.value)}
+                  placeholder="Motif de non-conformité..."
+                  onKeyDown={(e) => { if (e.key === "Enter" && d.id) { updateConformite(d.id, "NON_CONFORME", nonConformeMotif); setNonConformeDocId(null); } if (e.key === "Escape") setNonConformeDocId(null); }}
+                  style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid #ef4444`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+                />
+                <button onClick={() => { if (d.id) { updateConformite(d.id, "NON_CONFORME", nonConformeMotif); setNonConformeDocId(null); } }}
+                  style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: "#ef4444", color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                  Confirmer
+                </button>
+                <button onClick={() => setNonConformeDocId(null)}
+                  style={{ padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer" }}>
+                  Annuler
+                </button>
+              </div>
             )}
-            {!d.recu && <Badge color={C.warning} bg={C.warningDim}>En attente</Badge>}
           </div>
         );
 
@@ -1425,7 +1480,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div>
               <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Documents à fournir</h3>
-              <span style={{ fontSize: 12, color: C.textDim }}>{docsRecu}/{docs.length} reçus</span>
+              <span style={{ fontSize: 12, color: C.textDim }}>{docsRecu}/{docs.length} reçus · {docsConformes} conformes</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {docs.length > 0 && (
@@ -1449,8 +1504,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             >
               <ChevronRight size={14} color={C.textDim} style={{ transition: "transform 0.2s", transform: expandedCols.docsCommuns === false ? "rotate(0deg)" : "rotate(90deg)" }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: C.text, flex: 1 }}>Documents communs à toutes les qualifications</span>
-              <span style={{ fontSize: 11, color: C.textDim, marginRight: 8 }}>{communsRecu}/{docsCommuns.length}</span>
-              {docsCommuns.length > 0 && <div style={{ width: 80 }}><ProgressBar value={Math.round((communsRecu / docsCommuns.length) * 100)} C={C} /></div>}
+              <span style={{ fontSize: 11, color: C.textDim, marginRight: 8 }}>{communsRecu}/{docsCommuns.length} · {communsConformes} conf.</span>
+              {docsCommuns.length > 0 && <div style={{ width: 80 }}><ProgressBar value={Math.round((communsConformes / docsCommuns.length) * 100)} C={C} /></div>}
             </div>
             {expandedCols.docsCommuns !== false && docsCommuns.map((d) => renderDocRow(d, docs.indexOf(d)))}
           </div>
@@ -1463,8 +1518,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             >
               <ChevronRight size={14} color={C.textDim} style={{ transition: "transform 0.2s", transform: expandedCols.docsSpec === false ? "rotate(0deg)" : "rotate(90deg)" }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: C.text, flex: 1 }}>Documents spécifiques{qualifCode ? ` à la qualification ${qualifCode}` : ""}</span>
-              <span style={{ fontSize: 11, color: C.textDim, marginRight: 8 }}>{specifiquesRecu}/{docsSpecifiques.length}</span>
-              {docsSpecifiques.length > 0 && <div style={{ width: 80 }}><ProgressBar value={Math.round((specifiquesRecu / docsSpecifiques.length) * 100)} C={C} /></div>}
+              <span style={{ fontSize: 11, color: C.textDim, marginRight: 8 }}>{specifiquesRecu}/{docsSpecifiques.length} · {specifiquesConformes} conf.</span>
+              {docsSpecifiques.length > 0 && <div style={{ width: 80 }}><ProgressBar value={Math.round((specifiquesConformes / docsSpecifiques.length) * 100)} C={C} /></div>}
             </div>
             {expandedCols.docsSpec !== false && (
               docsSpecifiques.length > 0
