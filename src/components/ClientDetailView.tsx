@@ -106,8 +106,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         if (client?.id) {
           fetch(`/api/documents?entrepriseId=${client.id}`)
             .then((r) => r.ok ? r.json() : [])
-            .then((freshDocs) => setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null }) => ({
-              id: d.id, nom: d.nom, recu: d.recu,
+            .then((freshDocs) => setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null }) => ({
+              id: d.id, nom: d.nom, recu: d.recu, type: d.type || "TRONC_COMMUN", qualificationAssociee: d.qualificationAssociee || null,
               date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null,
             }))))
             .catch(() => {});
@@ -201,10 +201,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         // Load real documents
         if (data.documents?.length > 0) {
           setDocs(
-            data.documents.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; fichierUrl: string | null; fichierNom: string | null }) => ({
+            data.documents.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; fichierUrl: string | null; fichierNom: string | null }) => ({
               id: d.id,
               nom: d.nom,
               recu: d.recu,
+              type: d.type || "TRONC_COMMUN",
+              qualificationAssociee: d.qualificationAssociee || null,
               date: d.dateReception
                 ? new Date(d.dateReception).toLocaleDateString("fr-FR")
                 : null,
@@ -1358,79 +1360,118 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       )}
 
       {/* Tab: Documents */}
-      {tab === "docs" && (
+      {tab === "docs" && (() => {
+        const docsCommuns = docs.filter((d) => d.type !== "SPECIFIQUE");
+        const docsSpecifiques = docs.filter((d) => d.type === "SPECIFIQUE");
+        const communsRecu = docsCommuns.filter((d) => d.recu).length;
+        const specifiquesRecu = docsSpecifiques.filter((d) => d.recu).length;
+        const qualifCode = docsSpecifiques[0]?.qualificationAssociee || projets[0]?.qualifications?.[0]?.type || "";
+
+        const reloadDocs = async () => {
+          if (!client?.id || isDemoMode) return;
+          const projetId = projets[0]?.id;
+          if (!projetId) return;
+          await fetch(`/api/projets/${projetId}/generate-docs`, { method: "POST" });
+          const r = await fetch(`/api/documents?entrepriseId=${client.id}`);
+          if (r.ok) {
+            const freshDocs = await r.json();
+            setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null }) => ({
+              id: d.id, nom: d.nom, recu: d.recu, type: d.type || "TRONC_COMMUN", qualificationAssociee: d.qualificationAssociee || null,
+              date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null,
+            })));
+            toast("Documents mis à jour");
+          }
+        };
+
+        const renderDocRow = (d: typeof docs[0], globalIdx: number) => (
+          <div
+            key={d.id || globalIdx}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, padding: "10px 8px",
+              borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            onClick={() => toggleDoc(globalIdx)}
+          >
+            <div
+              {...(globalIdx === 0 ? { "data-guide": "doc-checkbox-first" } : {})}
+              style={{
+                width: 22, height: 22, borderRadius: 6,
+                border: `2px solid ${d.recu ? C.accent : C.border}`,
+                background: d.recu ? C.accent : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.2s", flexShrink: 0,
+              }}
+            >
+              {d.recu && <Check size={13} color="#fff" strokeWidth={3} />}
+            </div>
+            <span style={{ fontSize: 13, color: d.recu ? C.text : C.textMuted, fontWeight: d.recu ? 500 : 400, flex: 1 }}>
+              {d.nom}
+            </span>
+            {d.date && <span style={{ fontSize: 11, color: C.textDim }}>Reçu le {d.date}</span>}
+            {d.fichierUrl && (
+              <a href={d.fichierUrl} download={d.fichierNom || d.nom} onClick={(e) => e.stopPropagation()}
+                style={{ padding: "3px 8px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 11, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>
+                <Download size={11} /> Fichier
+              </a>
+            )}
+            {!d.recu && <Badge color={C.warning} bg={C.warningDim}>En attente</Badge>}
+          </div>
+        );
+
+        return (
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div>
               <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Documents à fournir</h3>
               <span style={{ fontSize: 12, color: C.textDim }}>{docsRecu}/{docs.length} reçus</span>
             </div>
-            {docs.length > 0 && (
-              <div data-guide="docs-progress">
-                <ProgressBar value={Math.round((docsRecu / docs.length) * 100)} C={C} />
-              </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {docs.length > 0 && (
+                <div data-guide="docs-progress">
+                  <ProgressBar value={docs.length > 0 ? Math.round((docsRecu / docs.length) * 100) : 0} C={C} />
+                </div>
+              )}
+              {projets.length > 0 && !isDemoMode && (
+                <Button C={C} variant="ghost" size="sm" icon={<RefreshCw size={12} />} onClick={reloadDocs}>
+                  Régénérer
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Section : Documents communs */}
+          <div style={{ marginBottom: 12 }}>
+            <div
+              onClick={() => setExpandedCols((p) => ({ ...p, docsCommuns: p.docsCommuns === false ? true : (p.docsCommuns === undefined ? false : !p.docsCommuns) }))}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 4px", cursor: "pointer", userSelect: "none", borderBottom: `1px solid ${C.border}` }}
+            >
+              <ChevronRight size={14} color={C.textDim} style={{ transition: "transform 0.2s", transform: expandedCols.docsCommuns === false ? "rotate(0deg)" : "rotate(90deg)" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.text, flex: 1 }}>Documents communs à toutes les qualifications</span>
+              <span style={{ fontSize: 11, color: C.textDim, marginRight: 8 }}>{communsRecu}/{docsCommuns.length}</span>
+              {docsCommuns.length > 0 && <div style={{ width: 80 }}><ProgressBar value={Math.round((communsRecu / docsCommuns.length) * 100)} C={C} /></div>}
+            </div>
+            {expandedCols.docsCommuns !== false && docsCommuns.map((d) => renderDocRow(d, docs.indexOf(d)))}
+          </div>
+
+          {/* Section : Documents spécifiques */}
+          <div>
+            <div
+              onClick={() => setExpandedCols((p) => ({ ...p, docsSpec: p.docsSpec === false ? true : (p.docsSpec === undefined ? false : !p.docsSpec) }))}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 4px", cursor: "pointer", userSelect: "none", borderBottom: `1px solid ${C.border}` }}
+            >
+              <ChevronRight size={14} color={C.textDim} style={{ transition: "transform 0.2s", transform: expandedCols.docsSpec === false ? "rotate(0deg)" : "rotate(90deg)" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.text, flex: 1 }}>Documents spécifiques{qualifCode ? ` à la qualification ${qualifCode}` : ""}</span>
+              <span style={{ fontSize: 11, color: C.textDim, marginRight: 8 }}>{specifiquesRecu}/{docsSpecifiques.length}</span>
+              {docsSpecifiques.length > 0 && <div style={{ width: 80 }}><ProgressBar value={Math.round((specifiquesRecu / docsSpecifiques.length) * 100)} C={C} /></div>}
+            </div>
+            {expandedCols.docsSpec !== false && (
+              docsSpecifiques.length > 0
+                ? docsSpecifiques.map((d) => renderDocRow(d, docs.indexOf(d)))
+                : <div style={{ padding: "12px 22px", fontSize: 12, color: C.textDim, fontStyle: "italic" }}>Aucun document spécifique configuré pour cette qualification.</div>
             )}
           </div>
-          {docs.length === 0 && projets.length > 0 && !isDemoMode && (
-            <Button C={C} variant="primary" onClick={async () => {
-              const projetId = projets[0]?.id;
-              if (!projetId) return;
-              const res = await fetch(`/api/projets/${projetId}/generate-docs`, { method: "POST" });
-              if (res.ok) {
-                // Recharger les docs
-                if (client?.id) {
-                  const r = await fetch(`/api/documents?entrepriseId=${client.id}`);
-                  if (r.ok) {
-                    const freshDocs = await r.json();
-                    setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null }) => ({
-                      id: d.id, nom: d.nom, recu: d.recu,
-                      date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null,
-                    })));
-                  }
-                }
-              }
-            }} style={{
-              marginBottom: 16, width: "100%", textAlign: "center",
-            }}>
-              Générer la checklist documents
-            </Button>
-          )}
-          {docs.map((d, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex", alignItems: "center", gap: 12, padding: "10px 8px",
-                borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-              onClick={() => toggleDoc(i)}
-            >
-              <div
-                {...(i === 0 ? { "data-guide": "doc-checkbox-first" } : {})}
-                style={{
-                  width: 22, height: 22, borderRadius: 6,
-                  border: `2px solid ${d.recu ? C.accent : C.border}`,
-                  background: d.recu ? C.accent : "transparent",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.2s", flexShrink: 0,
-                }}
-              >
-                {d.recu && <Check size={13} color="#fff" strokeWidth={3} />}
-              </div>
-              <span style={{ fontSize: 13, color: d.recu ? C.text : C.textMuted, fontWeight: d.recu ? 500 : 400, flex: 1 }}>
-                {d.nom}
-              </span>
-              {d.date && <span style={{ fontSize: 11, color: C.textDim }}>Reçu le {d.date}</span>}
-              {d.fichierUrl && (
-                <a href={d.fichierUrl} download={d.fichierNom || d.nom} onClick={(e) => e.stopPropagation()}
-                  style={{ padding: "3px 8px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 11, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 3 }}>
-                  <Download size={11} /> Fichier
-                </a>
-              )}
-              {!d.recu && <Badge color={C.warning} bg={C.warningDim}>En attente</Badge>}
-            </div>
-          ))}
 
           {/* Upload status */}
           {uploadMsg && (
@@ -1485,7 +1526,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </div>
           </GuideTooltip>
         </div>
-      )}
+        );
+      })()}
 
       {/* Tab: Track */}
       {tab === "track" && (() => {
