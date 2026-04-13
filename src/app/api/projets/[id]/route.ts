@@ -29,6 +29,10 @@ export async function PATCH(
   if (body.dateCommission !== undefined) data.dateCommission = body.dateCommission ? new Date(body.dateCommission) : null;
   if (body.identifiantQualibat !== undefined) data.identifiantQualibat = body.identifiantQualibat;
   if (body.motDePasseQualibat !== undefined) data.motDePasseQualibat = body.motDePasseQualibat;
+  if (body.certificateurType !== undefined) data.certificateurType = body.certificateurType;
+  if (body.emailCertificateur !== undefined) data.emailCertificateur = body.emailCertificateur;
+  if (body.bonCommandeDemande !== undefined) { data.bonCommandeDemande = body.bonCommandeDemande; data.dateBonCommandeDemande = body.bonCommandeDemande ? new Date() : null; }
+  if (body.bonCommandePaye !== undefined) { data.bonCommandePaye = body.bonCommandePaye; data.dateBonCommandePaye = body.bonCommandePaye ? new Date() : null; }
 
   const updated = await prisma.projet.update({ where: { id }, data });
 

@@ -199,6 +199,12 @@ model Projet {
   dateCommission        DateTime?
   identifiantQualibat   String?
   motDePasseQualibat    String?
+  certificateurType     String?
+  emailCertificateur    String?
+  bonCommandeDemande    Boolean   @default(false)
+  dateBonCommandeDemande DateTime?
+  bonCommandePaye       Boolean   @default(false)
+  dateBonCommandePaye   DateTime?
 
   qualifications ProjetQualification[]
   etapes         Etape[]

@@ -73,7 +73,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   interface BonDeCommande { id: string; qualificationCode: string; reference: string | null; montant: number | null; paye: boolean; datePaiement: string | null; dateEmission: string | null; commentaire: string | null }
   interface ChantierDoc { id: string; nom: string; fichierUrl: string | null; fichierNom: string | null; fichierTaille: number | null }
   interface ChantierData { id: string; numero: number; nom: string | null; description: string | null; devisRecu: boolean; devisFichierUrl: string | null; devisFichierNom: string | null; dateDevis: string | null; factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null; attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null; documents: ChantierDoc[] }
-  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; chantiers?: ChantierData[]; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null }>>([]);
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; chantiers?: ChantierData[]; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null; certificateurType?: string | null; emailCertificateur?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null }>>([]);
   const [showAddBon, setShowAddBon] = useState<string | null>(null);
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
@@ -1064,6 +1064,19 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 }
               </div>
             </div>
+            {/* Feuille de route progression */}
+            {(() => {
+              const etapes = projets[0]?.etapes || [];
+              if (etapes.length === 0) return null;
+              const done = etapes.filter((e) => e.terminee).length;
+              const active = etapes.find((e) => e.active);
+              const allDone = done === etapes.length;
+              return (
+                <div style={{ padding: "8px 0", fontSize: 11, color: allDone ? "#16a34a" : C.textDim }}>
+                  Feuille de route : Étape {done}/{etapes.length} — {allDone ? "Terminée ✓" : active ? active.nom : "Non démarrée"}
+                </div>
+              );
+            })()}
           </div>
 
           {/* BLOC 2 — Mise en relation */}
@@ -1342,11 +1355,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             );
           })()}
 
-          {/* Certificateur (Antenne Qualibat) */}
+          {/* Certificateur */}
           <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Certificateur</h3>
             {(() => {
               const currentProjet = projets[0];
+              const certType = currentProjet?.certificateurType || "Qualibat";
+              const isQualibat = certType === "Qualibat";
               const currentAntenneId = currentProjet?.antenneQualibatId || "";
               const selectedAntenne = antennes.find((a) => a.id === currentAntenneId);
               const updateProjet = async (patch: Record<string, unknown>) => {
@@ -1357,76 +1372,107 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 });
                 setProjets((prev) => prev.map((p) => p.id === currentProjet.id ? { ...p, ...patch } : p));
               };
-              const inputStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" as const };
+              const iStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" as const };
               return (
+                <>
                 <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+                  {/* Type de certificateur */}
                   <div style={{ gridColumn: "1 / -1" }}>
-                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Antenne Qualibat</label>
-                    <select
-                      value={currentAntenneId}
-                      onChange={(e) => updateProjet({ antenneQualibatId: e.target.value || null })}
-                      disabled={!currentProjet}
-                      style={inputStyle}
-                    >
-                      <option value="">-- Sélectionner --</option>
-                      {antennes.map((a) => (
-                        <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>
-                      ))}
+                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Type de certificateur</label>
+                    <select value={certType} onChange={(e) => updateProjet({ certificateurType: e.target.value })} disabled={!currentProjet} style={iStyle}>
+                      <option value="Qualibat">Qualibat</option>
+                      <option value="Certibat">Certibat</option>
+                      <option value="Qualit'EnR">Qualit&apos;EnR</option>
+                      <option value="Qualifelec">Qualifelec</option>
                     </select>
-                    {selectedAntenne && (selectedAntenne.email || selectedAntenne.telephone) && (
-                      <div style={{ fontSize: 11, color: C.textDim, marginTop: 6, display: "flex", gap: 14, flexWrap: "wrap" }}>
-                        {selectedAntenne.email && <span>{selectedAntenne.email}</span>}
-                        {selectedAntenne.telephone && <span>{formatPhone(selectedAntenne.telephone)}</span>}
-                      </div>
-                    )}
+                  </div>
+                  {/* Antenne Qualibat (only if Qualibat) */}
+                  {isQualibat && (
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Antenne Qualibat</label>
+                      <select value={currentAntenneId} onChange={(e) => updateProjet({ antenneQualibatId: e.target.value || null })} disabled={!currentProjet} style={iStyle}>
+                        <option value="">-- Sélectionner --</option>
+                        {antennes.map((a) => <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>)}
+                      </select>
+                      {selectedAntenne && (selectedAntenne.email || selectedAntenne.telephone) && (
+                        <div style={{ fontSize: 11, color: C.textDim, marginTop: 6, display: "flex", gap: 14, flexWrap: "wrap" }}>
+                          {selectedAntenne.email && <span>{selectedAntenne.email}</span>}
+                          {selectedAntenne.telephone && <span>{formatPhone(selectedAntenne.telephone)}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Email certificateur */}
+                  <div>
+                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Email certificateur</label>
+                    <input type="email" value={currentProjet?.emailCertificateur || ""}
+                      onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, emailCertificateur: e.target.value } : p))}
+                      onBlur={(e) => updateProjet({ emailCertificateur: e.target.value || null })}
+                      disabled={!currentProjet} placeholder="email@certificateur.fr" style={iStyle} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Identifiant</label>
-                    <input
-                      type="text"
-                      value={currentProjet?.identifiantQualibat || ""}
+                    <input type="text" value={currentProjet?.identifiantQualibat || ""}
                       onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, identifiantQualibat: e.target.value } : p))}
                       onBlur={(e) => updateProjet({ identifiantQualibat: e.target.value || null })}
-                      disabled={!currentProjet}
-                      placeholder="Identifiant espace Qualibat"
-                      style={inputStyle}
-                    />
+                      disabled={!currentProjet} placeholder="Identifiant espace" style={iStyle} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Mot de passe</label>
-                    <input
-                      type="text"
-                      value={currentProjet?.motDePasseQualibat || ""}
+                    <input type="text" value={currentProjet?.motDePasseQualibat || ""}
                       onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, motDePasseQualibat: e.target.value } : p))}
                       onBlur={(e) => updateProjet({ motDePasseQualibat: e.target.value || null })}
-                      disabled={!currentProjet}
-                      placeholder="Mot de passe espace Qualibat"
-                      style={inputStyle}
-                    />
+                      disabled={!currentProjet} placeholder="Mot de passe espace" style={iStyle} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Interlocuteur</label>
-                    <input
-                      type="text"
-                      value={currentProjet?.interlocuteurQualibat || ""}
+                    <input type="text" value={currentProjet?.interlocuteurQualibat || ""}
                       onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, interlocuteurQualibat: e.target.value } : p))}
                       onBlur={(e) => updateProjet({ interlocuteurQualibat: e.target.value || null })}
-                      disabled={!currentProjet}
-                      placeholder="Nom de l'instructeur"
-                      style={inputStyle}
-                    />
+                      disabled={!currentProjet} placeholder="Nom de l'instructeur" style={iStyle} />
                   </div>
                   <div>
                     <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Date de commission</label>
-                    <input
-                      type="date"
-                      value={currentProjet?.dateCommission ? new Date(currentProjet.dateCommission).toISOString().slice(0, 10) : ""}
+                    <input type="date" value={currentProjet?.dateCommission ? new Date(currentProjet.dateCommission).toISOString().slice(0, 10) : ""}
                       onChange={(e) => updateProjet({ dateCommission: e.target.value || null })}
-                      disabled={!currentProjet}
-                      style={inputStyle}
-                    />
+                      disabled={!currentProjet} style={iStyle} />
                   </div>
                 </div>
+                {/* Bon de commande certificateur */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+                  {[
+                    { key: "bonCommandeDemande", dateKey: "dateBonCommandeDemande", label: "Bon de commande demandé" },
+                    { key: "bonCommandePaye", dateKey: "dateBonCommandePaye", label: "Bon de commande payé" },
+                  ].map((f) => {
+                    const checked = !!(currentProjet as Record<string, unknown>)?.[f.key];
+                    const date = (currentProjet as Record<string, unknown>)?.[f.dateKey] as string | null;
+                    return (
+                      <label key={f.key} onClick={async () => {
+                        if (!currentProjet?.id || isDemoMode) return;
+                        const newVal = !checked;
+                        updateProjet({ [f.key]: newVal, [f.dateKey]: newVal ? new Date().toISOString() : null });
+                      }} style={{
+                        display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                        borderRadius: 8, cursor: "pointer",
+                        background: checked ? C.accentDim : C.bg,
+                        border: `1px solid ${checked ? C.accent + "40" : C.border}`,
+                        transition: "all 0.15s",
+                      }}>
+                        <div style={{
+                          width: 16, height: 16, borderRadius: 4,
+                          border: `2px solid ${checked ? C.accent : C.border}`,
+                          background: checked ? C.accent : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                        }}>
+                          {checked && <Check size={10} color="#fff" strokeWidth={3} />}
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text, flex: 1 }}>{f.label}</span>
+                        {date && <span style={{ fontSize: 11, color: C.textDim }}>le {new Date(date).toLocaleDateString("fr-FR")}</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+                </>
               );
             })()}
           </div>
