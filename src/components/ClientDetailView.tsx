@@ -106,9 +106,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         if (client?.id) {
           fetch(`/api/documents?entrepriseId=${client.id}`)
             .then((r) => r.ok ? r.json() : [])
-            .then((freshDocs) => setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null }) => ({
+            .then((freshDocs) => setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; fichierUrl?: string | null; fichierNom?: string | null }) => ({
               id: d.id, nom: d.nom, recu: d.recu, type: d.type || "TRONC_COMMUN", qualificationAssociee: d.qualificationAssociee || null,
-              date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null,
+              date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null, fichierUrl: d.fichierUrl || null, fichierNom: d.fichierNom || null,
             }))))
             .catch(() => {});
         }
@@ -1375,9 +1375,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           const r = await fetch(`/api/documents?entrepriseId=${client.id}`);
           if (r.ok) {
             const freshDocs = await r.json();
-            setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null }) => ({
+            setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; fichierUrl?: string | null; fichierNom?: string | null }) => ({
               id: d.id, nom: d.nom, recu: d.recu, type: d.type || "TRONC_COMMUN", qualificationAssociee: d.qualificationAssociee || null,
-              date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null,
+              date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null, fichierUrl: d.fichierUrl || null, fichierNom: d.fichierNom || null,
             })));
             toast("Documents mis à jour");
           }
