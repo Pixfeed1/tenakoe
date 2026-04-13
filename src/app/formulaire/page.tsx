@@ -20,7 +20,8 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [dark, setDark] = useState(false);
   const [ready, setReady] = useState(false);
   const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
-  const [choosingPrescripteur, setChoosingPrescripteur] = useState(false);
+  const [prescripteurInvalid, setPrescripteurInvalid] = useState(false);
+  const [noParam, setNoParam] = useState(false);
   const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>>([]);
   const [depots, setDepots] = useState<Array<{ id: string; nom: string }>>([]);
   const [form, setForm] = useState({
@@ -50,9 +51,17 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
         setResolvedPrescripteur(code);
       });
     } else {
-      setChoosingPrescripteur(true);
+      setNoParam(true);
     }
   }, [paramsPromise]);
+
+  // Validate prescripteur exists and is active
+  useEffect(() => {
+    if (resolvedPrescripteur && prescripteurConfigs.length > 0) {
+      const config = prescripteurConfigs.find((c) => c.type === resolvedPrescripteur);
+      if (!config) setPrescripteurInvalid(true);
+    }
+  }, [resolvedPrescripteur, prescripteurConfigs]);
 
   useEffect(() => {
     if (resolvedPrescripteur) {
@@ -108,48 +117,29 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     return <div style={{ minHeight: "100vh", background: "#f8f9fb" }} />;
   }
 
-  // Step 1: Choose prescripteur
-  if (choosingPrescripteur && !resolvedPrescripteur) {
+  // No prescripteur param — show "use your link" message
+  if (noParam || prescripteurInvalid) {
     return (
       <div style={{
         minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
         background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif", padding: "40px 16px",
       }}>
-
-        <div style={{ width: 480, maxWidth: "100%" }}>
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-              <img src="/logo.png" alt="Tenakoe" style={{ width: 44, height: 44, objectFit: "contain" }} />
-              <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
-                <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>Qualification RGE</div>
-              </div>
+        <div style={{ width: 480, maxWidth: "100%", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <img src="/logo.png" alt="Tenakoe" style={{ width: 44, height: 44, objectFit: "contain" }} />
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
+              <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>Qualification RGE</div>
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 6px" }}>Transmission d&apos;un artisan</h1>
-            <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>Sélectionnez votre enseigne pour commencer</p>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {prescripteurConfigs.map((config) => (
-              <button key={config.type} onClick={() => setResolvedPrescripteur(config.type)} style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "18px 22px", borderRadius: 14, border: `1px solid ${C.border}`,
-                background: C.surface, cursor: "pointer", boxShadow: C.shadow,
-                transition: "all 0.15s", textAlign: "left",
-              }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadowHover; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadow; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  {config.logoUrl && <img src={config.logoUrl} alt={config.nom} style={{ width: 48, height: 48, objectFit: "contain" }} />}
-                  <div>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: C.text }}>{config.nom}</div>
-                    <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>{config.type}</div>
-                  </div>
-                </div>
-                <ChevronRight size={18} color={C.textDim} />
-              </button>
-            ))}
-          </div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 12px" }}>
+            {prescripteurInvalid ? "Ce formulaire n\u2019est pas disponible" : "Lien invalide"}
+          </h1>
+          <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6, margin: 0 }}>
+            {prescripteurInvalid
+              ? "Le prescripteur demandé n\u2019existe pas ou n\u2019est plus actif. Contactez votre responsable pour obtenir le bon lien."
+              : "Veuillez utiliser le lien spécifique fourni par votre enseigne pour accéder au formulaire de transmission."}
+          </p>
         </div>
       </div>
     );
@@ -243,15 +233,6 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
                 {resolvedPrescripteur ? `${getPrescripteurName(resolvedPrescripteur)} — Coordonnées conseiller` : "Votre enseigne — Coordonnées conseiller"}
               </span>
             </div>
-            {!resolvedPrescripteur && (
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Prescripteur *</label>
-                <select style={inputStyle} value={form.prescripteur} onChange={(e) => set("prescripteur", e.target.value)}>
-                  <option value="">Choisir...</option>
-                  {prescripteurConfigs.map((c) => <option key={c.type} value={c.type}>{c.nom}</option>)}
-                </select>
-              </div>
-            )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
               <div><label style={labelStyle}>Votre nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomConseiller} onChange={(e) => set("nomConseiller", e.target.value)} required /></div>
               <div><label style={labelStyle}>Votre prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomConseiller} onChange={(e) => set("prenomConseiller", e.target.value)} required /></div>
