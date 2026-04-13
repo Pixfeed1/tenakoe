@@ -142,30 +142,31 @@ export function LeadsView({ C }: { C: Theme }) {
     fontSize: 13, outline: "none", boxSizing: "border-box" as const,
   };
 
+  const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>>([]);
+  useEffect(() => {
+    fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then((data: Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>) => setPrescripteurConfigs(data.filter((c) => c.actif))).catch(() => {});
+  }, []);
+
+  const getFormUrl = (type: string) => `/formulaire/${type.toLowerCase().replace(/_/g, "-")}`;
+
   return (
     <>
-      {/* Formulaire prescripteur */}
+      {/* Formulaires prescripteurs */}
       <div style={{
         background: C.blueDim, borderRadius: 12, padding: "14px 20px",
-        marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between",
-        border: `1px solid ${C.border}`,
+        marginBottom: 16, border: `1px solid ${C.border}`,
       }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Formulaire de transmission prescripteur</div>
-          <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>
-            Partagez ce lien avec vos prescripteurs pour recevoir des leads
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8 }}>Formulaires de transmission prescripteur</div>
+        {prescripteurConfigs.map((p) => (
+          <div key={p.type} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: `1px solid ${C.border}20` }}>
+            {p.logoUrl && <img src={p.logoUrl} alt={p.nom} style={{ width: 22, height: 22, objectFit: "contain" }} />}
+            <span style={{ fontSize: 12, fontWeight: 600, color: C.text, width: 80 }}>{p.nom}</span>
+            <span style={{ fontSize: 11, color: C.blue, flex: 1 }}>{typeof window !== "undefined" ? window.location.origin : ""}{getFormUrl(p.type)}</span>
+            <Button C={C} variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${getFormUrl(p.type)}`); toast("Lien copié"); }}>Copier</Button>
+            <Button C={C} variant="secondary" size="sm" onClick={() => { window.open(getFormUrl(p.type), "_blank"); }}>Voir</Button>
           </div>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button C={C} variant="secondary" onClick={() => {
-            navigator.clipboard.writeText(`${window.location.origin}/formulaire`);
-          }}>
-            Copier le lien
-          </Button>
-          <Button C={C} variant="primary" onClick={() => { window.open("/formulaire", "_blank"); }}>
-            Voir le formulaire
-          </Button>
-        </div>
+        ))}
+        {prescripteurConfigs.length === 0 && <div style={{ fontSize: 12, color: C.textDim }}>Aucun prescripteur configuré</div>}
       </div>
 
       {/* Action bar */}
