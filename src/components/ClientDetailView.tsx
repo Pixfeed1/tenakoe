@@ -1450,7 +1450,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setEntrepriseData((prev) => prev ? { ...prev, [f.key]: String(newVal), [f.dateKey]: newDate } : prev);
                     await fetch(`/api/entreprises/${client.id}`, {
                       method: "PATCH", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ [f.key]: newVal }),
+                      body: JSON.stringify({ [f.key]: newVal, [f.dateKey]: newVal ? new Date().toISOString() : null }),
                     }).catch(() => {});
                   }} style={{
                     display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
