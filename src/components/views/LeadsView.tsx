@@ -51,16 +51,28 @@ export function LeadsView({ C }: { C: Theme }) {
   // Form state
   const [form, setForm] = useState({
     nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
-    email: "", telephone: "", adresse: "", prescripteur: "PDB",
-    depot: "", numeroCarte: "", dejaReferentRGE: false, commentaires: "",
+    email: "", telephone: "", telephone2: "", prescripteur: "PDB",
+    depot: "", depotConfigId: "", numeroCarte: "", dejaReferentRGE: false,
+    commentaires: "", acceptePartage: false, interesseAccompagnement: "",
+    nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
   });
+  const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>>([]);
+  const [depots, setDepots] = useState<Array<{ id: string; nom: string }>>([]);
 
   useEffect(() => {
     fetchLeads();
+    fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then((data: Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>) => setPrescripteurConfigs(data.filter((c) => c.actif))).catch(() => {});
     const handler = () => setShowForm(true);
     window.addEventListener("tenakoe:new-lead", handler);
     return () => window.removeEventListener("tenakoe:new-lead", handler);
   }, []);
+
+  // Load depots when prescripteur changes
+  useEffect(() => {
+    if (form.prescripteur) {
+      fetch(`/api/depot-config?prescripteur=${form.prescripteur}`).then((r) => r.ok ? r.json() : []).then(setDepots).catch(() => {});
+    }
+  }, [form.prescripteur]);
 
   const fetchLeads = () => {
     fetch("/api/leads")
@@ -69,7 +81,19 @@ export function LeadsView({ C }: { C: Theme }) {
       .catch(() => setLoading(false));
   };
 
+  const emptyForm = {
+    nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
+    email: "", telephone: "", telephone2: "", prescripteur: "PDB",
+    depot: "", depotConfigId: "", numeroCarte: "", dejaReferentRGE: false,
+    commentaires: "", acceptePartage: false, interesseAccompagnement: "",
+    nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
+  };
+
   const submitLead = async () => {
+    if (!form.nomArtisan || !form.prenomArtisan || !form.nomEntreprise || !form.siret || !form.email || !form.telephone || !form.numeroCarte || !form.acceptePartage) {
+      toast("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
     const res = await fetch("/api/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -77,13 +101,12 @@ export function LeadsView({ C }: { C: Theme }) {
     });
     if (res.ok) {
       setShowForm(false);
-      setForm({
-        nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
-        email: "", telephone: "", adresse: "", prescripteur: "PDB",
-        depot: "", numeroCarte: "", dejaReferentRGE: false, commentaires: "",
-      });
+      setForm(emptyForm);
       fetchLeads();
       toast("Lead créé");
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast(data.error || "Erreur lors de la création");
     }
   };
 
@@ -142,11 +165,6 @@ export function LeadsView({ C }: { C: Theme }) {
     fontSize: 13, outline: "none", boxSizing: "border-box" as const,
   };
 
-  const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>>([]);
-  useEffect(() => {
-    fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then((data: Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>) => setPrescripteurConfigs(data.filter((c) => c.actif))).catch(() => {});
-  }, []);
-
   const getFormUrl = (type: string) => `/formulaire/${type.toLowerCase().replace(/_/g, "-")}`;
 
   return (
@@ -187,67 +205,69 @@ export function LeadsView({ C }: { C: Theme }) {
             <h3 style={{ fontSize: 15, fontWeight: 600, margin: 0, color: C.text }}>Nouveau lead</h3>
             <X size={16} color={C.textDim} style={{ cursor: "pointer" }} onClick={() => setShowForm(false)} />
           </div>
-          <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {/* Conseiller */}
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.04em" }}>Coordonnées conseiller</div>
+          <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Nom</label><input style={inputStyle} value={form.nomConseiller} onChange={(e) => setForm({ ...form, nomConseiller: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prénom</label><input style={inputStyle} value={form.prenomConseiller} onChange={(e) => setForm({ ...form, prenomConseiller: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Email</label><input type="email" style={inputStyle} value={form.emailConseiller} onChange={(e) => setForm({ ...form, emailConseiller: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Téléphone</label><input style={inputStyle} value={form.telephoneConseiller} onChange={(e) => setForm({ ...form, telephoneConseiller: e.target.value })} /></div>
+          </div>
+          <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
             <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Nom *</label>
-              <input style={inputStyle} value={form.nomArtisan} onChange={(e) => setForm({ ...form, nomArtisan: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Prénom *</label>
-              <input style={inputStyle} value={form.prenomArtisan} onChange={(e) => setForm({ ...form, prenomArtisan: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Entreprise</label>
-              <input style={inputStyle} value={form.nomEntreprise} onChange={(e) => setForm({ ...form, nomEntreprise: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>SIRET</label>
-              <input style={inputStyle} value={form.siret} onChange={(e) => setForm({ ...form, siret: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Email</label>
-              <input type="email" style={inputStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Téléphone</label>
-              <input style={inputStyle} value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Prescripteur *</label>
-              <select style={{ ...inputStyle }} value={form.prescripteur} onChange={(e) => setForm({ ...form, prescripteur: e.target.value })}>
-                <option value="PDB">PDB</option>
-                <option value="POINT_P">Point P</option>
-                <option value="BIGMAT">Big Mat</option>
+              <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prescripteur *</label>
+              <select style={inputStyle} value={form.prescripteur} onChange={(e) => setForm({ ...form, prescripteur: e.target.value, depot: "", depotConfigId: "" })}>
+                {prescripteurConfigs.map((c) => <option key={c.type} value={c.type}>{c.nom}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Dépôt</label>
-              <input style={inputStyle} value={form.depot} onChange={(e) => setForm({ ...form, depot: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>N° Carte</label>
-              <input style={inputStyle} value={form.numeroCarte} onChange={(e) => setForm({ ...form, numeroCarte: e.target.value })} />
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Adresse</label>
-              <input style={inputStyle} value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} />
-            </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Commentaires</label>
-              <textarea rows={2} style={{ ...inputStyle, resize: "vertical" }} value={form.commentaires} onChange={(e) => setForm({ ...form, commentaires: e.target.value })} />
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <input type="checkbox" checked={form.dejaReferentRGE} onChange={(e) => setForm({ ...form, dejaReferentRGE: e.target.checked })} />
-              <span style={{ fontSize: 12, color: C.textMuted }}>Déjà référent RGE</span>
+              <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Dépôt</label>
+              <select style={inputStyle} value={form.depot} onChange={(e) => { const sel = depots.find((d) => d.nom === e.target.value); setForm({ ...form, depot: e.target.value, depotConfigId: sel?.id || "" }); }}>
+                <option value="">Sélectionner...</option>
+                {depots.map((d) => <option key={d.id} value={d.nom}>{d.nom}</option>)}
+              </select>
             </div>
           </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-            <button onClick={() => setShowForm(false)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.textMuted, fontSize: 13, cursor: "pointer" }}>
-              Annuler
-            </button>
-            <Button C={C} variant="primary" type="submit" disabled={!form.nomArtisan || !form.prenomArtisan} onClick={submitLead}>
-              Créer le lead
-            </Button>
+
+          {/* Artisan */}
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.04em" }}>Artisan</div>
+          <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Nom *</label><input style={inputStyle} value={form.nomArtisan} onChange={(e) => setForm({ ...form, nomArtisan: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prénom *</label><input style={inputStyle} value={form.prenomArtisan} onChange={(e) => setForm({ ...form, prenomArtisan: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Entreprise *</label><input style={inputStyle} value={form.nomEntreprise} onChange={(e) => setForm({ ...form, nomEntreprise: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>SIRET *</label><input style={inputStyle} value={form.siret} onChange={(e) => setForm({ ...form, siret: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Email *</label><input type="email" style={inputStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Téléphone *</label><input style={inputStyle} value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Téléphone 2</label><input style={inputStyle} value={form.telephone2} onChange={(e) => setForm({ ...form, telephone2: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>N° Carte *</label><input style={inputStyle} value={form.numeroCarte} onChange={(e) => setForm({ ...form, numeroCarte: e.target.value })} /></div>
+          </div>
+
+          {/* Options */}
+          <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input type="checkbox" checked={form.dejaReferentRGE as boolean} onChange={(e) => setForm({ ...form, dejaReferentRGE: e.target.checked })} style={{ accentColor: C.accent }} />
+              <span style={{ fontSize: 12, color: C.text }}>Référent RGE Renoperf</span>
+            </div>
+            <div>
+              <select style={inputStyle} value={form.interesseAccompagnement} onChange={(e) => setForm({ ...form, interesseAccompagnement: e.target.value })}>
+                <option value="">Intéressé accompagnement...</option>
+                <option value="OUI">Oui</option>
+                <option value="NON">Non</option>
+                <option value="NSP">Ne sait pas</option>
+              </select>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input type="checkbox" checked={form.acceptePartage as boolean} onChange={(e) => setForm({ ...form, acceptePartage: e.target.checked })} style={{ accentColor: C.accent }} />
+              <span style={{ fontSize: 12, color: C.text }}>Accepte partage coordonnées *</span>
+            </div>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Commentaires</label>
+            <textarea rows={2} style={{ ...inputStyle, resize: "vertical" }} value={form.commentaires} onChange={(e) => setForm({ ...form, commentaires: e.target.value })} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <button onClick={() => setShowForm(false)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.textMuted, fontSize: 13, cursor: "pointer" }}>Annuler</button>
+            <Button C={C} variant="primary" onClick={submitLead}>Créer le lead</Button>
           </div>
         </div>
       )}
