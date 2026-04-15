@@ -14,7 +14,7 @@ import { GuideTooltip, useGuide } from "@/components/GuideSystem";
 import { isDemo as checkIsDemo, DEMO_ENTREPRISE, DEMO_CONTACTS, DEMO_DOCUMENTS, DEMO_ETAPES, DEMO_HISTORIQUE, DEMO_NOTES, DEMO_PROJETS, DEMO_TACHES, DEMO_TRANSMISSIONS, DEMO_MAIL_TEMPLATES, demoBadgeStyle, handleDemoAction } from "@/lib/demo";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-import { formatPhone, formatContactName, hydrateTemplate } from "@/lib/format";
+import { formatPhone, formatContactName, hydrateTemplate, fixFileUrl } from "@/lib/format";
 import { TransmissionDetailModal } from "@/components/TransmissionDetailModal";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
@@ -1301,7 +1301,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                               <span style={{ fontSize: 12, color: doc.recu ? C.text : C.textMuted, fontWeight: doc.recu ? 500 : 400, flex: 1 }}>{doc.label}</span>
                               {doc.date && <span style={{ fontSize: 10, color: C.textDim }}>{new Date(doc.date).toLocaleDateString("fr-FR")}</span>}
                               {doc.fichierUrl ? (
-                                <a href={doc.fichierUrl} download={doc.fichierNom || doc.label} onClick={(e) => e.stopPropagation()}
+                                <a href={fixFileUrl(doc.fichierUrl)} download={doc.fichierNom || doc.label} onClick={(e) => e.stopPropagation()}
                                   style={{ padding: "2px 8px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 10, fontWeight: 600, textDecoration: "none" }}>
                                   <Download size={10} /> {doc.fichierNom || "Fichier"}
                                 </a>
@@ -1332,7 +1332,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                                 <Paperclip size={11} color={C.textDim} />
                                 <span style={{ flex: 1, color: C.text }}>{d.fichierNom || d.nom}</span>
                                 {d.fichierUrl && (
-                                  <a href={d.fichierUrl} download={d.fichierNom || d.nom} style={{ color: C.blue, textDecoration: "none", fontSize: 10 }}>
+                                  <a href={fixFileUrl(d.fichierUrl)} download={d.fichierNom || d.nom} style={{ color: C.blue, textDecoration: "none", fontSize: 10 }}>
                                     <Download size={10} />
                                   </a>
                                 )}
@@ -1849,7 +1849,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
               {d.date && <span style={{ fontSize: 11, color: C.textDim, flexShrink: 0 }}>Reçu le {d.date}</span>}
               {d.fichierUrl && (
-                <a href={d.fichierUrl} download={d.fichierNom || d.nom} onClick={(e) => e.stopPropagation()}
+                <a href={fixFileUrl(d.fichierUrl)} download={d.fichierNom || d.nom} onClick={(e) => e.stopPropagation()}
                   style={{ padding: "3px 8px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 11, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
                   <Download size={11} /> Fichier
                 </a>
@@ -2691,7 +2691,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         )}
                       </div>
                       {note.fichierUrl && (
-                        <a href={note.fichierUrl} target="_blank" rel="noopener noreferrer" style={{
+                        <a href={fixFileUrl(note.fichierUrl)} target="_blank" rel="noopener noreferrer" style={{
                           display: "inline-flex", alignItems: "center", gap: 6,
                           marginTop: 8, padding: "6px 10px", borderRadius: 6,
                           background: C.bg, border: `1px solid ${C.border}`,

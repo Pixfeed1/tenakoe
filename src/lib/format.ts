@@ -45,3 +45,13 @@ export function formatContactName(contact: { prenom?: string; nom?: string }, en
   }
   return `${prenom} ${nom}`.trim() || "—";
 }
+
+/**
+ * Convertit les anciennes URLs /uploads/ vers la nouvelle route /api/files/
+ * Compatibilité arrière pour les fichiers uploadés avant la migration.
+ */
+export function fixFileUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("/uploads/")) return url.replace("/uploads/", "/api/files/");
+  return url;
+}

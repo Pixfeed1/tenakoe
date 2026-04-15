@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BookOpen, Search, Plus, X, Download, Trash2, FileText, FileSpreadsheet, Image as ImageIcon, File, Upload } from "lucide-react";
 import type { Theme } from "@/lib/theme";
+import { fixFileUrl } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -208,7 +209,7 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
                   {r.fichierTaille && <span>· {formatSize(r.fichierTaille)}</span>}
                 </div>
                 <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                  <a href={r.fichierUrl} download={r.fichierNom}
+                  <a href={fixFileUrl(r.fichierUrl)} download={r.fichierNom}
                     style={{ flex: 1, padding: "6px 10px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 11, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                     <Download size={11} /> Télécharger
                   </a>

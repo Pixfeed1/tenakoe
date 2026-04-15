@@ -24,7 +24,7 @@ export async function POST(
     return NextResponse.json({ error: "Fichier trop volumineux (max 10 Mo)" }, { status: 400 });
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "chantiers");
+  const uploadDir = path.join(process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads"), "chantiers");
   await mkdir(uploadDir, { recursive: true });
 
   const ext = path.extname(file.name);
@@ -36,7 +36,7 @@ export async function POST(
     data: {
       chantierId: id,
       nom: file.name,
-      fichierUrl: `/uploads/chantiers/${filename}`,
+      fichierUrl: `/api/files/chantiers/${filename}`,
       fichierNom: file.name,
       fichierTaille: file.size,
     },

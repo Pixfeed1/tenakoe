@@ -4,7 +4,7 @@ import path from "path";
 import { getCurrentUser } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
 const MAX_SIZE = 10 * 1024 * 1024; // 10 Mo
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   const filePath = path.join(UPLOAD_DIR, uniqueName);
   await writeFile(filePath, buffer);
 
-  const fileUrl = `/uploads/${uniqueName}`;
+  const fileUrl = `/api/files/${uniqueName}`;
 
   // Si un documentId est fourni, mettre à jour le document
   if (documentId) {

@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   if (!file || !nom) return NextResponse.json({ error: "Fichier et nom requis" }, { status: 400 });
   if (file.size > 20 * 1024 * 1024) return NextResponse.json({ error: "Fichier trop volumineux (max 20 Mo)" }, { status: 400 });
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "ressources");
+  const uploadDir = path.join(process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads"), "ressources");
   await mkdir(uploadDir, { recursive: true });
 
   const ext = path.extname(file.name);
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       nom,
       description: description || null,
       categorie: categorie || null,
-      fichierUrl: `/uploads/ressources/${filename}`,
+      fichierUrl: `/api/files/ressources/${filename}`,
       fichierNom: file.name,
       fichierTaille: file.size,
       uploadParId: user.id,
