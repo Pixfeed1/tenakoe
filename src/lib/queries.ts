@@ -207,7 +207,7 @@ export async function getEntrepriseDetail(id: string) {
       projets: {
         include: {
           chargee: { select: { id: true, prenom: true, nom: true } },
-          qualifications: true,
+          qualifications: { include: { rges: true } },
           etapes: { orderBy: { ordre: "asc" } },
           bonsDeCommande: { orderBy: { createdAt: "desc" } },
           chantiers: { include: { documents: true }, orderBy: { numero: "asc" } },

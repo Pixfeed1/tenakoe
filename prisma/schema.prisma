@@ -247,8 +247,28 @@ model ProjetQualification {
   formationChaudiereCogen   Boolean  @default(false)
   formationBT               Boolean  @default(false)
   formationAutre            String?
+  niveauVise                String?
+  niveauObtenu              String?
+
+  rges                      ProjetQualificationRGE[]
 
   @@unique([projetId, type])
+}
+
+model NomenclatureRGE {
+  id    String  @id @default(cuid())
+  code  String  @unique
+  nom   String
+  actif Boolean @default(true)
+}
+
+model ProjetQualificationRGE {
+  id                    String              @id @default(cuid())
+  projetQualificationId String
+  projetQualification   ProjetQualification @relation(fields: [projetQualificationId], references: [id], onDelete: Cascade)
+  rgeCode               String
+
+  @@unique([projetQualificationId, rgeCode])
 }
 
 model BonDeCommande {

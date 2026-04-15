@@ -28,7 +28,24 @@ export async function PATCH(
   const boolFields = ["formationITI", "formationITE", "formationMenuiserie", "formationQUALIPAC", "formationTR", "formationMenuiserieExt", "formationVMC", "formationToituresVelux", "formationToituresTerrasses", "formationEmetteursElec", "formationChaudiereCogen", "formationBT"];
   for (const f of boolFields) { if (body[f] !== undefined) data[f] = body[f]; }
   if (body.formationAutre !== undefined) data.formationAutre = body.formationAutre;
+  if (body.niveauVise !== undefined) data.niveauVise = body.niveauVise;
+  if (body.niveauObtenu !== undefined) data.niveauObtenu = body.niveauObtenu;
 
-  const updated = await prisma.projetQualification.update({ where: { id }, data });
-  return NextResponse.json(updated);
+  await prisma.projetQualification.update({ where: { id }, data });
+
+  // Handle rges array (replace all)
+  if (Array.isArray(body.rges)) {
+    await prisma.projetQualificationRGE.deleteMany({ where: { projetQualificationId: id } });
+    if (body.rges.length > 0) {
+      await prisma.projetQualificationRGE.createMany({
+        data: body.rges.map((code: string) => ({ projetQualificationId: id, rgeCode: code })),
+      });
+    }
+  }
+
+  const full = await prisma.projetQualification.findUnique({
+    where: { id },
+    include: { rges: true },
+  });
+  return NextResponse.json(full);
 }

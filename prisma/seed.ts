@@ -316,6 +316,35 @@ async function main() {
   console.log("Depots PDB created:", depotsPDB.length);
 
   // ========================
+  // NOMENCLATURE RGE (15 codes)
+  // ========================
+  const nomenclatureRGE = [
+    { code: "01", nom: "Chaudière à haute ou très haute performance gaz ou fioul" },
+    { code: "02", nom: "Capteur solaire pour la production de chauffage et/ou ECS" },
+    { code: "03", nom: "Appareil hydraulique fonctionnant au bois" },
+    { code: "04", nom: "Appareil indépendant fonctionnant au bois" },
+    { code: "05", nom: "PAC pour la production de chauffage et ECS" },
+    { code: "06", nom: "PAC pour la production d'ECS" },
+    { code: "07", nom: "Émetteurs électriques dont régulateurs de température" },
+    { code: "08", nom: "Équipements de ventilation mécanique" },
+    { code: "09", nom: "Isolation thermique des parois vitrées verticales" },
+    { code: "10", nom: "Isolation thermique des parois vitrées en toiture" },
+    { code: "11", nom: "Isolation thermique par l'intérieur et des rampants" },
+    { code: "12", nom: "Isolation thermique par l'extérieur" },
+    { code: "13", nom: "Isolation thermique des toitures et terrasses (dont sarking)" },
+    { code: "14", nom: "Isolation thermique des combles perdus" },
+    { code: "15", nom: "Isolation thermique local non chauffé" },
+  ];
+  for (const r of nomenclatureRGE) {
+    await prisma.nomenclatureRGE.upsert({
+      where: { code: r.code },
+      update: { nom: r.nom, actif: true },
+      create: { code: r.code, nom: r.nom },
+    });
+  }
+  console.log("Nomenclature RGE created:", nomenclatureRGE.length);
+
+  // ========================
   // APPORTEURS D'AFFAIRES
   // ========================
   await prisma.apporteurAffaires.upsert({

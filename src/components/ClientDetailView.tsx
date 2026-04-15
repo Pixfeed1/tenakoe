@@ -74,7 +74,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   interface BonDeCommande { id: string; qualificationCode: string; reference: string | null; montant: number | null; paye: boolean; datePaiement: string | null; dateEmission: string | null; commentaire: string | null }
   interface ChantierDoc { id: string; nom: string; fichierUrl: string | null; fichierNom: string | null; fichierTaille: number | null }
   interface ChantierData { id: string; numero: number; nom: string | null; description: string | null; devisRecu: boolean; devisFichierUrl: string | null; devisFichierNom: string | null; dateDevis: string | null; factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null; attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null; documents: ChantierDoc[] }
-  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; chantiers?: ChantierData[]; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null; certificateurType?: string | null; emailCertificateur?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null }>>([]);
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string; niveauVise?: string | null; niveauObtenu?: string | null; rges?: Array<{ id: string; rgeCode: string }> }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; chantiers?: ChantierData[]; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null; certificateurType?: string | null; emailCertificateur?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null }>>([]);
+  const [nomenclatureRGE, setNomenclatureRGE] = useState<Array<{ code: string; nom: string }>>([]);
   const [showAddBon, setShowAddBon] = useState<string | null>(null);
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
@@ -342,6 +343,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         data.forEach((q) => { map[q.code] = q.nom; });
         setNomenclatureMap(map);
       })
+      .catch(() => {});
+
+    // Load RGE nomenclature
+    fetch("/api/nomenclature-rge")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setNomenclatureRGE(data))
       .catch(() => {});
 
     fetch("/api/depot-config")
@@ -1642,6 +1649,73 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>{etapesDone}/{etapesTotal} étapes</div>
                     </div>
                   </div>
+
+                  {/* Qualifications détails (RGE + niveaux) */}
+                  {p.qualifications.map((q) => {
+                    if (!q.id) return null;
+                    const selectedCodes = (q.rges || []).map((r) => r.rgeCode);
+                    const updateQualif = async (patch: Record<string, unknown>) => {
+                      if (isDemoMode) return;
+                      const res = await fetch(`/api/qualifications/${q.id}`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(patch),
+                      });
+                      if (res.ok) {
+                        const updated = await res.json();
+                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === q.id ? { ...qq, niveauVise: updated.niveauVise, niveauObtenu: updated.niveauObtenu, rges: updated.rges } : qq) } : pr));
+                      }
+                    };
+                    return (
+                      <div key={q.id} style={{ marginTop: 10, marginLeft: 28, padding: "10px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}` }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: C.blue, marginBottom: 8 }}>
+                          {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
+                        </div>
+                        {/* RGE select multiple */}
+                        <div style={{ marginBottom: 8 }}>
+                          <div style={{ fontSize: 11, color: C.textDim, marginBottom: 4 }}>RGE associés</div>
+                          <select multiple value={selectedCodes} size={5}
+                            onChange={(e) => {
+                              const codes = Array.from(e.target.selectedOptions).map((o) => o.value);
+                              updateQualif({ rges: codes });
+                            }}
+                            style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11 }}
+                          >
+                            {nomenclatureRGE.map((r) => (
+                              <option key={r.code} value={r.code}>{r.code} - {r.nom}</option>
+                            ))}
+                          </select>
+                          {selectedCodes.length > 0 && (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                              {selectedCodes.map((code) => {
+                                const r = nomenclatureRGE.find((n) => n.code === code);
+                                return <Badge key={code} color="#16a34a" bg="rgba(22,163,74,0.1)">{code} {r ? `- ${r.nom}` : ""}</Badge>;
+                              })}
+                            </div>
+                          )}
+                        </div>
+                        {/* Niveaux */}
+                        <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <div>
+                            <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Niveau visé</label>
+                            <input type="text" defaultValue={q.niveauVise || ""}
+                              onBlur={(e) => updateQualif({ niveauVise: e.target.value || null })}
+                              placeholder="Ex: RGE 1"
+                              style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, boxSizing: "border-box" }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Niveau obtenu</label>
+                            <input type="text" defaultValue={q.niveauObtenu || ""}
+                              onBlur={(e) => updateQualif({ niveauObtenu: e.target.value || null })}
+                              placeholder="Ex: RGE 1"
+                              style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, boxSizing: "border-box" }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
                   {/* Bons de commande */}
                   {bons.length > 0 && (
                     <div style={{ marginTop: 10, marginLeft: 28 }}>
