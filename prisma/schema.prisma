@@ -723,3 +723,16 @@ model ApporteurAffaires {
 
   entreprises Entreprise[]
 }
+
+model Ressource {
+  id            String   @id @default(cuid())
+  nom           String
+  description   String?
+  categorie     String?
+  fichierUrl    String
+  fichierNom    String
+  fichierTaille Int?
+  uploadParId   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
