@@ -1728,19 +1728,27 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                           <div>
                             <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Niveau visé</label>
-                            <input type="text" defaultValue={q.niveauVise || ""}
-                              onBlur={(e) => updateQualif({ niveauVise: e.target.value || null })}
-                              placeholder="Ex: RGE 1"
+                            <select
+                              value={q.niveauVise || ""}
+                              onChange={(e) => updateQualif({ niveauVise: e.target.value || null })}
                               style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, boxSizing: "border-box" }}
-                            />
+                            >
+                              <option value="">-- Choisir --</option>
+                              <option value="PROB">PROB</option>
+                              <option value="PLEINE">PLEINE</option>
+                            </select>
                           </div>
                           <div>
                             <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Niveau obtenu</label>
-                            <input type="text" defaultValue={q.niveauObtenu || ""}
-                              onBlur={(e) => updateQualif({ niveauObtenu: e.target.value || null })}
-                              placeholder="Ex: RGE 1"
+                            <select
+                              value={q.niveauObtenu || ""}
+                              onChange={(e) => updateQualif({ niveauObtenu: e.target.value || null })}
                               style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, boxSizing: "border-box" }}
-                            />
+                            >
+                              <option value="">-- Choisir --</option>
+                              <option value="PROB">PROB</option>
+                              <option value="PLEINE">PLEINE</option>
+                            </select>
                           </div>
                         </div>
                       </div>
