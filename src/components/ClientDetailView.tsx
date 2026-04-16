@@ -175,6 +175,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       formationTR: "false", formationMenuiserieExt: "false", formationVMC: "false",
       formationToituresVelux: "false", formationToituresTerrasses: "false",
       formationEmetteursElec: "false", formationChaudiereCogen: "false", formationBT: "false",
+      formationHorsRenoperfITI: "false", formationHorsRenoperfITE: "false",
       chargee: firstProjet?.chargee?.prenom || "Kelly",
       dateStatutPrise: DEMO_ENTREPRISE.dateStatutPrise || "",
       dateStatutFacturation: DEMO_ENTREPRISE.dateStatutFacturation || "",
@@ -304,6 +305,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           formationEmetteursElec: firstQualif?.formationEmetteursElec ? "true" : "false",
           formationChaudiereCogen: firstQualif?.formationChaudiereCogen ? "true" : "false",
           formationBT: firstQualif?.formationBT ? "true" : "false",
+          formationHorsRenoperfITI: firstQualif?.formationHorsRenoperfITI ? "true" : "false",
+          formationHorsRenoperfITE: firstQualif?.formationHorsRenoperfITE ? "true" : "false",
           chargee: firstProjet?.chargee?.prenom || "",
           dateStatutPrise: data.dateStatutPrise || "",
           dateStatutFacturation: data.dateStatutFacturation || "",
@@ -1181,8 +1184,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <div style={{ paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
                     <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8, fontWeight: 600 }}>Autres formations hors Renoperf</span>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                      {renderCheckbox("formationITI", "ITI")}
-                      {renderCheckbox("formationITE", "ITE")}
+                      {renderCheckbox("formationHorsRenoperfITI", "ITI")}
+                      {renderCheckbox("formationHorsRenoperfITE", "ITE")}
                       {renderCheckbox("formationMenuiserie", "Menuiserie")}
                       {renderCheckbox("formationQUALIPAC", "QUALIPAC")}
                     </div>

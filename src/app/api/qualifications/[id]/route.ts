@@ -25,7 +25,7 @@ export async function PATCH(
   const body = await request.json();
 
   const data: Record<string, unknown> = {};
-  const boolFields = ["formationITI", "formationITE", "formationMenuiserie", "formationQUALIPAC", "formationTR", "formationMenuiserieExt", "formationVMC", "formationToituresVelux", "formationToituresTerrasses", "formationEmetteursElec", "formationChaudiereCogen", "formationBT"];
+  const boolFields = ["formationITI", "formationITE", "formationMenuiserie", "formationQUALIPAC", "formationTR", "formationMenuiserieExt", "formationVMC", "formationToituresVelux", "formationToituresTerrasses", "formationEmetteursElec", "formationChaudiereCogen", "formationBT", "formationHorsRenoperfITI", "formationHorsRenoperfITE"];
   for (const f of boolFields) { if (body[f] !== undefined) data[f] = body[f]; }
   if (body.formationAutre !== undefined) data.formationAutre = body.formationAutre;
   if (body.niveauVise !== undefined) data.niveauVise = body.niveauVise;

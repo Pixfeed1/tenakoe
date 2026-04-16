@@ -246,6 +246,8 @@ model ProjetQualification {
   formationEmetteursElec    Boolean  @default(false)
   formationChaudiereCogen   Boolean  @default(false)
   formationBT               Boolean  @default(false)
+  formationHorsRenoperfITI  Boolean  @default(false)
+  formationHorsRenoperfITE  Boolean  @default(false)
   formationAutre            String?
   niveauVise                String?
   niveauObtenu              String?
