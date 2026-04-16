@@ -253,6 +253,7 @@ model ProjetQualification {
   niveauObtenu              String?
 
   rges                      ProjetQualificationRGE[]
+  chantiers                 Chantier[]
 
   @@unique([projetId, type])
 }
@@ -290,8 +291,10 @@ model BonDeCommande {
 
 model Chantier {
   id                    String    @id @default(cuid())
-  projetId              String
-  projet                Projet    @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  projetId              String?
+  projet                Projet?   @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  projetQualificationId String?
+  projetQualification   ProjetQualification? @relation(fields: [projetQualificationId], references: [id], onDelete: Cascade)
   numero                Int
   nom                   String?
   description           String?
@@ -311,7 +314,7 @@ model Chantier {
   updatedAt             DateTime  @updatedAt
   documents             ChantierDocument[]
 
-  @@unique([projetId, numero])
+  @@unique([projetQualificationId, numero])
 }
 
 model ChantierDocument {

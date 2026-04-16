@@ -105,19 +105,22 @@ export async function POST(
     }
   }
 
-  // 4. Chantiers de référence (si aucun chantier existant)
+  // 4. Chantiers de référence par qualification (si aucun chantier existant pour la qualif)
   let chantiersCreated = 0;
-  const existingChantiers = await prisma.chantier.count({ where: { projetId: projet.id } });
-  if (existingChantiers === 0 && projet.qualifications.length > 0) {
-    for (let i = 1; i <= 4; i++) {
-      await prisma.chantier.create({
-        data: {
-          projetId: projet.id,
-          numero: i,
-          nom: i === 4 ? "Chantier supplémentaire" : null,
-        },
-      });
-      chantiersCreated++;
+  for (const qualif of projet.qualifications) {
+    const existing = await prisma.chantier.count({ where: { projetQualificationId: qualif.id } });
+    if (existing === 0) {
+      for (let i = 1; i <= 4; i++) {
+        await prisma.chantier.create({
+          data: {
+            projetQualificationId: qualif.id,
+            projetId: projet.id,
+            numero: i,
+            nom: i === 4 ? "Chantier supplémentaire" : null,
+          },
+        });
+        chantiersCreated++;
+      }
     }
   }
 

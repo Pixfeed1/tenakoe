@@ -128,13 +128,18 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ===== AUTO-GENERATION DES CHANTIERS =====
-  if (body.qualifications?.length > 0) {
-    const existingChantiers = await prisma.chantier.count({ where: { projetId: projet.id } });
-    if (existingChantiers === 0) {
+  // ===== AUTO-GENERATION DES CHANTIERS PAR QUALIFICATION =====
+  for (const qualif of projet.qualifications) {
+    const exists = await prisma.chantier.count({ where: { projetQualificationId: qualif.id } });
+    if (exists === 0) {
       for (let i = 1; i <= 4; i++) {
         await prisma.chantier.create({
-          data: { projetId: projet.id, numero: i, nom: i === 4 ? "Chantier supplémentaire" : null },
+          data: {
+            projetQualificationId: qualif.id,
+            projetId: projet.id,
+            numero: i,
+            nom: i === 4 ? "Chantier supplémentaire" : null,
+          },
         });
       }
     }
@@ -144,10 +149,14 @@ export async function POST(request: NextRequest) {
   const projetComplet = await prisma.projet.findUnique({
     where: { id: projet.id },
     include: {
-      qualifications: { include: { rges: true } },
+      qualifications: {
+        include: {
+          rges: true,
+          chantiers: { include: { documents: true }, orderBy: { numero: "asc" } },
+        },
+      },
       etapes: { orderBy: { ordre: "asc" } },
       documents: true,
-      chantiers: { include: { documents: true }, orderBy: { numero: "asc" } },
       bonsDeCommande: true,
     },
   });

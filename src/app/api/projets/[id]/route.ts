@@ -36,18 +36,31 @@ export async function PATCH(
 
   const updated = await prisma.projet.update({ where: { id }, data });
 
-  // Add qualifications
+  // Add qualifications (+ auto-create 4 chantiers per new qualification)
   if (body.addQualifications?.length > 0) {
     for (const q of body.addQualifications) {
-      await prisma.projetQualification.upsert({
+      const created = await prisma.projetQualification.upsert({
         where: { projetId_type: { projetId: id, type: q.type } },
         update: {},
         create: { projetId: id, type: q.type },
       });
+      const hasChantiers = await prisma.chantier.count({ where: { projetQualificationId: created.id } });
+      if (hasChantiers === 0) {
+        for (let i = 1; i <= 4; i++) {
+          await prisma.chantier.create({
+            data: {
+              projetQualificationId: created.id,
+              projetId: id,
+              numero: i,
+              nom: i === 4 ? "Chantier supplémentaire" : null,
+            },
+          });
+        }
+      }
     }
   }
 
-  // Remove qualifications
+  // Remove qualifications (chantiers cascade-delete)
   if (body.removeQualifications?.length > 0) {
     await prisma.projetQualification.deleteMany({
       where: { projetId: id, type: { in: body.removeQualifications } },
@@ -57,7 +70,12 @@ export async function PATCH(
   const full = await prisma.projet.findUnique({
     where: { id },
     include: {
-      qualifications: { include: { rges: true } },
+      qualifications: {
+        include: {
+          rges: true,
+          chantiers: { include: { documents: true }, orderBy: { numero: "asc" } },
+        },
+      },
       etapes: { orderBy: { ordre: "asc" } },
       bonsDeCommande: true,
     },
