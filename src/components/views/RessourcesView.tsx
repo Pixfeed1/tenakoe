@@ -47,6 +47,7 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
   const [filterCategorie, setFilterCategorie] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ nom: "", description: "", categorie: "" });
+  const [isNewCategorie, setIsNewCategorie] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +81,7 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
     if (res.ok) {
       setShowAdd(false);
       setForm({ nom: "", description: "", categorie: "" });
+      setIsNewCategorie(false);
       setFile(null);
       fetchRessources();
       toast("Ressource ajoutée");
@@ -124,11 +126,11 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
       {/* Add modal */}
       {showAdd && (
         <div style={{ position: "fixed", inset: 0, zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }} onClick={() => setShowAdd(false)} />
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }} onClick={() => { setShowAdd(false); setIsNewCategorie(false); }} />
           <div style={{ position: "relative", width: 540, maxWidth: "90vw", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 24, boxShadow: "0 8px 40px rgba(0,0,0,0.15)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>Ajouter un document</h3>
-              <button onClick={() => setShowAdd(false)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+              <button onClick={() => { setShowAdd(false); setIsNewCategorie(false); }} style={{ background: "none", border: "none", cursor: "pointer" }}>
                 <X size={16} color={C.textDim} />
               </button>
             </div>
@@ -144,11 +146,33 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
               </div>
               <div>
                 <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Catégorie</label>
-                <input list="categories-list" value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}
-                  placeholder="Choisir ou créer..." style={inputStyle} />
-                <datalist id="categories-list">
-                  {allCategories.map((c) => <option key={c} value={c} />)}
-                </datalist>
+                <select
+                  value={isNewCategorie ? "__NEW__" : form.categorie}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "__NEW__") {
+                      setIsNewCategorie(true);
+                      setForm({ ...form, categorie: "" });
+                    } else {
+                      setIsNewCategorie(false);
+                      setForm({ ...form, categorie: v });
+                    }
+                  }}
+                  style={inputStyle}
+                >
+                  <option value="">Aucune</option>
+                  {allCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+                  <option value="__NEW__">— Nouvelle catégorie —</option>
+                </select>
+                {isNewCategorie && (
+                  <input
+                    value={form.categorie}
+                    onChange={(e) => setForm({ ...form, categorie: e.target.value })}
+                    placeholder="Nom de la nouvelle catégorie"
+                    style={{ ...inputStyle, marginTop: 6 }}
+                    autoFocus
+                  />
+                )}
               </div>
               {/* Drop zone */}
               <div
@@ -171,7 +195,7 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
                 <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>PDF, Word, Excel, image · max 20 Mo</div>
               </div>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                <Button C={C} variant="ghost" onClick={() => setShowAdd(false)}>Annuler</Button>
+                <Button C={C} variant="ghost" onClick={() => { setShowAdd(false); setIsNewCategorie(false); }}>Annuler</Button>
                 <Button C={C} variant="primary" onClick={handleUpload} disabled={!form.nom.trim() || !file || uploading} loading={uploading}>Ajouter</Button>
               </div>
             </div>

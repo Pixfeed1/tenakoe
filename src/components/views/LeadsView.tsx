@@ -37,6 +37,7 @@ const PRESCRIPTEUR_LABELS: Record<string, string> = {
   PDB: "La Plateforme du Bâtiment",
   POINT_P: "Point P",
   BIGMAT: "Big Mat Girardon",
+  AUTRE: "Autre",
 };
 
 export function LeadsView({ C }: { C: Theme }) {
@@ -69,8 +70,10 @@ export function LeadsView({ C }: { C: Theme }) {
 
   // Load depots when prescripteur changes
   useEffect(() => {
-    if (form.prescripteur) {
+    if (form.prescripteur && form.prescripteur !== "AUTRE") {
       fetch(`/api/depot-config?prescripteur=${form.prescripteur}`).then((r) => r.ok ? r.json() : []).then(setDepots).catch(() => {});
+    } else {
+      setDepots([]);
     }
   }, [form.prescripteur]);
 
@@ -213,20 +216,23 @@ export function LeadsView({ C }: { C: Theme }) {
             <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Email</label><input type="email" style={inputStyle} value={form.emailConseiller} onChange={(e) => setForm({ ...form, emailConseiller: e.target.value })} /></div>
             <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Téléphone</label><input style={inputStyle} value={form.telephoneConseiller} onChange={(e) => setForm({ ...form, telephoneConseiller: e.target.value })} /></div>
           </div>
-          <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+          <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: form.prescripteur === "AUTRE" ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 16 }}>
             <div>
               <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prescripteur *</label>
               <select style={inputStyle} value={form.prescripteur} onChange={(e) => setForm({ ...form, prescripteur: e.target.value, depot: "", depotConfigId: "" })}>
                 {prescripteurConfigs.map((c) => <option key={c.type} value={c.type}>{c.nom}</option>)}
+                <option value="AUTRE">Autre (aucun prescripteur)</option>
               </select>
             </div>
-            <div>
-              <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Dépôt</label>
-              <select style={inputStyle} value={form.depot} onChange={(e) => { const sel = depots.find((d) => d.nom === e.target.value); setForm({ ...form, depot: e.target.value, depotConfigId: sel?.id || "" }); }}>
-                <option value="">Sélectionner...</option>
-                {depots.map((d) => <option key={d.id} value={d.nom}>{d.nom}</option>)}
-              </select>
-            </div>
+            {form.prescripteur !== "AUTRE" && (
+              <div>
+                <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Dépôt</label>
+                <select style={inputStyle} value={form.depot} onChange={(e) => { const sel = depots.find((d) => d.nom === e.target.value); setForm({ ...form, depot: e.target.value, depotConfigId: sel?.id || "" }); }}>
+                  <option value="">Sélectionner...</option>
+                  {depots.map((d) => <option key={d.id} value={d.nom}>{d.nom}</option>)}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Artisan */}
