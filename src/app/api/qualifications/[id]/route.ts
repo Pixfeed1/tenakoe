@@ -25,11 +25,22 @@ export async function PATCH(
   const body = await request.json();
 
   const data: Record<string, unknown> = {};
-  const boolFields = ["formationITI", "formationITE", "formationMenuiserie", "formationQUALIPAC", "formationTR", "formationMenuiserieExt", "formationVMC", "formationToituresVelux", "formationToituresTerrasses", "formationEmetteursElec", "formationChaudiereCogen", "formationBT", "formationHorsRenoperfITI", "formationHorsRenoperfITE"];
+  const boolFields = ["formationITI", "formationITE", "formationMenuiserie", "formationQUALIPAC", "formationTR", "formationMenuiserieExt", "formationVMC", "formationToituresVelux", "formationToituresTerrasses", "formationEmetteursElec", "formationChaudiereCogen", "formationBT", "formationHorsRenoperfITI", "formationHorsRenoperfITE", "bonCommandeDemande", "bonCommandePaye"];
   for (const f of boolFields) { if (body[f] !== undefined) data[f] = body[f]; }
   if (body.formationAutre !== undefined) data.formationAutre = body.formationAutre;
   if (body.niveauVise !== undefined) data.niveauVise = body.niveauVise;
   if (body.niveauObtenu !== undefined) data.niveauObtenu = body.niveauObtenu;
+
+  const stringFields = ["certificateurType", "emailCertificateur", "identifiantCertificateur", "motDePasseCertificateur", "interlocuteurCertificateur"];
+  for (const f of stringFields) { if (body[f] !== undefined) data[f] = body[f]; }
+  if (body.antenneQualibatId !== undefined) data.antenneQualibatId = body.antenneQualibatId;
+
+  const dateFields = ["dateCommission", "dateBonCommandeDemande", "dateBonCommandePaye"];
+  for (const f of dateFields) {
+    if (body[f] !== undefined) {
+      data[f] = body[f] ? new Date(body[f] as string) : null;
+    }
+  }
 
   await prisma.projetQualification.update({ where: { id }, data });
 
@@ -45,7 +56,7 @@ export async function PATCH(
 
   const full = await prisma.projetQualification.findUnique({
     where: { id },
-    include: { rges: true },
+    include: { rges: true, antenneQualibat: true },
   });
   return NextResponse.json(full);
 }

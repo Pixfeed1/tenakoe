@@ -74,7 +74,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   interface BonDeCommande { id: string; qualificationCode: string; reference: string | null; montant: number | null; paye: boolean; datePaiement: string | null; dateEmission: string | null; commentaire: string | null }
   interface ChantierDoc { id: string; nom: string; fichierUrl: string | null; fichierNom: string | null; fichierTaille: number | null }
   interface ChantierData { id: string; numero: number; nom: string | null; description: string | null; devisRecu: boolean; devisFichierUrl: string | null; devisFichierNom: string | null; dateDevis: string | null; factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null; attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null; documents: ChantierDoc[] }
-  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string; niveauVise?: string | null; niveauObtenu?: string | null; rges?: Array<{ id: string; rgeCode: string }>; chantiers?: ChantierData[] }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; antenneQualibatId?: string | null; interlocuteurQualibat?: string | null; dateCommission?: string | null; identifiantQualibat?: string | null; motDePasseQualibat?: string | null; certificateurType?: string | null; emailCertificateur?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null }>>([]);
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string; niveauVise?: string | null; niveauObtenu?: string | null; rges?: Array<{ id: string; rgeCode: string }>; chantiers?: ChantierData[]; certificateurType?: string | null; emailCertificateur?: string | null; antenneQualibatId?: string | null; identifiantCertificateur?: string | null; motDePasseCertificateur?: string | null; interlocuteurCertificateur?: string | null; dateCommission?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[] }>>([]);
   const [nomenclatureRGE, setNomenclatureRGE] = useState<Array<{ code: string; nom: string }>>([]);
   const [showAddBon, setShowAddBon] = useState<string | null>(null);
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
@@ -186,7 +186,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     setDocs(DEMO_DOCUMENTS.map((d) => ({ id: d.id, nom: d.nom, recu: d.recu, date: d.date })));
     setTracks(DEMO_ETAPES.map((e) => ({ id: e.id, nom: e.nom, delai: e.delai, done: e.done, active: e.active })));
     setContacts(DEMO_CONTACTS.map((c) => ({ id: c.id, nom: c.nom, prenom: c.prenom, email: c.email, telephone: c.telephone, fonction: c.fonction })));
-    setProjets(DEMO_PROJETS.map((p) => ({ id: p.id, nom: p.nom, qualifications: p.qualifications.map((q) => ({ type: q.type })), etapes: p.etapes.map((e) => ({ terminee: e.terminee, active: e.active, nom: e.nom })), antenneQualibatId: p.antenneQualibatId, interlocuteurQualibat: p.interlocuteurQualibat, dateCommission: p.dateCommission, identifiantQualibat: p.identifiantQualibat, motDePasseQualibat: p.motDePasseQualibat })));
+    setProjets(DEMO_PROJETS.map((p) => ({ id: p.id, nom: p.nom, qualifications: p.qualifications.map((q) => ({ type: q.type })), etapes: p.etapes.map((e) => ({ terminee: e.terminee, active: e.active, nom: e.nom })) })));
     setTaches(DEMO_TACHES.map((t) => ({ id: t.id, titre: t.titre, statut: t.statut, type: t.type, dateEcheance: t.dateEcheance, enRetard: t.enRetard, assignee: t.assignee })));
     setHistorique(DEMO_TRANSMISSIONS.map((t) => ({
       type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
@@ -1202,128 +1202,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             })()}
           </div>
 
-          {/* Certificateur */}
-          <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Certificateur</h3>
-            {(() => {
-              const currentProjet = projets[0];
-              const certType = currentProjet?.certificateurType || "Qualibat";
-              const isQualibat = certType === "Qualibat";
-              const currentAntenneId = currentProjet?.antenneQualibatId || "";
-              const selectedAntenne = antennes.find((a) => a.id === currentAntenneId);
-              const updateProjet = async (patch: Record<string, unknown>) => {
-                if (!currentProjet?.id || isDemoMode) return;
-                await fetch(`/api/projets/${currentProjet.id}`, {
-                  method: "PATCH", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(patch),
-                });
-                setProjets((prev) => prev.map((p) => p.id === currentProjet.id ? { ...p, ...patch } : p));
-              };
-              const iStyle = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" as const };
-              return (
-                <>
-                <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
-                  {/* Type de certificateur */}
-                  <div style={{ gridColumn: "1 / -1" }}>
-                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Type de certificateur</label>
-                    <select value={certType} onChange={(e) => updateProjet({ certificateurType: e.target.value })} disabled={!currentProjet} style={iStyle}>
-                      <option value="Qualibat">Qualibat</option>
-                      <option value="Certibat">Certibat</option>
-                      <option value="Qualit'EnR">Qualit&apos;EnR</option>
-                      <option value="Qualifelec">Qualifelec</option>
-                    </select>
-                  </div>
-                  {/* Antenne Qualibat (only if Qualibat) */}
-                  {isQualibat && (
-                    <div style={{ gridColumn: "1 / -1" }}>
-                      <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Antenne Qualibat</label>
-                      <select value={currentAntenneId} onChange={(e) => updateProjet({ antenneQualibatId: e.target.value || null })} disabled={!currentProjet} style={iStyle}>
-                        <option value="">-- Sélectionner --</option>
-                        {antennes.map((a) => <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>)}
-                      </select>
-                      {selectedAntenne && (selectedAntenne.email || selectedAntenne.telephone) && (
-                        <div style={{ fontSize: 11, color: C.textDim, marginTop: 6, display: "flex", gap: 14, flexWrap: "wrap" }}>
-                          {selectedAntenne.email && <span>{selectedAntenne.email}</span>}
-                          {selectedAntenne.telephone && <span>{formatPhone(selectedAntenne.telephone)}</span>}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Email certificateur */}
-                  <div>
-                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Email certificateur</label>
-                    <input type="email" value={currentProjet?.emailCertificateur || ""}
-                      onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, emailCertificateur: e.target.value } : p))}
-                      onBlur={(e) => updateProjet({ emailCertificateur: e.target.value || null })}
-                      disabled={!currentProjet} placeholder="email@certificateur.fr" style={iStyle} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Identifiant</label>
-                    <input type="text" value={currentProjet?.identifiantQualibat || ""}
-                      onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, identifiantQualibat: e.target.value } : p))}
-                      onBlur={(e) => updateProjet({ identifiantQualibat: e.target.value || null })}
-                      disabled={!currentProjet} placeholder="Identifiant espace" style={iStyle} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Mot de passe</label>
-                    <input type="text" value={currentProjet?.motDePasseQualibat || ""}
-                      onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, motDePasseQualibat: e.target.value } : p))}
-                      onBlur={(e) => updateProjet({ motDePasseQualibat: e.target.value || null })}
-                      disabled={!currentProjet} placeholder="Mot de passe espace" style={iStyle} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Interlocuteur</label>
-                    <input type="text" value={currentProjet?.interlocuteurQualibat || ""}
-                      onChange={(e) => setProjets((prev) => prev.map((p) => p.id === currentProjet?.id ? { ...p, interlocuteurQualibat: e.target.value } : p))}
-                      onBlur={(e) => updateProjet({ interlocuteurQualibat: e.target.value || null })}
-                      disabled={!currentProjet} placeholder="Nom de l'instructeur" style={iStyle} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Date de commission</label>
-                    <input type="date" value={currentProjet?.dateCommission ? new Date(currentProjet.dateCommission).toISOString().slice(0, 10) : ""}
-                      onChange={(e) => updateProjet({ dateCommission: e.target.value || null })}
-                      disabled={!currentProjet} style={iStyle} />
-                  </div>
-                </div>
-                {/* Bon de commande certificateur */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
-                  {[
-                    { key: "bonCommandeDemande", dateKey: "dateBonCommandeDemande", label: "Bon de commande demandé" },
-                    { key: "bonCommandePaye", dateKey: "dateBonCommandePaye", label: "Bon de commande payé" },
-                  ].map((f) => {
-                    const checked = !!(currentProjet as Record<string, unknown>)?.[f.key];
-                    const date = (currentProjet as Record<string, unknown>)?.[f.dateKey] as string | null;
-                    return (
-                      <label key={f.key} onClick={async () => {
-                        if (!currentProjet?.id || isDemoMode) return;
-                        const newVal = !checked;
-                        updateProjet({ [f.key]: newVal, [f.dateKey]: newVal ? new Date().toISOString() : null });
-                      }} style={{
-                        display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                        borderRadius: 8, cursor: "pointer",
-                        background: checked ? C.accentDim : C.bg,
-                        border: `1px solid ${checked ? C.accent + "40" : C.border}`,
-                        transition: "all 0.15s",
-                      }}>
-                        <div style={{
-                          width: 16, height: 16, borderRadius: 4,
-                          border: `2px solid ${checked ? C.accent : C.border}`,
-                          background: checked ? C.accent : "transparent",
-                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                        }}>
-                          {checked && <Check size={10} color="#fff" strokeWidth={3} />}
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text, flex: 1 }}>{f.label}</span>
-                        {date && <span style={{ fontSize: 11, color: C.textDim }}>le {new Date(date).toLocaleDateString("fr-FR")}</span>}
-                      </label>
-                    );
-                  })}
-                </div>
-                </>
-              );
-            })()}
-          </div>
-
           {/* Procédure alerte avant abandon */}
           <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Procédure alerte avant abandon</h3>
@@ -1500,6 +1378,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     const selectedCodes = (q.rges || []).map((r) => r.rgeCode);
 
                     const updateQualif = async (patch: Record<string, unknown>) => {
+                      // Optimistic local update so inputs stay in sync during typing
+                      setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, ...patch } : qq) } : pr));
                       if (isDemoMode) return;
                       try {
                         const res = await fetch(`/api/qualifications/${qualifId}`, {
@@ -1508,7 +1388,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         });
                         if (!res.ok) throw new Error("Erreur API");
                         const updated = await res.json();
-                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, niveauVise: updated.niveauVise, niveauObtenu: updated.niveauObtenu, rges: updated.rges } : qq) } : pr));
+                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, ...updated } : qq) } : pr));
                       } catch {
                         toast("Erreur lors de la sauvegarde");
                       }
@@ -1591,6 +1471,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             </select>
                           </div>
                         </div>
+
+                        {/* Certificateur (par qualification) */}
+                        <QualifCertificateur
+                          C={C}
+                          qualif={q}
+                          antennes={antennes}
+                          updateQualif={updateQualif}
+                        />
 
                         {/* Chantiers de référence pour cette qualification */}
                         <QualifChantiers
@@ -2655,6 +2543,184 @@ interface ChantierFull {
   factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null;
   attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null;
   documents: ChantierDocFull[];
+}
+
+function QualifCertificateur({
+  C, qualif, antennes, updateQualif,
+}: {
+  C: Theme;
+  qualif: {
+    certificateurType?: string | null;
+    emailCertificateur?: string | null;
+    antenneQualibatId?: string | null;
+    identifiantCertificateur?: string | null;
+    motDePasseCertificateur?: string | null;
+    interlocuteurCertificateur?: string | null;
+    dateCommission?: string | null;
+    bonCommandeDemande?: boolean;
+    dateBonCommandeDemande?: string | null;
+    bonCommandePaye?: boolean;
+    dateBonCommandePaye?: string | null;
+  };
+  antennes: Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>;
+  updateQualif: (patch: Record<string, unknown>) => Promise<void> | void;
+}) {
+  const certType = qualif.certificateurType || "";
+  const isQualibat = certType === "Qualibat";
+  const currentAntenneId = qualif.antenneQualibatId || "";
+  const selectedAntenne = antennes.find((a) => a.id === currentAntenneId);
+  const iStyle: React.CSSProperties = {
+    width: "100%", padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`,
+    background: C.surface, color: C.text, fontSize: 11, outline: "none", boxSizing: "border-box",
+  };
+
+  // Local draft state for text inputs — commit to server on blur
+  const [draft, setDraft] = useState({
+    email: qualif.emailCertificateur || "",
+    identifiant: qualif.identifiantCertificateur || "",
+    motDePasse: qualif.motDePasseCertificateur || "",
+    interlocuteur: qualif.interlocuteurCertificateur || "",
+  });
+  useEffect(() => {
+    setDraft({
+      email: qualif.emailCertificateur || "",
+      identifiant: qualif.identifiantCertificateur || "",
+      motDePasse: qualif.motDePasseCertificateur || "",
+      interlocuteur: qualif.interlocuteurCertificateur || "",
+    });
+  }, [qualif.emailCertificateur, qualif.identifiantCertificateur, qualif.motDePasseCertificateur, qualif.interlocuteurCertificateur]);
+
+  return (
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${C.border}` }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+        Certificateur
+      </div>
+      <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div style={{ gridColumn: "1 / -1" }}>
+          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Type de certificateur</label>
+          <select
+            value={certType}
+            onChange={(e) => {
+              const v = e.target.value;
+              const patch: Record<string, unknown> = { certificateurType: v || null };
+              if (v !== "Qualibat") patch.antenneQualibatId = null;
+              updateQualif(patch);
+            }}
+            style={iStyle}
+          >
+            <option value="">-- Choisir --</option>
+            <option value="Qualibat">Qualibat</option>
+            <option value="Certibat">Certibat</option>
+            <option value="Qualit'EnR">Qualit&apos;EnR</option>
+            <option value="Qualifelec">Qualifelec</option>
+          </select>
+        </div>
+        {isQualibat && (
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Antenne Qualibat</label>
+            <select
+              value={currentAntenneId}
+              onChange={(e) => updateQualif({ antenneQualibatId: e.target.value || null })}
+              style={iStyle}
+            >
+              <option value="">-- Sélectionner --</option>
+              {antennes.map((a) => <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>)}
+            </select>
+            {selectedAntenne && (selectedAntenne.email || selectedAntenne.telephone) && (
+              <div style={{ fontSize: 10, color: C.textDim, marginTop: 4, display: "flex", gap: 12, flexWrap: "wrap" }}>
+                {selectedAntenne.email && <span>{selectedAntenne.email}</span>}
+                {selectedAntenne.telephone && <span>{formatPhone(selectedAntenne.telephone)}</span>}
+              </div>
+            )}
+          </div>
+        )}
+        <div>
+          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Email certificateur</label>
+          <input
+            type="email"
+            value={draft.email}
+            onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+            onBlur={() => { if (draft.email !== (qualif.emailCertificateur || "")) updateQualif({ emailCertificateur: draft.email || null }); }}
+            placeholder="email@certificateur.fr"
+            style={iStyle}
+          />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Identifiant</label>
+          <input
+            type="text"
+            value={draft.identifiant}
+            onChange={(e) => setDraft((d) => ({ ...d, identifiant: e.target.value }))}
+            onBlur={() => { if (draft.identifiant !== (qualif.identifiantCertificateur || "")) updateQualif({ identifiantCertificateur: draft.identifiant || null }); }}
+            placeholder="Identifiant espace"
+            style={iStyle}
+          />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Mot de passe</label>
+          <input
+            type="text"
+            value={draft.motDePasse}
+            onChange={(e) => setDraft((d) => ({ ...d, motDePasse: e.target.value }))}
+            onBlur={() => { if (draft.motDePasse !== (qualif.motDePasseCertificateur || "")) updateQualif({ motDePasseCertificateur: draft.motDePasse || null }); }}
+            placeholder="Mot de passe espace"
+            style={iStyle}
+          />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Interlocuteur</label>
+          <input
+            type="text"
+            value={draft.interlocuteur}
+            onChange={(e) => setDraft((d) => ({ ...d, interlocuteur: e.target.value }))}
+            onBlur={() => { if (draft.interlocuteur !== (qualif.interlocuteurCertificateur || "")) updateQualif({ interlocuteurCertificateur: draft.interlocuteur || null }); }}
+            placeholder="Nom de l'instructeur"
+            style={iStyle}
+          />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Date de commission</label>
+          <input
+            type="date"
+            value={qualif.dateCommission ? new Date(qualif.dateCommission).toISOString().slice(0, 10) : ""}
+            onChange={(e) => updateQualif({ dateCommission: e.target.value || null })}
+            style={iStyle}
+          />
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+        {[
+          { key: "bonCommandeDemande", dateKey: "dateBonCommandeDemande", label: "Bon de commande demandé" },
+          { key: "bonCommandePaye", dateKey: "dateBonCommandePaye", label: "Bon de commande payé" },
+        ].map((f) => {
+          const checked = !!(qualif as Record<string, unknown>)[f.key];
+          const date = (qualif as Record<string, unknown>)[f.dateKey] as string | null | undefined;
+          return (
+            <label key={f.key} onClick={() => {
+              const newVal = !checked;
+              updateQualif({ [f.key]: newVal, [f.dateKey]: newVal ? new Date().toISOString() : null });
+            }} style={{
+              display: "flex", alignItems: "center", gap: 8, padding: "6px 10px",
+              borderRadius: 6, cursor: "pointer",
+              background: checked ? C.accentDim : C.surface,
+              border: `1px solid ${checked ? C.accent + "40" : C.border}`,
+            }}>
+              <div style={{
+                width: 14, height: 14, borderRadius: 3,
+                border: `2px solid ${checked ? C.accent : C.border}`,
+                background: checked ? C.accent : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>
+                {checked && <Check size={8} color="#fff" strokeWidth={3} />}
+              </div>
+              <span style={{ fontSize: 11, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text, flex: 1 }}>{f.label}</span>
+              {date && <span style={{ fontSize: 10, color: C.textDim }}>le {new Date(date).toLocaleDateString("fr-FR")}</span>}
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function QualifChantiers({

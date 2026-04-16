@@ -227,6 +227,7 @@ model AntenneQualibat {
   actif      Boolean  @default(true)
   createdAt  DateTime @default(now())
   projets    Projet[]
+  projetQualifications ProjetQualification[]
 }
 
 model ProjetQualification {
@@ -251,6 +252,19 @@ model ProjetQualification {
   formationAutre            String?
   niveauVise                String?
   niveauObtenu              String?
+
+  certificateurType         String?
+  emailCertificateur        String?
+  antenneQualibatId         String?
+  antenneQualibat           AntenneQualibat? @relation(fields: [antenneQualibatId], references: [id])
+  identifiantCertificateur  String?
+  motDePasseCertificateur   String?
+  interlocuteurCertificateur String?
+  dateCommission            DateTime?
+  bonCommandeDemande        Boolean  @default(false)
+  dateBonCommandeDemande    DateTime?
+  bonCommandePaye           Boolean  @default(false)
+  dateBonCommandePaye       DateTime?
 
   rges                      ProjetQualificationRGE[]
   chantiers                 Chantier[]
