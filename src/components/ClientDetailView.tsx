@@ -1653,45 +1653,73 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   {/* Qualifications détails (RGE + niveaux) */}
                   {p.qualifications.map((q) => {
                     if (!q.id) return null;
+                    const qualifId = q.id;
                     const selectedCodes = (q.rges || []).map((r) => r.rgeCode);
+
                     const updateQualif = async (patch: Record<string, unknown>) => {
                       if (isDemoMode) return;
-                      const res = await fetch(`/api/qualifications/${q.id}`, {
-                        method: "PATCH", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(patch),
-                      });
-                      if (res.ok) {
+                      try {
+                        const res = await fetch(`/api/qualifications/${qualifId}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(patch),
+                        });
+                        if (!res.ok) throw new Error("Erreur API");
                         const updated = await res.json();
-                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === q.id ? { ...qq, niveauVise: updated.niveauVise, niveauObtenu: updated.niveauObtenu, rges: updated.rges } : qq) } : pr));
+                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, niveauVise: updated.niveauVise, niveauObtenu: updated.niveauObtenu, rges: updated.rges } : qq) } : pr));
+                      } catch {
+                        toast("Erreur lors de la sauvegarde");
                       }
                     };
+
+                    const toggleRGE = async (code: string) => {
+                      const newCodes = selectedCodes.includes(code)
+                        ? selectedCodes.filter((c) => c !== code)
+                        : [...selectedCodes, code];
+                      // Optimistic update
+                      const previousRges = q.rges || [];
+                      setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
+                        ...pr,
+                        qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? {
+                          ...qq,
+                          rges: newCodes.map((c) => ({ id: "tmp-" + c, rgeCode: c })),
+                        } : qq),
+                      } : pr));
+                      if (isDemoMode) return;
+                      try {
+                        const res = await fetch(`/api/qualifications/${qualifId}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ rges: newCodes }),
+                        });
+                        if (!res.ok) throw new Error("Erreur API");
+                        const updated = await res.json();
+                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
+                          ...pr,
+                          qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, rges: updated.rges } : qq),
+                        } : pr));
+                      } catch {
+                        // Rollback
+                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
+                          ...pr,
+                          qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, rges: previousRges } : qq),
+                        } : pr));
+                        toast("Erreur lors de la sauvegarde du RGE");
+                      }
+                    };
+
                     return (
-                      <div key={q.id} style={{ marginTop: 10, marginLeft: 28, padding: "10px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}` }}>
+                      <div key={qualifId} style={{ marginTop: 10, marginLeft: 28, padding: "10px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}` }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: C.blue, marginBottom: 8 }}>
                           {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
                         </div>
-                        {/* RGE select multiple */}
+                        {/* RGE picker */}
                         <div style={{ marginBottom: 8 }}>
                           <div style={{ fontSize: 11, color: C.textDim, marginBottom: 4 }}>RGE associés</div>
-                          <select multiple value={selectedCodes} size={5}
-                            onChange={(e) => {
-                              const codes = Array.from(e.target.selectedOptions).map((o) => o.value);
-                              updateQualif({ rges: codes });
-                            }}
-                            style={{ width: "100%", padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11 }}
-                          >
-                            {nomenclatureRGE.map((r) => (
-                              <option key={r.code} value={r.code}>{r.code} - {r.nom}</option>
-                            ))}
-                          </select>
-                          {selectedCodes.length > 0 && (
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
-                              {selectedCodes.map((code) => {
-                                const r = nomenclatureRGE.find((n) => n.code === code);
-                                return <Badge key={code} color="#16a34a" bg="rgba(22,163,74,0.1)">{code} {r ? `- ${r.nom}` : ""}</Badge>;
-                              })}
-                            </div>
-                          )}
+                          <RGEPicker
+                            C={C}
+                            options={nomenclatureRGE}
+                            selected={selectedCodes}
+                            onToggle={toggleRGE}
+                          />
                         </div>
                         {/* Niveaux */}
                         <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -2750,6 +2778,110 @@ function formatStatutFacturation(statut?: string): string {
     DOSSIER_EN_APPEL: "En appel",
   };
   return map[statut || ""] || "—";
+}
+
+function RGEPicker({
+  C, options, selected, onToggle,
+}: {
+  C: Theme;
+  options: Array<{ code: string; nom: string }>;
+  selected: string[];
+  onToggle: (code: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} style={{ position: "relative" }}>
+      <div style={{
+        display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4,
+        minHeight: 32, padding: "4px 6px", borderRadius: 6,
+        border: `1px solid ${C.border}`, background: C.surface,
+      }}>
+        {selected.length === 0 && (
+          <span style={{ fontSize: 11, color: C.textDim, padding: "0 4px" }}>Aucun RGE sélectionné</span>
+        )}
+        {selected.map((code) => {
+          const opt = options.find((o) => o.code === code);
+          return (
+            <span key={code} style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              padding: "2px 6px 2px 8px", borderRadius: 4,
+              background: "rgba(22,163,74,0.1)", color: "#16a34a",
+              fontSize: 11, fontWeight: 600,
+            }}>
+              {code}{opt ? ` - ${opt.nom.slice(0, 30)}${opt.nom.length > 30 ? "…" : ""}` : ""}
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggle(code); }}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}
+                title="Retirer"
+              >
+                <X size={11} color="#16a34a" />
+              </button>
+            </span>
+          );
+        })}
+        <button
+          onClick={() => setOpen(!open)}
+          style={{
+            marginLeft: "auto", padding: "2px 8px", borderRadius: 4,
+            border: `1px solid ${C.border}`, background: C.bg, color: C.blue,
+            fontSize: 11, fontWeight: 600, cursor: "pointer",
+            display: "inline-flex", alignItems: "center", gap: 3,
+          }}
+        >
+          <Plus size={11} /> Ajouter
+        </button>
+      </div>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
+          background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8,
+          boxShadow: C.shadowHover, maxHeight: 240, overflowY: "auto",
+        }}>
+          {options.map((r) => {
+            const checked = selected.includes(r.code);
+            return (
+              <div key={r.code}
+                onClick={(e) => { e.stopPropagation(); onToggle(r.code); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8, padding: "6px 10px",
+                  cursor: "pointer", borderBottom: `1px solid ${C.border}`,
+                  background: checked ? "rgba(22,163,74,0.06)" : "transparent",
+                  transition: "background 0.1s",
+                }}
+                onMouseEnter={(e) => { if (!checked) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = checked ? "rgba(22,163,74,0.06)" : "transparent"; }}
+              >
+                <div style={{
+                  width: 14, height: 14, borderRadius: 3,
+                  border: `2px solid ${checked ? "#16a34a" : C.border}`,
+                  background: checked ? "#16a34a" : "transparent",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  {checked && <Check size={9} color="#fff" strokeWidth={3} />}
+                </div>
+                <span style={{ fontSize: 11, color: C.text, fontWeight: checked ? 600 : 400 }}>
+                  <span style={{ color: "#16a34a", fontWeight: 700 }}>{r.code}</span> - {r.nom}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function formatRelativeTime(date: Date): string {

@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
   const projetComplet = await prisma.projet.findUnique({
     where: { id: projet.id },
     include: {
-      qualifications: true,
+      qualifications: { include: { rges: true } },
       etapes: { orderBy: { ordre: "asc" } },
       documents: true,
       chantiers: { include: { documents: true }, orderBy: { numero: "asc" } },

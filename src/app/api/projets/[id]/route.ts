@@ -56,7 +56,11 @@ export async function PATCH(
 
   const full = await prisma.projet.findUnique({
     where: { id },
-    include: { qualifications: true, etapes: { orderBy: { ordre: "asc" } }, bonsDeCommande: true },
+    include: {
+      qualifications: { include: { rges: true } },
+      etapes: { orderBy: { ordre: "asc" } },
+      bonsDeCommande: true,
+    },
   });
   return NextResponse.json(full);
 }
