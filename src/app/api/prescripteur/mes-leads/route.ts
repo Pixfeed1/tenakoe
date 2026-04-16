@@ -1,20 +1,34 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "PRESCRIPTEUR") {
-    return NextResponse.json({ error: "Prescripteur uniquement" }, { status: 403 });
+  if (!user) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+  if (user.role === "CHARGEE") {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
-  if (!user.prescripteurType) {
+  const requestedType = request.nextUrl.searchParams.get("prescripteurType");
+
+  let prescripteurType: string | null = null;
+  if (user.role === "ADMIN") {
+    prescripteurType = requestedType || null;
+  } else if (user.role === "PRESCRIPTEUR") {
+    prescripteurType = user.prescripteurType || null;
+  } else {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
+
+  if (!prescripteurType) {
     return NextResponse.json([]);
   }
 
   const entreprises = await prisma.entreprise.findMany({
     where: {
-      prescripteur: user.prescripteurType,
+      prescripteur: prescripteurType,
       archive: false,
     },
     include: {

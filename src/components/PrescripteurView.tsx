@@ -19,9 +19,55 @@ interface Lead {
 
 interface PrescripteurViewProps {
   user: { name: string; initials: string };
+  demoMode?: boolean;
+  prescripteurType?: string;
+  embedded?: boolean;
 }
 
-export function PrescripteurView({ user }: PrescripteurViewProps) {
+const DEMO_LEADS: Lead[] = [
+  {
+    id: "demo-1",
+    nom: "Dupont Électricité",
+    artisan: "Jean Dupont",
+    dateTransmission: "10/04/2026",
+    statut: "Nouveau",
+    statutCouleur: "#ef4444",
+    chargee: "—",
+    derniereMaj: "10/04 — Transmis",
+  },
+  {
+    id: "demo-2",
+    nom: "Martin Plomberie",
+    artisan: "Paul Martin",
+    dateTransmission: "08/04/2026",
+    statut: "Prise en charge",
+    statutCouleur: "#3b82f6",
+    chargee: "Kelly",
+    derniereMaj: "14/04 — Prise en charge",
+  },
+  {
+    id: "demo-3",
+    nom: "Durand Couverture",
+    artisan: "Marc Durand",
+    dateTransmission: "05/04/2026",
+    statut: "En cours",
+    statutCouleur: "#d97706",
+    chargee: "Kelly",
+    derniereMaj: "15/04 — En cours",
+  },
+  {
+    id: "demo-4",
+    nom: "Bernard Menuiserie",
+    artisan: "Luc Bernard",
+    dateTransmission: "01/04/2026",
+    statut: "Qualifié",
+    statutCouleur: "#16a34a",
+    chargee: "Kelly",
+    derniereMaj: "16/04 — Qualifié",
+  },
+];
+
+export function PrescripteurView({ user, demoMode, prescripteurType, embedded }: PrescripteurViewProps) {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -32,11 +78,20 @@ export function PrescripteurView({ user }: PrescripteurViewProps) {
   const C = dark ? DARK : LIGHT;
 
   useEffect(() => {
-    fetch("/api/prescripteur/mes-leads")
+    if (demoMode) {
+      setLeads(DEMO_LEADS);
+      setLoading(false);
+      return;
+    }
+    const url = prescripteurType
+      ? `/api/prescripteur/mes-leads?prescripteurType=${encodeURIComponent(prescripteurType)}`
+      : "/api/prescripteur/mes-leads";
+    setLoading(true);
+    fetch(url)
       .then((r) => r.ok ? r.json() : [])
-      .then((data) => { setLeads(data); setLoading(false); })
+      .then((data) => { setLeads(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [demoMode, prescripteurType]);
 
   const toggleDark = () => {
     setDark((prev) => {
@@ -45,6 +100,34 @@ export function PrescripteurView({ user }: PrescripteurViewProps) {
       return next;
     });
   };
+
+  if (embedded) {
+    return (
+      <div>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>
+        ) : leads.length === 0 ? (
+          <div style={{
+            padding: 40, textAlign: "center", color: C.textDim,
+            background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
+          }}>
+            Aucun lead transmis pour le moment.
+          </div>
+        ) : (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {leads.map((lead) => (
+                <LeadCard key={lead.id} lead={lead} C={C} />
+              ))}
+            </div>
+            <div style={{ marginTop: 20, fontSize: 13, color: C.textDim }}>
+              {leads.length} lead{leads.length > 1 ? "s" : ""} transmis
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={{

@@ -21,6 +21,7 @@ import { HistoriqueView } from "@/components/views/HistoriqueView";
 import { RessourcesView } from "@/components/views/RessourcesView";
 import { ParametresView } from "@/components/views/ParametresView";
 import { IntegrationsView } from "@/components/views/IntegrationsView";
+import { VuePrescripteurView } from "@/components/views/VuePrescripteurView";
 import { AlertesDropdown } from "@/components/AlertesDropdown";
 import { useGuide } from "@/components/GuideSystem";
 import { Lightbulb, ChevronRight } from "lucide-react";
@@ -40,6 +41,7 @@ type View =
   | "Apporteurs"
   | "Intégrations"
   | "Paramètres"
+  | "VuePrescripteur"
   | "ClientDetail";
 
 const VIEW_TITLES: Record<View, string> = {
@@ -56,6 +58,7 @@ const VIEW_TITLES: Record<View, string> = {
   Apporteurs: "Apporteurs d'affaires",
   "Intégrations": "Intégrations",
   "Paramètres": "Paramètres",
+  VuePrescripteur: "Vue prescripteur",
   ClientDetail: "Fiche client",
 };
 
@@ -116,11 +119,16 @@ export function CRMShell({
     });
   };
 
-  const VALID_VIEWS = ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Ressources", "Facturation", "Historique", "Apporteurs", "Intégrations", "Paramètres", "ClientDetail"];
+  const VALID_VIEWS = ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Ressources", "Facturation", "Historique", "Apporteurs", "Intégrations", "Paramètres", "VuePrescripteur", "ClientDetail"];
   const startView = (initialView && VALID_VIEWS.includes(initialView) ? initialView : "Dashboard") as View;
 
+  const viewToNavLabel = (v: View): string => {
+    if (v === "VuePrescripteur") return "Vue prescripteur";
+    return v;
+  };
+
   const [view, setView] = useState<View>(startView);
-  const [activeNav, setActiveNav] = useState<string>(startView === "ClientDetail" ? "Dashboard" : startView);
+  const [activeNav, setActiveNav] = useState<string>(startView === "ClientDetail" ? "Dashboard" : viewToNavLabel(startView));
 
   const [selectedClient, setSelectedClient] = useState<{
     id?: string;
@@ -144,7 +152,7 @@ export function CRMShell({
   // Sync URL with view
   const navigateTo = (v: View) => {
     setView(v);
-    setActiveNav(v === "ClientDetail" ? activeNav : v);
+    setActiveNav(v === "ClientDetail" ? activeNav : viewToNavLabel(v));
     setNavKey((k) => k + 1); // Force remount = fresh data
     const url = new URL(window.location.href);
     if (v === "ClientDetail") {
@@ -160,8 +168,9 @@ export function CRMShell({
   // Handle browser back/forward
   useEffect(() => {
     const handlePop = () => {
-      setView(getViewFromURL());
-      setActiveNav(getViewFromURL());
+      const v = getViewFromURL();
+      setView(v);
+      setActiveNav(v === "ClientDetail" ? "Dashboard" : viewToNavLabel(v));
     };
     window.addEventListener("popstate", handlePop);
     return () => window.removeEventListener("popstate", handlePop);
@@ -199,7 +208,7 @@ export function CRMShell({
         className={mobileMenuOpen ? "open" : ""}
         onNavMobile={() => setMobileMenuOpen(false)}
         activeNav={activeNav}
-        onNav={(label) => navigateTo(label as View)}
+        onNav={(label) => navigateTo(label === "Vue prescripteur" ? "VuePrescripteur" : (label as View))}
         dark={dark}
         onToggleDark={toggleDark}
         user={user}
@@ -317,6 +326,9 @@ export function CRMShell({
         {view === "Apporteurs" && <ApporteursView key={navKey} C={C} />}
         {view === "Intégrations" && <IntegrationsView key={navKey} C={C} />}
         {view === "Paramètres" && <ParametresView key={navKey} C={C} role={user.role} />}
+        {view === "VuePrescripteur" && user.role === "ADMIN" && (
+          <VuePrescripteurView key={navKey} C={C} onExit={() => navigateTo("Dashboard")} />
+        )}
       </main>
     </div>
     </GuideProvider>

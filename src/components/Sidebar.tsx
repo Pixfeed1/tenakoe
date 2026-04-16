@@ -2,7 +2,7 @@
 
 import {
   LayoutDashboard, Zap, Target, Users, FolderOpen,
-  Send, File, BookOpen, CreditCard, Clock, Handshake, Plug, Settings, Sun, Moon, LogOut, Lightbulb,
+  Send, File, BookOpen, CreditCard, Clock, Handshake, Plug, Settings, Sun, Moon, LogOut, Lightbulb, Eye,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { SearchBar } from "@/components/SearchBar";
@@ -25,6 +25,10 @@ const NAV_ITEMS = [
 const NAV_BOTTOM = [
   { Icon: Plug, label: "Intégrations" },
   { Icon: Settings, label: "Paramètres" },
+];
+
+const NAV_BOTTOM_ADMIN = [
+  { Icon: Eye, label: "Vue prescripteur" },
 ];
 
 interface SidebarProps {
@@ -123,7 +127,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
         >
           Système
         </div>
-        {NAV_BOTTOM.map((item) => {
+        {[...NAV_BOTTOM, ...(user?.role === "ADMIN" ? NAV_BOTTOM_ADMIN : [])].map((item) => {
           const isActive = activeNav === item.label;
           return (
           <button
