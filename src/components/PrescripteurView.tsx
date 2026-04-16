@@ -10,6 +10,10 @@ interface Lead {
   id: string;
   nom: string;
   artisan: string;
+  email: string | null;
+  siret: string | null;
+  numeroCarte: string | null;
+  depot: string | null;
   dateTransmission: string;
   statut: string;
   statutCouleur: string;
@@ -29,6 +33,10 @@ const DEMO_LEADS: Lead[] = [
     id: "demo-1",
     nom: "Dupont Électricité",
     artisan: "Jean Dupont",
+    email: "contact@dupont-elec.fr",
+    siret: "812 456 789 00014",
+    numeroCarte: "CL-2048391",
+    depot: "0412 - Lyon Vaise",
     dateTransmission: "10/04/2026",
     statut: "Nouveau",
     statutCouleur: "#ef4444",
@@ -39,6 +47,10 @@ const DEMO_LEADS: Lead[] = [
     id: "demo-2",
     nom: "Martin Plomberie",
     artisan: "Paul Martin",
+    email: "paul@martin-plomberie.fr",
+    siret: "503 882 147 00022",
+    numeroCarte: "CL-1893274",
+    depot: "0318 - Villeurbanne",
     dateTransmission: "08/04/2026",
     statut: "Prise en charge",
     statutCouleur: "#3b82f6",
@@ -49,6 +61,10 @@ const DEMO_LEADS: Lead[] = [
     id: "demo-3",
     nom: "Durand Couverture",
     artisan: "Marc Durand",
+    email: "marc.durand@durand-couv.fr",
+    siret: "789 214 556 00018",
+    numeroCarte: "CL-3472016",
+    depot: "0527 - Bron",
     dateTransmission: "05/04/2026",
     statut: "En cours",
     statutCouleur: "#d97706",
@@ -59,6 +75,10 @@ const DEMO_LEADS: Lead[] = [
     id: "demo-4",
     nom: "Bernard Menuiserie",
     artisan: "Luc Bernard",
+    email: "contact@bernard-menuiserie.fr",
+    siret: "642 301 987 00036",
+    numeroCarte: "CL-2761548",
+    depot: "0418 - Saint-Priest",
     dateTransmission: "01/04/2026",
     statut: "Qualifié",
     statutCouleur: "#16a34a",
@@ -239,13 +259,13 @@ function LeadCard({ lead, C }: { lead: Lead; C: Theme }) {
       background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
       padding: "18px 22px", boxShadow: C.shadow,
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{lead.nom}</div>
           <div style={{ fontSize: 13, color: C.textMuted, marginTop: 2 }}>{lead.artisan}</div>
           <div style={{ fontSize: 12, color: C.textDim, marginTop: 4 }}>Transmis le {lead.dateTransmission}</div>
         </div>
-        <div style={{ textAlign: "right" }}>
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
           <Badge
             color={lead.statutCouleur}
             bg={lead.statutCouleur + "18"}
@@ -255,11 +275,43 @@ function LeadCard({ lead, C }: { lead: Lead; C: Theme }) {
           <div style={{ fontSize: 12, color: C.textMuted, marginTop: 6 }}>{lead.chargee}</div>
         </div>
       </div>
+
+      <div style={{
+        marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}`,
+        display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: "8px 18px",
+      }}>
+        <LeadInfo C={C} label="Email" value={lead.email} />
+        <LeadInfo C={C} label="SIRET" value={lead.siret} />
+        <LeadInfo C={C} label="N° carte client" value={lead.numeroCarte} />
+        <LeadInfo C={C} label="Dépôt" value={lead.depot} />
+      </div>
+
       <div style={{
         marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.border}`,
         fontSize: 12, color: C.textDim,
       }}>
         Dernière mise à jour : {lead.derniereMaj}
+      </div>
+    </div>
+  );
+}
+
+function LeadInfo({ C, label, value }: { C: Theme; label: string; value: string | null }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={{
+        fontSize: 10, fontWeight: 700, color: C.textDim,
+        textTransform: "uppercase", letterSpacing: "0.06em",
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 12.5, color: value ? C.text : C.textDim, marginTop: 2,
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        fontWeight: value ? 500 : 400,
+      }} title={value || ""}>
+        {value || "—"}
       </div>
     </div>
   );

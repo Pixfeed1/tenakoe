@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     },
     include: {
       contacts: { take: 1 },
+      depotConfig: { select: { nom: true } },
       projets: {
         include: {
           chargee: { select: { prenom: true } },
@@ -88,6 +89,10 @@ export async function GET(request: NextRequest) {
       id: ent.id,
       nom: ent.nom,
       artisan: contact ? `${contact.prenom} ${contact.nom}` : "—",
+      email: ent.email || null,
+      siret: ent.siret || null,
+      numeroCarte: ent.numeroCarte || null,
+      depot: ent.depotConfig?.nom || null,
       dateTransmission: ent.createdAt.toLocaleDateString("fr-FR"),
       statut: statutInfo.label,
       statutCouleur: statutInfo.couleur,
