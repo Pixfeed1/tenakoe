@@ -89,6 +89,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [editContact, setEditContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [callNote, setCallNote] = useState("");
   const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
+  const [expandedProjets, setExpandedProjets] = useState<Record<string, boolean>>({});
+  const [expandedQualifs, setExpandedQualifs] = useState<Record<string, boolean>>({});
   const [depotConfigs, setDepotConfigs] = useState<Array<{ id: string; nom: string }>>([]);
   const [apporteurs, setApporteurs] = useState<Array<{ id: string; nom: string; prenom: string | null; structure: string | null }>>([]);
   const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
@@ -1349,15 +1351,42 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
             {projets.length === 0 ? (
               <div style={{ padding: 16, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun projet</div>
-            ) : projets.map((p) => {
+            ) : projets.map((p, projetIdx) => {
               const etapesDone = p.etapes?.filter((e) => e.terminee).length || 0;
               const etapesTotal = p.etapes?.length || 0;
               const bons = (p.bonsDeCommande || []) as BonDeCommande[];
+              const projetColors = [C.accent, C.blue, C.purple, C.warning, C.danger];
+              const projetColor = projetColors[projetIdx % projetColors.length];
+              const isProjetOpen = expandedProjets[p.id] === undefined ? projetIdx === 0 : expandedProjets[p.id];
               return (
-                <div key={p.id} style={{ padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <FolderOpen size={16} color={C.purple} />
-                    <div style={{ flex: 1 }}>
+                <div
+                  key={p.id}
+                  style={{
+                    marginBottom: 16,
+                    borderRadius: 10,
+                    background: C.bg,
+                    border: `1px solid ${C.border}`,
+                    borderLeft: `3px solid ${projetColor}`,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    onClick={() => setExpandedProjets((prev) => ({ ...prev, [p.id]: !isProjetOpen }))}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 12,
+                      padding: "12px 14px", cursor: "pointer",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                  >
+                    <ChevronRight
+                      size={16}
+                      color={C.textDim}
+                      style={{ transition: "transform 0.2s", transform: isProjetOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}
+                    />
+                    <FolderOpen size={16} color={projetColor} style={{ flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
                         {p.qualifications.map((q) => (
@@ -1367,12 +1396,16 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         ))}
                         {p.qualifications.length === 0 && <span style={{ fontSize: 11, color: C.textDim }}>Aucune qualification</span>}
                       </div>
-                      <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>{etapesDone}/{etapesTotal} étapes</div>
+                    </div>
+                    <div style={{ fontSize: 11, color: C.textDim, flexShrink: 0, whiteSpace: "nowrap" }}>
+                      {etapesDone}/{etapesTotal} étapes
                     </div>
                   </div>
 
+                  {isProjetOpen && (
+                  <div style={{ padding: "4px 14px 14px" }}>
                   {/* Qualifications détails (RGE + niveaux) */}
-                  {p.qualifications.map((q) => {
+                  {p.qualifications.map((q, qualifIdx) => {
                     if (!q.id) return null;
                     const qualifId = q.id;
                     const selectedCodes = (q.rges || []).map((r) => r.rgeCode);
@@ -1429,11 +1462,31 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       }
                     };
 
+                    const isQualifOpen = expandedQualifs[qualifId] === undefined ? qualifIdx === 0 : expandedQualifs[qualifId];
+
                     return (
-                      <div key={qualifId} style={{ marginTop: 10, marginLeft: 28, padding: "10px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}` }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: C.blue, marginBottom: 8 }}>
-                          {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
+                      <div key={qualifId} style={{ marginTop: 10, padding: "0", borderRadius: 8, background: C.surface, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+                        <div
+                          onClick={() => setExpandedQualifs((prev) => ({ ...prev, [qualifId]: !isQualifOpen }))}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 8,
+                            padding: "8px 12px", cursor: "pointer",
+                            transition: "background 0.15s",
+                          }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                        >
+                          <ChevronRight
+                            size={14}
+                            color={C.textDim}
+                            style={{ transition: "transform 0.2s", transform: isQualifOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}
+                          />
+                          <Badge color={C.blue} bg={C.blueDim}>
+                            {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
+                          </Badge>
                         </div>
+                        {isQualifOpen && (
+                        <div style={{ padding: "4px 12px 12px" }}>
                         {/* RGE picker */}
                         <div style={{ marginBottom: 8 }}>
                           <div style={{ fontSize: 11, color: C.textDim, marginBottom: 4 }}>RGE associés</div>
@@ -1451,7 +1504,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             <select
                               value={q.niveauVise || ""}
                               onChange={(e) => updateQualif({ niveauVise: e.target.value || null })}
-                              style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, boxSizing: "border-box" }}
+                              style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, boxSizing: "border-box" }}
                             >
                               <option value="">-- Choisir --</option>
                               <option value="PROB">PROB</option>
@@ -1463,7 +1516,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             <select
                               value={q.niveauObtenu || ""}
                               onChange={(e) => updateQualif({ niveauObtenu: e.target.value || null })}
-                              style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, boxSizing: "border-box" }}
+                              style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, boxSizing: "border-box" }}
                             >
                               <option value="">-- Choisir --</option>
                               <option value="PROB">PROB</option>
@@ -1496,14 +1549,16 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             } : pr));
                           }}
                         />
+                        </div>
+                        )}
                       </div>
                     );
                   })}
 
                   {/* Bons de commande */}
                   {bons.length > 0 && (
-                    <div style={{ marginTop: 10, marginLeft: 28 }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 6 }}>Bons de commande</div>
+                    <div style={{ marginTop: 14, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>Bons de commande</div>
                       {bons.map((b) => (
                         <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", fontSize: 12, borderBottom: `1px solid ${C.border}` }}>
                           <span style={{ color: C.textDim }}>{b.qualificationCode}</span>
@@ -1533,7 +1588,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     </div>
                   )}
                   {/* Add bon de commande */}
-                  <div style={{ marginTop: 6, marginLeft: 28 }}>
+                  <div style={{ marginTop: 6 }}>
                     {showAddBon === p.id ? (
                       <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginTop: 6 }}>
                         <select value={newBonForm.qualificationCode} onChange={(e) => setNewBonForm({ ...newBonForm, qualificationCode: e.target.value })}
@@ -1565,6 +1620,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       </button>
                     )}
                   </div>
+                  </div>
+                  )}
                 </div>
               );
             })}
@@ -2590,11 +2647,34 @@ function QualifCertificateur({
     });
   }, [qualif.emailCertificateur, qualif.identifiantCertificateur, qualif.motDePasseCertificateur, qualif.interlocuteurCertificateur]);
 
+  const [open, setOpen] = useState(false);
+  const summary = [
+    certType,
+    isQualibat && selectedAntenne?.nom,
+  ].filter(Boolean).join(" · ");
+
   return (
     <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${C.border}` }}>
-      <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-        Certificateur
+      <div
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          display: "flex", alignItems: "center", gap: 8,
+          marginBottom: open ? 6 : 0, cursor: "pointer",
+        }}
+      >
+        <ChevronRight
+          size={12}
+          color={C.textDim}
+          style={{ transition: "transform 0.2s", transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
+        />
+        <span style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          Certificateur
+        </span>
+        {!open && summary && (
+          <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 500 }}>— {summary}</span>
+        )}
       </div>
+      {open && (<>
       <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         <div style={{ gridColumn: "1 / -1" }}>
           <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Type de certificateur</label>
@@ -2719,6 +2799,7 @@ function QualifCertificateur({
           );
         })}
       </div>
+      </>)}
     </div>
   );
 }
