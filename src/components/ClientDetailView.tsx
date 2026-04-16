@@ -1083,11 +1083,25 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Qualifications</span>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                 {projets.flatMap((p) => p.qualifications).length > 0
-                  ? projets.flatMap((p) => p.qualifications).map((q) => (
-                    <Badge key={q.type} color={C.blue} bg={C.blueDim}>
-                      {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
-                    </Badge>
-                  ))
+                  ? projets.flatMap((p) => p.qualifications).map((q) => {
+                    const pct = computeQualifProgress(q);
+                    const dotColor = progressColor(pct);
+                    return (
+                      <span
+                        key={q.type}
+                        title={`${pct}% — ${pct < 30 ? "Démarrage" : pct < 70 ? "En cours" : "Presque terminé"}`}
+                        style={{
+                          display: "inline-flex", alignItems: "center", gap: 6,
+                          padding: "3px 10px", borderRadius: 999,
+                          background: C.blueDim, color: C.blue,
+                          fontSize: 11, fontWeight: 600,
+                        }}
+                      >
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+                        {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
+                      </span>
+                    );
+                  })
                   : <span style={{ fontSize: 13, color: C.textDim }}>—</span>
                 }
               </div>
@@ -1463,27 +1477,40 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     };
 
                     const isQualifOpen = expandedQualifs[qualifId] === undefined ? qualifIdx === 0 : expandedQualifs[qualifId];
+                    const qualifPct = computeQualifProgress(q);
+                    const qualifPctColor = progressColor(qualifPct);
 
                     return (
                       <div key={qualifId} style={{ marginTop: 10, padding: "0", borderRadius: 8, background: C.surface, border: `1px solid ${C.border}`, overflow: "hidden" }}>
                         <div
                           onClick={() => setExpandedQualifs((prev) => ({ ...prev, [qualifId]: !isQualifOpen }))}
                           style={{
-                            display: "flex", alignItems: "center", gap: 8,
-                            padding: "8px 12px", cursor: "pointer",
+                            cursor: "pointer",
                             transition: "background 0.15s",
                           }}
                           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                         >
-                          <ChevronRight
-                            size={14}
-                            color={C.textDim}
-                            style={{ transition: "transform 0.2s", transform: isQualifOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}
-                          />
-                          <Badge color={C.blue} bg={C.blueDim}>
-                            {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
-                          </Badge>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px 4px" }}>
+                            <ChevronRight
+                              size={14}
+                              color={C.textDim}
+                              style={{ transition: "transform 0.2s", transform: isQualifOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}
+                            />
+                            <Badge color={C.blue} bg={C.blueDim}>
+                              {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
+                            </Badge>
+                            <div style={{ flex: 1 }} />
+                            <span style={{ fontSize: 11, color: qualifPctColor, fontWeight: 600 }}>{qualifPct}%</span>
+                          </div>
+                          <div style={{ height: 4, background: C.border, marginBottom: 0 }}>
+                            <div style={{
+                              height: "100%",
+                              width: `${qualifPct}%`,
+                              background: qualifPctColor,
+                              transition: "width 0.4s ease, background 0.3s",
+                            }} />
+                          </div>
                         </div>
                         {isQualifOpen && (
                         <div style={{ padding: "4px 12px 12px" }}>
@@ -2602,6 +2629,31 @@ interface ChantierFull {
   documents: ChantierDocFull[];
 }
 
+function computeQualifProgress(q: {
+  rges?: Array<{ rgeCode: string }>;
+  niveauVise?: string | null;
+  certificateurType?: string | null;
+  identifiantCertificateur?: string | null;
+  bonCommandePaye?: boolean;
+  chantiers?: Array<{ numero: number; devisRecu: boolean; factureRecue: boolean; attestationRecue: boolean }>;
+}): number {
+  let score = 0;
+  if ((q.rges || []).length > 0) score += 20;
+  if (q.niveauVise) score += 10;
+  if (q.certificateurType && q.identifiantCertificateur) score += 20;
+  if (q.bonCommandePaye) score += 20;
+  const mainChantiers = (q.chantiers || []).filter((c) => c.numero <= 3);
+  const complets = mainChantiers.filter((c) => c.devisRecu && c.factureRecue && c.attestationRecue).length;
+  score += (complets / 3) * 30;
+  return Math.round(Math.min(100, score));
+}
+
+function progressColor(pct: number): string {
+  if (pct < 30) return "#ef4444";
+  if (pct < 70) return "#f59e0b";
+  return "#16a34a";
+}
+
 function QualifCertificateur({
   C, qualif, antennes, updateQualif,
 }: {
@@ -2647,11 +2699,38 @@ function QualifCertificateur({
     });
   }, [qualif.emailCertificateur, qualif.identifiantCertificateur, qualif.motDePasseCertificateur, qualif.interlocuteurCertificateur]);
 
-  const [open, setOpen] = useState(false);
+  // Default open if certificateurType is filled, closed otherwise
+  const [open, setOpen] = useState(!!certType);
   const summary = [
     certType,
     isQualibat && selectedAntenne?.nom,
   ].filter(Boolean).join(" · ");
+
+  const Chip = ({ checked, date, label, onClick }: { checked: boolean; date: string | null | undefined; label: string; onClick: () => void }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        padding: "4px 10px", borderRadius: 999, cursor: "pointer",
+        background: checked ? C.accentDim : "transparent",
+        border: `1px solid ${checked ? C.accent + "40" : C.border}`,
+        color: checked ? C.accentText : C.textMuted,
+        fontSize: 10.5, fontWeight: 600,
+      }}
+    >
+      <div style={{
+        width: 11, height: 11, borderRadius: 3,
+        border: `1.5px solid ${checked ? C.accent : C.border}`,
+        background: checked ? C.accent : "transparent",
+        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+      }}>
+        {checked && <Check size={7} color="#fff" strokeWidth={3} />}
+      </div>
+      <span>{label}</span>
+      {checked && date && <span style={{ color: C.textDim, fontWeight: 400 }}>· {new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}</span>}
+    </button>
+  );
 
   return (
     <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${C.border}` }}>
@@ -2659,7 +2738,7 @@ function QualifCertificateur({
         onClick={() => setOpen((v) => !v)}
         style={{
           display: "flex", alignItems: "center", gap: 8,
-          marginBottom: open ? 6 : 0, cursor: "pointer",
+          marginBottom: open ? 8 : 0, cursor: "pointer",
         }}
       >
         <ChevronRight
@@ -2674,132 +2753,138 @@ function QualifCertificateur({
           <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 500 }}>— {summary}</span>
         )}
       </div>
-      {open && (<>
-      <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-        <div style={{ gridColumn: "1 / -1" }}>
-          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Type de certificateur</label>
-          <select
-            value={certType}
-            onChange={(e) => {
-              const v = e.target.value;
-              const patch: Record<string, unknown> = { certificateurType: v || null };
-              if (v !== "Qualibat") patch.antenneQualibatId = null;
-              updateQualif(patch);
-            }}
-            style={iStyle}
-          >
-            <option value="">-- Choisir --</option>
-            <option value="Qualibat">Qualibat</option>
-            <option value="Certibat">Certibat</option>
-            <option value="Qualit'EnR">Qualit&apos;EnR</option>
-            <option value="Qualifelec">Qualifelec</option>
-          </select>
-        </div>
-        {isQualibat && (
-          <div style={{ gridColumn: "1 / -1" }}>
-            <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Antenne Qualibat</label>
+      {open && (
+        <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          {/* Ligne 1 */}
+          <div>
+            <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>Type de certificateur</label>
             <select
-              value={currentAntenneId}
-              onChange={(e) => updateQualif({ antenneQualibatId: e.target.value || null })}
+              value={certType}
+              onChange={(e) => {
+                const v = e.target.value;
+                const patch: Record<string, unknown> = { certificateurType: v || null };
+                if (v !== "Qualibat") patch.antenneQualibatId = null;
+                updateQualif(patch);
+              }}
               style={iStyle}
             >
-              <option value="">-- Sélectionner --</option>
-              {antennes.map((a) => <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>)}
+              <option value="">-- Choisir --</option>
+              <option value="Qualibat">Qualibat</option>
+              <option value="Certibat">Certibat</option>
+              <option value="Qualit'EnR">Qualit&apos;EnR</option>
+              <option value="Qualifelec">Qualifelec</option>
             </select>
-            {selectedAntenne && (selectedAntenne.email || selectedAntenne.telephone) && (
-              <div style={{ fontSize: 10, color: C.textDim, marginTop: 4, display: "flex", gap: 12, flexWrap: "wrap" }}>
-                {selectedAntenne.email && <span>{selectedAntenne.email}</span>}
-                {selectedAntenne.telephone && <span>{formatPhone(selectedAntenne.telephone)}</span>}
-              </div>
-            )}
           </div>
-        )}
-        <div>
-          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Email certificateur</label>
-          <input
-            type="email"
-            value={draft.email}
-            onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-            onBlur={() => { if (draft.email !== (qualif.emailCertificateur || "")) updateQualif({ emailCertificateur: draft.email || null }); }}
-            placeholder="email@certificateur.fr"
-            style={iStyle}
-          />
+          {isQualibat ? (
+            <div>
+              <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>Antenne Qualibat</label>
+              <select
+                value={currentAntenneId}
+                onChange={(e) => updateQualif({ antenneQualibatId: e.target.value || null })}
+                style={iStyle}
+              >
+                <option value="">-- Sélectionner --</option>
+                {antennes.map((a) => <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>)}
+              </select>
+              {selectedAntenne && (selectedAntenne.email || selectedAntenne.telephone) && (
+                <div style={{ fontSize: 9, color: C.textDim, marginTop: 3, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {selectedAntenne.email && <span>{selectedAntenne.email}</span>}
+                  {selectedAntenne.telephone && <span>{formatPhone(selectedAntenne.telephone)}</span>}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div>
+              <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>Email certificateur</label>
+              <input
+                type="email"
+                value={draft.email}
+                onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+                onBlur={() => { if (draft.email !== (qualif.emailCertificateur || "")) updateQualif({ emailCertificateur: draft.email || null }); }}
+                placeholder="email@certificateur.fr"
+                style={iStyle}
+              />
+            </div>
+          )}
+          {isQualibat && (
+            <div>
+              <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>Email certificateur</label>
+              <input
+                type="email"
+                value={draft.email}
+                onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+                onBlur={() => { if (draft.email !== (qualif.emailCertificateur || "")) updateQualif({ emailCertificateur: draft.email || null }); }}
+                placeholder="email@certificateur.fr"
+                style={iStyle}
+              />
+            </div>
+          )}
+          {/* Ligne 2 */}
+          <div>
+            <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>Identifiant</label>
+            <input
+              type="text"
+              value={draft.identifiant}
+              onChange={(e) => setDraft((d) => ({ ...d, identifiant: e.target.value }))}
+              onBlur={() => { if (draft.identifiant !== (qualif.identifiantCertificateur || "")) updateQualif({ identifiantCertificateur: draft.identifiant || null }); }}
+              placeholder="Identifiant"
+              style={iStyle}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>Mot de passe</label>
+            <input
+              type="text"
+              value={draft.motDePasse}
+              onChange={(e) => setDraft((d) => ({ ...d, motDePasse: e.target.value }))}
+              onBlur={() => { if (draft.motDePasse !== (qualif.motDePasseCertificateur || "")) updateQualif({ motDePasseCertificateur: draft.motDePasse || null }); }}
+              placeholder="Mot de passe"
+              style={iStyle}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>Interlocuteur</label>
+            <input
+              type="text"
+              value={draft.interlocuteur}
+              onChange={(e) => setDraft((d) => ({ ...d, interlocuteur: e.target.value }))}
+              onBlur={() => { if (draft.interlocuteur !== (qualif.interlocuteurCertificateur || "")) updateQualif({ interlocuteurCertificateur: draft.interlocuteur || null }); }}
+              placeholder="Interlocuteur"
+              style={iStyle}
+            />
+          </div>
+          {/* Ligne 3 */}
+          <div>
+            <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>Date de commission</label>
+            <input
+              type="date"
+              value={qualif.dateCommission ? new Date(qualif.dateCommission).toISOString().slice(0, 10) : ""}
+              onChange={(e) => updateQualif({ dateCommission: e.target.value || null })}
+              style={iStyle}
+            />
+          </div>
+          <div style={{ gridColumn: "2 / span 2", display: "flex", flexWrap: "wrap", alignItems: "end", gap: 6, paddingBottom: 2 }}>
+            <Chip
+              checked={!!qualif.bonCommandeDemande}
+              date={qualif.dateBonCommandeDemande}
+              label="Bon commandé"
+              onClick={() => {
+                const newVal = !qualif.bonCommandeDemande;
+                updateQualif({ bonCommandeDemande: newVal, dateBonCommandeDemande: newVal ? new Date().toISOString() : null });
+              }}
+            />
+            <Chip
+              checked={!!qualif.bonCommandePaye}
+              date={qualif.dateBonCommandePaye}
+              label="Bon payé"
+              onClick={() => {
+                const newVal = !qualif.bonCommandePaye;
+                updateQualif({ bonCommandePaye: newVal, dateBonCommandePaye: newVal ? new Date().toISOString() : null });
+              }}
+            />
+          </div>
         </div>
-        <div>
-          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Identifiant</label>
-          <input
-            type="text"
-            value={draft.identifiant}
-            onChange={(e) => setDraft((d) => ({ ...d, identifiant: e.target.value }))}
-            onBlur={() => { if (draft.identifiant !== (qualif.identifiantCertificateur || "")) updateQualif({ identifiantCertificateur: draft.identifiant || null }); }}
-            placeholder="Identifiant espace"
-            style={iStyle}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Mot de passe</label>
-          <input
-            type="text"
-            value={draft.motDePasse}
-            onChange={(e) => setDraft((d) => ({ ...d, motDePasse: e.target.value }))}
-            onBlur={() => { if (draft.motDePasse !== (qualif.motDePasseCertificateur || "")) updateQualif({ motDePasseCertificateur: draft.motDePasse || null }); }}
-            placeholder="Mot de passe espace"
-            style={iStyle}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Interlocuteur</label>
-          <input
-            type="text"
-            value={draft.interlocuteur}
-            onChange={(e) => setDraft((d) => ({ ...d, interlocuteur: e.target.value }))}
-            onBlur={() => { if (draft.interlocuteur !== (qualif.interlocuteurCertificateur || "")) updateQualif({ interlocuteurCertificateur: draft.interlocuteur || null }); }}
-            placeholder="Nom de l'instructeur"
-            style={iStyle}
-          />
-        </div>
-        <div>
-          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Date de commission</label>
-          <input
-            type="date"
-            value={qualif.dateCommission ? new Date(qualif.dateCommission).toISOString().slice(0, 10) : ""}
-            onChange={(e) => updateQualif({ dateCommission: e.target.value || null })}
-            style={iStyle}
-          />
-        </div>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
-        {[
-          { key: "bonCommandeDemande", dateKey: "dateBonCommandeDemande", label: "Bon de commande demandé" },
-          { key: "bonCommandePaye", dateKey: "dateBonCommandePaye", label: "Bon de commande payé" },
-        ].map((f) => {
-          const checked = !!(qualif as Record<string, unknown>)[f.key];
-          const date = (qualif as Record<string, unknown>)[f.dateKey] as string | null | undefined;
-          return (
-            <label key={f.key} onClick={() => {
-              const newVal = !checked;
-              updateQualif({ [f.key]: newVal, [f.dateKey]: newVal ? new Date().toISOString() : null });
-            }} style={{
-              display: "flex", alignItems: "center", gap: 8, padding: "6px 10px",
-              borderRadius: 6, cursor: "pointer",
-              background: checked ? C.accentDim : C.surface,
-              border: `1px solid ${checked ? C.accent + "40" : C.border}`,
-            }}>
-              <div style={{
-                width: 14, height: 14, borderRadius: 3,
-                border: `2px solid ${checked ? C.accent : C.border}`,
-                background: checked ? C.accent : "transparent",
-                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-              }}>
-                {checked && <Check size={8} color="#fff" strokeWidth={3} />}
-              </div>
-              <span style={{ fontSize: 11, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text, flex: 1 }}>{f.label}</span>
-              {date && <span style={{ fontSize: 10, color: C.textDim }}>le {new Date(date).toLocaleDateString("fr-FR")}</span>}
-            </label>
-          );
-        })}
-      </div>
-      </>)}
+      )}
     </div>
   );
 }
@@ -2868,31 +2953,72 @@ function QualifChantiers({
   return (
     <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: C.textDim }}>Chantiers de référence</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em" }}>Chantiers de référence</span>
         <span style={{ fontSize: 10, color: C.textDim }}>{complets}/{main.length} complets</span>
       </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
       {chantiers.map((c) => {
         const status = getStatus(c);
         const key = `qchantier-${c.id}`;
         const isOpen = expandedCols[key] === true;
         const title = c.numero <= 3 ? `Chantier ${c.numero}` : "Chantier supplémentaire";
+        const isMain = c.numero <= 3;
+        const DotIndicator = ({ recu, label }: { recu: boolean; label: string }) => (
+          <span
+            title={`${label}: ${recu ? "reçu" : "manquant"}`}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 3,
+              fontSize: 9.5, color: recu ? C.text : C.textDim, fontWeight: recu ? 600 : 400,
+            }}
+          >
+            <span style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: recu ? "#16a34a" : "transparent",
+              border: `1.5px solid ${recu ? "#16a34a" : C.textDim}`,
+              flexShrink: 0,
+            }} />
+            {label.slice(0, 1)}
+          </span>
+        );
 
         return (
-          <div key={c.id} style={{ marginBottom: 6, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+          <div
+            key={c.id}
+            style={{
+              gridColumn: isOpen ? "1 / -1" : "auto",
+              borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden",
+              background: C.surface,
+            }}
+          >
             <div
               onClick={() => setExpandedCols((prev) => ({ ...prev, [key]: !isOpen }))}
-              style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: C.surface, cursor: "pointer" }}
+              style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 10px", cursor: "pointer" }}
             >
-              <ChevronRight size={12} color={C.textDim} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform 0.15s" }} />
-              {status === "complet" ? <CheckCircle size={12} color="#16a34a" /> : status === "en-cours" ? <Clock size={12} color="#f59e0b" /> : <Circle size={12} color={C.textDim} />}
-              <span style={{ fontSize: 11, fontWeight: 600, color: statusColor(status), flex: 1 }}>{title}</span>
-              <input
-                defaultValue={c.nom || ""}
-                placeholder="Nom / adresse..."
-                onClick={(e) => e.stopPropagation()}
-                onBlur={(e) => updateChantier(c.id, { nom: e.target.value || null })}
-                style={{ padding: "3px 6px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 10, width: 160, outline: "none" }}
-              />
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <ChevronRight size={11} color={C.textDim} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform 0.15s", flexShrink: 0 }} />
+                {status === "complet" ? <CheckCircle size={12} color="#16a34a" /> : status === "en-cours" ? <Clock size={12} color="#f59e0b" /> : <Circle size={12} color={C.textDim} />}
+                <span style={{ fontSize: 11, fontWeight: 600, color: statusColor(status), flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {title}{c.nom ? ` — ${c.nom}` : ""}
+                </span>
+                {isMain ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    <DotIndicator recu={c.devisRecu} label="Devis" />
+                    <DotIndicator recu={c.factureRecue} label="Facture" />
+                    <DotIndicator recu={c.attestationRecue} label="Attestation" />
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 10, color: C.textDim, flexShrink: 0 }}>{c.documents.length} doc{c.documents.length > 1 ? "s" : ""}</span>
+                )}
+              </div>
+              {isOpen && (
+                <input
+                  defaultValue={c.nom || ""}
+                  placeholder="Nom / adresse..."
+                  onClick={(e) => e.stopPropagation()}
+                  onBlur={(e) => updateChantier(c.id, { nom: e.target.value || null })}
+                  style={{ padding: "4px 8px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 10, width: "100%", outline: "none", boxSizing: "border-box" }}
+                />
+              )}
             </div>
 
             {isOpen && (
@@ -2968,6 +3094,7 @@ function QualifChantiers({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
