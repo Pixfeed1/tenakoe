@@ -90,7 +90,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [callNote, setCallNote] = useState("");
   const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
   const [expandedProjets, setExpandedProjets] = useState<Record<string, boolean>>({});
-  const [expandedQualifs, setExpandedQualifs] = useState<Record<string, boolean>>({});
+  const [activeQualifByProjet, setActiveQualifByProjet] = useState<Record<string, string>>({});
+  const [addingQualifToProjet, setAddingQualifToProjet] = useState<string | null>(null);
+  const [addQualifSearch, setAddQualifSearch] = useState("");
+  const [addQualifResults, setAddQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
   const [depotConfigs, setDepotConfigs] = useState<Array<{ id: string; nom: string }>>([]);
   const [apporteurs, setApporteurs] = useState<Array<{ id: string; nom: string; prenom: string | null; structure: string | null }>>([]);
   const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
@@ -1369,26 +1372,20 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               const etapesDone = p.etapes?.filter((e) => e.terminee).length || 0;
               const etapesTotal = p.etapes?.length || 0;
               const bons = (p.bonsDeCommande || []) as BonDeCommande[];
-              const projetColors = [C.accent, C.blue, C.purple, C.warning, C.danger];
-              const projetColor = projetColors[projetIdx % projetColors.length];
               const isProjetOpen = expandedProjets[p.id] === undefined ? projetIdx === 0 : expandedProjets[p.id];
+              const isLastProjet = projetIdx === projets.length - 1;
               return (
                 <div
                   key={p.id}
                   style={{
-                    marginBottom: 16,
-                    borderRadius: 10,
-                    background: C.bg,
-                    border: `1px solid ${C.border}`,
-                    borderLeft: `3px solid ${projetColor}`,
-                    overflow: "hidden",
+                    borderBottom: isLastProjet ? "none" : `1px solid ${C.border}`,
                   }}
                 >
                   <div
                     onClick={() => setExpandedProjets((prev) => ({ ...prev, [p.id]: !isProjetOpen }))}
                     style={{
                       display: "flex", alignItems: "center", gap: 12,
-                      padding: "12px 14px", cursor: "pointer",
+                      padding: "12px 6px", cursor: "pointer",
                       transition: "background 0.15s",
                     }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
@@ -1399,7 +1396,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       color={C.textDim}
                       style={{ transition: "transform 0.2s", transform: isProjetOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}
                     />
-                    <FolderOpen size={16} color={projetColor} style={{ flexShrink: 0 }} />
+                    <FolderOpen size={16} color={C.textMuted} style={{ flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
@@ -1417,170 +1414,281 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   </div>
 
                   {isProjetOpen && (
-                  <div style={{ padding: "4px 14px 14px" }}>
-                  {/* Qualifications détails (RGE + niveaux) */}
-                  {p.qualifications.map((q, qualifIdx) => {
-                    if (!q.id) return null;
-                    const qualifId = q.id;
-                    const selectedCodes = (q.rges || []).map((r) => r.rgeCode);
+                  <div style={{ padding: "4px 6px 14px" }}>
+                  {(() => {
+                    const qualifs = p.qualifications.filter((q) => q.id);
+                    if (qualifs.length === 0 && addingQualifToProjet !== p.id) {
+                      return (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 4px" }}>
+                          <span style={{ fontSize: 11, color: C.textDim, flex: 1 }}>Aucune qualification.</span>
+                          <button
+                            onClick={() => { setAddingQualifToProjet(p.id); setAddQualifSearch(""); setAddQualifResults([]); }}
+                            style={{ padding: "4px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer" }}
+                          >
+                            + Ajouter une qualification
+                          </button>
+                        </div>
+                      );
+                    }
 
-                    const updateQualif = async (patch: Record<string, unknown>) => {
-                      // Optimistic local update so inputs stay in sync during typing
-                      setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, ...patch } : qq) } : pr));
-                      if (isDemoMode) return;
-                      try {
-                        const res = await fetch(`/api/qualifications/${qualifId}`, {
-                          method: "PATCH", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(patch),
-                        });
-                        if (!res.ok) throw new Error("Erreur API");
-                        const updated = await res.json();
-                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, ...updated } : qq) } : pr));
-                      } catch {
-                        toast("Erreur lors de la sauvegarde");
-                      }
-                    };
-
-                    const toggleRGE = async (code: string) => {
-                      const newCodes = selectedCodes.includes(code)
-                        ? selectedCodes.filter((c) => c !== code)
-                        : [...selectedCodes, code];
-                      // Optimistic update
-                      const previousRges = q.rges || [];
-                      setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
-                        ...pr,
-                        qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? {
-                          ...qq,
-                          rges: newCodes.map((c) => ({ id: "tmp-" + c, rgeCode: c })),
-                        } : qq),
-                      } : pr));
-                      if (isDemoMode) return;
-                      try {
-                        const res = await fetch(`/api/qualifications/${qualifId}`, {
-                          method: "PATCH", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ rges: newCodes }),
-                        });
-                        if (!res.ok) throw new Error("Erreur API");
-                        const updated = await res.json();
-                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
-                          ...pr,
-                          qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, rges: updated.rges } : qq),
-                        } : pr));
-                      } catch {
-                        // Rollback
-                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
-                          ...pr,
-                          qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, rges: previousRges } : qq),
-                        } : pr));
-                        toast("Erreur lors de la sauvegarde du RGE");
-                      }
-                    };
-
-                    const isQualifOpen = expandedQualifs[qualifId] === undefined ? qualifIdx === 0 : expandedQualifs[qualifId];
-                    const qualifPct = computeQualifProgress(q);
-                    const qualifPctColor = progressColor(qualifPct);
+                    const activeQualifId = activeQualifByProjet[p.id] && qualifs.find((q) => q.id === activeQualifByProjet[p.id])
+                      ? activeQualifByProjet[p.id]
+                      : qualifs[0]?.id;
+                    const activeQualif = qualifs.find((q) => q.id === activeQualifId);
 
                     return (
-                      <div key={qualifId} style={{ marginTop: 10, padding: "0", borderRadius: 8, background: C.surface, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                        <div
-                          onClick={() => setExpandedQualifs((prev) => ({ ...prev, [qualifId]: !isQualifOpen }))}
-                          style={{
-                            cursor: "pointer",
-                            transition: "background 0.15s",
-                          }}
-                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px 4px" }}>
-                            <ChevronRight
-                              size={14}
-                              color={C.textDim}
-                              style={{ transition: "transform 0.2s", transform: isQualifOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}
+                      <>
+                        {/* Tab bar */}
+                        <div style={{
+                          display: "flex", gap: 2, flexWrap: "wrap",
+                          borderBottom: `1px solid ${C.border}`,
+                          marginBottom: 0,
+                        }}>
+                          {qualifs.map((q) => {
+                            const qPct = computeQualifProgress(q);
+                            const dotColor = progressColor(qPct);
+                            const isActive = q.id === activeQualifId;
+                            const tabLabel = `${q.type}${nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type].slice(0, 30)}${nomenclatureMap[q.type].length > 30 ? "…" : ""}` : ""}`;
+                            return (
+                              <button
+                                key={q.id}
+                                onClick={() => setActiveQualifByProjet((prev) => ({ ...prev, [p.id]: q.id! }))}
+                                style={{
+                                  display: "inline-flex", alignItems: "center", gap: 6,
+                                  padding: "7px 12px", border: "none",
+                                  background: isActive ? C.accentDim : "transparent",
+                                  color: isActive ? C.accentText : C.textMuted,
+                                  fontSize: 11, fontWeight: isActive ? 600 : 500,
+                                  cursor: "pointer",
+                                  borderBottom: `2px solid ${isActive ? C.accent : "transparent"}`,
+                                  marginBottom: -1,
+                                  borderRadius: "6px 6px 0 0",
+                                  transition: "background 0.15s",
+                                }}
+                                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                              >
+                                <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+                                <span>{tabLabel}</span>
+                              </button>
+                            );
+                          })}
+                          <button
+                            onClick={() => { setAddingQualifToProjet(p.id); setAddQualifSearch(""); setAddQualifResults([]); }}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              padding: "7px 12px", border: "none", background: "transparent",
+                              color: C.textDim, fontSize: 11, fontWeight: 500, cursor: "pointer",
+                              borderRadius: "6px 6px 0 0",
+                              transition: "background 0.15s",
+                            }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                          >
+                            <Plus size={12} /> Ajouter
+                          </button>
+                        </div>
+
+                        {/* Inline add-qualification picker */}
+                        {addingQualifToProjet === p.id && (
+                          <div style={{ position: "relative", margin: "10px 0 4px" }}>
+                            <input
+                              autoFocus
+                              placeholder="Code ou nom de la qualification..."
+                              value={addQualifSearch}
+                              onChange={(e) => {
+                                setAddQualifSearch(e.target.value);
+                                if (e.target.value.length >= 2) {
+                                  fetch(`/api/nomenclature-qualibat?search=${encodeURIComponent(e.target.value)}`)
+                                    .then((r) => r.json()).then(setAddQualifResults).catch(() => {});
+                                } else { setAddQualifResults([]); }
+                              }}
+                              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }}
                             />
-                            <Badge color={C.blue} bg={C.blueDim}>
-                              {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
-                            </Badge>
-                            <div style={{ flex: 1 }} />
-                            <span style={{ fontSize: 11, color: qualifPctColor, fontWeight: 600 }}>{qualifPct}%</span>
-                          </div>
-                          <div style={{ height: 4, background: C.border, marginBottom: 0 }}>
-                            <div style={{
-                              height: "100%",
-                              width: `${qualifPct}%`,
-                              background: qualifPctColor,
-                              transition: "width 0.4s ease, background 0.3s",
-                            }} />
-                          </div>
-                        </div>
-                        {isQualifOpen && (
-                        <div style={{ padding: "4px 12px 12px" }}>
-                        {/* RGE picker */}
-                        <div style={{ marginBottom: 8 }}>
-                          <div style={{ fontSize: 11, color: C.textDim, marginBottom: 4 }}>RGE associés</div>
-                          <RGEPicker
-                            C={C}
-                            options={nomenclatureRGE}
-                            selected={selectedCodes}
-                            onToggle={toggleRGE}
-                          />
-                        </div>
-                        {/* Niveaux */}
-                        <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                          <div>
-                            <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Niveau visé</label>
-                            <select
-                              value={q.niveauVise || ""}
-                              onChange={(e) => updateQualif({ niveauVise: e.target.value || null })}
-                              style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, boxSizing: "border-box" }}
+                            <button
+                              onClick={() => { setAddingQualifToProjet(null); setAddQualifSearch(""); setAddQualifResults([]); }}
+                              style={{ position: "absolute", right: 6, top: 6, padding: 4, border: "none", background: "transparent", cursor: "pointer" }}
+                              title="Annuler"
                             >
-                              <option value="">-- Choisir --</option>
-                              <option value="PROB">PROB</option>
-                              <option value="PLEINE">PLEINE</option>
-                            </select>
+                              <X size={14} color={C.textDim} />
+                            </button>
+                            {addQualifResults.length > 0 && (
+                              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadowHover, maxHeight: 240, overflowY: "auto", marginTop: 4 }}>
+                                {addQualifResults.filter((q) => !qualifs.some((qq) => qq.type === q.code)).map((q) => (
+                                  <button
+                                    key={q.code}
+                                    onClick={async () => {
+                                      const newCode = q.code;
+                                      setAddingQualifToProjet(null); setAddQualifSearch(""); setAddQualifResults([]);
+                                      if (isDemoMode) {
+                                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: [...pr.qualifications, { id: `demo-q-${Date.now()}`, type: newCode }] } : pr));
+                                        return;
+                                      }
+                                      try {
+                                        const res = await fetch(`/api/projets/${p.id}`, {
+                                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                                          body: JSON.stringify({ addQualifications: [{ type: newCode }] }),
+                                        });
+                                        if (!res.ok) throw new Error();
+                                        const updated = await res.json();
+                                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: updated.qualifications } : pr));
+                                        const added = updated.qualifications.find((qq: { type: string; id: string }) => qq.type === newCode);
+                                        if (added) setActiveQualifByProjet((prev) => ({ ...prev, [p.id]: added.id }));
+                                        toast("Qualification ajoutée");
+                                      } catch {
+                                        toast("Erreur lors de l'ajout");
+                                      }
+                                    }}
+                                    style={{ width: "100%", padding: "6px 10px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", fontSize: 11, color: C.text, borderBottom: `1px solid ${C.border}` }}
+                                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                                  >
+                                    <span style={{ fontWeight: 700, color: C.blue }}>{q.code}</span>
+                                    <span style={{ marginLeft: 6 }}>{q.nom}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          <div>
-                            <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Niveau obtenu</label>
-                            <select
-                              value={q.niveauObtenu || ""}
-                              onChange={(e) => updateQualif({ niveauObtenu: e.target.value || null })}
-                              style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, boxSizing: "border-box" }}
-                            >
-                              <option value="">-- Choisir --</option>
-                              <option value="PROB">PROB</option>
-                              <option value="PLEINE">PLEINE</option>
-                            </select>
-                          </div>
-                        </div>
+                        )}
 
-                        {/* Certificateur (par qualification) */}
-                        <QualifCertificateur
-                          C={C}
-                          qualif={q}
-                          antennes={antennes}
-                          updateQualif={updateQualif}
-                        />
+                        {/* Active qualification content */}
+                        {activeQualif && activeQualif.id && (() => {
+                          const q = activeQualif;
+                          const qualifId = q.id!;
+                          const selectedCodes = (q.rges || []).map((r) => r.rgeCode);
+                          const qualifPct = computeQualifProgress(q);
+                          const qualifPctColor = progressColor(qualifPct);
 
-                        {/* Chantiers de référence pour cette qualification */}
-                        <QualifChantiers
-                          C={C}
-                          qualificationId={qualifId}
-                          chantiers={q.chantiers || []}
-                          expandedCols={expandedCols}
-                          setExpandedCols={setExpandedCols}
-                          isDemoMode={isDemoMode}
-                          toast={toast}
-                          onUpdate={(newChantiers) => {
+                          const updateQualif = async (patch: Record<string, unknown>) => {
+                            setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, ...patch } : qq) } : pr));
+                            if (isDemoMode) return;
+                            try {
+                              const res = await fetch(`/api/qualifications/${qualifId}`, {
+                                method: "PATCH", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(patch),
+                              });
+                              if (!res.ok) throw new Error("Erreur API");
+                              const updated = await res.json();
+                              setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, ...updated } : qq) } : pr));
+                            } catch {
+                              toast("Erreur lors de la sauvegarde");
+                            }
+                          };
+
+                          const toggleRGE = async (code: string) => {
+                            const newCodes = selectedCodes.includes(code)
+                              ? selectedCodes.filter((c) => c !== code)
+                              : [...selectedCodes, code];
+                            const previousRges = q.rges || [];
                             setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
                               ...pr,
-                              qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, chantiers: newChantiers } : qq),
+                              qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, rges: newCodes.map((c) => ({ id: "tmp-" + c, rgeCode: c })) } : qq),
                             } : pr));
-                          }}
-                        />
-                        </div>
-                        )}
-                      </div>
+                            if (isDemoMode) return;
+                            try {
+                              const res = await fetch(`/api/qualifications/${qualifId}`, {
+                                method: "PATCH", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ rges: newCodes }),
+                              });
+                              if (!res.ok) throw new Error("Erreur API");
+                              const updated = await res.json();
+                              setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
+                                ...pr,
+                                qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, rges: updated.rges } : qq),
+                              } : pr));
+                            } catch {
+                              setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
+                                ...pr,
+                                qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, rges: previousRges } : qq),
+                              } : pr));
+                              toast("Erreur lors de la sauvegarde du RGE");
+                            }
+                          };
+
+                          return (
+                            <div style={{ padding: "10px 2px 0" }}>
+                              {/* Progress bar */}
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                                <div style={{ flex: 1, height: 4, background: C.border, borderRadius: 2, overflow: "hidden" }}>
+                                  <div style={{
+                                    height: "100%",
+                                    width: `${qualifPct}%`,
+                                    background: qualifPctColor,
+                                    transition: "width 0.4s ease, background 0.3s",
+                                  }} />
+                                </div>
+                                <span style={{ fontSize: 11, color: qualifPctColor, fontWeight: 600, minWidth: 32, textAlign: "right" }}>{qualifPct}%</span>
+                              </div>
+
+                              {/* RGE picker */}
+                              <div style={{ marginBottom: 10 }}>
+                                <div style={{ fontSize: 11, color: C.textDim, marginBottom: 4 }}>RGE associés</div>
+                                <RGEPicker
+                                  C={C}
+                                  options={nomenclatureRGE}
+                                  selected={selectedCodes}
+                                  onToggle={toggleRGE}
+                                />
+                              </div>
+
+                              {/* Niveaux */}
+                              <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                                <div>
+                                  <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Niveau visé</label>
+                                  <select
+                                    value={q.niveauVise || ""}
+                                    onChange={(e) => updateQualif({ niveauVise: e.target.value || null })}
+                                    style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, boxSizing: "border-box" }}
+                                  >
+                                    <option value="">-- Choisir --</option>
+                                    <option value="PROB">PROB</option>
+                                    <option value="PLEINE">PLEINE</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 3 }}>Niveau obtenu</label>
+                                  <select
+                                    value={q.niveauObtenu || ""}
+                                    onChange={(e) => updateQualif({ niveauObtenu: e.target.value || null })}
+                                    style={{ width: "100%", padding: "5px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, boxSizing: "border-box" }}
+                                  >
+                                    <option value="">-- Choisir --</option>
+                                    <option value="PROB">PROB</option>
+                                    <option value="PLEINE">PLEINE</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              <QualifCertificateur
+                                key={qualifId}
+                                C={C}
+                                qualif={q}
+                                antennes={antennes}
+                                updateQualif={updateQualif}
+                              />
+
+                              <QualifChantiers
+                                C={C}
+                                qualificationId={qualifId}
+                                chantiers={q.chantiers || []}
+                                expandedCols={expandedCols}
+                                setExpandedCols={setExpandedCols}
+                                isDemoMode={isDemoMode}
+                                toast={toast}
+                                onUpdate={(newChantiers) => {
+                                  setProjets((prev) => prev.map((pr) => pr.id === p.id ? {
+                                    ...pr,
+                                    qualifications: pr.qualifications.map((qq) => qq.id === qualifId ? { ...qq, chantiers: newChantiers } : qq),
+                                  } : pr));
+                                }}
+                              />
+                            </div>
+                          );
+                        })()}
+                      </>
                     );
-                  })}
+                  })()}
 
                   {/* Bons de commande */}
                   {bons.length > 0 && (
