@@ -5,6 +5,7 @@ import { Moon, Sun, LogOut, AlertTriangle, ChevronUp, ChevronDown, Download } fr
 import { signOut } from "next-auth/react";
 import { LIGHT, DARK, type Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 
 interface EtapeInfo {
   ordre: number;
@@ -318,23 +319,20 @@ export function PrescripteurView({ user, demoMode, prescripteurType, embedded }:
 
   const tableContent = (
     <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 12, flexWrap: "wrap" }}>
         <div style={{ fontSize: 13, color: C.textDim }}>
           {loading ? "Chargement..." : `${filteredSorted.length} lead${filteredSorted.length > 1 ? "s" : ""}${filteredSorted.length !== leads.length ? ` sur ${leads.length}` : ""}`}
         </div>
-        <button
-          onClick={() => exportToCSV(filteredSorted)}
+        <Button
+          C={C}
+          variant="primary"
+          size="sm"
+          icon={<Download size={13} />}
           disabled={filteredSorted.length === 0}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "7px 14px", borderRadius: 8,
-            border: `1px solid ${C.border}`, background: C.surface, color: C.text,
-            fontSize: 12, fontWeight: 600, cursor: filteredSorted.length === 0 ? "not-allowed" : "pointer",
-            opacity: filteredSorted.length === 0 ? 0.5 : 1,
-          }}
+          onClick={() => exportToCSV(filteredSorted)}
         >
-          <Download size={14} /> Exporter CSV
-        </button>
+          Exporter CSV
+        </Button>
       </div>
 
       {loading ? (
