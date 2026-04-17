@@ -1082,27 +1082,49 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
             ))}
             {/* Qualifications (all from all projects) */}
-            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0" }}>
-              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Qualifications</span>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            <div className="info-row" style={{ display: "flex", gap: 10, padding: "8px 0" }}>
+              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140, flexShrink: 0, paddingTop: 3 }}>Qualifications</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
                 {projets.flatMap((p) => p.qualifications).length > 0
                   ? projets.flatMap((p) => p.qualifications).map((q) => {
                     const pct = computeQualifProgress(q);
                     const dotColor = progressColor(pct);
+                    const rgeNames = (q.rges || []).map((r) => {
+                      const match = nomenclatureRGE.find((n) => n.code === r.rgeCode);
+                      return match ? `${match.code} - ${match.nom}` : r.rgeCode;
+                    });
                     return (
-                      <span
-                        key={q.type}
-                        title={`${pct}% — ${pct < 30 ? "Démarrage" : pct < 70 ? "En cours" : "Presque terminé"}`}
-                        style={{
-                          display: "inline-flex", alignItems: "center", gap: 6,
-                          padding: "3px 10px", borderRadius: 999,
-                          background: C.blueDim, color: C.blue,
-                          fontSize: 11, fontWeight: 600,
-                        }}
-                      >
-                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
-                        {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
-                      </span>
+                      <div key={q.type}>
+                        <span
+                          title={`${pct}% — ${pct < 30 ? "Démarrage" : pct < 70 ? "En cours" : "Presque terminé"}`}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 6,
+                            padding: "3px 10px", borderRadius: 999,
+                            background: C.blueDim, color: C.blue,
+                            fontSize: 11, fontWeight: 600,
+                          }}
+                        >
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+                          {q.type}{nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type]}` : ""}
+                        </span>
+                        {rgeNames.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4, marginLeft: 20 }}>
+                            {rgeNames.map((rge) => (
+                              <span
+                                key={rge}
+                                style={{
+                                  padding: "1px 6px", borderRadius: 4,
+                                  background: C.bg, color: C.textDim,
+                                  fontSize: 10, fontWeight: 500,
+                                  border: `1px solid ${C.border}`,
+                                }}
+                              >
+                                {rge}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     );
                   })
                   : <span style={{ fontSize: 13, color: C.textDim }}>—</span>
