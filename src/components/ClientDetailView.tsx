@@ -74,7 +74,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   interface BonDeCommande { id: string; qualificationCode: string; reference: string | null; montant: number | null; paye: boolean; datePaiement: string | null; dateEmission: string | null; commentaire: string | null }
   interface ChantierDoc { id: string; nom: string; fichierUrl: string | null; fichierNom: string | null; fichierTaille: number | null }
   interface ChantierData { id: string; numero: number; nom: string | null; description: string | null; devisRecu: boolean; devisFichierUrl: string | null; devisFichierNom: string | null; dateDevis: string | null; factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null; attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null; documents: ChantierDoc[] }
-  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string; niveauVise?: string | null; niveauObtenu?: string | null; rges?: Array<{ id: string; rgeCode: string }>; chantiers?: ChantierData[]; certificateurType?: string | null; emailCertificateur?: string | null; antenneQualibatId?: string | null; identifiantCertificateur?: string | null; motDePasseCertificateur?: string | null; interlocuteurCertificateur?: string | null; dateCommission?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[] }>>([]);
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string; niveauVise?: string | null; niveauObtenu?: string | null; rges?: Array<{ id: string; rgeCode: string }>; chantiers?: ChantierData[]; certificateurType?: string | null; emailCertificateur?: string | null; antenneQualibatId?: string | null; identifiantCertificateur?: string | null; motDePasseCertificateur?: string | null; interlocuteurCertificateur?: string | null; dateCommission?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; chargee?: { id: string; prenom: string; nom: string } | null }>>([]);
   const [nomenclatureRGE, setNomenclatureRGE] = useState<Array<{ code: string; nom: string }>>([]);
   const [showAddBon, setShowAddBon] = useState<string | null>(null);
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
@@ -96,7 +96,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [addQualifResults, setAddQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
   const [depotConfigs, setDepotConfigs] = useState<Array<{ id: string; nom: string }>>([]);
   const [apporteurs, setApporteurs] = useState<Array<{ id: string; nom: string; prenom: string | null; structure: string | null }>>([]);
-  const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
+  const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string; role?: string }>>([]);
   const [showMentionMenu, setShowMentionMenu] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const [mentionCursorPos, setMentionCursorPos] = useState(0);
@@ -1081,6 +1081,30 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 </div>
               </div>
             ))}
+            {/* Chargée de projet */}
+            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Chargée de projet</span>
+              <select
+                value={projets[0]?.chargee?.id || ""}
+                onChange={async (e) => {
+                  const projetId = projets[0]?.id;
+                  if (!projetId || isDemoMode) return;
+                  const newChargeeId = e.target.value || null;
+                  const newChargee = mentionUsers.find((u) => u.id === newChargeeId) || null;
+                  setProjets((prev) => prev.map((p, i) => i === 0 ? { ...p, chargee: newChargee ? { id: newChargee.id, prenom: newChargee.prenom, nom: newChargee.nom } : null } : p));
+                  await fetch(`/api/projets/${projetId}`, {
+                    method: "PATCH", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chargeeId: newChargeeId }),
+                  }).catch(() => {});
+                }}
+                style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }}
+              >
+                <option value="">— Non assignée —</option>
+                {mentionUsers.filter((u) => u.role !== "PRESCRIPTEUR").map((u) => (
+                  <option key={u.id} value={u.id}>{u.prenom}</option>
+                ))}
+              </select>
+            </div>
             {/* Qualifications (all from all projects) */}
             <div className="info-row" style={{ display: "flex", gap: 10, padding: "8px 0" }}>
               <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140, flexShrink: 0, paddingTop: 3 }}>Qualifications</span>
