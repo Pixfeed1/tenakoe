@@ -144,6 +144,8 @@ export async function GET(request: NextRequest) {
       statut: statutInfo.label,
       statutCouleur: statutInfo.couleur,
       etape: etapeInfo,
+      interesseTNK: ent.interesseTNK || "NSP",
+      dateInteresseTNK: ent.dateInteresseTNK?.toISOString() || null,
       alerte1Envoyee: ent.alerte1Envoyee,
       dateAlerte1: ent.dateAlerte1?.toISOString() || null,
       alerte2Envoyee: ent.alerte2Envoyee,

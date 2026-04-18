@@ -31,6 +31,8 @@ interface Lead {
   statut: string;
   statutCouleur: string;
   etape: EtapeInfo | null;
+  interesseTNK: string;
+  dateInteresseTNK: string | null;
   alerte1Envoyee: boolean;
   dateAlerte1: string | null;
   alerte2Envoyee: boolean;
@@ -66,6 +68,8 @@ const DEMO_LEADS: Lead[] = [
     statut: "Nouveau",
     statutCouleur: "#ef4444",
     etape: null,
+    interesseTNK: "NSP",
+    dateInteresseTNK: null,
     alerte1Envoyee: false,
     dateAlerte1: null,
     alerte2Envoyee: false,
@@ -92,6 +96,8 @@ const DEMO_LEADS: Lead[] = [
     statut: "Prise en charge",
     statutCouleur: "#3b82f6",
     etape: { ordre: 3, total: 22, nom: "Collecte documents", date: "2026-04-14T00:00:00.000Z" },
+    interesseTNK: "OUI",
+    dateInteresseTNK: "2026-04-12T10:00:00.000Z",
     alerte1Envoyee: false,
     dateAlerte1: null,
     alerte2Envoyee: false,
@@ -118,6 +124,8 @@ const DEMO_LEADS: Lead[] = [
     statut: "Devis envoyé",
     statutCouleur: "#7c3aed",
     etape: { ordre: 5, total: 22, nom: "Envoi devis", date: "2026-04-15T00:00:00.000Z" },
+    interesseTNK: "NON",
+    dateInteresseTNK: "2026-04-10T14:00:00.000Z",
     alerte1Envoyee: true,
     dateAlerte1: "2026-04-15T10:00:00.000Z",
     alerte2Envoyee: false,
@@ -144,6 +152,8 @@ const DEMO_LEADS: Lead[] = [
     statut: "Qualifié",
     statutCouleur: "#16a34a",
     etape: { ordre: 22, total: 22, nom: "Qualification obtenue", date: "2026-04-16T00:00:00.000Z" },
+    interesseTNK: "OUI",
+    dateInteresseTNK: "2026-04-05T09:00:00.000Z",
     alerte1Envoyee: false,
     dateAlerte1: null,
     alerte2Envoyee: false,
@@ -155,7 +165,7 @@ const DEMO_LEADS: Lead[] = [
   },
 ];
 
-type ColKey = "nom" | "artisan" | "email" | "telephone" | "siret" | "numeroCarte" | "depot" | "conseiller" | "dateTransmission" | "dateStatutPrise" | "statut" | "alerte";
+type ColKey = "nom" | "artisan" | "email" | "telephone" | "siret" | "numeroCarte" | "depot" | "conseiller" | "dateTransmission" | "dateStatutPrise" | "statut" | "interesseTNK" | "alerte";
 
 interface ColumnDef {
   key: ColKey;
@@ -176,6 +186,7 @@ const COLUMNS: ColumnDef[] = [
   { key: "dateTransmission", label: "Date transmission", minWidth: 130, sortable: true },
   { key: "dateStatutPrise", label: "Prise en charge", minWidth: 130, sortable: true },
   { key: "statut", label: "Statut / Étape", minWidth: 200, sortable: true },
+  { key: "interesseTNK", label: "Intéressé TNK", minWidth: 120, sortable: true },
   { key: "alerte", label: "Alerte abandon", minWidth: 140, sortable: false },
 ];
 
@@ -211,6 +222,7 @@ function getColValue(lead: Lead, key: ColKey): string {
     case "statut":
       return [lead.statut, lead.etape ? `Étape ${lead.etape.ordre}/${lead.etape.total} — ${lead.etape.nom}` : ""]
         .filter(Boolean).join(" ");
+    case "interesseTNK": return lead.interesseTNK || "NSP";
     case "alerte": {
       const a = getLatestAlerte(lead);
       return a ? a.label : "";
@@ -230,7 +242,7 @@ function exportToCSV(leads: Lead[]): void {
   const headers = [
     "Nom entreprise", "Artisan", "Email", "Téléphone", "SIRET", "N° carte",
     "Dépôt", "Conseiller", "Date transmission", "Date prise en charge",
-    "Statut", "Étape", "Alerte abandon", "Date alerte",
+    "Statut", "Étape", "Intéressé TNK", "Alerte abandon", "Date alerte",
   ];
   const rows = leads.map((l) => {
     const a = getLatestAlerte(l);
@@ -239,6 +251,7 @@ function exportToCSV(leads: Lead[]): void {
       stripCardPrefix(l.numeroCarte) || "", l.depot || "", l.conseiller || "",
       l.dateTransmission, l.dateStatutPrise || "", l.statut,
       l.etape ? `Étape ${l.etape.ordre}/${l.etape.total} — ${l.etape.nom}` : "",
+      l.interesseTNK || "NSP",
       a ? a.label : "",
       a && a.date ? new Date(a.date).toLocaleDateString("fr-FR") : "",
     ];
@@ -450,6 +463,27 @@ export function PrescripteurView({ user, demoMode, prescripteurType, embedded }:
                             </span>
                           )}
                         </div>
+                      </td>
+                      <td style={cellStyle}>
+                        {(() => {
+                          const tnk = lead.interesseTNK || "NSP";
+                          const colorMap: Record<string, { color: string; bg: string }> = {
+                            OUI: { color: "#16a34a", bg: "rgba(22,163,74,0.1)" },
+                            NON: { color: "#dc2626", bg: "rgba(220,38,38,0.08)" },
+                            NSP: { color: C.textDim, bg: C.bg },
+                          };
+                          const s = colorMap[tnk] || colorMap.NSP;
+                          return (
+                            <div>
+                              <Badge color={s.color} bg={s.bg}>{tnk === "OUI" ? "Oui" : tnk === "NON" ? "Non" : "NSP"}</Badge>
+                              {lead.dateInteresseTNK && (
+                                <div style={{ fontSize: 10, color: C.textDim, marginTop: 3, whiteSpace: "nowrap" }}>
+                                  Modifié le {new Date(lead.dateInteresseTNK).toLocaleDateString("fr-FR")}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td style={cellStyle}>
                         {alerte ? (
