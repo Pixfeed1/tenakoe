@@ -108,6 +108,9 @@ model Entreprise {
   dateInteresseTNK      DateTime?
   dateMiseEnRelation    DateTime?
   dateQualification     DateTime?
+  eligible              String?            @default("A_VERIFIER")
+  eligibleCommentaire   String?
+  dateEligible          DateTime?
 
   contacts      Contact[]
   projets       Projet[]

@@ -1034,6 +1034,49 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           {/* BLOC 1 — Statut & Facturation (allégé) */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>
+            {/* Éligible */}
+            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Éligible</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", flex: 1 }}>
+                <select
+                  value={entrepriseData?.eligible || "A_VERIFIER"}
+                  onChange={async (e) => {
+                    if (!client?.id || isDemoMode) return;
+                    const val = e.target.value;
+                    setEntrepriseData((prev) => prev ? { ...prev, eligible: val, dateEligible: new Date().toISOString() } : prev);
+                    await fetch(`/api/entreprises/${client.id}`, {
+                      method: "PATCH", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ eligible: val }),
+                    }).catch(() => {});
+                  }}
+                  style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
+                >
+                  <option value="OUI">Oui</option>
+                  <option value="NON">Non</option>
+                  <option value="A_VERIFIER">À vérifier</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Commentaire..."
+                  defaultValue={entrepriseData?.eligibleCommentaire || ""}
+                  onBlur={async (e) => {
+                    if (!client?.id || isDemoMode) return;
+                    const val = e.target.value;
+                    setEntrepriseData((prev) => prev ? { ...prev, eligibleCommentaire: val } : prev);
+                    await fetch(`/api/entreprises/${client.id}`, {
+                      method: "PATCH", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ eligibleCommentaire: val }),
+                    }).catch(() => {});
+                  }}
+                  style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, flex: 1, minWidth: 120, outline: "none" }}
+                />
+              </div>
+              {entrepriseData?.dateEligible && (
+                <span style={{ fontSize: 10, color: C.textDim, whiteSpace: "nowrap" }}>
+                  {new Date(entrepriseData.dateEligible).toLocaleDateString("fr-FR")}
+                </span>
+              )}
+            </div>
             {[
               { label: "Intéressé TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
             ].map((f, i) => (

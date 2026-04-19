@@ -65,6 +65,8 @@ export async function PATCH(
   if (body.depotId !== undefined) data.depotId = body.depotId || null;
   if (body.apporteurId !== undefined) data.apporteurId = body.apporteurId || null;
   if (body.numeroCarte !== undefined) data.numeroCarte = body.numeroCarte;
+  if (body.eligible !== undefined) { data.eligible = body.eligible; data.dateEligible = new Date(); }
+  if (body.eligibleCommentaire !== undefined) data.eligibleCommentaire = body.eligibleCommentaire;
 
   const updated = await prisma.entreprise.update({ where: { id }, data });
 
