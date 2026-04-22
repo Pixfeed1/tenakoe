@@ -281,8 +281,8 @@ function PipelineTab({ C }: { C: Theme }) {
   const { toast } = useToast();
   const [statutsPrise, setStatutsPrise] = useState<Array<{ id: string; nom: string; code: string; couleur: string; icone: string; ordre: number; actif: boolean; parDefaut: boolean }>>([]);
   const [statutsFacturation, setStatutsFacturation] = useState<Array<{ id: string; nom: string; code: string; couleur: string; icone: string; ordre: number; actif: boolean; parDefaut: boolean; declencheConversion: boolean }>>([]);
-  const [newPrise, setNewPrise] = useState({ nom: "", couleur: "#3b82f6" });
-  const [newFact, setNewFact] = useState({ nom: "", couleur: "#7c3aed", declencheConversion: false });
+  const [newPrise, setNewPrise] = useState({ nom: "", couleur: "#0d9488" });
+  const [newFact, setNewFact] = useState({ nom: "", couleur: "#ea580c", declencheConversion: false });
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -322,13 +322,13 @@ function PipelineTab({ C }: { C: Theme }) {
   const addPrise = async () => {
     if (!newPrise.nom) return;
     const res = await fetch("/api/pipeline-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "prise", nom: newPrise.nom, couleur: newPrise.couleur, ordre: statutsPrise.length + 1 }) });
-    if (res.ok) { const s = await res.json(); setStatutsPrise((p) => [...p, s]); setNewPrise({ nom: "", couleur: "#3b82f6" }); }
+    if (res.ok) { const s = await res.json(); setStatutsPrise((p) => [...p, s]); setNewPrise({ nom: "", couleur: "#0d9488" }); }
   };
 
   const addFact = async () => {
     if (!newFact.nom) return;
     const res = await fetch("/api/pipeline-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "facturation", nom: newFact.nom, couleur: newFact.couleur, ordre: statutsFacturation.length + 1, declencheConversion: newFact.declencheConversion }) });
-    if (res.ok) { const s = await res.json(); setStatutsFacturation((p) => [...p, s]); setNewFact({ nom: "", couleur: "#7c3aed", declencheConversion: false }); }
+    if (res.ok) { const s = await res.json(); setStatutsFacturation((p) => [...p, s]); setNewFact({ nom: "", couleur: "#ea580c", declencheConversion: false }); }
   };
 
   const renderStatutRow = (s: { id: string; nom: string; code: string; couleur: string; icone: string; ordre: number; actif: boolean; parDefaut: boolean }, type: "prise" | "facturation", declencheConversion?: boolean) => (

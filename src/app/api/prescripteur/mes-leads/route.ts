@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
   const statutMap: Record<string, { label: string; couleur: string }> = {
     NOUVEAU: { label: "Nouveau", couleur: "#ef4444" },
-    PRISE_EN_CHARGE: { label: "Prise en charge", couleur: "#3b82f6" },
+    PRISE_EN_CHARGE: { label: "Prise en charge", couleur: "#0d9488" },
     PRISE_EN_CHARGE_A_RELANCER: { label: "À relancer", couleur: "#d97706" },
   };
 
@@ -88,11 +88,11 @@ export async function GET(request: NextRequest) {
 
     const facturationMap: Record<string, { label: string; couleur: string }> = {
       DEVIS_A_FAIRE: { label: "Devis à faire", couleur: "#94a3b8" },
-      DEVIS_ENVOYE: { label: "Devis envoyé", couleur: "#7c3aed" },
-      DEVIS_SIGNE: { label: "Devis signé", couleur: "#3b82f6" },
-      FACTURE_ENVOYEE: { label: "Facture envoyée", couleur: "#2563eb" },
+      DEVIS_ENVOYE: { label: "Devis envoyé", couleur: "#ea580c" },
+      DEVIS_SIGNE: { label: "Devis signé", couleur: "#0d9488" },
+      FACTURE_ENVOYEE: { label: "Facture envoyée", couleur: "#0d9488" },
       FACTURE_PAYEE: { label: docsTotal > 0 ? `Collecte en cours (${docsRecu}/${docsTotal})` : "Facture payée", couleur: "#16a34a" },
-      DOSSIER_DEPOSE: { label: "Dossier déposé", couleur: "#0ea5e9" },
+      DOSSIER_DEPOSE: { label: "Dossier déposé", couleur: "#0d9488" },
       DOSSIER_COMPLEMENT: { label: "Demande de complément", couleur: "#d97706" },
       QUALIFIE: { label: "Qualifié", couleur: "#16a34a" },
       REFUSE: { label: "Refusé", couleur: "#dc2626" },

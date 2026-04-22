@@ -134,7 +134,7 @@ export function GuideCursor({ action, visible, onComplete }: {
             ? "M8 1 L8 13 L11 11 L14 17 L16 16 L13 10 L17 10 Z" // closed hand
             : "M4 0 L4 20 L9 15 L14 22 L17 20 L12 13 L19 13 Z"   // open pointer
           }
-          fill={phase.grabbing ? "#2563eb" : "#16a34a"}
+          fill={phase.grabbing ? "#0d9488" : "#16a34a"}
           stroke="#fff" strokeWidth="1.5"
         />
       </svg>

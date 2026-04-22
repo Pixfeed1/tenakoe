@@ -25,9 +25,9 @@ const CATEGORIES_SUGGEREES = ["Modèles", "Procédures", "Réglementaire", "Form
 function getFileIcon(nom: string) {
   const ext = nom.split(".").pop()?.toLowerCase() || "";
   if (["pdf"].includes(ext)) return { Icon: FileText, color: "#ef4444" };
-  if (["doc", "docx"].includes(ext)) return { Icon: FileText, color: "#3b82f6" };
+  if (["doc", "docx"].includes(ext)) return { Icon: FileText, color: "#0d9488" };
   if (["xls", "xlsx", "csv"].includes(ext)) return { Icon: FileSpreadsheet, color: "#16a34a" };
-  if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return { Icon: ImageIcon, color: "#7c3aed" };
+  if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return { Icon: ImageIcon, color: "#ea580c" };
   return { Icon: File, color: "#94a3b8" };
 }
 

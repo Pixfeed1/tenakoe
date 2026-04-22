@@ -448,14 +448,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       {isDemoMode && (
         <div style={{
           padding: "8px 16px", borderRadius: 10, marginBottom: 16,
-          background: "rgba(124,58,237,0.08)", border: "1px dashed #7c3aed",
+          background: "rgba(234,88,12,0.08)", border: "1px dashed #ea580c",
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#7c3aed" }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#ea580c" }}>
             Mode démo — Les actions sont simulées, aucune donnée réelle n&apos;est modifiée
           </span>
           <Button C={C} variant="ghost" onClick={() => onBack()} style={{
-            fontSize: 11, color: "#7c3aed", textDecoration: "underline",
+            fontSize: 11, color: "#ea580c", textDecoration: "underline",
           }}>
             Quitter la démo
           </Button>
@@ -743,7 +743,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 setSending(false);
               }}
               style={{
-                background: sending ? "#94a3b8" : "linear-gradient(135deg, #7c3aed, #6d28d9)",
+                background: sending ? "#94a3b8" : "linear-gradient(135deg, #ea580c, #c2410c)",
               }}
             >
               {sending ? "Envoi..." : "Envoyer SMS"}
@@ -2225,7 +2225,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, color: C.text, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                     {a.message}
-                    {a.automatique && <Badge color="#7c3aed" bg="rgba(124,58,237,0.1)">Auto</Badge>}
+                    {a.automatique && <Badge color="#ea580c" bg="rgba(234,88,12,0.1)">Auto</Badge>}
                     {a.statutEnvoi === "ECHEC" && <Badge color="#ef4444" bg="rgba(239,68,68,0.1)">Échec</Badge>}
                     {a.statutEnvoi === "ENVOYE" && a.automatique && <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Envoyé</Badge>}
                   </div>
@@ -2520,7 +2520,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     >
                       <div style={{
                         width: 24, height: 24, borderRadius: 6,
-                        background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
+                        background: "linear-gradient(135deg, #ea580c, #0d9488)",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 10, fontWeight: 700, color: "#fff",
                       }}>

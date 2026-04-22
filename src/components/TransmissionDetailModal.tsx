@@ -56,7 +56,7 @@ export function TransmissionDetailModal({ C, transmissionId, onClose }: Props) {
         {/* Header */}
         <div style={{ padding: "18px 24px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Icon size={18} color={isEmail ? "#3b82f6" : isSms ? "#7c3aed" : "#0ea5e9"} />
+            <Icon size={18} color={isEmail ? "#0d9488" : isSms ? "#ea580c" : "#0d9488"} />
             <span style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{typeLabel}</span>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
@@ -74,16 +74,16 @@ export function TransmissionDetailModal({ C, transmissionId, onClose }: Props) {
             <>
               {/* Badges */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
-                <Badge color={data.direction === "SORTANT" ? "#3b82f6" : "#16a34a"} bg={data.direction === "SORTANT" ? "rgba(59,130,246,0.1)" : "rgba(22,163,74,0.1)"}>
+                <Badge color={data.direction === "SORTANT" ? "#0d9488" : "#16a34a"} bg={data.direction === "SORTANT" ? "rgba(13,148,136,0.1)" : "rgba(22,163,74,0.1)"}>
                   {data.direction === "SORTANT" ? "Envoyé" : "Reçu"}
                 </Badge>
-                <Badge color={data.automatique ? "#7c3aed" : "#94a3b8"} bg={data.automatique ? "rgba(124,58,237,0.1)" : "rgba(148,163,184,0.1)"}>
+                <Badge color={data.automatique ? "#ea580c" : "#94a3b8"} bg={data.automatique ? "rgba(234,88,12,0.1)" : "rgba(148,163,184,0.1)"}>
                   {data.automatique ? "Auto" : "Manuel"}
                 </Badge>
                 {data.statutEnvoi && (
                   <Badge
-                    color={data.statutEnvoi === "ENVOYE" ? "#16a34a" : data.statutEnvoi === "DELIVRE" ? "#3b82f6" : data.statutEnvoi === "ECHEC" ? "#ef4444" : "#f59e0b"}
-                    bg={data.statutEnvoi === "ENVOYE" ? "rgba(22,163,74,0.1)" : data.statutEnvoi === "DELIVRE" ? "rgba(59,130,246,0.1)" : data.statutEnvoi === "ECHEC" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)"}
+                    color={data.statutEnvoi === "ENVOYE" ? "#16a34a" : data.statutEnvoi === "DELIVRE" ? "#0d9488" : data.statutEnvoi === "ECHEC" ? "#ef4444" : "#f59e0b"}
+                    bg={data.statutEnvoi === "ENVOYE" ? "rgba(22,163,74,0.1)" : data.statutEnvoi === "DELIVRE" ? "rgba(13,148,136,0.1)" : data.statutEnvoi === "ECHEC" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)"}
                   >
                     {data.statutEnvoi === "ENVOYE" ? "Envoyé" : data.statutEnvoi === "DELIVRE" ? "Délivré" : data.statutEnvoi === "ECHEC" ? "Échec" : "En attente"}
                   </Badge>

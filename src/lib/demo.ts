@@ -149,13 +149,13 @@ export const DEMO_NOTES = [
 
 export const demoBadgeStyle: React.CSSProperties = {
   padding: "1px 6px", borderRadius: 4, fontSize: 9, fontWeight: 800,
-  color: "#7c3aed", background: "rgba(124,58,237,0.12)",
+  color: "#ea580c", background: "rgba(234,88,12,0.12)",
   letterSpacing: "0.05em",
 };
 
 export const demoCardStyle: React.CSSProperties = {
   borderStyle: "dashed",
-  borderColor: "#7c3aed",
+  borderColor: "#ea580c",
   opacity: 0.9,
 };
 

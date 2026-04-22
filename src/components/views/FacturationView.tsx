@@ -355,11 +355,11 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
 
 function colorToFactThemeKey(hex: string): { color: string; bg: string } {
   const map: Record<string, { color: string; bg: string }> = {
-    "#3b82f6": { color: "blue", bg: "blueDim" },
+    "#0d9488": { color: "blue", bg: "blueDim" },
     "#16a34a": { color: "accent", bg: "accentDim" },
     "#ef4444": { color: "danger", bg: "dangerDim" },
     "#d97706": { color: "warning", bg: "warningDim" },
-    "#7c3aed": { color: "purple", bg: "purpleDim" },
+    "#ea580c": { color: "purple", bg: "purpleDim" },
   };
   return map[hex] || { color: "blue", bg: "blueDim" };
 }

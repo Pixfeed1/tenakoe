@@ -96,7 +96,7 @@ const DEMO_LEADS: Lead[] = [
     dateStatutPrise: "11/04/2026",
     dateStatutPriseISO: "2026-04-11T10:15:00.000Z",
     statut: "Prise en charge",
-    statutCouleur: "#3b82f6",
+    statutCouleur: "#0d9488",
     etape: { ordre: 3, total: 22, nom: "Collecte documents", date: "2026-04-14T00:00:00.000Z" },
     interesseTNK: "OUI",
     dateInteresseTNK: "2026-04-12T10:00:00.000Z",
@@ -125,7 +125,7 @@ const DEMO_LEADS: Lead[] = [
     dateStatutPrise: "07/04/2026",
     dateStatutPriseISO: "2026-04-07T09:30:00.000Z",
     statut: "Devis envoyé",
-    statutCouleur: "#7c3aed",
+    statutCouleur: "#ea580c",
     etape: { ordre: 5, total: 22, nom: "Envoi devis", date: "2026-04-15T00:00:00.000Z" },
     interesseTNK: "NON",
     dateInteresseTNK: "2026-04-10T14:00:00.000Z",
@@ -589,7 +589,7 @@ export function PrescripteurView({ user, demoMode, prescripteurType, embedded }:
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
               width: 34, height: 34, borderRadius: 10,
-              background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
+              background: "linear-gradient(135deg, #ea580c, #0d9488)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 12, fontWeight: 700, color: "#fff",
             }}>

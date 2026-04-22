@@ -23,12 +23,12 @@ export async function POST(request: NextRequest) {
 
   if (type === "prise") {
     const statut = await prisma.statutPriseConfig.create({
-      data: { nom, code: code || nom.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z_]/g, ""), couleur: couleur || "#3b82f6", icone: body.icone || "circle", ordre: ordre || 99 },
+      data: { nom, code: code || nom.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z_]/g, ""), couleur: couleur || "#0d9488", icone: body.icone || "circle", ordre: ordre || 99 },
     });
     return NextResponse.json(statut, { status: 201 });
   } else {
     const statut = await prisma.statutFacturationConfig.create({
-      data: { nom, code: code || nom.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z_]/g, ""), couleur: couleur || "#7c3aed", icone: body.icone || "circle", ordre: ordre || 99, declencheConversion: body.declencheConversion || false },
+      data: { nom, code: code || nom.toUpperCase().replace(/\s+/g, "_").replace(/[^A-Z_]/g, ""), couleur: couleur || "#ea580c", icone: body.icone || "circle", ordre: ordre || 99, declencheConversion: body.declencheConversion || false },
     });
     return NextResponse.json(statut, { status: 201 });
   }

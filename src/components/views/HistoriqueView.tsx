@@ -25,9 +25,9 @@ interface Activity {
 interface Chargee { id: string; prenom: string; nom: string }
 
 const TYPE_CONFIG: Record<string, { Icon: typeof Mail; label: string; color: string; bg: string }> = {
-  EMAIL: { Icon: Mail, label: "Email", color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
-  SMS: { Icon: MessageSquare, label: "SMS", color: "#7c3aed", bg: "rgba(124,58,237,0.1)" },
-  APPEL: { Icon: Phone, label: "Appel", color: "#0ea5e9", bg: "rgba(14,165,233,0.1)" },
+  EMAIL: { Icon: Mail, label: "Email", color: "#0d9488", bg: "rgba(13,148,136,0.1)" },
+  SMS: { Icon: MessageSquare, label: "SMS", color: "#ea580c", bg: "rgba(234,88,12,0.1)" },
+  APPEL: { Icon: Phone, label: "Appel", color: "#0d9488", bg: "rgba(13,148,136,0.1)" },
   STATUT: { Icon: ClipboardList, label: "Statut", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   DOC: { Icon: FileText, label: "Document", color: "#16a34a", bg: "rgba(22,163,74,0.1)" },
   LEAD: { Icon: Zap, label: "Lead", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
@@ -154,8 +154,8 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
           </div>
         </div>
         <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, color: filterAutoOnly ? "#7c3aed" : C.textDim, fontWeight: filterAutoOnly ? 600 : 400 }}>
-            <input type="checkbox" checked={filterAutoOnly} onChange={(e) => { setFilterAutoOnly(e.target.checked); setPage(1); }} style={{ accentColor: "#7c3aed" }} />
+          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, color: filterAutoOnly ? "#ea580c" : C.textDim, fontWeight: filterAutoOnly ? 600 : 400 }}>
+            <input type="checkbox" checked={filterAutoOnly} onChange={(e) => { setFilterAutoOnly(e.target.checked); setPage(1); }} style={{ accentColor: "#ea580c" }} />
             Automatisations uniquement
           </label>
         </div>
@@ -191,7 +191,7 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
                     </Badge>
                   </td>
                   <td style={{ padding: "10px 14px" }}>
-                    <Badge color={a.automatique ? "#7c3aed" : "#94a3b8"} bg={a.automatique ? "rgba(124,58,237,0.1)" : "rgba(148,163,184,0.1)"}>
+                    <Badge color={a.automatique ? "#ea580c" : "#94a3b8"} bg={a.automatique ? "rgba(234,88,12,0.1)" : "rgba(148,163,184,0.1)"}>
                       {a.automatique ? "Auto" : "Manuel"}
                     </Badge>
                   </td>
@@ -209,8 +209,8 @@ export function HistoriqueView({ C, onSelectClient }: { C: Theme; onSelectClient
                     {a.statutEnvoi && (
                       <span title={a.erreur || ""} style={{ cursor: a.erreur ? "help" : "default" }}>
                         <Badge
-                          color={a.statutEnvoi === "ENVOYE" ? "#16a34a" : a.statutEnvoi === "DELIVRE" ? "#3b82f6" : a.statutEnvoi === "ECHEC" ? "#ef4444" : "#f59e0b"}
-                          bg={a.statutEnvoi === "ENVOYE" ? "rgba(22,163,74,0.1)" : a.statutEnvoi === "DELIVRE" ? "rgba(59,130,246,0.1)" : a.statutEnvoi === "ECHEC" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)"}
+                          color={a.statutEnvoi === "ENVOYE" ? "#16a34a" : a.statutEnvoi === "DELIVRE" ? "#0d9488" : a.statutEnvoi === "ECHEC" ? "#ef4444" : "#f59e0b"}
+                          bg={a.statutEnvoi === "ENVOYE" ? "rgba(22,163,74,0.1)" : a.statutEnvoi === "DELIVRE" ? "rgba(13,148,136,0.1)" : a.statutEnvoi === "ECHEC" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)"}
                         >
                           {a.statutEnvoi === "ENVOYE" ? "Envoyé" : a.statutEnvoi === "DELIVRE" ? "Délivré" : a.statutEnvoi === "ECHEC" ? "Échec" : "En attente"}
                         </Badge>
