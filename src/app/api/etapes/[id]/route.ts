@@ -47,5 +47,22 @@ export async function PATCH(
     }
   }
 
+  // Si on annule une étape, la réactiver et désactiver la suivante
+  if (body.terminee === false) {
+    await prisma.etape.update({
+      where: { id },
+      data: { active: true },
+    });
+    const nextEtape = await prisma.etape.findFirst({
+      where: { projetId: etape.projetId, ordre: etape.ordre + 1 },
+    });
+    if (nextEtape) {
+      await prisma.etape.update({
+        where: { id: nextEtape.id },
+        data: { active: false, dateObjectif: null },
+      });
+    }
+  }
+
   return NextResponse.json(updated);
 }

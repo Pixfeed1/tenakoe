@@ -2125,10 +2125,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         const updated = prev.map((step) =>
                           step.id === t.id ? { ...step, done: newDone, active: !newDone } : step
                         );
+                        const idx = updated.findIndex((s) => s.id === t.id);
                         if (newDone) {
-                          const idx = updated.findIndex((s) => s.id === t.id);
                           if (idx >= 0 && idx + 1 < updated.length) {
                             updated[idx + 1] = { ...updated[idx + 1], active: true };
+                          }
+                        } else {
+                          if (idx >= 0 && idx + 1 < updated.length) {
+                            updated[idx + 1] = { ...updated[idx + 1], active: false };
                           }
                         }
                         return updated;
