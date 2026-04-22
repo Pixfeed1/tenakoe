@@ -468,7 +468,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div
             style={{
               width: 52, height: 52, borderRadius: 14,
-              background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`,
+              background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
