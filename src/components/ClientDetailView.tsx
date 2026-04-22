@@ -2520,7 +2520,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     >
                       <div style={{
                         width: 24, height: 24, borderRadius: 6,
-                        background: "linear-gradient(135deg, #ea580c, #0d9488)",
+                        background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 10, fontWeight: 700, color: "#fff",
                       }}>

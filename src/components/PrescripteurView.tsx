@@ -589,7 +589,7 @@ export function PrescripteurView({ user, demoMode, prescripteurType, embedded }:
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
               width: 34, height: 34, borderRadius: 10,
-              background: "linear-gradient(135deg, #ea580c, #0d9488)",
+              background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 12, fontWeight: 700, color: "#fff",
             }}>
