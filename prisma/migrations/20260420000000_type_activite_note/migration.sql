@@ -1,0 +1,1 @@
+ALTER TYPE "TypeActivite" ADD VALUE 'NOTE';

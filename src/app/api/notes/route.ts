@@ -74,6 +74,16 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  await prisma.logActivite.create({
+    data: {
+      type: "NOTE",
+      description: `Note ajoutée : ${body.contenu.substring(0, 100)}${body.contenu.length > 100 ? "..." : ""}`,
+      entite: "Entreprise",
+      entiteId: body.entrepriseId,
+      userId: user.id,
+    },
+  });
+
   return NextResponse.json(note, { status: 201 });
 }
 

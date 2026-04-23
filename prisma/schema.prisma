@@ -645,6 +645,7 @@ enum TypeActivite {
   RECEPTION_DOCUMENT
   AFFECTATION
   CONNEXION
+  NOTE
 }
 
 // ============================================================
