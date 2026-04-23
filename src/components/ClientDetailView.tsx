@@ -3213,7 +3213,7 @@ function QualifChantiers({
         const status = getStatus(c);
         const key = `qchantier-${c.id}`;
         const isOpen = expandedCols[key] === true;
-        const title = c.numero <= 3 ? `Chantier ${c.numero}` : "Chantier supplémentaire";
+        const title = c.numero <= 3 ? `Chantier ${c.numero}` : `Chantier supplémentaire ${c.numero - 3}`;
         const isMain = c.numero <= 3;
         const DotIndicator = ({ recu, label }: { recu: boolean; label: string }) => (
           <span

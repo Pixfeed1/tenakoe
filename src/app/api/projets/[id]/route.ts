@@ -46,13 +46,13 @@ export async function PATCH(
       });
       const hasChantiers = await prisma.chantier.count({ where: { projetQualificationId: created.id } });
       if (hasChantiers === 0) {
-        for (let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= 7; i++) {
           await prisma.chantier.create({
             data: {
               projetQualificationId: created.id,
               projetId: id,
               numero: i,
-              nom: i === 4 ? "Chantier supplémentaire" : null,
+              nom: i > 3 ? `Chantier supplémentaire ${i - 3}` : null,
             },
           });
         }
