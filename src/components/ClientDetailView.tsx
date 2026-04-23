@@ -1956,6 +1956,32 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   </button>
                 </div>
               )}
+              {d.id && (
+                <label
+                  onClick={(e) => e.stopPropagation()}
+                  title="Uploader un fichier"
+                  style={{ padding: 3, borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex", flexShrink: 0 }}
+                >
+                  <Upload size={14} color={C.textDim} />
+                  <input type="file" style={{ display: "none" }} onChange={async (ev) => {
+                    const file = ev.target.files?.[0];
+                    if (!file || !d.id) return;
+                    const fd = new FormData();
+                    fd.append("file", file);
+                    const res = await fetch("/api/upload", { method: "POST", body: fd });
+                    if (res.ok) {
+                      const { url } = await res.json();
+                      await fetch(`/api/documents/${d.id}`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ fichierUrl: url, fichierNom: file.name, recu: true }),
+                      });
+                      setDocs((prev) => prev.map((doc) => doc.id === d.id ? { ...doc, fichierUrl: url, fichierNom: file.name, recu: true, date: new Date().toLocaleDateString("fr-FR") } : doc));
+                      toast(`${d.nom} uploadé`);
+                    }
+                    ev.target.value = "";
+                  }} />
+                </label>
+              )}
             </div>
             {nonConformeDocId === d.id && (
               <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 8px 10px 46px", borderBottom: `1px solid ${C.border}`, background: "rgba(239,68,68,0.04)" }} onClick={(e) => e.stopPropagation()}>
