@@ -374,21 +374,37 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       .then((data) => setAntennes(data))
       .catch(() => {});
 
-    // Fetch transmissions as historique
-    fetch(`/api/transmissions?entrepriseId=${client.id}`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: Array<{ id: string; canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null; automatique?: boolean; statutEnvoi?: string | null }>) => {
-        setHistorique(data.map((t) => ({
-          id: t.id,
-          type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
-          message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoyé" : "reçu"} — ${t.objet || t.destinataire}`,
-          chargee: t.expediteur ? `${t.expediteur.prenom}${t.expediteurEmail ? ` (${t.expediteurEmail})` : ""}` : "—",
-          time: formatRelativeTime(new Date(t.dateEnvoi)),
-          automatique: t.automatique || false,
-          statutEnvoi: t.statutEnvoi || null,
-        })));
-      })
-      .catch(() => {});
+    // Fetch transmissions + notes as historique
+    Promise.all([
+      fetch(`/api/transmissions?entrepriseId=${client.id}`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`/api/notes?entrepriseId=${client.id}`).then((r) => (r.ok ? r.json() : [])),
+    ]).then(([transmissions, notes]: [
+      Array<{ id: string; canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null; automatique?: boolean; statutEnvoi?: string | null }>,
+      Array<{ id: string; contenu: string; createdAt: string; auteur: { prenom: string; nom: string } }>,
+    ]) => {
+      const transmissionItems = transmissions.map((t) => ({
+        id: t.id,
+        type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
+        message: `${t.canal === "EMAIL" ? "Mail" : t.canal === "SMS" ? "SMS" : "Appel"} ${t.direction === "SORTANT" ? "envoyé" : "reçu"} — ${t.objet || t.destinataire}`,
+        chargee: t.expediteur ? `${t.expediteur.prenom}${t.expediteurEmail ? ` (${t.expediteurEmail})` : ""}` : "—",
+        time: formatRelativeTime(new Date(t.dateEnvoi)),
+        sortDate: new Date(t.dateEnvoi).getTime(),
+        automatique: t.automatique || false,
+        statutEnvoi: t.statutEnvoi || null,
+      }));
+      const noteItems = notes.map((n) => ({
+        id: undefined as string | undefined,
+        type: "NOTE",
+        message: `Note : ${n.contenu.substring(0, 150)}${n.contenu.length > 150 ? "…" : ""}`,
+        chargee: `${n.auteur.prenom} ${n.auteur.nom}`,
+        time: formatRelativeTime(new Date(n.createdAt)),
+        sortDate: new Date(n.createdAt).getTime(),
+        automatique: false,
+        statutEnvoi: null as string | null,
+      }));
+      const merged = [...transmissionItems, ...noteItems].sort((a, b) => b.sortDate - a.sortDate);
+      setHistorique(merged);
+    }).catch(() => {});
   }, [client?.id]);
   const [dragFile, setDragFile] = useState(false);
   const [tab, setTab] = useState("dossier");
