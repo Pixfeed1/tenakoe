@@ -1445,10 +1445,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     </div>
                   )}
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
+                  {newProjetForm.nom && newProjetForm.qualifications.length === 0 && (
+                    <span style={{ fontSize: 11, color: C.danger }}>Ajoutez au moins une qualification</span>
+                  )}
                   <Button C={C} variant="ghost" onClick={() => setShowAddProjet(false)}>Annuler</Button>
-                  <Button C={C} variant="primary" disabled={!newProjetForm.nom} onClick={async () => {
-                    if (!newProjetForm.nom) return;
+                  <Button C={C} variant="primary" disabled={!newProjetForm.nom || newProjetForm.qualifications.length === 0} onClick={async () => {
                     if (isDemoMode) {
                       handleDemoAction("Projet créé");
                       setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualifications.map((q) => ({ type: q.code })), etapes: [] }]);
