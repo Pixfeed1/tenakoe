@@ -47,6 +47,7 @@ export function LeadsView({ C }: { C: Theme }) {
   const [converting, setConverting] = useState<string | null>(null);
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ nomArtisan: "", prenomArtisan: "", nomEntreprise: "", email: "", telephone: "" });
 
   // Form state
@@ -93,23 +94,25 @@ export function LeadsView({ C }: { C: Theme }) {
   };
 
   const submitLead = async () => {
-    if (!form.nomArtisan || !form.prenomArtisan || !form.nomEntreprise || !form.siret || !form.email || !form.telephone || !form.numeroCarte || !form.acceptePartage) {
-      toast("Veuillez remplir tous les champs obligatoires");
+    setFormError(null);
+    if (!form.nomArtisan || !form.prenomArtisan || !form.nomEntreprise || !form.siret || !form.email || !form.telephone || !form.numeroCarte) {
+      setFormError("Veuillez remplir tous les champs obligatoires (*)");
       return;
     }
     const res = await fetch("/api/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, acceptePartage: true }),
     });
     if (res.ok) {
       setShowForm(false);
       setForm(emptyForm);
+      setFormError(null);
       fetchLeads();
       toast("Lead créé");
     } else {
       const data = await res.json().catch(() => ({}));
-      toast(data.error || "Erreur lors de la création");
+      setFormError(data.error || "Erreur lors de la création");
     }
   };
 
@@ -271,8 +274,13 @@ export function LeadsView({ C }: { C: Theme }) {
             <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Commentaires</label>
             <textarea rows={2} style={{ ...inputStyle, resize: "vertical" }} value={form.commentaires} onChange={(e) => setForm({ ...form, commentaires: e.target.value })} />
           </div>
+          {formError && (
+            <div style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)", color: "#dc2626", fontSize: 12, fontWeight: 500 }}>
+              {formError}
+            </div>
+          )}
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button onClick={() => setShowForm(false)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.textMuted, fontSize: 13, cursor: "pointer" }}>Annuler</button>
+            <button onClick={() => { setShowForm(false); setFormError(null); }} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.textMuted, fontSize: 13, cursor: "pointer" }}>Annuler</button>
             <Button C={C} variant="primary" onClick={submitLead}>Créer le lead</Button>
           </div>
         </div>

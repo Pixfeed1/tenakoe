@@ -41,7 +41,10 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  const requiredFields = ["nomArtisan", "prenomArtisan", "prescripteur", "nomEntreprise", "siret", "numeroCarte", "email", "telephone", "nomConseiller", "prenomConseiller", "emailConseiller", "telephoneConseiller"];
+  const user = await getCurrentUser();
+  const baseRequired = ["nomArtisan", "prenomArtisan", "prescripteur", "nomEntreprise", "siret", "numeroCarte", "email", "telephone"];
+  const publicRequired = [...baseRequired, "nomConseiller", "prenomConseiller", "emailConseiller", "telephoneConseiller"];
+  const requiredFields = user ? baseRequired : publicRequired;
   const missingFields = requiredFields.filter((f) => !body[f]);
   if (missingFields.length > 0) {
     return NextResponse.json(
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  if (!body.acceptePartage) {
+  if (!user && !body.acceptePartage) {
     return NextResponse.json(
       { error: "L'artisan doit accepter le partage de ses coordonnées" },
       { status: 400 }
