@@ -80,8 +80,6 @@ async function main() {
     "ATTESTATION CAISSE DE CONGES PAYES (CIBTP)",
     "DIPLOMES ET FORMATIONS",
     "DOSSIER BROUILLON QUALIBAT",
-    "DEVIS CONFORME - Renseignement administratif obligatoire",
-    "FACTURE CONFORME - Renseignement obligatoire",
     "ATTESTATION DE REUSSITE RGE (SCORE: 24 et plus)",
   ];
 
