@@ -242,10 +242,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           setProjets(data.projets);
         }
 
-        // Load real etapes if available
-        if (data.projets?.[0]?.etapes?.length > 0) {
+        // Load real etapes if available (find first projet with etapes)
+        const projetWithEtapes = data.projets?.find((p: { etapes?: unknown[] }) => p.etapes && p.etapes.length > 0);
+        if (projetWithEtapes?.etapes?.length > 0) {
           setTracks(
-            data.projets[0].etapes.map((e: { id: string; nom: string; delaiJours: number; terminee: boolean; active: boolean }) => ({
+            projetWithEtapes.etapes.map((e: { id: string; nom: string; delaiJours: number; terminee: boolean; active: boolean }) => ({
               id: e.id,
               nom: e.nom,
               delai: e.delaiJours || 0,
