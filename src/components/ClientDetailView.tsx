@@ -1126,7 +1126,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
             ))}
             {[
-              { label: "Statut", value: formatStatutPrise(entrepriseData?.statutPrise), dateKey: "dateStatutPrise" },
+              { label: "Statut du lead", value: formatStatutPrise(entrepriseData?.statutPrise), dateKey: "dateStatutPrise" },
               { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation), dateKey: "dateStatutFacturation" },
             ].map((f, i) => (
               <div key={`s${i}`} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
