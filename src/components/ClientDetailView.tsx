@@ -1160,7 +1160,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }}
               >
                 <option value="">— Non assignée —</option>
-                {mentionUsers.filter((u) => u.role === "CHARGEE").map((u) => (
+                {mentionUsers.filter((u) => u.role === "CHARGEE" || u.role === "ADMIN").map((u) => (
                   <option key={u.id} value={u.id}>{u.prenom}</option>
                 ))}
               </select>
