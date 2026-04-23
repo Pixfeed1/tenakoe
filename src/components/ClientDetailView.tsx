@@ -3292,14 +3292,14 @@ function QualifChantiers({
                     </div>
                     <span style={{ fontSize: 11, color: doc.recu ? C.text : C.textMuted, fontWeight: doc.recu ? 500 : 400, flex: 1 }}>{doc.label}</span>
                     {doc.date && <span style={{ fontSize: 9, color: C.textDim }}>{new Date(doc.date).toLocaleDateString("fr-FR")}</span>}
-                    {doc.fichierUrl ? (
+                    {doc.fichierUrl && (
                       <a href={fixFileUrl(doc.fichierUrl)} download={doc.fichierNom || doc.label} onClick={(e) => e.stopPropagation()}
-                        style={{ padding: "2px 6px", borderRadius: 4, background: C.blueDim, color: C.blue, fontSize: 9, fontWeight: 600, textDecoration: "none" }}>
+                        style={{ padding: "2px 6px", borderRadius: 4, background: C.blueDim, color: C.blue, fontSize: 9, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 2 }}>
                         <Download size={9} /> {doc.fichierNom ? doc.fichierNom.slice(0, 14) : "Fichier"}
                       </a>
-                    ) : doc.recu ? (
-                      <label style={{ padding: "2px 6px", borderRadius: 4, background: C.accentDim, color: C.accentText, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>
-                        <Upload size={9} /> Uploader
+                    )}
+                    <label style={{ padding: "2px 6px", borderRadius: 4, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                      <Upload size={9} color={C.textDim} />
                         <input type="file" style={{ display: "none" }} onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
@@ -3308,11 +3308,10 @@ function QualifChantiers({
                           const res = await fetch("/api/upload", { method: "POST", body: fd });
                           if (res.ok) {
                             const { url } = await res.json();
-                            updateChantier(c.id, { [doc.urlKey]: url, [doc.nomKey]: file.name });
+                            updateChantier(c.id, { [doc.recuKey]: true, [doc.urlKey]: url, [doc.nomKey]: file.name });
                           }
                         }} />
                       </label>
-                    ) : null}
                   </div>
                 ))}
 
