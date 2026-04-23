@@ -245,6 +245,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         // Load real etapes if available (find first projet with etapes)
         const projetWithEtapes = data.projets?.find((p: { etapes?: unknown[] }) => p.etapes && p.etapes.length > 0);
         if (projetWithEtapes?.etapes?.length > 0) {
+          console.log("[TENAKOE] Setting tracks from projet:", projetWithEtapes.nom, "etapes:", projetWithEtapes.etapes.length);
           setTracks(
             projetWithEtapes.etapes.map((e: { id: string; nom: string; delaiJours: number; terminee: boolean; active: boolean }) => ({
               id: e.id,
@@ -254,6 +255,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               active: e.active,
             }))
           );
+        } else {
+          console.log("[TENAKOE] No projet with etapes found in:", data.projets?.map((p: { nom: string; etapes?: unknown[] }) => ({ nom: p.nom, etapes: p.etapes?.length })));
         }
 
         // Qualification and formation from first project
@@ -406,7 +409,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       const merged = [...transmissionItems, ...noteItems].sort((a, b) => b.sortDate - a.sortDate);
       setHistorique(merged);
     }).catch(() => {});
-  }, [client?.id]);
+  }, [client?.id, isDemoMode]);
   const [dragFile, setDragFile] = useState(false);
   const [tab, setTab] = useState("dossier");
   const [mailOpen, setMailOpen] = useState(false);
