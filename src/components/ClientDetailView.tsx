@@ -1095,6 +1095,21 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               )}
             </div>
             {[
+              { label: "Statut du lead", value: formatStatutPrise(entrepriseData?.statutPrise), dateKey: "dateStatutPrise" },
+            ].map((f, i) => (
+              <div key={`s${i}`} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+                <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
+                <div>
+                  <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
+                  {entrepriseData?.[f.dateKey] && (
+                    <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                      Modifié le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {[
               { label: "Intéressé TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
             ].map((f, i) => (
               <div key={i} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
@@ -1126,7 +1141,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
             ))}
             {[
-              { label: "Statut du lead", value: formatStatutPrise(entrepriseData?.statutPrise), dateKey: "dateStatutPrise" },
               { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation), dateKey: "dateStatutFacturation" },
             ].map((f, i) => (
               <div key={`s${i}`} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
