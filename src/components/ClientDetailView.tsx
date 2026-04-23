@@ -1265,7 +1265,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <div style={{ marginBottom: 16 }}>
                     <span style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 8, fontWeight: 600 }}>Modules RENOPERF nécessaires</span>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6 }}>
-                      {renderCheckbox("formationTR", "TR")}
+                      {renderCheckbox("formationTR", "Transverse")}
                       {renderCheckbox("formationITI", "ITI")}
                       {renderCheckbox("formationITE", "ITE")}
                       {renderCheckbox("formationMenuiserieExt", "Menuiserie Ext")}
@@ -1274,7 +1274,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       {renderCheckbox("formationToituresTerrasses", "Toitures Terrasses")}
                       {renderCheckbox("formationEmetteursElec", "Émetteurs Élec")}
                       {renderCheckbox("formationChaudiereCogen", "Chaudière cogén")}
-                      {renderCheckbox("formationBT", "BT")}
+                      {renderCheckbox("formationBT", "Bouquet de travaux")}
                     </div>
                   </div>
 
