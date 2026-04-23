@@ -1197,9 +1197,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                                 key={rge}
                                 style={{
                                   padding: "1px 6px", borderRadius: 4,
-                                  background: C.bg, color: C.textDim,
-                                  fontSize: 10, fontWeight: 500,
-                                  border: `1px solid ${C.border}`,
+                                  background: "rgba(13,148,136,0.1)", color: "#0d9488",
+                                  fontSize: 10, fontWeight: 600,
+                                  border: "1px solid rgba(13,148,136,0.2)",
                                 }}
                               >
                                 {rge}
