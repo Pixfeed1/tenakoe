@@ -2099,6 +2099,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </h3>
 
           {/* Progress header */}
+          {tracks.length === 0 && (
+            <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13, lineHeight: 1.6 }}>
+              Aucune étape. Créez un projet avec une qualification puis générez les documents pour initialiser la feuille de route.
+            </div>
+          )}
           {tracks.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
