@@ -2088,9 +2088,27 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
       {/* Tab: Track */}
       {tab === "track" && (() => {
-        const doneCount = tracks.filter((t) => t.done).length;
-        const activeStep = tracks.find((t) => t.active);
-        const progress = tracks.length > 0 ? Math.round((doneCount / tracks.length) * 100) : 0;
+        // Fallback: if tracks state is empty but projets have etapes, load from projets
+        let displayTracks = tracks;
+        if (displayTracks.length === 0 && !isDemoMode) {
+          const projetWithEtapes = projets.find((p) => p.etapes && p.etapes.length > 0);
+          if (projetWithEtapes) {
+            const mapped = (projetWithEtapes as unknown as { etapes: Array<{ id?: string; nom: string; delaiJours?: number; terminee: boolean; active: boolean }> }).etapes.map((e) => ({
+              id: e.id || "",
+              nom: e.nom,
+              delai: e.delaiJours || 0,
+              done: e.terminee,
+              active: e.active,
+            }));
+            if (mapped.length > 0) {
+              setTracks(mapped);
+              displayTracks = mapped;
+            }
+          }
+        }
+        const doneCount = displayTracks.filter((t: TrackStep) => t.done).length;
+        const activeStep = displayTracks.find((t: TrackStep) => t.active);
+        const progress = displayTracks.length > 0 ? Math.round((doneCount / displayTracks.length) * 100) : 0;
         const isMail = (nom: string) => nom.toLowerCase().includes("mail automatique");
 
         return (
@@ -2100,17 +2118,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           </h3>
 
           {/* Progress header */}
-          {tracks.length === 0 && (
+          {displayTracks.length === 0 && (
             <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13, lineHeight: 1.6 }}>
               Aucune étape. Créez un projet avec une qualification puis générez les documents pour initialiser la feuille de route.
             </div>
           )}
-          {tracks.length > 0 && (
+          {displayTracks.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: activeStep ? C.blue : C.textMuted }}>
-                  Étape {doneCount + (activeStep ? 1 : 0)}/{tracks.length}
-                  {activeStep ? ` — ${activeStep.nom}` : doneCount === tracks.length ? " — Terminé" : ""}
+                  Étape {doneCount + (activeStep ? 1 : 0)}/{displayTracks.length}
+                  {activeStep ? ` — ${activeStep.nom}` : doneCount === displayTracks.length ? " — Terminé" : ""}
                 </span>
                 <span style={{ fontSize: 11, color: C.textDim }}>{progress}%</span>
               </div>
@@ -2131,7 +2149,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           )}
 
           <div data-guide="track-timeline" style={{ position: "relative" }}>
-            {tracks.map((t, i) => {
+            {displayTracks.map((t, i) => {
               // Hide done steps if collapsed (show last done + active + future)
               if (t.done && doneCount > 2 && !expandedCols.trackDone && i < doneCount - 1) return null;
 
@@ -2184,7 +2202,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       <span style={{ fontSize: 11, fontWeight: 600, color: C.textDim }}>{i + 1}</span>
                     )}
                   </div>
-                  {i < tracks.length - 1 && (
+                  {i < displayTracks.length - 1 && (
                     <div style={{ width: 2, height: 32, background: t.done ? C.accent : C.border, transition: "all 0.3s" }} />
                   )}
                 </div>
