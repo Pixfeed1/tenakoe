@@ -253,6 +253,7 @@ model ProjetQualification {
   formationHorsRenoperfITI  Boolean  @default(false)
   formationHorsRenoperfITE  Boolean  @default(false)
   formationAutre            String?
+  titulaireRenove           Boolean  @default(false)
   niveauVise                String?
   niveauObtenu              String?
 

@@ -1275,6 +1275,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       {renderCheckbox("formationEmetteursElec", "Émetteurs Élec")}
                       {renderCheckbox("formationChaudiereCogen", "Chaudière cogén")}
                       {renderCheckbox("formationBT", "Bouquet de travaux")}
+                      {renderCheckbox("titulaireRenove", "Titulaire RENOVE")}
                     </div>
                   </div>
 
