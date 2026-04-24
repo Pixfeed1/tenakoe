@@ -80,7 +80,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
   const [newTache, setNewTache] = useState<{ titre: string; type: string; dateEcheance: string; assigneeId: string }>({ titre: "", type: "AUTRE", dateEcheance: "", assigneeId: "" });
-  const [historique, setHistorique] = useState<Array<{ id?: string; type: string; message: string; chargee: string; time: string; automatique?: boolean; statutEnvoi?: string | null }>>([]);
+  const [historique, setHistorique] = useState<Array<{ id?: string; type: string; message: string; chargee: string; time: string; sortDate?: number; automatique?: boolean; statutEnvoi?: string | null }>>([]);
   const [viewingTransmissionId, setViewingTransmissionId] = useState<string | null>(null);
   const [showCallLog, setShowCallLog] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -98,6 +98,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [apporteurs, setApporteurs] = useState<Array<{ id: string; nom: string; prenom: string | null; structure: string | null }>>([]);
   const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string; role?: string }>>([]);
   const [showMentionMenu, setShowMentionMenu] = useState(false);
+  const [showNoteForm, setShowNoteForm] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const [mentionCursorPos, setMentionCursorPos] = useState(0);
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -778,7 +779,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           { id: "historique", label: "Historique", Icon: RefreshCw },
           { id: "contacts", label: `Contacts (${contacts.length})`, Icon: UserCircle },
           { id: "taches", label: `Tâches (${taches.length})`, Icon: ClipboardList },
-          { id: "notes", label: `Notes (${notes.length})`, Icon: StickyNote },
         ].map((t) => (
           <Button
             C={C}
@@ -2262,13 +2262,105 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       {/* Tab: Historique */}
       {tab === "historique" && (
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Historique d&apos;activité</h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: C.text }}>Historique d&apos;activité</h3>
+            <Button C={C} variant="primary" size="sm" icon={<StickyNote size={13} />} onClick={() => setShowNoteForm((v) => !v)}>
+              Ajouter une note
+            </Button>
+          </div>
+
+          {/* Inline note form */}
+          {showNoteForm && (
+            <div style={{ marginBottom: 16, padding: 14, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, position: "relative" }}>
+              <textarea
+                ref={noteTextareaRef}
+                placeholder="Ajouter une note... (tapez @ pour mentionner)"
+                value={newNote}
+                onChange={(e) => {
+                  setNewNote(e.target.value);
+                  const pos = e.target.selectionStart || 0;
+                  const textBefore = e.target.value.slice(0, pos);
+                  const atMatch = textBefore.match(/@(\w*)$/);
+                  if (atMatch) { setShowMentionMenu(true); setMentionFilter(atMatch[1].toLowerCase()); setMentionCursorPos(pos); }
+                  else { setShowMentionMenu(false); }
+                }}
+                onKeyDown={(e) => { if (showMentionMenu && e.key === "Escape") setShowMentionMenu(false); }}
+                rows={3}
+                style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box" }}
+                autoFocus
+              />
+              {showMentionMenu && (
+                <div style={{ position: "absolute", zIndex: 50, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: C.shadowHover, maxHeight: 160, overflowY: "auto", width: 200, bottom: "100%", marginBottom: 4 }}>
+                  {mentionUsers.filter((u) => u.prenom.toLowerCase().includes(mentionFilter) || u.nom.toLowerCase().includes(mentionFilter)).map((u) => (
+                    <button key={u.id} onClick={() => {
+                      const before = newNote.slice(0, mentionCursorPos - mentionFilter.length - 1);
+                      const after = newNote.slice(mentionCursorPos);
+                      setNewNote(`${before}@${u.prenom} ${after}`);
+                      setShowMentionMenu(false);
+                      noteTextareaRef.current?.focus();
+                    }} style={{ width: "100%", padding: "8px 12px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", fontSize: 13, color: C.text, display: "flex", alignItems: "center", gap: 8 }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                    >
+                      <div style={{ width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #7c3aed, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff" }}>
+                        {u.prenom[0]}{u.nom[0]}
+                      </div>
+                      {u.prenom} {u.nom}
+                    </button>
+                  ))}
+                  {mentionUsers.filter((u) => u.prenom.toLowerCase().includes(mentionFilter) || u.nom.toLowerCase().includes(mentionFilter)).length === 0 && (
+                    <div style={{ padding: "8px 12px", fontSize: 12, color: C.textDim }}>Aucun utilisateur</div>
+                  )}
+                </div>
+              )}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                <label style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", fontSize: 12, color: C.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
+                  <Paperclip size={13} />
+                  {noteFile ? noteFile.name : "Joindre"}
+                  <input type="file" style={{ display: "none" }} onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && file.size > 10 * 1024 * 1024) { alert("Fichier trop volumineux (max 10 Mo)"); return; }
+                    setNoteFile(file || null);
+                  }} />
+                </label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <Button C={C} variant="ghost" size="sm" onClick={() => { setShowNoteForm(false); setNewNote(""); setNoteFile(null); }}>Annuler</Button>
+                  <Button C={C} variant="primary" size="sm" disabled={!newNote.trim() && !noteFile} onClick={async () => {
+                    if (!newNote.trim() && !noteFile) return;
+                    if (isDemoMode) {
+                      setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote || `[Pièce jointe : ${noteFile?.name}]`, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" } }, ...prev]);
+                      setHistorique((prev) => [{ type: "NOTE", message: newNote, chargee: "Vous", time: "À l'instant", sortDate: Date.now() }, ...prev]);
+                      setNewNote(""); setNoteFile(null); setShowNoteForm(false); toast("Note ajoutée");
+                      return;
+                    }
+                    if (!client?.id) return;
+                    let fichierUrl = null; let fichierNom = null; let fichierTaille = null;
+                    if (noteFile) {
+                      const fd = new FormData(); fd.append("file", noteFile); fd.append("entrepriseId", client.id);
+                      const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
+                      if (uploadRes.ok) { const d = await uploadRes.json(); fichierUrl = d.url; fichierNom = noteFile.name; fichierTaille = noteFile.size; }
+                    }
+                    const res = await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contenu: newNote || `[Pièce jointe : ${fichierNom}]`, entrepriseId: client.id, fichierUrl, fichierNom, fichierTaille }) });
+                    if (res.ok) {
+                      const note = await res.json();
+                      setNotes((prev) => [note, ...prev]);
+                      setHistorique((prev) => [{ type: "NOTE", message: note.contenu, chargee: `${note.auteur.prenom} ${note.auteur.nom}`, time: "À l'instant", sortDate: Date.now() }, ...prev]);
+                      setNewNote(""); setNoteFile(null); setShowNoteForm(false); toast("Note ajoutée");
+                    }
+                  }}>Ajouter</Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {historique.length === 0 && (
             <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucune activité pour cette entreprise</div>
           )}
-          {historique.slice(0, 10).map((a, i) => {
+          {historique.map((a, i) => {
             const ActIcon = ACTIVITY_ICONS[a.type] || FileText;
             const actColor = ACTIVITY_COLORS[a.type] || "textDim";
+            const isNote = a.type === "NOTE";
+            const noteData = isNote ? notes.find((n) => a.message.includes(n.contenu.substring(0, 50))) : null;
             return (
               <div
                 key={i}
@@ -2279,26 +2371,49 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   cursor: a.id && ["EMAIL", "SMS", "APPEL"].includes(a.type) ? "pointer" : "default",
                   transition: "background 0.1s",
                 }}
-                onMouseEnter={(e) => { if (a.id) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                onMouseEnter={(e) => { if (a.id || isNote) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
               >
-                <div
-                  style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    backgroundColor: C[(actColor + "Dim") as keyof Theme] as string,
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}
-                >
+                <div style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C[(actColor + "Dim") as keyof Theme] as string, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <ActIcon size={14} color={C[actColor as keyof Theme] as string} strokeWidth={2} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, color: C.text, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    {a.message}
+                    {isNote ? (
+                      <span style={{ whiteSpace: "pre-wrap" }}>
+                        {a.message.replace(/^Note : /, "").split(/(@\w+)/g).map((part, pi) =>
+                          part.startsWith("@")
+                            ? <span key={pi} style={{ color: C.accent, fontWeight: 600, background: C.accentDim, padding: "0 4px", borderRadius: 4 }}>{part}</span>
+                            : part
+                        )}
+                      </span>
+                    ) : a.message}
+                    {isNote && <Badge color={C.purple} bg={C.purpleDim}>Note</Badge>}
                     {a.automatique && <Badge color="#ea580c" bg="rgba(234,88,12,0.1)">Auto</Badge>}
                     {a.statutEnvoi === "ECHEC" && <Badge color="#ef4444" bg="rgba(239,68,68,0.1)">Échec</Badge>}
                     {a.statutEnvoi === "ENVOYE" && a.automatique && <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Envoyé</Badge>}
                   </div>
-                  <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>{a.chargee} · {a.time}</div>
+                  {noteData?.fichierUrl && (
+                    <a href={fixFileUrl(noteData.fichierUrl)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 8px", borderRadius: 4, background: C.bg, border: `1px solid ${C.border}`, fontSize: 11, color: C.blue, textDecoration: "none" }}>
+                      <Paperclip size={10} /> {noteData.fichierNom || "Pièce jointe"}
+                    </a>
+                  )}
+                  <div style={{ fontSize: 11, color: C.textDim, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                    {a.chargee} · {a.time}
+                    {isNote && noteData && (
+                      <button onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!window.confirm("Supprimer cette note ?")) return;
+                        const res = await fetch(`/api/notes?id=${noteData.id}`, { method: "DELETE" });
+                        if (res.ok) {
+                          setNotes((prev) => prev.filter((n) => n.id !== noteData.id));
+                          setHistorique((prev) => prev.filter((_, idx) => idx !== i));
+                        }
+                      }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }} title="Supprimer la note">
+                        <Trash2 size={11} color={C.textDim} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
