@@ -36,7 +36,7 @@ const inputStyle = (C: Theme): React.CSSProperties => ({
 });
 
 export function ParametresView({ C, role }: { C: Theme; role?: string }) {
-  const isAdmin = role === "ADMIN";
+  const isAdmin = role !== "PRESCRIPTEUR";
   const [tab, setTab] = useState<Tab>(isAdmin ? "utilisateurs" : "compte");
 
   return (

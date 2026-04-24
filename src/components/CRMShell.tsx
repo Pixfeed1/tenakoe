@@ -326,7 +326,7 @@ export function CRMShell({
         {view === "Apporteurs" && <ApporteursView key={navKey} C={C} />}
         {view === "Intégrations" && <IntegrationsView key={navKey} C={C} />}
         {view === "Paramètres" && <ParametresView key={navKey} C={C} role={user.role} />}
-        {view === "VuePrescripteur" && user.role === "ADMIN" && (
+        {view === "VuePrescripteur" && user.role !== "PRESCRIPTEUR" && (
           <VuePrescripteurView key={navKey} C={C} onExit={() => navigateTo("Dashboard")} />
         )}
       </main>
