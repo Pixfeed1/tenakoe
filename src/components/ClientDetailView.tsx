@@ -247,12 +247,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         const projetWithEtapes = data.projets?.find((p: { etapes?: unknown[] }) => p.etapes && p.etapes.length > 0);
         if (projetWithEtapes?.etapes?.length > 0) {
           setTracks(
-            projetWithEtapes.etapes.map((e: { id: string; nom: string; delaiJours: number; terminee: boolean; active: boolean }) => ({
+            projetWithEtapes.etapes.map((e: { id: string; nom: string; delaiJours: number; terminee: boolean; active: boolean; dateRealisee?: string | null }) => ({
               id: e.id,
               nom: e.nom,
               delai: e.delaiJours || 0,
               done: e.terminee,
               active: e.active,
+              dateRealisee: e.dateRealisee || null,
             }))
           );
         }
@@ -2237,7 +2238,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       {t.nom}
                     </span>
                     {isMail(t.nom) && <Badge color={C.purple} bg={C.purpleDim}>Mail auto</Badge>}
-                    {t.done && <Badge color={C.accentText} bg={C.accentDim}>Fait</Badge>}
+                    {t.done && <Badge color={C.accentText} bg={C.accentDim}>Fait{t.dateRealisee ? ` le ${new Date(t.dateRealisee).toLocaleDateString("fr-FR")}` : ""}</Badge>}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                     <span style={{ fontSize: 11, color: t.active ? C.blue : C.textDim }}>
