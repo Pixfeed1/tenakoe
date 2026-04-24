@@ -938,6 +938,38 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       body: JSON.stringify({ [f.key]: val }),
                     });
                   }
+                  if (f.key === "departement" && val.trim() && !isDemoMode) {
+                    fetch(`/api/departement-qualibat?departement=${encodeURIComponent(val.trim())}`)
+                      .then((r) => r.ok ? r.json() : null)
+                      .then((mapping: { delegation: string; email: string; telephone: string } | null) => {
+                        if (!mapping) return;
+                        const emailCity = mapping.email.split("@")[0].replace("agence", "");
+                        const matchedAntenne = antennes.find((a) =>
+                          a.nom.toLowerCase().includes(emailCity) ||
+                          (a.delegation || "").toLowerCase().includes(mapping.delegation.toLowerCase())
+                        );
+                        setProjets((prev) => prev.map((pr) => ({
+                          ...pr,
+                          qualifications: pr.qualifications.map((q) => {
+                            if (q.certificateurType !== "Qualibat" && q.certificateurType) return q;
+                            const patch: Record<string, unknown> = {
+                              certificateurType: "Qualibat",
+                              emailCertificateur: mapping.email,
+                            };
+                            if (matchedAntenne) patch.antenneQualibatId = matchedAntenne.id;
+                            if (q.id && !isDemoMode) {
+                              fetch(`/api/qualifications/${q.id}`, {
+                                method: "PATCH", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(patch),
+                              }).catch(() => {});
+                            }
+                            return { ...q, ...patch };
+                          }),
+                        })));
+                        toast(`Certificateur Qualibat pr\u00e9-rempli (${mapping.delegation} \u00b7 ${mapping.email})`);
+                      })
+                      .catch(() => {});
+                  }
                 }
                 setEditingField(null);
               };

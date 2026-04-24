@@ -234,6 +234,14 @@ model AntenneQualibat {
   projetQualifications ProjetQualification[]
 }
 
+model DepartementQualibat {
+  id          String @id @default(cuid())
+  departement String @unique
+  delegation  String
+  email       String
+  telephone   String
+}
+
 model ProjetQualification {
   id                  String   @id @default(cuid())
   projetId            String
