@@ -1212,9 +1212,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                                 key={rge}
                                 style={{
                                   padding: "1px 6px", borderRadius: 4,
-                                  background: "rgba(99,102,241,0.1)", color: "#6366f1",
+                                  background: "rgba(245,158,11,0.12)", color: "#d97706",
                                   fontSize: 10, fontWeight: 600,
-                                  border: "1px solid rgba(99,102,241,0.2)",
+                                  border: "1px solid rgba(245,158,11,0.25)",
                                 }}
                               >
                                 {rge}
@@ -3402,7 +3402,7 @@ function RGEPicker({
             <span key={code} style={{
               display: "inline-flex", alignItems: "center", gap: 4,
               padding: "2px 6px 2px 8px", borderRadius: 4,
-              background: "rgba(99,102,241,0.1)", color: "#6366f1",
+              background: "rgba(245,158,11,0.12)", color: "#d97706",
               fontSize: 11, fontWeight: 600,
             }}>
               {code}{opt ? ` - ${opt.nom.slice(0, 30)}${opt.nom.length > 30 ? "…" : ""}` : ""}
@@ -3411,7 +3411,7 @@ function RGEPicker({
                 style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}
                 title="Retirer"
               >
-                <X size={11} color="#6366f1" />
+                <X size={11} color="#d97706" />
               </button>
             </span>
           );
