@@ -25,7 +25,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>>([]);
   const [depots, setDepots] = useState<Array<{ id: string; nom: string }>>([]);
   const [form, setForm] = useState({
-    nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
+    nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "", departement: "",
     email: "", telephone: "", telephone2: "", prescripteur: "PDB",
     depot: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false, interesseAccompagnement: "",
@@ -96,6 +96,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
       ["prenomArtisan", "Prénom de l'artisan"],
       ["nomEntreprise", "Nom de l'entreprise"],
       ["siret", "SIRET"],
+      ["departement", "N° département du siège social"],
       ["numeroCarte", "Numéro de carte"],
       ["email", "Email de l'artisan"],
       ["telephone", "Téléphone de l'artisan"],
@@ -191,7 +192,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           </p>
           <button
             onClick={() => { setSubmitted(false); setForm({
-              nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
+              nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "", departement: "",
               email: "", telephone: "", telephone2: "", prescripteur: form.prescripteur,
               depot: form.depot, numeroCarte: form.numeroCarte, dejaReferentRGE: false,
               commentaires: "", acceptePartage: false, interesseAccompagnement: "",
@@ -285,6 +286,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomArtisan} onChange={(e) => set("prenomArtisan", e.target.value)} required /></div>
               <div><label style={labelStyle}>Entreprise *</label><input style={inputStyle} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value)} required /></div>
               <div><label style={labelStyle}>SIRET *</label><input style={inputStyle} placeholder="N° SIRET" value={form.siret} onChange={(e) => set("siret", e.target.value)} required /></div>
+              <div><label style={labelStyle}>N° département du siège social *</label><input style={inputStyle} placeholder="ex: 75" value={form.departement} onChange={(e) => set("departement", e.target.value)} required /></div>
               <div><label style={labelStyle}>N° carte *</label><input style={inputStyle} placeholder="N° carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} required /></div>
             </div>
           </div>

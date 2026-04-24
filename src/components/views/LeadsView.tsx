@@ -52,7 +52,7 @@ export function LeadsView({ C }: { C: Theme }) {
 
   // Form state
   const [form, setForm] = useState({
-    nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
+    nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "", departement: "",
     email: "", telephone: "", telephone2: "", prescripteur: "PDB",
     depot: "", depotConfigId: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false, interesseAccompagnement: "",
@@ -86,7 +86,7 @@ export function LeadsView({ C }: { C: Theme }) {
   };
 
   const emptyForm = {
-    nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "",
+    nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "", departement: "",
     email: "", telephone: "", telephone2: "", prescripteur: "PDB",
     depot: "", depotConfigId: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false, interesseAccompagnement: "",
@@ -95,7 +95,7 @@ export function LeadsView({ C }: { C: Theme }) {
 
   const submitLead = async () => {
     setFormError(null);
-    if (!form.nomArtisan || !form.prenomArtisan || !form.nomEntreprise || !form.siret || !form.email || !form.telephone || !form.numeroCarte) {
+    if (!form.nomArtisan || !form.prenomArtisan || !form.nomEntreprise || !form.siret || !form.departement || !form.email || !form.telephone || !form.numeroCarte) {
       setFormError("Veuillez remplir tous les champs obligatoires (*)");
       return;
     }
@@ -245,6 +245,7 @@ export function LeadsView({ C }: { C: Theme }) {
             <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prénom *</label><input style={inputStyle} value={form.prenomArtisan} onChange={(e) => setForm({ ...form, prenomArtisan: e.target.value })} /></div>
             <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Entreprise *</label><input style={inputStyle} value={form.nomEntreprise} onChange={(e) => setForm({ ...form, nomEntreprise: e.target.value })} /></div>
             <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>SIRET *</label><input style={inputStyle} value={form.siret} onChange={(e) => setForm({ ...form, siret: e.target.value })} /></div>
+            <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>N° département *</label><input style={inputStyle} value={form.departement} onChange={(e) => setForm({ ...form, departement: e.target.value })} placeholder="ex: 75" /></div>
             <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Email *</label><input type="email" style={inputStyle} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Téléphone *</label><input style={inputStyle} value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} /></div>
             <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Téléphone 2</label><input style={inputStyle} value={form.telephone2} onChange={(e) => setForm({ ...form, telephone2: e.target.value })} /></div>

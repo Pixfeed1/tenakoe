@@ -922,6 +922,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Email", key: "email", value: entrepriseData?.email || "—", Icon: Mail },
               { label: "Téléphone", key: "telephone", value: formatPhone(entrepriseData?.telephone), Icon: Phone },
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
+              { label: "N° département", key: "departement", value: entrepriseData?.departement || "—", Icon: Building2, required: true },
               { label: "Prescripteur", key: "prescripteur", value: entrepriseData?.prescripteur || client?.prescripteur || "—", Icon: Building2 },
               { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
@@ -1042,7 +1043,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     }}
                   />
                 ) : (
-                  <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{f.value}</span>
+                  <>
+                    <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{f.value}</span>
+                    {(f as { required?: boolean }).required && (!f.value || f.value === "—") && (
+                      <span style={{ fontSize: 10, color: "#ef4444", fontWeight: 600, border: "1px solid rgba(239,68,68,0.3)", borderRadius: 4, padding: "1px 6px", background: "rgba(239,68,68,0.06)" }}>Requis</span>
+                    )}
+                  </>
                 )}
                 {f.key !== "contact" && editingField !== f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
               </div>

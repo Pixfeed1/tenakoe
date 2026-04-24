@@ -78,6 +78,7 @@ model Entreprise {
   adresse            String?
   codePostal         String?
   ville              String?
+  departement        String?
   email              String?
   telephone          String?
   createdAt          DateTime           @default(now())
@@ -580,6 +581,7 @@ model LeadFormulaire {
   telephone        String?
   telephone2       String?
   adresse          String?
+  departement      String?
   prescripteur     String
   depot            String?
   depotConfigId    String?

@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const user = await getCurrentUser();
-  const baseRequired = ["nomArtisan", "prenomArtisan", "prescripteur", "nomEntreprise", "siret", "numeroCarte", "email", "telephone"];
+  const baseRequired = ["nomArtisan", "prenomArtisan", "prescripteur", "nomEntreprise", "siret", "numeroCarte", "email", "telephone", "departement"];
   const publicRequired = [...baseRequired, "nomConseiller", "prenomConseiller", "emailConseiller", "telephoneConseiller"];
   const requiredFields = user ? baseRequired : publicRequired;
   const missingFields = requiredFields.filter((f) => !body[f]);
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       telephone: body.telephone || null,
       telephone2: body.telephone2 || null,
       adresse: body.adresse || null,
+      departement: body.departement || null,
       prescripteur: body.prescripteur,
       depot: body.depot || null,
       depotConfigId: body.depotConfigId || null,

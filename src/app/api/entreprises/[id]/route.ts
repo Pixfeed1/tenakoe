@@ -53,6 +53,7 @@ export async function PATCH(
   if (body.adresse !== undefined) data.adresse = body.adresse;
   if (body.ville !== undefined) data.ville = body.ville;
   if (body.codePostal !== undefined) data.codePostal = body.codePostal;
+  if (body.departement !== undefined) data.departement = body.departement;
   if (body.interesseTNK !== undefined) { data.interesseTNK = body.interesseTNK; data.dateInteresseTNK = new Date(); }
   if (body.miseEnRelation !== undefined) { data.miseEnRelation = body.miseEnRelation; data.dateMiseEnRelation = new Date(); }
   if (body.miseEnRelationAutre !== undefined) data.miseEnRelationAutre = body.miseEnRelationAutre;
