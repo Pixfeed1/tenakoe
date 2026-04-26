@@ -62,6 +62,14 @@ export async function PATCH(
   if (body.alerte2Envoyee !== undefined) { data.alerte2Envoyee = body.alerte2Envoyee; data.dateAlerte2 = body.dateAlerte2 ? new Date(body.dateAlerte2) : (body.alerte2Envoyee ? new Date() : null); }
   if (body.mailAbandonEnvoye !== undefined) { data.mailAbandonEnvoye = body.mailAbandonEnvoye; data.dateMailAbandon = body.dateMailAbandon ? new Date(body.dateMailAbandon) : (body.mailAbandonEnvoye ? new Date() : null); }
   if (body.dejaReferentRGE !== undefined) data.dejaReferentRGE = body.dejaReferentRGE;
+  const relanceFields = ["relanceJoindre1", "relanceJoindre2", "relanceJoindre3", "relanceJoindre4", "relanceJoindreInjoignable", "relanceDevis1", "relanceDevis2", "relanceDevis3", "relanceDevis4", "relanceDevisFerme"];
+  for (const rf of relanceFields) {
+    if (body[rf] !== undefined) {
+      data[rf] = body[rf];
+      const dateKey = "date" + rf.charAt(0).toUpperCase() + rf.slice(1);
+      data[dateKey] = body[rf] ? new Date() : null;
+    }
+  }
   if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
   if (body.depotId !== undefined) data.depotId = body.depotId || null;
   if (body.apporteurId !== undefined) data.apporteurId = body.apporteurId || null;

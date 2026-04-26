@@ -1378,6 +1378,76 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             })()}
           </div>
 
+          {/* Relances avant paiement */}
+          <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Relances avant paiement</h3>
+            {[
+              {
+                titre: "Relances pour joindre le prospect",
+                items: [
+                  { key: "relanceJoindre1", dateKey: "dateRelanceJoindre1", label: "Relance 1" },
+                  { key: "relanceJoindre2", dateKey: "dateRelanceJoindre2", label: "Relance 2" },
+                  { key: "relanceJoindre3", dateKey: "dateRelanceJoindre3", label: "Relance 3" },
+                  { key: "relanceJoindre4", dateKey: "dateRelanceJoindre4", label: "Relance 4" },
+                  { key: "relanceJoindreInjoignable", dateKey: "dateRelanceJoindreInjoignable", label: "Injoignable — prospect fermé" },
+                ],
+              },
+              {
+                titre: "Relances pour signature sur devis envoyé",
+                items: [
+                  { key: "relanceDevis1", dateKey: "dateRelanceDevis1", label: "Relance 1" },
+                  { key: "relanceDevis2", dateKey: "dateRelanceDevis2", label: "Relance 2" },
+                  { key: "relanceDevis3", dateKey: "dateRelanceDevis3", label: "Relance 3" },
+                  { key: "relanceDevis4", dateKey: "dateRelanceDevis4", label: "Relance 4" },
+                  { key: "relanceDevisFerme", dateKey: "dateRelanceDevisFerme", label: "Pas de retour — prospect fermé" },
+                ],
+              },
+            ].map((section) => (
+              <div key={section.titre} style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>{section.titre}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {section.items.map((f) => {
+                    const checked = entrepriseData?.[f.key] === "true" || String(entrepriseData?.[f.key]) === "true";
+                    const date = entrepriseData?.[f.dateKey];
+                    return (
+                      <label key={f.key} onClick={async () => {
+                        if (!client?.id || isDemoMode) return;
+                        const newVal = !checked;
+                        setEntrepriseData((prev) => prev ? { ...prev, [f.key]: String(newVal), [f.dateKey]: newVal ? new Date().toISOString() : "" } : prev);
+                        await fetch(`/api/entreprises/${client.id}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ [f.key]: newVal }),
+                        }).catch(() => {});
+                      }} style={{
+                        display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                        borderRadius: 8, cursor: "pointer",
+                        background: checked ? C.accentDim : C.bg,
+                        border: `1px solid ${checked ? C.accent + "40" : C.border}`,
+                        transition: "all 0.15s",
+                      }}>
+                        <div style={{
+                          width: 16, height: 16, borderRadius: 4,
+                          border: `2px solid ${checked ? C.accent : C.border}`,
+                          background: checked ? C.accent : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          flexShrink: 0,
+                        }}>
+                          {checked && <Check size={10} color="#fff" strokeWidth={3} />}
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text, flex: 1 }}>{f.label}</span>
+                        {date && (
+                          <span style={{ fontSize: 11, color: C.textDim }}>
+                            le {new Date(date).toLocaleDateString("fr-FR")}
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* Procédure alerte avant abandon */}
           <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Procédure alerte avant abandon</h3>

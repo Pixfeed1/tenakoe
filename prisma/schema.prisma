@@ -112,6 +112,26 @@ model Entreprise {
   eligible              String?            @default("A_VERIFIER")
   eligibleCommentaire   String?
   dateEligible          DateTime?
+  relanceJoindre1              Boolean  @default(false)
+  dateRelanceJoindre1          DateTime?
+  relanceJoindre2              Boolean  @default(false)
+  dateRelanceJoindre2          DateTime?
+  relanceJoindre3              Boolean  @default(false)
+  dateRelanceJoindre3          DateTime?
+  relanceJoindre4              Boolean  @default(false)
+  dateRelanceJoindre4          DateTime?
+  relanceJoindreInjoignable    Boolean  @default(false)
+  dateRelanceJoindreInjoignable DateTime?
+  relanceDevis1                Boolean  @default(false)
+  dateRelanceDevis1            DateTime?
+  relanceDevis2                Boolean  @default(false)
+  dateRelanceDevis2            DateTime?
+  relanceDevis3                Boolean  @default(false)
+  dateRelanceDevis3            DateTime?
+  relanceDevis4                Boolean  @default(false)
+  dateRelanceDevis4            DateTime?
+  relanceDevisFerme            Boolean  @default(false)
+  dateRelanceDevisFerme        DateTime?
 
   contacts      Contact[]
   projets       Projet[]
