@@ -990,7 +990,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 }}
               >
                 <f.Icon size={14} color={C.textDim} />
-                <span style={{ fontSize: 12, color: C.textDim, width: 90 }}>{f.label}</span>
+                <span style={{ fontSize: 12, color: C.textDim, width: 90 }}>{f.label}{(f as { required?: boolean }).required && <span style={{ color: "#ef4444" }}> *</span>}</span>
                 {editingField === f.key && f.key === "prescripteur" ? (
                   <select
                     autoFocus
@@ -1077,9 +1077,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 ) : (
                   <>
                     <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{f.value}</span>
-                    {(f as { required?: boolean }).required && (!f.value || f.value === "—") && (
-                      <span style={{ fontSize: 10, color: "#ef4444", fontWeight: 600, border: "1px solid rgba(239,68,68,0.3)", borderRadius: 4, padding: "1px 6px", background: "rgba(239,68,68,0.06)" }}>Requis</span>
-                    )}
                   </>
                 )}
                 {f.key !== "contact" && editingField !== f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
