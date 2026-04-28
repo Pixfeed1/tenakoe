@@ -3194,6 +3194,14 @@ function QualifCertificateur({
   const isQualibat = certType === "Qualibat";
   const currentAntenneId = qualif.antenneQualibatId || "";
   const selectedAntenne = antennes.find((a) => a.id === currentAntenneId);
+
+  const CERTIFICATEUR_CONTACTS: Record<string, { email: string; telephone: string }> = {
+    "Qualit'EnR": { email: "qualification@qualit-enr.org", telephone: "01 48 78 70 90" },
+    "Qualifelec": { email: "contact@qualifelec.fr", telephone: "01 53 06 65 20" },
+    "Certibat": { email: "certibat-contact@qualibat.com", telephone: "" },
+  };
+  const certContact = CERTIFICATEUR_CONTACTS[certType];
+
   const iStyle: React.CSSProperties = {
     width: "100%", padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`,
     background: C.surface, color: C.text, fontSize: 11, outline: "none", boxSizing: "border-box",
@@ -3280,6 +3288,8 @@ function QualifCertificateur({
                 const v = e.target.value;
                 const patch: Record<string, unknown> = { certificateurType: v || null };
                 if (v !== "Qualibat") patch.antenneQualibatId = null;
+                const contact = CERTIFICATEUR_CONTACTS[v];
+                if (contact) patch.emailCertificateur = contact.email;
                 updateQualif(patch);
               }}
               style={iStyle}
@@ -3320,6 +3330,9 @@ function QualifCertificateur({
                 placeholder="email@certificateur.fr"
                 style={iStyle}
               />
+              {certContact?.telephone && (
+                <div style={{ fontSize: 9, color: C.textDim, marginTop: 3 }}>Tél : {certContact.telephone}</div>
+              )}
             </div>
           )}
           {isQualibat && (
