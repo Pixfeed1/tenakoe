@@ -282,9 +282,9 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Artisan</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
-              <div><label style={labelStyle}>Nom *</label><input style={inputStyle} placeholder="Nom" value={form.nomArtisan} onChange={(e) => set("nomArtisan", e.target.value)} required /></div>
+              <div><label style={labelStyle}>Nom *</label><input style={{ ...inputStyle, textTransform: "uppercase" }} placeholder="Nom" value={form.nomArtisan} onChange={(e) => set("nomArtisan", e.target.value.toUpperCase())} required /></div>
               <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} placeholder="Prénom" value={form.prenomArtisan} onChange={(e) => set("prenomArtisan", e.target.value)} required /></div>
-              <div><label style={labelStyle}>Entreprise *</label><input style={inputStyle} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value)} required /></div>
+              <div><label style={labelStyle}>Entreprise *</label><input style={{ ...inputStyle, textTransform: "uppercase" }} placeholder="Nom de l'entreprise" value={form.nomEntreprise} onChange={(e) => set("nomEntreprise", e.target.value.toUpperCase())} required /></div>
               <div><label style={labelStyle}>SIRET *</label><input style={inputStyle} placeholder="N° SIRET" value={form.siret} onChange={(e) => set("siret", e.target.value)} required /></div>
               <div><label style={labelStyle}>N° département du siège social *</label><input style={inputStyle} placeholder="ex: 75" value={form.departement} onChange={(e) => set("departement", e.target.value)} required /></div>
               <div><label style={labelStyle}>N° carte *</label><input style={inputStyle} placeholder="N° carte" value={form.numeroCarte} onChange={(e) => set("numeroCarte", e.target.value)} required /></div>
