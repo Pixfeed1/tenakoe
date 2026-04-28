@@ -16,6 +16,7 @@ interface Entreprise {
   statutPrise: string;
   statutFacturation: string | null;
   updatedAt: string;
+  interesseTNK: string | null;
   projets: Array<{ chargee: { prenom: string } | null }>;
 }
 
@@ -143,6 +144,13 @@ export function ProspectsView({ C, onSelectClient }: { C: Theme; onSelectClient:
             </div>
           );
         })}
+        <div style={{
+          padding: "12px 20px", borderRadius: 12, background: C.surface,
+          border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10,
+        }}>
+          <span style={{ fontSize: 22, fontWeight: 700, color: C.danger }}>{entreprises.filter((e) => e.interesseTNK === "INJOIGNABLE").length}</span>
+          <span style={{ fontSize: 12, color: C.textMuted }}>Injoignables</span>
+        </div>
       </div>
 
       {/* Table */}

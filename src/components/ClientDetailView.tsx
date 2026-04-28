@@ -1146,7 +1146,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </div>
             ))}
             {[
-              { label: "Intéressé TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }] },
+              { label: "Intéressé TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }, { v: "INJOIGNABLE", l: "Injoignable — prospect fermé" }] },
             ].map((f, i) => (
               <div key={i} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
                 <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
@@ -1278,6 +1278,35 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 </div>
               );
             })()}
+
+            {/* Synthèse des dates */}
+            <div style={{ paddingTop: 10, borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>Synthèse des dates</div>
+              {(() => {
+                const fmt = (d: string | undefined | null) => d ? new Date(d).toLocaleDateString("fr-FR") : "—";
+                const etape17 = tracks.find((t) => t.nom.toLowerCase().includes("depot") || t.nom.toLowerCase().includes("dépôt"));
+                const etape19 = tracks.find((t) => t.nom.toLowerCase().includes("obtention"));
+                const firstActive = tracks.find((t) => t.active);
+                return (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px", fontSize: 12 }}>
+                    {[
+                      { label: "Nouveau", date: entrepriseData?.createdAt },
+                      { label: "Prise en charge", date: entrepriseData?.dateStatutPrise },
+                      { label: "Injoignable", date: entrepriseData?.interesseTNK === "INJOIGNABLE" ? entrepriseData?.dateInteresseTNK : null },
+                      { label: "Payé", date: entrepriseData?.statutFacturation === "FACTURE_PAYEE" ? entrepriseData?.dateStatutFacturation : null },
+                      { label: "En cours", date: firstActive?.dateRealisee },
+                      { label: "Déposé", date: etape17?.done ? etape17.dateRealisee : null },
+                      { label: "Qualifié", date: etape19?.done ? etape19.dateRealisee : null },
+                    ].map((r) => (
+                      <div key={r.label} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0" }}>
+                        <span style={{ color: C.textMuted }}>{r.label}</span>
+                        <span style={{ color: r.date ? C.text : C.textDim, fontWeight: r.date ? 500 : 400 }}>{fmt(r.date)}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
 
           {/* Formation (unifié) */}
@@ -3087,7 +3116,7 @@ function formatStatutPrise(statut?: string): string {
 }
 
 function formatInteretTNK(interet?: string): string {
-  const map: Record<string, string> = { OUI: "Oui", NON: "Non", NSP: "NSP" };
+  const map: Record<string, string> = { OUI: "Oui", NON: "Non", NSP: "NSP", INJOIGNABLE: "Injoignable" };
   return map[interet || ""] || "Oui";
 }
 
