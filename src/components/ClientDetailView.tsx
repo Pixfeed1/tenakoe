@@ -1479,7 +1479,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 
           {/* Procédure alerte avant abandon */}
           <div style={{ gridColumn: "1 / -1", background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Procédure alerte avant abandon</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Alerte abandon prestation payée — le client n&apos;envoie pas les infos</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
                 { key: "alerte1Envoyee", dateKey: "dateAlerte1", label: "Alerte 1 envoyée" },
@@ -1948,71 +1948,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     );
                   })()}
 
-                  {/* Bons de commande */}
-                  {bons.length > 0 && (
-                    <div style={{ marginTop: 14, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>Bons de commande</div>
-                      {bons.map((b) => (
-                        <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", fontSize: 12, borderBottom: `1px solid ${C.border}` }}>
-                          <span style={{ color: C.textDim }}>{b.qualificationCode}</span>
-                          <span style={{ color: C.text, fontWeight: 500, flex: 1 }}>{b.reference || "—"}</span>
-                          {b.montant != null && <span style={{ color: C.text }}>{b.montant.toFixed(2)} €</span>}
-                          <Badge color={b.paye ? "#16a34a" : "#ef4444"} bg={b.paye ? "rgba(22,163,74,0.1)" : "rgba(239,68,68,0.1)"}>
-                            {b.paye ? "Payé" : "Non payé"}
-                          </Badge>
-                          {b.paye && b.datePaiement && <span style={{ fontSize: 10, color: C.textDim }}>{new Date(b.datePaiement).toLocaleDateString("fr-FR")}</span>}
-                          {!b.paye && (
-                            <button onClick={async () => {
-                              await fetch(`/api/bons-de-commande/${b.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paye: true }) });
-                              setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, bonsDeCommande: (pr.bonsDeCommande || []).map((x: BonDeCommande) => x.id === b.id ? { ...x, paye: true, datePaiement: new Date().toISOString() } : x) } : pr));
-                              toast("Bon marqué comme payé");
-                            }} style={{ padding: "2px 8px", borderRadius: 4, border: "none", background: C.accentDim, color: C.accentText, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>
-                              Marquer payé
-                            </button>
-                          )}
-                          <button onClick={async () => {
-                            await fetch(`/api/bons-de-commande/${b.id}`, { method: "DELETE" });
-                            setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, bonsDeCommande: (pr.bonsDeCommande || []).filter((x: BonDeCommande) => x.id !== b.id) } : pr));
-                          }} style={{ padding: 2, background: "none", border: "none", cursor: "pointer" }}>
-                            <Trash2 size={11} color={C.textDim} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {/* Add bon de commande */}
-                  <div style={{ marginTop: 6 }}>
-                    {showAddBon === p.id ? (
-                      <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginTop: 6 }}>
-                        <select value={newBonForm.qualificationCode} onChange={(e) => setNewBonForm({ ...newBonForm, qualificationCode: e.target.value })}
-                          style={{ padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11 }}>
-                          <option value="">Qualification...</option>
-                          {p.qualifications.map((q) => <option key={q.type} value={q.type}>{q.type}</option>)}
-                        </select>
-                        <input placeholder="Référence" value={newBonForm.reference} onChange={(e) => setNewBonForm({ ...newBonForm, reference: e.target.value })}
-                          style={{ padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11 }} />
-                        <input placeholder="Montant (€)" type="number" value={newBonForm.montant} onChange={(e) => setNewBonForm({ ...newBonForm, montant: e.target.value })}
-                          style={{ padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11 }} />
-                        <div style={{ display: "flex", gap: 4 }}>
-                          <button onClick={async () => {
-                            if (!newBonForm.qualificationCode) return;
-                            const res = await fetch("/api/bons-de-commande", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projetId: p.id, ...newBonForm, montant: newBonForm.montant ? Number(newBonForm.montant) : null }) });
-                            if (res.ok) {
-                              const bon = await res.json();
-                              setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, bonsDeCommande: [bon, ...(pr.bonsDeCommande || [])] } : pr));
-                              setShowAddBon(null); setNewBonForm({ qualificationCode: "", reference: "", montant: "", dateEmission: "" }); toast("Bon de commande créé");
-                            }
-                          }} style={{ padding: "6px 10px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>Ajouter</button>
-                          <button onClick={() => setShowAddBon(null)} style={{ padding: "6px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 10, cursor: "pointer" }}>Annuler</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button onClick={() => { setShowAddBon(p.id); setNewBonForm({ qualificationCode: p.qualifications[0]?.type || "", reference: "", montant: "", dateEmission: "" }); }}
-                        style={{ padding: "4px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer", marginTop: 4 }}>
-                        + Bon de commande
-                      </button>
-                    )}
-                  </div>
                   </div>
                   )}
                 </div>
@@ -3186,6 +3121,8 @@ function QualifCertificateur({
     dateBonCommandeDemande?: string | null;
     bonCommandePaye?: boolean;
     dateBonCommandePaye?: string | null;
+    bonCommandeFichierUrl?: string | null;
+    bonCommandeFichierNom?: string | null;
   };
   antennes: Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>;
   updateQualif: (patch: Record<string, unknown>) => Promise<void> | void;
@@ -3411,6 +3348,34 @@ function QualifCertificateur({
                 updateQualif({ bonCommandePaye: newVal, dateBonCommandePaye: newVal ? new Date().toISOString() : null });
               }}
             />
+            {qualif.bonCommandeFichierUrl ? (
+              <a href={fixFileUrl(qualif.bonCommandeFichierUrl)} download={qualif.bonCommandeFichierNom || "bon-commande"} style={{
+                display: "inline-flex", alignItems: "center", gap: 3,
+                padding: "4px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
+                background: C.blueDim, color: C.blue, textDecoration: "none",
+              }}>
+                <Download size={10} /> {qualif.bonCommandeFichierNom ? qualif.bonCommandeFichierNom.slice(0, 20) : "Fichier"}
+              </a>
+            ) : null}
+            <label style={{
+              display: "inline-flex", alignItems: "center", gap: 3,
+              padding: "4px 8px", borderRadius: 999, cursor: "pointer",
+              border: `1px solid ${C.border}`, background: "transparent",
+              fontSize: 10, color: C.textDim,
+            }} title="Uploader le bon de commande">
+              <Upload size={10} />
+              <input type="file" style={{ display: "none" }} onChange={async (ev) => {
+                const file = ev.target.files?.[0];
+                if (!file) return;
+                const fd = new FormData(); fd.append("file", file);
+                const res = await fetch("/api/upload", { method: "POST", body: fd });
+                if (res.ok) {
+                  const { url } = await res.json();
+                  updateQualif({ bonCommandeFichierUrl: url, bonCommandeFichierNom: file.name });
+                }
+                ev.target.value = "";
+              }} />
+            </label>
           </div>
         </div>
       )}

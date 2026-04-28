@@ -31,7 +31,7 @@ export async function PATCH(
   if (body.niveauVise !== undefined) data.niveauVise = body.niveauVise;
   if (body.niveauObtenu !== undefined) data.niveauObtenu = body.niveauObtenu;
 
-  const stringFields = ["certificateurType", "emailCertificateur", "identifiantCertificateur", "motDePasseCertificateur", "interlocuteurCertificateur"];
+  const stringFields = ["certificateurType", "emailCertificateur", "identifiantCertificateur", "motDePasseCertificateur", "interlocuteurCertificateur", "bonCommandeFichierUrl", "bonCommandeFichierNom"];
   for (const f of stringFields) { if (body[f] !== undefined) data[f] = body[f]; }
   if (body.antenneQualibatId !== undefined) data.antenneQualibatId = body.antenneQualibatId;
 

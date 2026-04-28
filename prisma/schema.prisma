@@ -298,6 +298,8 @@ model ProjetQualification {
   dateBonCommandeDemande    DateTime?
   bonCommandePaye           Boolean  @default(false)
   dateBonCommandePaye       DateTime?
+  bonCommandeFichierUrl     String?
+  bonCommandeFichierNom     String?
 
   rges                      ProjetQualificationRGE[]
   chantiers                 Chantier[]
