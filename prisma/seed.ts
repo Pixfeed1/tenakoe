@@ -314,6 +314,29 @@ async function main() {
   console.log("Depots PDB created:", depotsPDB.length);
 
   // ========================
+  // DEPOTS BIGMAT (agences, ordre alphabétique)
+  // ========================
+  const depotsBigMat = [
+    "Abrets Les", "Alton", "Ampuis", "Annemasse", "Avignon",
+    "Belleville-en-Beaujolais", "Beynost", "Bourg-en-Bresse", "Branges",
+    "Chanas", "Chapareillan", "Chaponost", "Cuines",
+    "Lentilly", "Le Teil", "Loriol",
+    "Mâcon", "Mercuriol", "Mions", "Modane", "Montélimar",
+    "Pontamafrey",
+    "Saint-Étienne-sur-Reyssouze", "Saint-Jean-de-Maurienne",
+    "Tournus",
+  ];
+
+  for (let i = 0; i < depotsBigMat.length; i++) {
+    await prisma.depotConfig.upsert({
+      where: { nom_prescripteurType: { nom: depotsBigMat[i], prescripteurType: "BIGMAT" } },
+      update: { ordre: i + 1, actif: true },
+      create: { nom: depotsBigMat[i], prescripteurType: "BIGMAT", ordre: i + 1 },
+    });
+  }
+  console.log("Depots BigMat created:", depotsBigMat.length);
+
+  // ========================
   // NOMENCLATURE RGE (15 codes)
   // ========================
   const nomenclatureRGE = [
