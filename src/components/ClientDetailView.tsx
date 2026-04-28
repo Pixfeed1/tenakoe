@@ -73,7 +73,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [nomenclatureMap, setNomenclatureMap] = useState<Record<string, string>>({});
   interface BonDeCommande { id: string; qualificationCode: string; reference: string | null; montant: number | null; paye: boolean; datePaiement: string | null; dateEmission: string | null; commentaire: string | null }
   interface ChantierDoc { id: string; nom: string; fichierUrl: string | null; fichierNom: string | null; fichierTaille: number | null }
-  interface ChantierData { id: string; numero: number; nom: string | null; description: string | null; devisRecu: boolean; devisFichierUrl: string | null; devisFichierNom: string | null; dateDevis: string | null; factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null; attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null; documents: ChantierDoc[] }
+  interface ChantierData { id: string; numero: number; nom: string | null; description: string | null; devisRecu: boolean; devisFichierUrl: string | null; devisFichierNom: string | null; dateDevis: string | null; factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null; attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null; photosRecues: boolean; photosFichierUrl: string | null; photosFichierNom: string | null; datePhotos: string | null; documents: ChantierDoc[] }
   const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string; niveauVise?: string | null; niveauObtenu?: string | null; rges?: Array<{ id: string; rgeCode: string }>; chantiers?: ChantierData[]; certificateurType?: string | null; emailCertificateur?: string | null; antenneQualibatId?: string | null; identifiantCertificateur?: string | null; motDePasseCertificateur?: string | null; interlocuteurCertificateur?: string | null; dateCommission?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; chargee?: { id: string; prenom: string; nom: string } | null }>>([]);
   const [nomenclatureRGE, setNomenclatureRGE] = useState<Array<{ code: string; nom: string }>>([]);
   const [showAddBon, setShowAddBon] = useState<string | null>(null);
@@ -3077,6 +3077,7 @@ interface ChantierFull {
   devisRecu: boolean; devisFichierUrl: string | null; devisFichierNom: string | null; dateDevis: string | null;
   factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null;
   attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null;
+  photosRecues: boolean; photosFichierUrl: string | null; photosFichierNom: string | null; datePhotos: string | null;
   documents: ChantierDocFull[];
 }
 
@@ -3086,7 +3087,7 @@ function computeQualifProgress(q: {
   certificateurType?: string | null;
   identifiantCertificateur?: string | null;
   bonCommandePaye?: boolean;
-  chantiers?: Array<{ numero: number; devisRecu: boolean; factureRecue: boolean; attestationRecue: boolean }>;
+  chantiers?: Array<{ numero: number; devisRecu: boolean; factureRecue: boolean; attestationRecue: boolean; photosRecues?: boolean }>;
 }): number {
   let score = 0;
   if ((q.rges || []).length > 0) score += 20;
@@ -3094,7 +3095,7 @@ function computeQualifProgress(q: {
   if (q.certificateurType && q.identifiantCertificateur) score += 20;
   if (q.bonCommandePaye) score += 20;
   const mainChantiers = (q.chantiers || []).filter((c) => c.numero <= 3);
-  const complets = mainChantiers.filter((c) => c.devisRecu && c.factureRecue && c.attestationRecue).length;
+  const complets = mainChantiers.filter((c) => c.devisRecu && c.factureRecue && c.attestationRecue && c.photosRecues).length;
   score += (complets / 3) * 30;
   return Math.round(Math.min(100, score));
 }
@@ -3386,12 +3387,12 @@ function QualifChantiers({
   onUpdate: (newChantiers: ChantierFull[]) => void;
 }) {
   const main = chantiers.filter((c) => c.numero <= 3);
-  const complets = main.filter((c) => c.devisRecu && c.factureRecue && c.attestationRecue).length;
+  const complets = main.filter((c) => c.devisRecu && c.factureRecue && c.attestationRecue && c.photosRecues).length;
 
   const getStatus = (c: ChantierFull): "complet" | "en-cours" | "vide" => {
     if (c.numero <= 3) {
-      if (c.devisRecu && c.factureRecue && c.attestationRecue) return "complet";
-      if (c.devisRecu || c.factureRecue || c.attestationRecue || c.documents.length > 0) return "en-cours";
+      if (c.devisRecu && c.factureRecue && c.attestationRecue && c.photosRecues) return "complet";
+      if (c.devisRecu || c.factureRecue || c.attestationRecue || c.photosRecues || c.documents.length > 0) return "en-cours";
       return "vide";
     }
     return c.documents.length > 0 ? "complet" : "vide";
@@ -3489,6 +3490,7 @@ function QualifChantiers({
                     <DotIndicator recu={c.devisRecu} label="Devis" />
                     <DotIndicator recu={c.factureRecue} label="Facture" />
                     <DotIndicator recu={c.attestationRecue} label="Attestation" />
+                    <DotIndicator recu={c.photosRecues} label="Photos" />
                   </div>
                 ) : (
                   <span style={{ fontSize: 10, color: C.textDim, flexShrink: 0 }}>{c.documents.length} doc{c.documents.length > 1 ? "s" : ""}</span>
@@ -3511,6 +3513,7 @@ function QualifChantiers({
                   { key: "devis", label: "Devis", recu: c.devisRecu, fichierUrl: c.devisFichierUrl, fichierNom: c.devisFichierNom, date: c.dateDevis, recuKey: "devisRecu", urlKey: "devisFichierUrl", nomKey: "devisFichierNom" },
                   { key: "facture", label: "Facture", recu: c.factureRecue, fichierUrl: c.factureFichierUrl, fichierNom: c.factureFichierNom, date: c.dateFacture, recuKey: "factureRecue", urlKey: "factureFichierUrl", nomKey: "factureFichierNom" },
                   { key: "attestation", label: "Attestation travaux", recu: c.attestationRecue, fichierUrl: c.attestationFichierUrl, fichierNom: c.attestationFichierNom, date: c.dateAttestation, recuKey: "attestationRecue", urlKey: "attestationFichierUrl", nomKey: "attestationFichierNom" },
+                  { key: "photos", label: "Photos", recu: c.photosRecues, fichierUrl: c.photosFichierUrl, fichierNom: c.photosFichierNom, date: c.datePhotos, recuKey: "photosRecues", urlKey: "photosFichierUrl", nomKey: "photosFichierNom" },
                 ].map((doc) => (
                   <div key={doc.key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: `1px solid ${C.border}` }}>
                     <div onClick={() => updateChantier(c.id, { [doc.recuKey]: !doc.recu })} style={{

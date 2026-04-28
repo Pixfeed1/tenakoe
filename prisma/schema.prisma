@@ -359,6 +359,10 @@ model Chantier {
   attestationFichierUrl String?
   attestationFichierNom String?
   dateAttestation       DateTime?
+  photosRecues          Boolean   @default(false)
+  photosFichierUrl      String?
+  photosFichierNom      String?
+  datePhotos            DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   documents             ChantierDocument[]
