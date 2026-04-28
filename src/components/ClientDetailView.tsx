@@ -3255,6 +3255,9 @@ function QualifCertificateur({
                   {selectedAntenne.telephone && <span>{formatPhone(selectedAntenne.telephone)}</span>}
                 </div>
               )}
+              {!selectedAntenne && qualif.emailCertificateur && (
+                <div style={{ fontSize: 9, color: C.textDim, marginTop: 3 }}>{qualif.emailCertificateur}</div>
+              )}
             </div>
           ) : (
             <div>
@@ -3270,19 +3273,6 @@ function QualifCertificateur({
               {certContact?.telephone && (
                 <div style={{ fontSize: 9, color: C.textDim, marginTop: 3 }}>Tél : {certContact.telephone}</div>
               )}
-            </div>
-          )}
-          {isQualibat && (
-            <div>
-              <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>Email certificateur</label>
-              <input
-                type="email"
-                value={draft.email}
-                onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-                onBlur={() => { if (draft.email !== (qualif.emailCertificateur || "")) updateQualif({ emailCertificateur: draft.email || null }); }}
-                placeholder="email@certificateur.fr"
-                style={iStyle}
-              />
             </div>
           )}
           {/* Ligne 2 */}
