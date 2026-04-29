@@ -13,7 +13,7 @@ export async function PATCH(
   const tache = await prisma.tache.findUnique({ where: { id } });
   if (!tache) return NextResponse.json({ error: "Tache non trouvee" }, { status: 404 });
 
-  if (user.role !== "ADMIN" && tache.assigneeId !== user.id && tache.createurId !== user.id) {
+  if (user.role === "PRESCRIPTEUR" && tache.assigneeId !== user.id && tache.createurId !== user.id) {
     return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
   }
 
@@ -47,7 +47,7 @@ export async function DELETE(
   const tache = await prisma.tache.findUnique({ where: { id } });
   if (!tache) return NextResponse.json({ error: "Tache non trouvee" }, { status: 404 });
 
-  if (user.role !== "ADMIN" && tache.assigneeId !== user.id && tache.createurId !== user.id) {
+  if (user.role === "PRESCRIPTEUR" && tache.assigneeId !== user.id && tache.createurId !== user.id) {
     return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
   }
 

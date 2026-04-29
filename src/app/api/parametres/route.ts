@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/rbac";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const parametres = await prisma.parametre.findMany({ orderBy: { cle: "asc" } });
   return NextResponse.json(parametres);
@@ -12,7 +12,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const body = await request.json();
   const parametre = await prisma.parametre.upsert({

@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/rbac";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") return NextResponse.json(null);
+  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json(null);
 
   const source = request.nextUrl.searchParams.get("source");
   if (!source) return NextResponse.json(null);

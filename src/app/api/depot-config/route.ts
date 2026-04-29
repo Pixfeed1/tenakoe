@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 // POST: admin only
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const body = await request.json();
   if (!body.nom || !body.prescripteurType) return NextResponse.json({ error: "nom et prescripteurType requis" }, { status: 400 });
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 // DELETE: admin only
 export async function DELETE(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const id = request.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id requis" }, { status: 400 });

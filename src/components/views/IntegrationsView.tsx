@@ -411,12 +411,15 @@ export function IntegrationsView({ C }: { C: Theme }) {
                         Enregistrer
                       </button>
                     )}
-                    <button onClick={() => testConnection(integ)} disabled={testing === integ.key} style={{
-                      padding: "8px 18px", borderRadius: 8,
-                      border: `1px solid ${C.border}`, background: C.surface,
-                      color: C.textMuted, fontSize: 13, fontWeight: 500, cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 6,
-                    }}>
+                    <button onClick={() => testConnection(integ)} disabled={testing === integ.key}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+                      style={{
+                        padding: "8px 18px", borderRadius: 8,
+                        border: `1px solid ${C.border}`, background: C.surface,
+                        color: C.textMuted, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 6, transition: "transform 0.15s, box-shadow 0.15s",
+                      }}>
                       <RefreshCw size={13} className={testing === integ.key ? "animate-spin" : ""} />
                       {testing === integ.key ? "Test..." : "Tester"}
                     </button>
@@ -504,11 +507,14 @@ function GmailOAuthSection({ C }: { C: Theme }) {
           </div>
         </>
       ) : (
-        <button onClick={connect} style={{
-          padding: "8px 18px", borderRadius: 8, border: "none",
-          background: "#EA4335", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 6,
-        }}>
+        <button onClick={connect}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px rgba(234,67,53,0.3)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+          style={{
+            padding: "8px 18px", borderRadius: 8, border: "none",
+            background: "#EA4335", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 6, transition: "transform 0.15s, box-shadow 0.15s",
+          }}>
           <Mail size={14} /> Connecter mon compte Gmail
         </button>
       )}

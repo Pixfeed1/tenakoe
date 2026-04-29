@@ -101,7 +101,7 @@ export async function PATCH(request: NextRequest) {
   if (!note) return NextResponse.json({ error: "Note non trouvée" }, { status: 404 });
 
   // Seul l'auteur ou un admin peut modifier
-  if (note.auteurId !== user.id && user.role !== "ADMIN") {
+  if (note.auteurId !== user.id && user.role === "PRESCRIPTEUR") {
     return NextResponse.json({ error: "Pas autorisé" }, { status: 403 });
   }
 
@@ -131,7 +131,7 @@ export async function DELETE(request: NextRequest) {
   const note = await prisma.note.findUnique({ where: { id } });
   if (!note) return NextResponse.json({ error: "Note non trouvée" }, { status: 404 });
 
-  if (note.auteurId !== user.id && user.role !== "ADMIN") {
+  if (note.auteurId !== user.id && user.role === "PRESCRIPTEUR") {
     return NextResponse.json({ error: "Pas autorisé" }, { status: 403 });
   }
 
