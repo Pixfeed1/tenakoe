@@ -31,7 +31,7 @@ export async function DELETE(
 ) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
-  if (user.role === "PRESCRIPTEUR" && user.role !== "CHARGEE") {
+  if (user.role === "PRESCRIPTEUR") {
     return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
   }
 
