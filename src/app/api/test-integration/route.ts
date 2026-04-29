@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ ok: false, msg: "Email et App Password requis" });
         }
         const transporter = nodemailer.createTransport({
-          host: config.smtp_host || "smtp.gmail.com",
+          host: config.smtp_host?.trim() || "smtp.gmail.com",
           port: Number(config.smtp_port) || 587,
           secure: false,
           auth: { user: config.smtp_user, pass: config.smtp_pass },
