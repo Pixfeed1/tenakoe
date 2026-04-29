@@ -451,13 +451,20 @@ function GmailOAuthSection({ C }: { C: Theme }) {
 
   useEffect(() => {
     fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then(setStatus).catch(() => {});
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "gmail-oauth-success") {
+        fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then(setStatus).catch(() => {});
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
   }, []);
 
   const connect = async () => {
     const res = await fetch("/api/auth/gmail", { method: "POST" });
     if (res.ok) {
       const { url } = await res.json();
-      window.location.href = url;
+      window.open(url, "gmail-oauth", "width=500,height=600,left=200,top=100");
     }
   };
 

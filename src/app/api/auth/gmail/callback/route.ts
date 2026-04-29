@@ -1,17 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { handleGmailCallback } from "@/lib/gmail";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   if (!code) {
-    return NextResponse.redirect(new URL("/dashboard?view=Intégrations&error=no_code", request.url));
+    return new Response(`<html><body><script>
+      window.opener?.postMessage({ type: "gmail-oauth-error", msg: "Code manquant" }, "*");
+      window.close();
+    </script><p>Erreur: code manquant. Vous pouvez fermer cette fenêtre.</p></body></html>`, {
+      headers: { "Content-Type": "text/html" },
+    });
   }
 
   try {
     await handleGmailCallback(code);
-    return NextResponse.redirect(new URL("/dashboard?view=Intégrations&gmail=connected", request.url));
+    return new Response(`<html><body><script>
+      window.opener?.postMessage({ type: "gmail-oauth-success" }, "*");
+      window.close();
+    </script><p>Connexion réussie! Vous pouvez fermer cette fenêtre.</p></body></html>`, {
+      headers: { "Content-Type": "text/html" },
+    });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Erreur";
-    return NextResponse.redirect(new URL(`/dashboard?view=Intégrations&error=${encodeURIComponent(msg)}`, request.url));
+    const msg = error instanceof Error ? error.message : "Erreur inconnue";
+    return new Response(`<html><body><script>
+      window.opener?.postMessage({ type: "gmail-oauth-error", msg: ${JSON.stringify(msg)} }, "*");
+      window.close();
+    </script><p>Erreur: ${msg}. Vous pouvez fermer cette fenêtre.</p></body></html>`, {
+      headers: { "Content-Type": "text/html" },
+    });
   }
 }

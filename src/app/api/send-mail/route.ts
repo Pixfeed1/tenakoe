@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { sendMail, type SmtpConfig } from "@/lib/mail";
 import { prisma } from "@/lib/prisma";
 import { hydrateTemplate } from "@/lib/format";
+import { getSignature } from "@/lib/mail-signature";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -50,8 +51,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Ajouter la signature automatique
+    const nameParts = (fromName || "").split(" ");
+    const signature = getSignature({
+      prenom: nameParts[0] || "",
+      nom: nameParts.slice(1).join(" ") || "",
+      email: fromEmail || "",
+      telephone: dbUser?.telephone,
+    });
+    const htmlWithSignature = `${content || ""}<br/><br/>${signature}`;
+
     const result = await sendMail({
-      to, subject, html: content || "", cc, bcc,
+      to, subject, html: htmlWithSignature, cc, bcc,
       from: `"${fromName}" <${userSmtp?.user || fromEmail}>`,
       smtp: userSmtp,
     });
