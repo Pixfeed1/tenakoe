@@ -5,6 +5,7 @@ import { Plug, ExternalLink, CheckCircle2, XCircle, RefreshCw, ChevronDown, Chev
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { GuideTooltip } from "@/components/GuideSystem";
+import { useToast } from "@/components/ui/Toast";
 
 interface IntegrationConfig {
   key: string;
@@ -149,6 +150,7 @@ interface SavedIntegration {
 }
 
 export function IntegrationsView({ C }: { C: Theme }) {
+  const { toast } = useToast();
   const [saved, setSaved] = useState<SavedIntegration[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
@@ -199,6 +201,9 @@ export function IntegrationsView({ C }: { C: Theme }) {
         const idx = prev.findIndex((s) => s.id === updated.id);
         return idx >= 0 ? prev.map((s) => s.id === updated.id ? updated : s) : [...prev, updated];
       });
+      toast("Configuration sauvegardée");
+    } else {
+      toast("Erreur lors de la sauvegarde");
     }
   };
 
@@ -387,18 +392,22 @@ export function IntegrationsView({ C }: { C: Theme }) {
                       display: "flex", alignItems: "center", gap: 6,
                     }}>
                       {test.ok ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                      {test.msg}
+                      {test.ok ? "Connexion réussie" : test.msg || "Erreur de connexion"}
                     </div>
                   )}
 
                   {/* Actions */}
                   <div style={{ display: "flex", gap: 8 }}>
                     {integ.fields.length > 0 && (
-                      <button onClick={() => saveIntegration(integ)} style={{
-                        padding: "8px 18px", borderRadius: 8, border: "none",
-                        background: "linear-gradient(135deg, #16a34a, #15803d)",
-                        color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                      }}>
+                      <button onClick={() => saveIntegration(integ)}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px rgba(22,163,74,0.25)"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(22,163,74,0.15)"; }}
+                        style={{
+                          padding: "8px 18px", borderRadius: 8, border: "none",
+                          background: "linear-gradient(135deg, #16a34a, #15803d)",
+                          color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                          boxShadow: "0 2px 8px rgba(22,163,74,0.15)", transition: "transform 0.15s, box-shadow 0.15s",
+                        }}>
                         Enregistrer
                       </button>
                     )}
