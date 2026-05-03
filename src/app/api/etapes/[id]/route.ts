@@ -59,12 +59,17 @@ export async function PATCH(
     };
     const statutUpdate = statutMap[etape.ordre];
     if (statutUpdate && etape.projet.entrepriseId) {
+      const updateData: Record<string, unknown> = {
+        ...statutUpdate,
+        dateStatutPrise: new Date(),
+      };
+      const vals = Object.values(statutUpdate);
+      if (vals.some((v) => ["QUALIFIE", "TERMINE", "FACTURE_PAYEE"].includes(v as string))) {
+        updateData.estClient = true;
+      }
       await prisma.entreprise.update({
         where: { id: etape.projet.entrepriseId },
-        data: {
-          ...statutUpdate,
-          dateStatutPrise: new Date(),
-        },
+        data: updateData,
       });
       await prisma.logActivite.create({
         data: {

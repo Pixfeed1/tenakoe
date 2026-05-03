@@ -76,6 +76,16 @@ export async function PATCH(
   if (body.numeroCarte !== undefined) data.numeroCarte = body.numeroCarte;
   if (body.eligible !== undefined) { data.eligible = body.eligible; data.dateEligible = new Date(); }
   if (body.eligibleCommentaire !== undefined) data.eligibleCommentaire = body.eligibleCommentaire;
+  if (body.statutPrise !== undefined) {
+    data.statutPrise = body.statutPrise;
+    data.dateStatutPrise = new Date();
+    if (["QUALIFIE", "TERMINE", "FACTURE_PAYEE"].includes(body.statutPrise)) data.estClient = true;
+  }
+  if (body.statutFacturation !== undefined) {
+    data.statutFacturation = body.statutFacturation;
+    data.dateStatutFacturation = new Date();
+    if (body.statutFacturation === "FACTURE_PAYEE") data.estClient = true;
+  }
 
   const updated = await prisma.entreprise.update({ where: { id }, data });
 
