@@ -2451,10 +2451,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <div style={{ fontSize: 13, color: C.text, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                     {isNote ? (
                       <span style={{ whiteSpace: "pre-wrap" }}>
-                        {a.message.replace(/^Note : /, "").split(/(@\w+)/g).map((part, pi) =>
+                        {a.message.replace(/^Note : /, "").split(/(@\w+|\/api\/files\/\S+)/g).map((part, pi) =>
                           part.startsWith("@")
                             ? <span key={pi} style={{ color: C.accent, fontWeight: 600, background: C.accentDim, padding: "0 4px", borderRadius: 4 }}>{part}</span>
-                            : part
+                            : part.startsWith("/api/files/")
+                              ? <a key={pi} href={part} target="_blank" rel="noopener noreferrer" style={{ color: C.accent, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }} onClick={(e) => e.stopPropagation()}><Paperclip size={12} />{part.split("_").slice(-1)[0] || part.split("/").pop()}</a>
+                              : part
                         )}
                       </span>
                     ) : a.message}
@@ -3003,9 +3005,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   ) : (
                     <>
                       <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                        {note.contenu.split(/(@\w+)/g).map((part, pi) =>
+                        {note.contenu.split(/(@\w+|\/api\/files\/\S+)/g).map((part, pi) =>
                           part.startsWith("@")
                             ? <span key={pi} style={{ color: C.accent, fontWeight: 600, background: C.accentDim, padding: "0 4px", borderRadius: 4 }}>{part}</span>
+                            : part.startsWith("/api/files/")
+                              ? <a key={pi} href={part} target="_blank" rel="noopener noreferrer" style={{ color: C.accent, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}><Paperclip size={12} />{part.split("_").slice(-1)[0] || part.split("/").pop()}</a>
                             : part
                         )}
                       </div>
