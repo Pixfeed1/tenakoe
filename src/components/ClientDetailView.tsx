@@ -1283,24 +1283,47 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <div style={{ paddingTop: 10, borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>Synthèse des dates</div>
               {(() => {
-                const fmt = (d: string | undefined | null) => d ? new Date(d).toLocaleDateString("fr-FR") : "—";
                 const etape17 = tracks.find((t) => t.nom.toLowerCase().includes("depot") || t.nom.toLowerCase().includes("dépôt"));
                 const etape19 = tracks.find((t) => t.nom.toLowerCase().includes("obtention"));
                 const firstActive = tracks.find((t) => t.active);
+                const dateRows: Array<{ label: string; date: string | undefined | null; apiKey?: string }> = [
+                  { label: "Nouveau", date: entrepriseData?.createdAt, apiKey: "createdAt" },
+                  { label: "Prise en charge", date: entrepriseData?.dateStatutPrise, apiKey: "dateStatutPrise" },
+                  { label: "Injoignable", date: entrepriseData?.interesseTNK === "INJOIGNABLE" ? entrepriseData?.dateInteresseTNK : null, apiKey: "dateInteresseTNK" },
+                  { label: "Payé", date: entrepriseData?.statutFacturation === "FACTURE_PAYEE" ? entrepriseData?.dateStatutFacturation : null, apiKey: "dateStatutFacturation" },
+                  { label: "En cours", date: firstActive?.dateRealisee },
+                  { label: "Déposé", date: etape17?.done ? etape17.dateRealisee : null },
+                  { label: "Qualifié", date: etape19?.done ? etape19.dateRealisee : null },
+                ];
                 return (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px", fontSize: 12 }}>
-                    {[
-                      { label: "Nouveau", date: entrepriseData?.createdAt },
-                      { label: "Prise en charge", date: entrepriseData?.dateStatutPrise },
-                      { label: "Injoignable", date: entrepriseData?.interesseTNK === "INJOIGNABLE" ? entrepriseData?.dateInteresseTNK : null },
-                      { label: "Payé", date: entrepriseData?.statutFacturation === "FACTURE_PAYEE" ? entrepriseData?.dateStatutFacturation : null },
-                      { label: "En cours", date: firstActive?.dateRealisee },
-                      { label: "Déposé", date: etape17?.done ? etape17.dateRealisee : null },
-                      { label: "Qualifié", date: etape19?.done ? etape19.dateRealisee : null },
-                    ].map((r) => (
-                      <div key={r.label} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0" }}>
+                    {dateRows.map((r) => (
+                      <div key={r.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0" }}>
                         <span style={{ color: C.textMuted }}>{r.label}</span>
-                        <span style={{ color: r.date ? C.text : C.textDim, fontWeight: r.date ? 500 : 400 }}>{fmt(r.date)}</span>
+                        {r.apiKey && client?.id && !isDemoMode ? (
+                          <input
+                            type="date"
+                            value={r.date ? new Date(r.date).toISOString().slice(0, 10) : ""}
+                            onChange={async (e) => {
+                              const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                              setEntrepriseData((prev) => prev ? { ...prev, [r.apiKey!]: val || "" } : prev);
+                              await fetch(`/api/entreprises/${client.id}`, {
+                                method: "PATCH", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ [r.apiKey!]: val }),
+                              }).catch(() => {});
+                            }}
+                            style={{
+                              padding: "1px 4px", borderRadius: 4, border: `1px solid ${r.date ? "transparent" : C.border}`,
+                              background: "transparent", color: r.date ? C.text : C.textDim,
+                              fontSize: 12, fontWeight: r.date ? 500 : 400, outline: "none", cursor: "pointer",
+                              width: 100, textAlign: "right",
+                            }}
+                          />
+                        ) : (
+                          <span style={{ color: r.date ? C.text : C.textDim, fontWeight: r.date ? 500 : 400 }}>
+                            {r.date ? new Date(r.date).toLocaleDateString("fr-FR") : "—"}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
