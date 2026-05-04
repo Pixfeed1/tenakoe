@@ -3199,30 +3199,29 @@ function QualifCertificateur({
     isQualibat && selectedAntenne?.nom,
   ].filter(Boolean).join(" · ");
 
-  const Chip = ({ checked, date, label, onClick }: { checked: boolean; date: string | null | undefined; label: string; onClick: () => void }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 6,
-        padding: "4px 10px", borderRadius: 999, cursor: "pointer",
-        background: checked ? C.accentDim : "transparent",
-        border: `1px solid ${checked ? C.accent + "40" : C.border}`,
-        color: checked ? C.accentText : C.textMuted,
-        fontSize: 10.5, fontWeight: 600,
-      }}
-    >
-      <div style={{
-        width: 11, height: 11, borderRadius: 3,
-        border: `1.5px solid ${checked ? C.accent : C.border}`,
-        background: checked ? C.accent : "transparent",
-        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-      }}>
-        {checked && <Check size={7} color="#fff" strokeWidth={3} />}
-      </div>
-      <span>{label}</span>
-      {checked && date && <span style={{ color: C.textDim, fontWeight: 400 }}>· {new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}</span>}
-    </button>
+  const Chip = ({ checked, date, label, onClick, onDateChange }: { checked: boolean; date: string | null | undefined; label: string; onClick: () => void; onDateChange?: (d: string) => void }) => (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 999, background: checked ? C.accentDim : "transparent", border: `1px solid ${checked ? C.accent + "40" : C.border}`, fontSize: 10.5, fontWeight: 600 }}>
+      <button
+        type="button"
+        onClick={onClick}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0, color: checked ? C.accentText : C.textMuted, fontSize: 10.5, fontWeight: 600 }}
+      >
+        <div style={{ width: 11, height: 11, borderRadius: 3, border: `1.5px solid ${checked ? C.accent : C.border}`, background: checked ? C.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {checked && <Check size={7} color="#fff" strokeWidth={3} />}
+        </div>
+        <span>{label}</span>
+      </button>
+      {checked && date && onDateChange && (
+        <input
+          type="date"
+          value={new Date(date).toISOString().slice(0, 10)}
+          onChange={(e) => onDateChange(e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString())}
+          onClick={(e) => e.stopPropagation()}
+          style={{ border: "none", background: "transparent", color: C.textDim, fontSize: 10, fontWeight: 400, width: 85, padding: 0, outline: "none", cursor: "pointer" }}
+        />
+      )}
+      {checked && date && !onDateChange && <span style={{ color: C.textDim, fontWeight: 400 }}>· {new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}</span>}
+    </span>
   );
 
   return (
@@ -3360,6 +3359,7 @@ function QualifCertificateur({
                 const newVal = !qualif.bonCommandeDemande;
                 updateQualif({ bonCommandeDemande: newVal, dateBonCommandeDemande: newVal ? new Date().toISOString() : null });
               }}
+              onDateChange={(d) => updateQualif({ dateBonCommandeDemande: d })}
             />
             <Chip
               checked={!!qualif.bonCommandePaye}
@@ -3369,6 +3369,7 @@ function QualifCertificateur({
                 const newVal = !qualif.bonCommandePaye;
                 updateQualif({ bonCommandePaye: newVal, dateBonCommandePaye: newVal ? new Date().toISOString() : null });
               }}
+              onDateChange={(d) => updateQualif({ dateBonCommandePaye: d })}
             />
             {qualif.bonCommandeFichierUrl ? (
               <a href={fixFileUrl(qualif.bonCommandeFichierUrl)} download={qualif.bonCommandeFichierNom || "bon-commande"} style={{
