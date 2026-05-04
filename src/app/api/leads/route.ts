@@ -59,6 +59,28 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Upsert conseiller si email fourni
+  let conseillerId: string | null = null;
+  if (body.emailConseiller) {
+    const conseiller = await prisma.conseiller.upsert({
+      where: { email: body.emailConseiller },
+      update: {
+        nom: body.nomConseiller || undefined,
+        prenom: body.prenomConseiller || undefined,
+        telephone: body.telephoneConseiller || undefined,
+        prescripteurType: body.prescripteur,
+      },
+      create: {
+        nom: body.nomConseiller || "",
+        prenom: body.prenomConseiller || null,
+        email: body.emailConseiller,
+        telephone: body.telephoneConseiller || null,
+        prescripteurType: body.prescripteur,
+      },
+    });
+    conseillerId = conseiller.id;
+  }
+
   const lead = await prisma.leadFormulaire.create({
     data: {
       nomArtisan: body.nomArtisan,

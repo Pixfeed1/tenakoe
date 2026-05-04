@@ -297,6 +297,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           depotNom: data.depotConfig?.nom || "",
           apporteurId: data.apporteurId || "",
           apporteurNom: data.apporteur ? `${data.apporteur.prenom ? data.apporteur.prenom + " " : ""}${data.apporteur.nom}${data.apporteur.structure ? " (" + data.apporteur.structure + ")" : ""}` : "",
+          conseillerNom: data.conseiller ? `${data.conseiller.prenom ? data.conseiller.prenom + " " : ""}${data.conseiller.nom}` : "",
+          conseillerEmail: data.conseiller?.email || "",
+          conseillerTelephone: data.conseiller?.telephone || "",
           numeroCarte: data.numeroCarte || "",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
           qualificationId: firstQualif?.id || "",
@@ -926,6 +929,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Prescripteur", key: "prescripteur", value: entrepriseData?.prescripteur || client?.prescripteur || "—", Icon: Building2 },
               { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
+              { label: "Conseiller", key: "conseiller", value: entrepriseData?.conseillerNom ? `${entrepriseData.conseillerNom}${entrepriseData.conseillerEmail ? " · " + entrepriseData.conseillerEmail : ""}${entrepriseData.conseillerTelephone ? " · " + entrepriseData.conseillerTelephone : ""}` : "—", Icon: UserCircle },
               { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
             ].map((f, i) => {
               const saveField = async (val: string) => {

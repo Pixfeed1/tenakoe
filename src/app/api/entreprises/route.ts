@@ -78,6 +78,8 @@ export async function POST(request: NextRequest) {
       interesseTNK: body.interesseTNK,
       miseEnRelation: body.miseEnRelation,
       dejaReferentRGE: body.dejaReferentRGE ?? false,
+      departement: body.departement || null,
+      conseillerId: body.conseillerId || null,
     },
   });
 

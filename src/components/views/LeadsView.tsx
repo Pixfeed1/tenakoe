@@ -118,6 +118,15 @@ export function LeadsView({ C }: { C: Theme }) {
 
   const convertLead = async (lead: Lead) => {
     setConverting(lead.id);
+    // Find conseiller by email if available
+    let conseillerId: string | null = null;
+    if (lead.emailConseiller) {
+      const cRes = await fetch(`/api/conseillers?email=${encodeURIComponent(lead.emailConseiller)}`).catch(() => null);
+      if (cRes?.ok) {
+        const cData = await cRes.json();
+        if (cData?.id) conseillerId = cData.id;
+      }
+    }
     const res = await fetch("/api/entreprises", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -132,6 +141,8 @@ export function LeadsView({ C }: { C: Theme }) {
         depotId: (lead as unknown as Record<string, unknown>).depotConfigId || null,
         numeroCarte: lead.numeroCarte,
         dejaReferentRGE: lead.dejaReferentRGE,
+        departement: (lead as unknown as Record<string, unknown>).departement || null,
+        conseillerId,
       }),
     });
     if (res.ok) {

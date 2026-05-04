@@ -142,6 +142,21 @@ model Entreprise {
   alertes       Alerte[]
   apporteurId   String?
   apporteur     ApporteurAffaires? @relation(fields: [apporteurId], references: [id])
+  conseillerId  String?
+  conseiller    Conseiller? @relation(fields: [conseillerId], references: [id])
+}
+
+model Conseiller {
+  id               String       @id @default(cuid())
+  nom              String
+  prenom           String?
+  email            String?      @unique
+  telephone        String?
+  prescripteurType String
+  actif            Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  entreprises      Entreprise[]
 }
 
 // ============================================================
