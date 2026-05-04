@@ -31,6 +31,9 @@ export async function PATCH(
     data.active = false;
     data.enRetard = false;
   }
+  if (body.dateRealisee !== undefined && body.terminee === undefined) {
+    data.dateRealisee = body.dateRealisee ? new Date(body.dateRealisee as string) : null;
+  }
 
   const updated = await prisma.etape.update({ where: { id }, data });
 

@@ -2334,7 +2334,44 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       {t.nom}
                     </span>
                     {isMail(t.nom) && <Badge color={C.purple} bg={C.purpleDim}>Mail auto</Badge>}
-                    {t.done && <Badge color={C.accentText} bg={C.accentDim}>Fait{t.dateRealisee ? ` le ${new Date(t.dateRealisee).toLocaleDateString("fr-FR")}` : ""}</Badge>}
+                    {t.done && (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <Badge color={C.accentText} bg={C.accentDim}>Fait{t.dateRealisee ? ` le ${new Date(t.dateRealisee).toLocaleDateString("fr-FR")}` : ""}</Badge>
+                        {t.dateRealisee && (
+                          <span style={{ position: "relative", display: "inline-flex" }}>
+                            <Edit3 size={12} color={C.textDim} style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setExpandedCols((prev) => ({ ...prev, [`editDate-${t.id}`]: true })); }} />
+                            {expandedCols[`editDate-${t.id}`] && (
+                              <input
+                                type="date"
+                                autoFocus
+                                defaultValue={new Date(t.dateRealisee).toISOString().slice(0, 10)}
+                                onBlur={async (e) => {
+                                  setExpandedCols((prev) => ({ ...prev, [`editDate-${t.id}`]: false }));
+                                  const val = e.target.value;
+                                  if (!val) return;
+                                  const iso = new Date(val).toISOString();
+                                  setTracks((prev) => prev.map((tr) => tr.id === t.id ? { ...tr, dateRealisee: iso } : tr));
+                                  if (!isDemoMode) {
+                                    await fetch(`/api/etapes/${t.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dateRealisee: iso }) }).catch(() => {});
+                                  }
+                                }}
+                                onChange={async (e) => {
+                                  const val = e.target.value;
+                                  if (!val) return;
+                                  const iso = new Date(val).toISOString();
+                                  setTracks((prev) => prev.map((tr) => tr.id === t.id ? { ...tr, dateRealisee: iso } : tr));
+                                  if (!isDemoMode) {
+                                    await fetch(`/api/etapes/${t.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dateRealisee: iso }) }).catch(() => {});
+                                  }
+                                  setExpandedCols((prev) => ({ ...prev, [`editDate-${t.id}`]: false }));
+                                }}
+                                style={{ position: "absolute", top: -4, left: 16, padding: "2px 4px", borderRadius: 4, border: `1px solid ${C.accent}`, background: C.surface, color: C.text, fontSize: 11, zIndex: 10, outline: "none" }}
+                              />
+                            )}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                     <span style={{ fontSize: 11, color: t.active ? C.blue : C.textDim }}>
