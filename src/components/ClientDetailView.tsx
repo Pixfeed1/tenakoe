@@ -2299,6 +2299,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         fetch(`/api/etapes/${t.id}`, {
                           method: "PATCH", headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ terminee: newDone }),
+                        }).then((res) => res.ok ? res.json() : null).then((data) => {
+                          if (data?.dateRealisee !== undefined) {
+                            setTracks((prev) => prev.map((tr) => tr.id === t.id ? { ...tr, dateRealisee: data.dateRealisee } : tr));
+                          }
                         }).catch(() => {});
                       }
                       if (newDone) { guide.showSuggestion("etape-terminee"); toast("Étape terminée"); }
