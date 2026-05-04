@@ -193,7 +193,7 @@ const COLUMNS: ColumnDef[] = [
   { key: "interesseTNK", label: "Intéressé TNK", minWidth: 120, sortable: true },
   { key: "eligible", label: "Éligible", minWidth: 110, sortable: true },
   { key: "statut", label: "Statut / Étape", minWidth: 200, sortable: true },
-  { key: "alerte", label: "Alerte abandon", minWidth: 140, sortable: false },
+  { key: "alerte", label: "Alerte abandon prestation payée", minWidth: 180, sortable: false },
 ];
 
 function normalize(s: string | null | undefined): string {
@@ -249,7 +249,7 @@ function exportToCSV(leads: Lead[]): void {
   const headers = [
     "Nom entreprise", "Artisan", "Email", "Téléphone", "SIRET", "N° carte",
     "Dépôt", "Conseiller", "Date transmission", "Date prise en charge",
-    "Intéressé TNK", "Éligible", "Statut", "Étape", "Alerte abandon", "Date alerte",
+    "Intéressé TNK", "Éligible", "Statut", "Étape", "Alerte abandon prestation payée", "Date alerte",
   ];
   const rows = leads.map((l) => {
     const a = getLatestAlerte(l);
