@@ -143,6 +143,10 @@ export function LeadsView({ C }: { C: Theme }) {
         dejaReferentRGE: lead.dejaReferentRGE,
         departement: (lead as unknown as Record<string, unknown>).departement || null,
         conseillerId,
+        nomConseiller: lead.nomConseiller,
+        prenomConseiller: lead.prenomConseiller,
+        emailConseiller: lead.emailConseiller,
+        telephoneConseiller: lead.telephoneConseiller,
       }),
     });
     if (res.ok) {

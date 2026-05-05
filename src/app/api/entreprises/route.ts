@@ -80,6 +80,10 @@ export async function POST(request: NextRequest) {
       dejaReferentRGE: body.dejaReferentRGE ?? false,
       departement: body.departement || null,
       conseillerId: body.conseillerId || null,
+      nomConseiller: body.nomConseiller || null,
+      prenomConseiller: body.prenomConseiller || null,
+      emailConseiller: body.emailConseiller || null,
+      telephoneConseiller: body.telephoneConseiller || null,
     },
   });
 

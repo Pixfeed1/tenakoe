@@ -54,6 +54,10 @@ export async function PATCH(
   if (body.ville !== undefined) data.ville = body.ville;
   if (body.codePostal !== undefined) data.codePostal = body.codePostal;
   if (body.departement !== undefined) data.departement = body.departement;
+  if (body.nomConseiller !== undefined) data.nomConseiller = body.nomConseiller;
+  if (body.prenomConseiller !== undefined) data.prenomConseiller = body.prenomConseiller;
+  if (body.emailConseiller !== undefined) data.emailConseiller = body.emailConseiller;
+  if (body.telephoneConseiller !== undefined) data.telephoneConseiller = body.telephoneConseiller;
   if (body.interesseTNK !== undefined) { data.interesseTNK = body.interesseTNK; data.dateInteresseTNK = new Date(); }
   if (body.miseEnRelation !== undefined) { data.miseEnRelation = body.miseEnRelation; data.dateMiseEnRelation = new Date(); }
   if (body.miseEnRelationAutre !== undefined) data.miseEnRelationAutre = body.miseEnRelationAutre;

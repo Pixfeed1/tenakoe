@@ -300,6 +300,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           conseillerNom: data.conseiller ? `${data.conseiller.prenom ? data.conseiller.prenom + " " : ""}${data.conseiller.nom}` : "",
           conseillerEmail: data.conseiller?.email || "",
           conseillerTelephone: data.conseiller?.telephone || "",
+          nomConseiller: data.nomConseiller || "",
+          prenomConseiller: data.prenomConseiller || "",
+          emailConseiller2: data.emailConseiller || "",
+          telephoneConseiller: data.telephoneConseiller || "",
           numeroCarte: data.numeroCarte || "",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
           qualificationId: firstQualif?.id || "",
@@ -1088,6 +1092,45 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               );
             })}
           </div>
+          {/* Coordonnées conseiller */}
+          {(entrepriseData?.nomConseiller || entrepriseData?.prenomConseiller || entrepriseData?.emailConseiller2 || entrepriseData?.telephoneConseiller) && (
+            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Coordonnées conseiller prescripteur</h3>
+              {[
+                { label: "Nom", key: "nomConseiller", value: entrepriseData?.nomConseiller || "—", Icon: UserCircle },
+                { label: "Prénom", key: "prenomConseiller", value: entrepriseData?.prenomConseiller || "—", Icon: UserCircle },
+                { label: "Email", key: "emailConseiller", value: entrepriseData?.emailConseiller2 || "—", Icon: Mail },
+                { label: "Téléphone", key: "telephoneConseiller", value: entrepriseData?.telephoneConseiller || "—", Icon: Phone },
+              ].map((f, i) => (
+                <div key={i} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < 3 ? `1px solid ${C.border}` : "none", cursor: "pointer" }}
+                  onClick={() => { setEditingField(f.key); setEditFieldValue(f.value === "—" ? "" : f.value); }}
+                >
+                  <f.Icon size={14} color={C.textDim} />
+                  <span style={{ fontSize: 12, color: C.textDim, width: 90 }}>{f.label}</span>
+                  {editingField === f.key ? (
+                    <input
+                      autoFocus
+                      value={editFieldValue}
+                      onChange={(e) => setEditFieldValue(e.target.value)}
+                      onBlur={async () => {
+                        const val = editFieldValue;
+                        if (val !== (f.value === "—" ? "" : f.value) && client?.id && !isDemoMode) {
+                          setEntrepriseData((prev) => prev ? { ...prev, [f.key === "emailConseiller" ? "emailConseiller2" : f.key]: val } : prev);
+                          await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [f.key]: val }) });
+                        }
+                        setEditingField(null);
+                      }}
+                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingField(null); }}
+                      style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.accent}`, background: C.bg, color: C.text, fontSize: 13, fontWeight: 500, outline: "none" }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{f.value}</span>
+                  )}
+                  {editingField !== f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
+                </div>
+              ))}
+            </div>
+          )}
           {/* BLOC 1 — Statut & Facturation (allégé) */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>
