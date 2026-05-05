@@ -2487,7 +2487,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                     >
                       <div style={{ width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #7c3aed, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff" }}>
-                        {u.prenom[0]}{u.nom[0]}
+                        {(u.prenom || "")[0] || ""}{(u.nom || "")[0] || "?"}
                       </div>
                       {u.prenom} {u.nom}
                     </button>
@@ -2894,7 +2894,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 10, fontWeight: 700, color: "#fff",
                       }}>
-                        {u.prenom[0]}{u.nom[0]}
+                        {(u.prenom || "")[0] || ""}{(u.nom || "")[0] || "?"}
                       </div>
                       {u.prenom} {u.nom}
                     </button>

@@ -110,7 +110,7 @@ function UsersTab({ C }: { C: Theme }) {
   };
 
   const saveEdit = async () => {
-    if (!editingUser || !editForm.nom.trim() || !editForm.prenom.trim() || !editForm.email.trim()) return;
+    if (!editingUser || !editForm.email.trim()) return;
     const res = await fetch(`/api/users/${editingUser}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editForm) });
     if (res.ok) {
       setUsers((p) => p.map((u) => u.id === editingUser ? { ...u, nom: editForm.nom, prenom: editForm.prenom, email: editForm.email, telephone: editForm.telephone || null } : u));
@@ -174,7 +174,7 @@ function UsersTab({ C }: { C: Theme }) {
         <div key={u.id}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 8px", borderBottom: `1px solid ${C.border}` }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: u.actif ? C.accentDim : C.surfaceHover, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: u.actif ? C.accentText : C.textDim }}>
-            {u.prenom[0]}{u.nom[0]}
+            {(u.prenom || "")[0] || ""}{(u.nom || "")[0] || "?"}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: u.actif ? C.text : C.textDim }}>{u.prenom} {u.nom}</div>
@@ -215,7 +215,7 @@ function UsersTab({ C }: { C: Theme }) {
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
               <button onClick={() => setEditingUser(null)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
-              <button onClick={saveEdit} disabled={!editForm.nom.trim() || !editForm.prenom.trim() || !editForm.email.trim()} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Enregistrer</button>
+              <button onClick={saveEdit} disabled={!editForm.email.trim()} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Enregistrer</button>
             </div>
           </div>
         )}
