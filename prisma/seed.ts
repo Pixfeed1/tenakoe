@@ -412,17 +412,17 @@ async function main() {
   // ========================
   const mailTemplates = [
     {
-      nom: "Paiement recu - Contact chargee de projet",
-      objet: "Paiement recu - Contact de votre chargee de projet",
+      nom: "Paiement reçu - Contact chargée de projet",
+      objet: "Paiement reçu - Contact de votre chargée de projet",
       categorie: "SUIVI",
       ordre: 1,
       contenu: `Bonjour {{civilite}} {{nom}},
 
 Je vous remercie pour le paiement de votre prestation d'accompagnement au montage de votre dossier de candidature Qualibat-RGE.
 
-Votre chargee de projet va tres prochainement vous contacter pour demarrer la prestation.
+Votre chargée de projet va très prochainement vous contacter pour démarrer la prestation.
 
-Votre chargee de projet est : {{chargee}}
+Votre chargée de projet est : {{chargee}}
 
 Merci pour votre confiance !
 
@@ -431,7 +431,7 @@ Cordialement,
 {{expediteur_tel}} - {{expediteur_email}}`,
     },
     {
-      nom: "Bon de commande Qualibat a regler",
+      nom: "Bon de commande Qualibat à régler",
       objet: "Merci de payer votre bon de commande qualification",
       categorie: "SUIVI",
       ordre: 2,
@@ -441,11 +441,11 @@ Qualibat vient de vous transmettre le bon de commande pour votre demande de qual
 
 Il s'agit des frais d'instruction de l'organisme certificateur.
 
-Je vous remercie de bien vouloir regler ce bon de commande :
+Je vous remercie de bien vouloir régler ce bon de commande :
 - soit en vous rendant sur votre espace entreprise
-- soit en direct par telephone avec votre chargee de projet Tenakoe qui realisera le paiement avec vous sur votre espace entreprise.
+- soit en direct par téléphone avec votre chargée de projet Tenakoe qui réalisera le paiement avec vous sur votre espace entreprise.
 
-L'organisme certificateur vous adressera egalement une facture acquittee.
+L'organisme certificateur vous adressera également une facture acquittée.
 
 Votre bon de commande est valable 1 an.
 
@@ -454,19 +454,19 @@ Cordialement,
 {{expediteur_tel}} - {{expediteur_email}}`,
     },
     {
-      nom: "Dossier depose",
-      objet: "Votre dossier qualification est depose",
+      nom: "Dossier déposé",
+      objet: "Votre dossier qualification est déposé",
       categorie: "SUIVI",
       ordre: 3,
       contenu: `Bonjour {{civilite}} {{nom}},
 
-Nous avons depose votre dossier de candidature sur la plate-forme dematerialisee QUALIBAT.
+Nous avons déposé votre dossier de candidature sur la plate-forme dématérialisée QUALIBAT.
 
-Votre dossier peut faire l'objet de demande de complements avant son passage en Commission. Cette demande de complement vous sera directement adressee : surveillez vos mails et avertissez votre chargee de projet !
+Votre dossier peut faire l'objet de demande de compléments avant son passage en Commission. Cette demande de complément vous sera directement adressée : surveillez vos mails et avertissez votre chargée de projet !
 
-Le depot de candidature ne vaut pas automatiquement qualification. La Commission d'attribution est seule decisionnaire, au regard de la completude, la conformite et la qualite de votre dossier.
+Le dépôt de candidature ne vaut pas automatiquement qualification. La Commission d'attribution est seule décisionnaire, au regard de la complétude, la conformité et la qualité de votre dossier.
 
-A cette etape, la date de passage de votre dossier ne nous a pas encore ete communiquee.
+À cette étape, la date de passage de votre dossier ne nous a pas encore été communiquée.
 
 Cordialement,
 {{expediteur}}
@@ -481,37 +481,37 @@ Cordialement,
 
 La date de passage de votre dossier en Commission est le {{date_commission}}.
 
-Vous serez informe par courrier de la decision de la Commission, dans un delai maximum d'1 mois (plus generalement, sous quinzaine).
+Vous serez informé par courrier de la décision de la Commission, dans un délai maximum d'1 mois (plus généralement, sous quinzaine).
 
-Le depot de candidature ne vaut pas automatiquement qualification. La Commission d'attribution est seule decisionnaire, au regard de la completude, la conformite et la qualite de votre dossier.
+Le dépôt de candidature ne vaut pas automatiquement qualification. La Commission d'attribution est seule décisionnaire, au regard de la complétude, la conformité et la qualité de votre dossier.
 
-Je vous remercie de bien vouloir me transmettre copie de la decision de la Commission des reception.
+Je vous remercie de bien vouloir me transmettre copie de la décision de la Commission dès réception.
 
 Cordialement,
 {{expediteur}}
 {{expediteur_tel}} - {{expediteur_email}}`,
     },
     {
-      nom: "Entreprise qualifiee - Felicitations",
-      objet: "Votre entreprise est qualifiee - Les etapes suivantes",
+      nom: "Entreprise qualifiée - Félicitations",
+      objet: "Votre entreprise est qualifiée - Les étapes suivantes",
       categorie: "SUIVI",
       ordre: 5,
       contenu: `Bonjour {{civilite}} {{nom}},
 
-Felicitations !
+Félicitations !
 
-Votre entreprise est desormais qualifiee, et figure sur l'annuaire France Renov' des professionnels RGE.
+Votre entreprise est désormais qualifiée, et figure sur l'annuaire France Rénov' des professionnels RGE.
 https://france-renov.gouv.fr/annuaires-professionnels/artisan-rge-architecte
 
-Vous pouvez desormais communiquer sur votre qualification aupres de vos clients, et apposer le signe sur tous vos documents, vos reseaux sociaux et vos vehicules en suivant les regles d'usage de l'organisme certificateur.
+Vous pouvez désormais communiquer sur votre qualification auprès de vos clients, et apposer le signe sur tous vos documents, vos réseaux sociaux et vos véhicules en suivant les règles d'usage de l'organisme certificateur.
 
-Les etapes suivantes de votre qualification :
-- chaque annee : actualisation de votre qualification (verification de la conformite assurance, URSSAF, etc) => surveillez vos mails !
-- a mi-parcours de votre qualification : audit sur site => surveillez vos mails !
+Les étapes suivantes de votre qualification :
+- chaque année : actualisation de votre qualification (vérification de la conformité assurance, URSSAF, etc) => surveillez vos mails !
+- à mi-parcours de votre qualification : audit sur site => surveillez vos mails !
 
-Anticipez vos demarches pour ne pas perdre votre qualification.
+Anticipez vos démarches pour ne pas perdre votre qualification.
 
-Faites appel a Tenakoe pour votre declaration annuelle et la preparation de vos audits !
+Faites appel à Tenakoe pour votre déclaration annuelle et la préparation de vos audits !
 
 Cordialement,
 {{expediteur}}
@@ -524,13 +524,13 @@ Cordialement,
       ordre: 6,
       contenu: `Bonjour {{civilite}} {{nom}},
 
-Vous avez confie a Tenakoe une prestation d'accompagnement au montage de votre dossier qualification mention RGE.
+Vous avez confié à Tenakoe une prestation d'accompagnement au montage de votre dossier qualification mention RGE.
 
-Sauf erreur de ma part, vous n'avez pas donne suite aux demandes de documents et aux differentes relances de votre chargee de projet.
+Sauf erreur de ma part, vous n'avez pas donné suite aux demandes de documents et aux différentes relances de votre chargée de projet.
 
-En l'etat, nous ne sommes donc pas en mesure de mener a bien votre prestation.
+En l'état, nous ne sommes donc pas en mesure de mener à bien votre prestation.
 
-Sans retour de votre part avant le {{date_limite}}, votre dossier sera ferme en l'etat.
+Sans retour de votre part avant le {{date_limite}}, votre dossier sera fermé en l'état.
 
 Cordialement,
 {{expediteur}}
@@ -538,18 +538,18 @@ Cordialement,
     },
     {
       nom: "Alerte fermeture dossier #2",
-      objet: "URGENT - Derniere relance avant fermeture de votre dossier",
+      objet: "URGENT - Dernière relance avant fermeture de votre dossier",
       categorie: "RELANCE",
       ordre: 7,
       contenu: `Bonjour {{civilite}} {{nom}},
 
-Vous avez confie a Tenakoe une prestation d'accompagnement au montage de votre dossier qualification mention RGE.
+Vous avez confié à Tenakoe une prestation d'accompagnement au montage de votre dossier qualification mention RGE.
 
-Sauf erreur de ma part, vous n'avez pas donne suite aux demandes de documents et aux differentes relances de votre chargee de projet.
+Sauf erreur de ma part, vous n'avez pas donné suite aux demandes de documents et aux différentes relances de votre chargée de projet.
 
-En l'etat, nous ne sommes donc pas en mesure de mener a bien votre prestation.
+En l'état, nous ne sommes donc pas en mesure de mener à bien votre prestation.
 
-Sans retour de votre part avant le {{date_limite}}, votre dossier sera ferme en l'etat.
+Sans retour de votre part avant le {{date_limite}}, votre dossier sera fermé en l'état.
 
 Cordialement,
 {{expediteur}}
@@ -562,15 +562,15 @@ Cordialement,
       ordre: 8,
       contenu: `Bonjour {{civilite}} {{nom}},
 
-Vous avez confie a Tenakoe une prestation d'accompagnement au montage de votre dossier qualification mention RGE.
+Vous avez confié à Tenakoe une prestation d'accompagnement au montage de votre dossier qualification mention RGE.
 
-Sauf erreur de ma part, vous n'avez pas donne suite aux demandes de documents et aux differentes relances de votre chargee de projet.
+Sauf erreur de ma part, vous n'avez pas donné suite aux demandes de documents et aux différentes relances de votre chargée de projet.
 
-En l'etat, nous ne sommes donc pas en mesure de mener a bien votre prestation.
+En l'état, nous ne sommes donc pas en mesure de mener à bien votre prestation.
 
-Votre dossier est ferme en l'etat.
+Votre dossier est fermé en l'état.
 
-Je reste a votre ecoute pour toute precision.
+Je reste à votre écoute pour toute précision.
 
 Cordialement,
 {{expediteur}}
