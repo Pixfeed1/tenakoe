@@ -125,7 +125,7 @@ async function main() {
     { code: "DOSSIER_COMPLEMENT", nom: "Demande de complément", couleur: "#d97706", ordre: 7, icone: "alert-triangle" },
     { code: "QUALIFIE", nom: "Qualifié", couleur: "#16a34a", ordre: 8, icone: "award" },
     { code: "REFUSE", nom: "Refusé", couleur: "#dc2626", ordre: 9, icone: "x-circle" },
-    { code: "DOSSIER_EN_APPEL", nom: "En appel", couleur: "#f59e0b", ordre: 10, icone: "phone" },
+    { code: "DOSSIER_EN_APPEL", nom: "En appel", couleur: "#f59e0b", ordre: 10, icone: "gavel" },
   ];
   for (const s of statutsFacturation) {
     await prisma.statutFacturationConfig.upsert({
