@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, getProjetFilter } from "@/lib/rbac";
+import { entrepriseScopeFilter } from "@/lib/dossierScope";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -9,7 +10,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const entrepriseId = searchParams.get("entrepriseId");
 
-  const rbacFilter = getProjetFilter(user);
+  const scopeFilter = entrepriseScopeFilter(user);
+  const rbacFilter = { ...getProjetFilter(user), ...(Object.keys(scopeFilter).length > 0 ? { entreprise: scopeFilter } : {}) };
 
   const projets = await prisma.projet.findMany({
     where: {
