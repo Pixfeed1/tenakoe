@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FolderOpen, Search, ChevronRight, Plus, X, Archive } from "lucide-react";
+import { FolderOpen, Search, ChevronRight, ChevronDown, Plus, X, Archive, SlidersHorizontal } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,14 @@ interface Projet {
   nom: string;
   actif: boolean;
   archive?: boolean;
-  entreprise: { id: string; nom: string; statutPrise?: string; statutFacturation?: string | null; chargeeId?: string | null };
+  entreprise: {
+    id: string; nom: string; chargeeId?: string | null;
+    statutPrise?: string; statutFacturation?: string | null;
+    interesseTNK?: string | null; eligible?: string | null;
+    estClient?: boolean; dejaReferentRGE?: boolean;
+    prescripteur?: string | null; apporteurId?: string | null;
+    depotId?: string | null; departement?: string | null; archive?: boolean;
+  };
   chargee: { id: string; prenom: string; nom: string } | null;
   qualifications: Array<{ type: string }>;
   etapes: Array<{ terminee: boolean; active: boolean; nom: string }>;
@@ -26,28 +33,77 @@ const QUALIF_LABELS: Record<string, string> = {
   QUALIT_ENR: "Qualit'ENR", QUALIPAC: "QualiPAC",
 };
 
+const STORAGE_KEY = "tenakoe:dossiers:filtres";
+
 export function DossiersView({ C, onSelectClient, role }: { C: Theme; onSelectClient: (c: { id: string; nom: string }) => void; role?: string }) {
   const [projets, setProjets] = useState<Projet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
   const [newProjet, setNewProjet] = useState({ nom: "", entrepriseId: "", qualification: "" });
 
+  // Filters
+  const [search, setSearch] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
   const [filtreChargee, setFiltreChargee] = useState("");
   const [filtreStatutPrise, setFiltreStatutPrise] = useState("");
   const [filtreStatutFacturation, setFiltreStatutFacturation] = useState("");
-  const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string; role?: string }>>([]);
+  const [filtreInteresseTNK, setFiltreInteresseTNK] = useState("");
+  const [filtreEligible, setFiltreEligible] = useState("");
+  const [filtreEstClient, setFiltreEstClient] = useState<"" | "oui" | "non">("");
+  const [filtreDejaRGE, setFiltreDejaRGE] = useState<"" | "oui" | "non">("");
+  const [filtrePrescripteur, setFiltrePrescripteur] = useState("");
+  const [filtreApporteur, setFiltreApporteur] = useState("");
+  const [filtreDepot, setFiltreDepot] = useState("");
+  const [filtreDepartement, setFiltreDepartement] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  // Reference data
+  const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
   const [statutsPrise, setStatutsPrise] = useState<StatutConfig[]>([]);
   const [statutsFacturation, setStatutsFacturation] = useState<StatutConfig[]>([]);
+  const [prescripteurs, setPrescripteurs] = useState<Array<{ type: string; nom: string }>>([]);
+  const [apporteurs, setApporteurs] = useState<Array<{ id: string; nom: string; prenom: string | null }>>([]);
+  const [depots, setDepots] = useState<Array<{ id: string; nom: string }>>([]);
 
   const peutVoirToutesChargees = role === "ADMIN";
 
+  // Restore filters from sessionStorage
   useEffect(() => {
-    fetch("/api/projets")
-      .then((r) => r.json())
-      .then((data) => { setProjets(data); setLoading(false); })
-      .catch(() => setLoading(false));
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const f = JSON.parse(saved);
+        if (f.search) setSearch(f.search);
+        if (f.filtreChargee) setFiltreChargee(f.filtreChargee);
+        if (f.filtreStatutPrise) setFiltreStatutPrise(f.filtreStatutPrise);
+        if (f.filtreStatutFacturation) setFiltreStatutFacturation(f.filtreStatutFacturation);
+        if (f.filtreInteresseTNK) setFiltreInteresseTNK(f.filtreInteresseTNK);
+        if (f.filtreEligible) setFiltreEligible(f.filtreEligible);
+        if (f.filtreEstClient) setFiltreEstClient(f.filtreEstClient);
+        if (f.filtreDejaRGE) setFiltreDejaRGE(f.filtreDejaRGE);
+        if (f.filtrePrescripteur) setFiltrePrescripteur(f.filtrePrescripteur);
+        if (f.filtreApporteur) setFiltreApporteur(f.filtreApporteur);
+        if (f.filtreDepot) setFiltreDepot(f.filtreDepot);
+        if (f.filtreDepartement) setFiltreDepartement(f.filtreDepartement);
+        if (f.showAdvancedFilters) setShowAdvancedFilters(true);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Save filters to sessionStorage
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        search, filtreChargee, filtreStatutPrise, filtreStatutFacturation,
+        filtreInteresseTNK, filtreEligible, filtreEstClient, filtreDejaRGE,
+        filtrePrescripteur, filtreApporteur, filtreDepot, filtreDepartement,
+        showAdvancedFilters,
+      }));
+    } catch { /* ignore */ }
+  }, [search, filtreChargee, filtreStatutPrise, filtreStatutFacturation, filtreInteresseTNK, filtreEligible, filtreEstClient, filtreDejaRGE, filtrePrescripteur, filtreApporteur, filtreDepot, filtreDepartement, showAdvancedFilters]);
+
+  useEffect(() => {
+    fetch("/api/projets").then((r) => r.json()).then((data) => { setProjets(data); setLoading(false); }).catch(() => setLoading(false));
     if (peutVoirToutesChargees) {
       fetch("/api/users").then((r) => r.ok ? r.json() : [])
         .then((data) => setChargees(data.filter((u: { role?: string; actif?: boolean }) => u.actif && u.role !== "PRESCRIPTEUR")))
@@ -55,78 +111,151 @@ export function DossiersView({ C, onSelectClient, role }: { C: Theme; onSelectCl
     }
     fetch("/api/pipeline-config").then((r) => r.ok ? r.json() : null)
       .then((data: { statutsPrise?: StatutConfig[]; statutsFacturation?: StatutConfig[] } | null) => {
-        if (data?.statutsPrise) setStatutsPrise(data.statutsPrise.filter((s: StatutConfig) => s.actif));
-        if (data?.statutsFacturation) setStatutsFacturation(data.statutsFacturation.filter((s: StatutConfig) => s.actif));
+        if (data?.statutsPrise) setStatutsPrise(data.statutsPrise.filter((s) => s.actif));
+        if (data?.statutsFacturation) setStatutsFacturation(data.statutsFacturation.filter((s) => s.actif));
       }).catch(() => {});
+    fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then((data) => setPrescripteurs(Array.isArray(data) ? data.filter((c: { actif?: boolean }) => c.actif) : [])).catch(() => {});
+    fetch("/api/apporteurs").then((r) => r.ok ? r.json() : []).then(setApporteurs).catch(() => {});
+    fetch("/api/depot-config").then((r) => r.ok ? r.json() : []).then(setDepots).catch(() => {});
     const handler = () => setShowAdd(true);
     window.addEventListener("tenakoe:new-dossier", handler);
     return () => window.removeEventListener("tenakoe:new-dossier", handler);
   }, [peutVoirToutesChargees]);
 
-  const filtresActifs = !!(filtreChargee || filtreStatutPrise || filtreStatutFacturation);
-  const resetFiltres = () => { setFiltreChargee(""); setFiltreStatutPrise(""); setFiltreStatutFacturation(""); };
+  const advancedCount = [filtreEligible, filtreEstClient, filtreDejaRGE, filtrePrescripteur, filtreApporteur, filtreDepot, filtreDepartement].filter(Boolean).length;
+  const anyFilter = !!(filtreChargee || filtreStatutPrise || filtreStatutFacturation || filtreInteresseTNK || advancedCount > 0);
+
+  const resetAll = () => {
+    setSearch(""); setFiltreChargee(""); setFiltreStatutPrise(""); setFiltreStatutFacturation("");
+    setFiltreInteresseTNK(""); setFiltreEligible(""); setFiltreEstClient(""); setFiltreDejaRGE("");
+    setFiltrePrescripteur(""); setFiltreApporteur(""); setFiltreDepot(""); setFiltreDepartement("");
+    setShowAdvancedFilters(false);
+  };
 
   const filtered = projets.filter((p) => {
-    if (!showArchived && p.archive) return false;
-    if (showArchived && !p.archive) return false;
-    if (search && !p.nom.toLowerCase().includes(search.toLowerCase()) && !p.entreprise.nom.toLowerCase().includes(search.toLowerCase())) return false;
-    if (filtreChargee && p.entreprise.chargeeId !== filtreChargee) return false;
-    if (filtreStatutPrise && p.entreprise.statutPrise !== filtreStatutPrise) return false;
-    if (filtreStatutFacturation && p.entreprise.statutFacturation !== filtreStatutFacturation) return false;
+    const e = p.entreprise;
+    if (!showArchived && (p.archive || e.archive)) return false;
+    if (showArchived && !p.archive && !e.archive) return false;
+    if (search && !p.nom.toLowerCase().includes(search.toLowerCase()) && !e.nom.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filtreChargee && e.chargeeId !== filtreChargee) return false;
+    if (filtreStatutPrise && e.statutPrise !== filtreStatutPrise) return false;
+    if (filtreStatutFacturation && e.statutFacturation !== filtreStatutFacturation) return false;
+    if (filtreInteresseTNK && e.interesseTNK !== filtreInteresseTNK) return false;
+    if (filtreEligible && e.eligible !== filtreEligible) return false;
+    if (filtreEstClient === "oui" && !e.estClient) return false;
+    if (filtreEstClient === "non" && e.estClient) return false;
+    if (filtreDejaRGE === "oui" && !e.dejaReferentRGE) return false;
+    if (filtreDejaRGE === "non" && e.dejaReferentRGE) return false;
+    if (filtrePrescripteur && e.prescripteur !== filtrePrescripteur) return false;
+    if (filtreApporteur && e.apporteurId !== filtreApporteur) return false;
+    if (filtreDepot && e.depotId !== filtreDepot) return false;
+    if (filtreDepartement && e.departement?.toLowerCase() !== filtreDepartement.toLowerCase()) return false;
     return true;
   });
 
-  const selectStyle: React.CSSProperties = {
-    padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`,
-    background: C.surface, color: C.text, fontSize: 13, outline: "none",
-  };
+  const ss: React.CSSProperties = { padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" };
 
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{filtered.length} dossier{filtered.length > 1 ? "s" : ""}</span>
-        {filtresActifs && <span style={{ fontSize: 12, color: C.textDim }}>sur {projets.length} total</span>}
+        {anyFilter && <span style={{ fontSize: 12, color: C.textDim }}>sur {projets.length} total</span>}
       </div>
-      <div className="filter-bar" style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        <div style={{
-          flex: 1, minWidth: 180, display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
-          borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface,
-        }}>
+
+      {/* Main filters */}
+      <div className="filter-bar" style={{ display: "flex", gap: 10, marginBottom: showAdvancedFilters ? 8 : 20, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 180, display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface }}>
           <Search size={14} color={C.textDim} />
-          <input placeholder="Rechercher un dossier..." value={search} onChange={(e) => setSearch(e.target.value)}
+          <input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)}
             style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
         </div>
         {peutVoirToutesChargees && (
-          <select value={filtreChargee} onChange={(e) => setFiltreChargee(e.target.value)} style={selectStyle}>
+          <select value={filtreChargee} onChange={(e) => setFiltreChargee(e.target.value)} style={ss}>
             <option value="">Toutes les chargées</option>
             {chargees.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
           </select>
         )}
         {statutsPrise.length > 0 && (
-          <select value={filtreStatutPrise} onChange={(e) => setFiltreStatutPrise(e.target.value)} style={selectStyle}>
+          <select value={filtreStatutPrise} onChange={(e) => setFiltreStatutPrise(e.target.value)} style={ss}>
             <option value="">Statut (prise)</option>
             {statutsPrise.sort((a, b) => a.ordre - b.ordre).map((s) => <option key={s.code} value={s.code}>{s.nom}</option>)}
           </select>
         )}
         {statutsFacturation.length > 0 && (
-          <select value={filtreStatutFacturation} onChange={(e) => setFiltreStatutFacturation(e.target.value)} style={selectStyle}>
+          <select value={filtreStatutFacturation} onChange={(e) => setFiltreStatutFacturation(e.target.value)} style={ss}>
             <option value="">Facturation</option>
             {statutsFacturation.sort((a, b) => a.ordre - b.ordre).map((s) => <option key={s.code} value={s.code}>{s.nom}</option>)}
           </select>
         )}
+        <select value={filtreInteresseTNK} onChange={(e) => setFiltreInteresseTNK(e.target.value)} style={ss}>
+          <option value="">Intéressé TNK</option>
+          <option value="OUI">Oui</option>
+          <option value="NON">Non</option>
+          <option value="NSP">NSP</option>
+          <option value="INJOIGNABLE">Injoignable</option>
+        </select>
+        <button onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} style={{
+          ...ss, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+          background: showAdvancedFilters ? C.accentDim : C.surface,
+          color: showAdvancedFilters ? C.accentText : C.textMuted,
+          border: `1px solid ${showAdvancedFilters ? C.accent + "40" : C.border}`,
+        }}>
+          <SlidersHorizontal size={13} />
+          Plus de filtres{advancedCount > 0 ? ` (${advancedCount})` : ""}
+          <ChevronDown size={12} style={{ transition: "transform 0.2s", transform: showAdvancedFilters ? "rotate(180deg)" : "rotate(0deg)" }} />
+        </button>
         <button onClick={() => setShowArchived(!showArchived)} style={{
-          padding: "8px 14px", borderRadius: 10,
+          ...ss, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
           border: `1px solid ${showArchived ? C.warning : C.border}`,
           background: showArchived ? C.warningDim : C.surface,
-          color: showArchived ? C.warning : C.textMuted, fontSize: 13, cursor: "pointer",
-          display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+          color: showArchived ? C.warning : C.textMuted,
         }}>
-          <Archive size={13} /> {showArchived ? "Archivés" : "Voir archivés"}
+          <Archive size={13} /> {showArchived ? "Archivés" : "Archives"}
         </button>
-        {filtresActifs && (
-          <Button C={C} variant="ghost" size="sm" onClick={resetFiltres} icon={<X size={12} />}>Réinitialiser</Button>
-        )}
+        {anyFilter && <Button C={C} variant="ghost" size="sm" onClick={resetAll} icon={<X size={12} />}>Réinitialiser</Button>}
       </div>
+
+      {/* Advanced filters */}
+      {showAdvancedFilters && (
+        <div className="filter-bar" style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", padding: "12px 14px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
+          <select value={filtreEligible} onChange={(e) => setFiltreEligible(e.target.value)} style={ss}>
+            <option value="">Éligible</option>
+            <option value="OUI">Oui</option>
+            <option value="NON">Non</option>
+            <option value="A_VERIFIER">À vérifier</option>
+          </select>
+          <select value={filtreEstClient} onChange={(e) => setFiltreEstClient(e.target.value as "" | "oui" | "non")} style={ss}>
+            <option value="">Client ?</option>
+            <option value="oui">Client</option>
+            <option value="non">Prospect</option>
+          </select>
+          <select value={filtreDejaRGE} onChange={(e) => setFiltreDejaRGE(e.target.value as "" | "oui" | "non")} style={ss}>
+            <option value="">Déjà RGE ?</option>
+            <option value="oui">Oui</option>
+            <option value="non">Non</option>
+          </select>
+          {prescripteurs.length > 0 && (
+            <select value={filtrePrescripteur} onChange={(e) => setFiltrePrescripteur(e.target.value)} style={ss}>
+              <option value="">Prescripteur</option>
+              {prescripteurs.map((p) => <option key={p.type} value={p.type}>{p.nom}</option>)}
+            </select>
+          )}
+          {apporteurs.length > 0 && (
+            <select value={filtreApporteur} onChange={(e) => setFiltreApporteur(e.target.value)} style={ss}>
+              <option value="">Apporteur</option>
+              {apporteurs.map((a) => <option key={a.id} value={a.id}>{a.prenom ? a.prenom + " " : ""}{a.nom}</option>)}
+            </select>
+          )}
+          {depots.length > 0 && (
+            <select value={filtreDepot} onChange={(e) => setFiltreDepot(e.target.value)} style={ss}>
+              <option value="">Dépôt</option>
+              {depots.map((d) => <option key={d.id} value={d.id}>{d.nom}</option>)}
+            </select>
+          )}
+          <input placeholder="Département (ex: 75)" value={filtreDepartement} onChange={(e) => setFiltreDepartement(e.target.value)}
+            style={{ ...ss, width: 130 }} />
+        </div>
+      )}
 
       {showAdd && (
         <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, marginBottom: 16, boxShadow: C.shadow }}>
