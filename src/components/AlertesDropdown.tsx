@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  Bell, Clock, AlertTriangle, FileText, Zap, CheckCircle, X,
+  Bell, Clock, AlertTriangle, FileText, Zap, CheckCircle, X, AtSign,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 
@@ -21,6 +21,7 @@ const TYPE_ICONS: Record<string, React.ComponentType<{ size?: number; color?: st
   DOCUMENT_MANQUANT: FileText,
   RELANCE_48H: Zap,
   RAPPEL_ECHEANCE: Bell,
+  MENTION: AtSign,
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -29,6 +30,7 @@ const TYPE_COLORS: Record<string, string> = {
   DOCUMENT_MANQUANT: "warning",
   RELANCE_48H: "blue",
   RAPPEL_ECHEANCE: "purple",
+  MENTION: "accent",
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -37,6 +39,7 @@ const TYPE_LABELS: Record<string, string> = {
   DOCUMENT_MANQUANT: "Documents manquants",
   RELANCE_48H: "Relance 48h",
   RAPPEL_ECHEANCE: "Rappel échéance",
+  MENTION: "Mention",
 };
 
 export function AlertesDropdown({ C }: { C: Theme }) {
@@ -157,7 +160,17 @@ export function AlertesDropdown({ C }: { C: Theme }) {
                     display: "flex", alignItems: "flex-start", gap: 12,
                     padding: "12px 18px", borderBottom: `1px solid ${C.border}`,
                     transition: "background 0.15s",
+                    cursor: alerte.entreprise ? "pointer" : "default",
                   }}
+                    onClick={() => {
+                      if (alerte.entreprise) {
+                        markRead(alerte.id);
+                        const url = new URL(window.location.href);
+                        url.searchParams.set("view", "ClientDetail");
+                        url.searchParams.set("clientId", alerte.entreprise.id);
+                        window.location.href = url.toString();
+                      }
+                    }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                   >

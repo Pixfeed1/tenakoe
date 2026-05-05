@@ -597,6 +597,7 @@ model Note {
   auteur        User       @relation(fields: [auteurId], references: [id])
   entrepriseId  String
   entreprise    Entreprise @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
+  alertes       Alerte[]
 }
 
 // ============================================================
@@ -609,6 +610,7 @@ enum TypeAlerte {
   DOCUMENT_MANQUANT
   RELANCE_48H
   RAPPEL_ECHEANCE
+  MENTION
 }
 
 model Alerte {
@@ -622,6 +624,8 @@ model Alerte {
   user         User        @relation(fields: [userId], references: [id])
   entrepriseId String?
   entreprise   Entreprise? @relation(fields: [entrepriseId], references: [id])
+  noteId       String?
+  note         Note?       @relation(fields: [noteId], references: [id], onDelete: Cascade)
 }
 
 // ============================================================

@@ -61,14 +61,20 @@ export async function POST(request: NextRequest) {
         })),
       },
     });
+    const entreprise = await prisma.entreprise.findUnique({
+      where: { id: body.entrepriseId },
+      select: { nom: true },
+    });
+    const auteurNom = user.name || "Quelqu'un";
     for (const mu of mentionedUsers) {
       if (mu.id === user.id) continue;
       await prisma.alerte.create({
         data: {
-          type: "RAPPEL_ECHEANCE",
-          message: `${user.name} vous a mentionne dans une note`,
+          type: "MENTION",
+          message: `${auteurNom} t'a mentionné dans une note sur ${entreprise?.nom || "un dossier"}`,
           userId: mu.id,
           entrepriseId: body.entrepriseId || null,
+          noteId: note.id,
         },
       });
     }
