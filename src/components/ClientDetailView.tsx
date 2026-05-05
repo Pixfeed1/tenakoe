@@ -1172,8 +1172,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 />
               </div>
               {entrepriseData?.dateEligible && (
-                <span style={{ fontSize: 10, color: C.textDim, whiteSpace: "nowrap" }}>
-                  {new Date(entrepriseData.dateEligible).toLocaleDateString("fr-FR")}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, whiteSpace: "nowrap" }}>
+                  Modifié le
+                  <input type="date" value={new Date(entrepriseData.dateEligible).toISOString().slice(0, 10)}
+                    onChange={async (e) => {
+                      if (!client?.id || isDemoMode) return;
+                      const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                      setEntrepriseData((prev) => prev ? { ...prev, dateEligible: val || "" } : prev);
+                      await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dateEligible: val }) }).catch(() => {});
+                    }}
+                    style={{ fontSize: 10, color: C.textDim, background: "transparent", border: "none", borderBottom: `1px dashed ${C.border}`, padding: "1px 2px", cursor: "pointer", fontFamily: "inherit" }}
+                  />
                 </span>
               )}
             </div>
@@ -1185,8 +1194,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <div>
                   <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
                   {entrepriseData?.[f.dateKey] && (
-                    <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
-                      Modifié le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                      Modifié le
+                      <input type="date" value={new Date(entrepriseData[f.dateKey]).toISOString().slice(0, 10)}
+                        onChange={async (e) => {
+                          if (!client?.id || isDemoMode) return;
+                          const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                          setEntrepriseData((prev) => prev ? { ...prev, [f.dateKey]: val || "" } : prev);
+                          await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [f.dateKey]: val }) }).catch(() => {});
+                        }}
+                        style={{ fontSize: 10, color: C.textDim, background: "transparent", border: "none", borderBottom: `1px dashed ${C.border}`, padding: "1px 2px", cursor: "pointer", fontFamily: "inherit" }}
+                      />
                     </div>
                   )}
                 </div>
@@ -1216,8 +1234,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   </select>
                 </div>
                 {entrepriseData?.[f.dateKey] && (
-                  <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
-                    Modifié le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                    Modifié le
+                    <input type="date" value={new Date(entrepriseData[f.dateKey]).toISOString().slice(0, 10)}
+                      onChange={async (e) => {
+                        if (!client?.id || isDemoMode) return;
+                        const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                        setEntrepriseData((prev) => prev ? { ...prev, [f.dateKey]: val || "" } : prev);
+                        await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [f.dateKey]: val }) }).catch(() => {});
+                      }}
+                      style={{ fontSize: 10, color: C.textDim, background: "transparent", border: "none", borderBottom: `1px dashed ${C.border}`, padding: "1px 2px", cursor: "pointer", fontFamily: "inherit" }}
+                    />
                   </div>
                 )}
                 </div>
@@ -1231,8 +1258,17 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <div>
                   <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
                   {entrepriseData?.[f.dateKey] && (
-                    <div style={{ fontSize: 10, color: C.textDim, marginTop: 2 }}>
-                      Modifié le {new Date(entrepriseData[f.dateKey]).toLocaleDateString("fr-FR")}
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                      Modifié le
+                      <input type="date" value={new Date(entrepriseData[f.dateKey]).toISOString().slice(0, 10)}
+                        onChange={async (e) => {
+                          if (!client?.id || isDemoMode) return;
+                          const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                          setEntrepriseData((prev) => prev ? { ...prev, [f.dateKey]: val || "" } : prev);
+                          await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [f.dateKey]: val }) }).catch(() => {});
+                        }}
+                        style={{ fontSize: 10, color: C.textDim, background: "transparent", border: "none", borderBottom: `1px dashed ${C.border}`, padding: "1px 2px", cursor: "pointer", fontFamily: "inherit" }}
+                      />
                     </div>
                   )}
                 </div>

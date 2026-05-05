@@ -92,9 +92,9 @@ export async function PATCH(
     data.dateStatutFacturation = new Date();
     if (body.statutFacturation === "FACTURE_PAYEE") data.estClient = true;
   }
-  const dateOverrides = ["dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK"];
+  const dateOverrides = ["dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK", "dateEligible"];
   for (const dk of dateOverrides) {
-    if (body[dk] !== undefined && body.statutPrise === undefined && body.statutFacturation === undefined && body.interesseTNK === undefined) {
+    if (body[dk] !== undefined && body.statutPrise === undefined && body.statutFacturation === undefined && body.interesseTNK === undefined && body.eligible === undefined) {
       data[dk] = body[dk] ? new Date(body[dk] as string) : null;
     }
   }
