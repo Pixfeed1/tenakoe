@@ -86,20 +86,100 @@ export async function PATCH(
     }
   }
 
-  // Si on annule une étape, la réactiver et désactiver la suivante
+  // Si on annule une étape, la réactiver, désactiver la suivante, rollback statut
   if (body.terminee === false) {
-    await prisma.etape.update({
-      where: { id },
-      data: { active: true },
-    });
+    const statutMap: Record<number, { statutPrise?: string; statutFacturation?: string }> = {
+      1:  { statutPrise: "NOUVEAU" },
+      2:  { statutPrise: "PRISE_EN_CHARGE" },
+      4:  { statutFacturation: "DEVIS_ENVOYE" },
+      5:  { statutFacturation: "FACTURE_ENVOYEE" },
+      6:  { statutFacturation: "FACTURE_PAYEE" },
+      10: { statutPrise: "PRISE_EN_CHARGE" },
+      17: { statutFacturation: "DOSSIER_DEPOSE" },
+      19: { statutFacturation: "QUALIFIE" },
+    };
+
     const nextEtape = await prisma.etape.findFirst({
       where: { projetId: etape.projetId, ordre: etape.ordre + 1 },
     });
-    if (nextEtape) {
-      await prisma.etape.update({
-        where: { id: nextEtape.id },
-        data: { active: false, dateObjectif: null },
+
+    // Rollback statut entreprise si l'étape dévalidée avait un mapping
+    const currentMapping = statutMap[etape.ordre];
+    let rollbackInfo: string | null = null;
+
+    if (currentMapping && etape.projet.entrepriseId) {
+      const previousEtapes = await prisma.etape.findMany({
+        where: { projetId: etape.projetId, terminee: true, ordre: { lt: etape.ordre } },
+        orderBy: { ordre: "desc" },
       });
+
+      const entrepriseUpdate: Record<string, unknown> = {};
+
+      if (currentMapping.statutPrise) {
+        let restoredPrise = "NOUVEAU";
+        for (const prev of previousEtapes) {
+          const m = statutMap[prev.ordre];
+          if (m?.statutPrise) { restoredPrise = m.statutPrise; break; }
+        }
+        entrepriseUpdate.statutPrise = restoredPrise;
+        entrepriseUpdate.dateStatutPrise = new Date();
+        rollbackInfo = restoredPrise;
+      }
+
+      if (currentMapping.statutFacturation) {
+        let restoredFact = "DEVIS_A_FAIRE";
+        for (const prev of previousEtapes) {
+          const m = statutMap[prev.ordre];
+          if (m?.statutFacturation) { restoredFact = m.statutFacturation; break; }
+        }
+        entrepriseUpdate.statutFacturation = restoredFact;
+        entrepriseUpdate.dateStatutFacturation = new Date();
+        rollbackInfo = rollbackInfo ? `${rollbackInfo} + ${restoredFact}` : restoredFact;
+      }
+
+      // estClient: repasser à false seulement si aucune étape qualifiante ne reste terminée
+      const qualifyingStatuses = ["QUALIFIE", "TERMINE", "FACTURE_PAYEE"];
+      const remainingQualifying = previousEtapes.some((prev) => {
+        const m = statutMap[prev.ordre];
+        if (!m) return false;
+        return Object.values(m).some((v) => qualifyingStatuses.includes(v as string));
+      });
+      if (!remainingQualifying) {
+        entrepriseUpdate.estClient = false;
+        rollbackInfo = rollbackInfo ? `${rollbackInfo} + estClient=false` : "estClient=false";
+      }
+
+      await prisma.$transaction([
+        prisma.etape.update({ where: { id }, data: { active: true } }),
+        ...(nextEtape ? [prisma.etape.update({ where: { id: nextEtape.id }, data: { active: false, dateObjectif: null } })] : []),
+        prisma.entreprise.update({ where: { id: etape.projet.entrepriseId }, data: entrepriseUpdate }),
+        prisma.logActivite.create({
+          data: {
+            type: "CHANGEMENT_STATUT",
+            description: `Retour en arrière : étape ${etape.ordre} "${etape.nom}" dévalidée${rollbackInfo ? ` (statut restauré : ${rollbackInfo})` : ""}`,
+            entite: "Entreprise",
+            entiteId: etape.projet.entrepriseId,
+            userId: user.id,
+          },
+        }),
+      ]);
+    } else {
+      // Étape sans mapping statut : juste réactiver + désactiver suivante + log
+      await prisma.etape.update({ where: { id }, data: { active: true } });
+      if (nextEtape) {
+        await prisma.etape.update({ where: { id: nextEtape.id }, data: { active: false, dateObjectif: null } });
+      }
+      if (etape.projet.entrepriseId) {
+        await prisma.logActivite.create({
+          data: {
+            type: "CHANGEMENT_STATUT",
+            description: `Retour en arrière : étape ${etape.ordre} "${etape.nom}" dévalidée`,
+            entite: "Entreprise",
+            entiteId: etape.projet.entrepriseId,
+            userId: user.id,
+          },
+        });
+      }
     }
   }
 

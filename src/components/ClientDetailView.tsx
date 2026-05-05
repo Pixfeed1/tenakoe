@@ -2282,6 +2282,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     {...(t.active ? { "data-guide": "track-active-step" } : {})}
                     onClick={async () => {
                       if (!t.active && !t.done) return;
+                      if (t.done) {
+                        if (!window.confirm(`Annuler la validation de l'étape "${t.nom}" ? Le statut du dossier sera recalculé en conséquence.`)) return;
+                      }
                       const newDone = !t.done;
                       setTracks((prev) => {
                         const updated = prev.map((step) =>
