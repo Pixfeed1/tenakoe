@@ -185,37 +185,27 @@ function UsersTab({ C }: { C: Theme }) {
             <option value="CHARGEE">Chargée</option>
             <option value="PRESCRIPTEUR">Prescripteur</option>
           </select>
-          <button onClick={() => {
+          <Button C={C} variant="ghost" size="sm" onClick={() => {
             setEditingUser(u.id);
             setEditForm({ nom: u.nom, prenom: u.prenom, email: u.email, telephone: u.telephone || "" });
-          }} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, cursor: "pointer", display: "flex", alignItems: "center" }}
-            title="Modifier"
-          >
-            <Edit2 size={13} />
-          </button>
-          <button onClick={() => {
-            if (u.actif) {
-              setDeactivatingUser(u.id);
-              setReassignTo("");
-            } else {
-              toggleActif(u.id, u.actif);
-            }
-          }} style={{ padding: "4px 10px", borderRadius: 6, border: "none", background: u.actif ? C.dangerDim : C.accentDim, color: u.actif ? C.danger : C.accentText, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
-            {u.actif ? "Désactiver" : "Activer"}
-          </button>
+          }} title="Modifier" icon={<Edit2 size={13} />}>{""}</Button>
+          <Button C={C} variant={u.actif ? "danger" : "primary"} size="sm" onClick={() => {
+            if (u.actif) { setDeactivatingUser(u.id); setReassignTo(""); }
+            else { toggleActif(u.id, u.actif); }
+          }}>{u.actif ? "Désactiver" : "Activer"}</Button>
         </div>
         {/* Edit panel */}
         {editingUser === u.id && (
           <div style={{ padding: "14px 16px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginTop: 8, marginBottom: 8 }}>
             <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
-              <input placeholder="Prénom *" value={editForm.prenom} onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })} style={inputStyle(C)} />
-              <input placeholder="Nom *" value={editForm.nom} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} style={inputStyle(C)} />
+              <input placeholder="Prénom" value={editForm.prenom} onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })} style={inputStyle(C)} />
+              <input placeholder="Nom" value={editForm.nom} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} style={inputStyle(C)} />
               <input placeholder="Email *" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} style={inputStyle(C)} />
               <input placeholder="Téléphone" value={editForm.telephone} onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })} style={inputStyle(C)} />
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
-              <button onClick={() => setEditingUser(null)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Annuler</button>
-              <button onClick={saveEdit} disabled={!editForm.email.trim()} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Enregistrer</button>
+              <Button C={C} variant="ghost" size="sm" onClick={() => setEditingUser(null)}>Annuler</Button>
+              <Button C={C} variant="primary" size="sm" onClick={saveEdit} disabled={!editForm.email.trim()}>Enregistrer</Button>
             </div>
           </div>
         )}
