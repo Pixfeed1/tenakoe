@@ -43,6 +43,7 @@ model User {
   smtpPort         Int?
   smtpUser         String?
   smtpPass         String?
+  voitTousLesDossiers Boolean @default(false)
 
   projets       Projet[]       @relation("ChargeeProjet")
   transmissions Transmission[]
@@ -50,6 +51,7 @@ model User {
   tachesCreees  Tache[]        @relation("TacheCreateur")
   notes         Note[]
   alertes       Alerte[]
+  entreprisesAttribuees Entreprise[] @relation("ChargeeEntreprise")
 }
 
 // ============================================================
@@ -148,6 +150,8 @@ model Entreprise {
   apporteur     ApporteurAffaires? @relation(fields: [apporteurId], references: [id])
   conseillerId  String?
   conseiller    Conseiller? @relation(fields: [conseillerId], references: [id])
+  chargeeId     String?
+  chargee       User? @relation("ChargeeEntreprise", fields: [chargeeId], references: [id])
 }
 
 model Conseiller {

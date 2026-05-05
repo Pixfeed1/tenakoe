@@ -8,7 +8,7 @@ export async function GET() {
   if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const users = await prisma.user.findMany({
-    select: { id: true, email: true, nom: true, prenom: true, telephone: true, role: true, actif: true, createdAt: true },
+    select: { id: true, email: true, nom: true, prenom: true, telephone: true, role: true, actif: true, createdAt: true, voitTousLesDossiers: true },
     orderBy: { nom: "asc" },
   });
   return NextResponse.json(users);

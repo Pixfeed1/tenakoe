@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getEntrepriseDetail } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/rbac";
+import { userCanAccessEntreprise } from "@/lib/dossierScope";
 
 export async function GET(
   request: NextRequest,
@@ -17,16 +18,16 @@ export async function GET(
     return NextResponse.json({ error: "Entreprise non trouvee" }, { status: 404 });
   }
 
-  // RBAC: chargee can only see entreprises assigned to her
-  if (user.role === "CHARGEE") {
-    const hasAccess = entreprise.projets.some((p) => p.chargee?.id === user.id);
-    if (!hasAccess) return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
-  }
   // RBAC: prescripteur can only see entreprises from their network
   if (user.role === "PRESCRIPTEUR") {
     if (entreprise.prescripteur !== user.prescripteurType) {
       return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
     }
+  }
+  // Scope: chargée ne voit que ses dossiers (sauf voitTousLesDossiers)
+  if (user.role !== "PRESCRIPTEUR") {
+    const canAccess = await userCanAccessEntreprise(user, id);
+    if (!canAccess) return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
   }
 
   return NextResponse.json(entreprise);
@@ -76,6 +77,7 @@ export async function PATCH(
   }
   if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
   if (body.depotId !== undefined) data.depotId = body.depotId || null;
+  if (body.chargeeId !== undefined) data.chargeeId = body.chargeeId || null;
   if (body.apporteurId !== undefined) data.apporteurId = body.apporteurId || null;
   if (body.numeroCarte !== undefined) data.numeroCarte = body.numeroCarte;
   if (body.eligible !== undefined) { data.eligible = body.eligible; data.dateEligible = new Date(); }

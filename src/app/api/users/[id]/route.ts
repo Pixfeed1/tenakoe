@@ -16,6 +16,7 @@ export async function PATCH(
   if (body.nom !== undefined) data.nom = body.nom;
   if (body.prenom !== undefined) data.prenom = body.prenom;
   if (body.telephone !== undefined) data.telephone = body.telephone || null;
+  if (body.voitTousLesDossiers !== undefined) data.voitTousLesDossiers = body.voitTousLesDossiers;
   if (body.email !== undefined) {
     const existing = await prisma.user.findFirst({ where: { email: body.email, id: { not: id } } });
     if (existing) return NextResponse.json({ error: "Cet email est déjà utilisé par un autre utilisateur" }, { status: 409 });

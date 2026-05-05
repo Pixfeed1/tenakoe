@@ -1,14 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import type { CurrentUser } from "@/lib/rbac";
 import { getEntrepriseFilter, getProjetFilter, getTacheFilter } from "@/lib/rbac";
+import { entrepriseScopeFilter } from "@/lib/dossierScope";
 
 // ========================
 // DASHBOARD DATA
 // ========================
 
 export async function getDashboardStats(user?: CurrentUser | null) {
-  const entFilter = user ? getEntrepriseFilter(user) : {};
-  const projFilter = user ? getProjetFilter(user) : {};
+  const scopeFilter = user ? entrepriseScopeFilter(user) : {};
+  const entFilter = user ? { ...getEntrepriseFilter(user), ...scopeFilter } : {};
+  const projFilter = user ? { ...getProjetFilter(user), ...(Object.keys(scopeFilter).length > 0 ? { entreprise: scopeFilter } : {}) } : {};
   const tacheFilter = user ? getTacheFilter(user) : {};
 
   const [nouveaux, enCharge, aRelancer, dossiers, enRetard, clients] =
@@ -31,7 +33,7 @@ export async function getDashboardStats(user?: CurrentUser | null) {
 }
 
 export async function getPipelineData(user?: CurrentUser | null) {
-  const entFilter = user ? getEntrepriseFilter(user) : {};
+  const entFilter = user ? { ...getEntrepriseFilter(user), ...entrepriseScopeFilter(user) } : {};
 
   const entreprises = await prisma.entreprise.findMany({
     where: {
@@ -99,7 +101,7 @@ export async function getPipelineData(user?: CurrentUser | null) {
 }
 
 export async function getClientsWithProgress(user?: CurrentUser | null) {
-  const entFilter = user ? getEntrepriseFilter(user) : {};
+  const entFilter = user ? { ...getEntrepriseFilter(user), ...entrepriseScopeFilter(user) } : {};
 
   const entreprises = await prisma.entreprise.findMany({
     where: { ...entFilter, statutFacturation: "FACTURE_PAYEE" },

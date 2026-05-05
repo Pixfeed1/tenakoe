@@ -8,6 +8,7 @@ export interface CurrentUser {
   name: string;
   role: "ADMIN" | "CHARGEE" | "PRESCRIPTEUR";
   prescripteurType?: string | null;
+  voitTousLesDossiers?: boolean;
 }
 
 /**
@@ -17,22 +18,18 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
 
-  // Fetch prescripteurType from DB for PRESCRIPTEUR role
-  let prescripteurType: string | null = null;
-  if (session.user.role === "PRESCRIPTEUR") {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { prescripteurType: true },
-    });
-    prescripteurType = dbUser?.prescripteurType || null;
-  }
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { prescripteurType: true, voitTousLesDossiers: true },
+  });
 
   return {
     id: session.user.id,
     email: session.user.email || "",
     name: session.user.name || "",
     role: session.user.role as CurrentUser["role"],
-    prescripteurType,
+    prescripteurType: dbUser?.prescripteurType || null,
+    voitTousLesDossiers: dbUser?.voitTousLesDossiers || false,
   };
 }
 

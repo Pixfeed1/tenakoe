@@ -85,7 +85,7 @@ function UsersTab({ C }: { C: Theme }) {
   const [deactivatingUser, setDeactivatingUser] = useState<string | null>(null);
   const [reassignTo, setReassignTo] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ nom: "", prenom: "", email: "", telephone: "" });
+  const [editForm, setEditForm] = useState({ nom: "", prenom: "", email: "", telephone: "", voitTousLesDossiers: false });
   const [form, setForm] = useState({ email: "", nom: "", prenom: "", telephone: "", role: "CHARGEE", password: "", prescripteurType: "" });
 
   const [prescripteurOptions, setPrescripteurOptions] = useState<Array<{ type: string; nom: string }>>([]);
@@ -113,7 +113,7 @@ function UsersTab({ C }: { C: Theme }) {
     if (!editingUser || !editForm.email.trim()) return;
     const res = await fetch(`/api/users/${editingUser}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(editForm) });
     if (res.ok) {
-      setUsers((p) => p.map((u) => u.id === editingUser ? { ...u, nom: editForm.nom, prenom: editForm.prenom, email: editForm.email, telephone: editForm.telephone || null } : u));
+      setUsers((p) => p.map((u) => u.id === editingUser ? { ...u, nom: editForm.nom, prenom: editForm.prenom, email: editForm.email, telephone: editForm.telephone || null, voitTousLesDossiers: editForm.voitTousLesDossiers } : u));
       setEditingUser(null);
       toast("Utilisateur modifié");
     } else {
@@ -185,9 +185,12 @@ function UsersTab({ C }: { C: Theme }) {
             <option value="CHARGEE">Chargée</option>
             <option value="PRESCRIPTEUR">Prescripteur</option>
           </select>
+          {(u as Record<string, unknown>).voitTousLesDossiers && (
+            <span style={{ padding: "2px 6px", borderRadius: 4, background: C.accentDim, color: C.accentText, fontSize: 10, fontWeight: 600 }}>Vue globale</span>
+          )}
           <Button C={C} variant="ghost" size="sm" onClick={() => {
             setEditingUser(u.id);
-            setEditForm({ nom: u.nom, prenom: u.prenom, email: u.email, telephone: u.telephone || "" });
+            setEditForm({ nom: u.nom, prenom: u.prenom, email: u.email, telephone: u.telephone || "", voitTousLesDossiers: (u as Record<string, unknown>).voitTousLesDossiers === true });
           }} title="Modifier" icon={<Edit2 size={13} />}>{""}</Button>
           <Button C={C} variant={u.actif ? "danger" : "primary"} size="sm" onClick={() => {
             if (u.actif) { setDeactivatingUser(u.id); setReassignTo(""); }
@@ -203,6 +206,10 @@ function UsersTab({ C }: { C: Theme }) {
               <input placeholder="Email *" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} style={inputStyle(C)} />
               <input placeholder="Téléphone" value={editForm.telephone} onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })} style={inputStyle(C)} />
             </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, fontSize: 12, color: C.text, cursor: "pointer" }}>
+              <input type="checkbox" checked={editForm.voitTousLesDossiers} onChange={(e) => setEditForm({ ...editForm, voitTousLesDossiers: e.target.checked })} style={{ accentColor: C.accent }} />
+              Voit tous les dossiers (vue globale)
+            </label>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
               <Button C={C} variant="ghost" size="sm" onClick={() => setEditingUser(null)}>Annuler</Button>
               <Button C={C} variant="primary" size="sm" onClick={saveEdit} disabled={!editForm.email.trim()}>Enregistrer</Button>
