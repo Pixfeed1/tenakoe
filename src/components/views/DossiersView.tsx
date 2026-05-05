@@ -53,10 +53,10 @@ export function DossiersView({ C, onSelectClient, role }: { C: Theme; onSelectCl
         .then((data) => setChargees(data.filter((u: { role?: string; actif?: boolean }) => u.actif && u.role !== "PRESCRIPTEUR")))
         .catch(() => {});
     }
-    fetch("/api/pipeline-config").then((r) => r.ok ? r.json() : {})
-      .then((data) => {
-        if (data.statutsPrise) setStatutsPrise(data.statutsPrise.filter((s: StatutConfig) => s.actif));
-        if (data.statutsFacturation) setStatutsFacturation(data.statutsFacturation.filter((s: StatutConfig) => s.actif));
+    fetch("/api/pipeline-config").then((r) => r.ok ? r.json() : null)
+      .then((data: { statutsPrise?: StatutConfig[]; statutsFacturation?: StatutConfig[] } | null) => {
+        if (data?.statutsPrise) setStatutsPrise(data.statutsPrise.filter((s: StatutConfig) => s.actif));
+        if (data?.statutsFacturation) setStatutsFacturation(data.statutsFacturation.filter((s: StatutConfig) => s.actif));
       }).catch(() => {});
     const handler = () => setShowAdd(true);
     window.addEventListener("tenakoe:new-dossier", handler);
