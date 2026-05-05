@@ -185,7 +185,7 @@ function UsersTab({ C }: { C: Theme }) {
             <option value="CHARGEE">Chargée</option>
             <option value="PRESCRIPTEUR">Prescripteur</option>
           </select>
-          {(u as Record<string, unknown>).voitTousLesDossiers && (
+          {(u as Record<string, unknown>).voitTousLesDossiers === true && (
             <span style={{ padding: "2px 6px", borderRadius: 4, background: C.accentDim, color: C.accentText, fontSize: 10, fontWeight: 600 }}>Vue globale</span>
           )}
           <Button C={C} variant="ghost" size="sm" onClick={() => {
