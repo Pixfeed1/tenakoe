@@ -1189,30 +1189,45 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 </span>
               )}
             </div>
-            {[
-              { label: "Statut du lead", value: formatStatutPrise(entrepriseData?.statutPrise), dateKey: "dateStatutPrise" },
-            ].map((f, i) => (
-              <div key={`s${i}`} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-                <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
-                <div>
-                  <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
-                  {entrepriseData?.[f.dateKey] && (
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, marginTop: 2 }}>
-                      Modifié le
-                      <input type="date" value={new Date(entrepriseData[f.dateKey]).toISOString().slice(0, 10)}
-                        onChange={async (e) => {
-                          if (!client?.id || isDemoMode) return;
-                          const val = e.target.value ? new Date(e.target.value).toISOString() : null;
-                          setEntrepriseData((prev) => prev ? { ...prev, [f.dateKey]: val || "" } : prev);
-                          await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [f.dateKey]: val }) }).catch(() => {});
-                        }}
-                        style={{ fontSize: 10, color: C.textDim, background: "transparent", border: "none", borderBottom: `1px dashed ${C.border}`, padding: "1px 2px", cursor: "pointer", fontFamily: "inherit" }}
-                      />
-                    </div>
-                  )}
-                </div>
+            {/* Statut du lead */}
+            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Statut du lead</span>
+              <div>
+                <select
+                  value={entrepriseData?.statutPrise || "NOUVEAU"}
+                  onChange={async (e) => {
+                    if (!client?.id || isDemoMode) return;
+                    const val = e.target.value;
+                    setEntrepriseData((prev) => prev ? { ...prev, statutPrise: val, dateStatutPrise: new Date().toISOString() } : prev);
+                    await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statutPrise: val }) }).catch(() => {});
+                  }}
+                  style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
+                >
+                  <option value="NOUVEAU">Nouveau</option>
+                  <option value="PRISE_EN_CHARGE">Prise en charge</option>
+                  <option value="PRISE_EN_CHARGE_A_RELANCER">À relancer</option>
+                  <option value="INJOIGNABLE">Injoignable</option>
+                  <option value="EN_COURS">En cours</option>
+                  <option value="ABANDONNE">Abandonné</option>
+                  <option value="QUALIFIE">Qualifié</option>
+                  <option value="TERMINE">Terminé</option>
+                </select>
+                {entrepriseData?.dateStatutPrise && (
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                    Modifié le
+                    <input type="date" value={new Date(entrepriseData.dateStatutPrise).toISOString().slice(0, 10)}
+                      onChange={async (e) => {
+                        if (!client?.id || isDemoMode) return;
+                        const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                        setEntrepriseData((prev) => prev ? { ...prev, dateStatutPrise: val || "" } : prev);
+                        await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dateStatutPrise: val }) }).catch(() => {});
+                      }}
+                      style={{ fontSize: 10, color: C.textDim, background: "transparent", border: "none", borderBottom: `1px dashed ${C.border}`, padding: "1px 2px", cursor: "pointer", fontFamily: "inherit" }}
+                    />
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
             {[
               { label: "Intéressé TNK", key: "interesseTNK", dateKey: "dateInteresseTNK", value: formatInteretTNK(entrepriseData?.interesseTNK), raw: entrepriseData?.interesseTNK, options: [{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "NSP" }, { v: "INJOIGNABLE", l: "Injoignable — prospect fermé" }] },
             ].map((f, i) => (
@@ -1253,22 +1268,40 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 </div>
               </div>
             ))}
-            {[
-              { label: "Facturation", value: formatStatutFacturation(entrepriseData?.statutFacturation), dateKey: "dateStatutFacturation" },
-            ].map((f, i) => (
-              <div key={`s${i}`} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-                <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>{f.label}</span>
-                <div>
-                  <Badge color={C.accentText} bg={C.accentDim}>{f.value}</Badge>
-                  {entrepriseData?.[f.dateKey] && (
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, marginTop: 2 }}>
-                      Modifié le
-                      <input type="date" value={new Date(entrepriseData[f.dateKey]).toISOString().slice(0, 10)}
-                        onChange={async (e) => {
-                          if (!client?.id || isDemoMode) return;
-                          const val = e.target.value ? new Date(e.target.value).toISOString() : null;
-                          setEntrepriseData((prev) => prev ? { ...prev, [f.dateKey]: val || "" } : prev);
-                          await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [f.dateKey]: val }) }).catch(() => {});
+            {/* Facturation */}
+            <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Facturation</span>
+              <div>
+                <select
+                  value={entrepriseData?.statutFacturation || "DEVIS_A_FAIRE"}
+                  onChange={async (e) => {
+                    if (!client?.id || isDemoMode) return;
+                    const val = e.target.value;
+                    setEntrepriseData((prev) => prev ? { ...prev, statutFacturation: val, dateStatutFacturation: new Date().toISOString() } : prev);
+                    await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statutFacturation: val }) }).catch(() => {});
+                  }}
+                  style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
+                >
+                  <option value="DEVIS_A_FAIRE">Devis à faire</option>
+                  <option value="DEVIS_ENVOYE">Devis envoyé</option>
+                  <option value="DEVIS_SIGNE">Devis signé</option>
+                  <option value="FACTURE_ENVOYEE">Facture envoyée</option>
+                  <option value="FACTURE_PAYEE">Facture payée</option>
+                  <option value="DOSSIER_DEPOSE">Dossier déposé</option>
+                  <option value="DOSSIER_COMPLEMENT">Demande complément</option>
+                  <option value="QUALIFIE">Qualifié</option>
+                  <option value="REFUSE">Refusé</option>
+                  <option value="DOSSIER_EN_APPEL">En appel</option>
+                </select>
+                {entrepriseData?.dateStatutFacturation && (
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, marginTop: 2 }}>
+                    Modifié le
+                    <input type="date" value={new Date(entrepriseData.dateStatutFacturation).toISOString().slice(0, 10)}
+                      onChange={async (e) => {
+                        if (!client?.id || isDemoMode) return;
+                        const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                        setEntrepriseData((prev) => prev ? { ...prev, dateStatutFacturation: val || "" } : prev);
+                        await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dateStatutFacturation: val }) }).catch(() => {});
                         }}
                         style={{ fontSize: 10, color: C.textDim, background: "transparent", border: "none", borderBottom: `1px dashed ${C.border}`, padding: "1px 2px", cursor: "pointer", fontFamily: "inherit" }}
                       />
@@ -1276,7 +1309,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   )}
                 </div>
               </div>
-            ))}
             {/* Chargée de projet */}
             <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
               <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Chargée de projet</span>
