@@ -2637,7 +2637,31 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, color: C.text, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    {isNote ? (
+                    {isNote && editingNote === noteData?.id ? (
+                      <div style={{ width: "100%" }} onClick={(e) => e.stopPropagation()}>
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          rows={3}
+                          style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box" }}
+                        />
+                        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                          <Button C={C} variant="primary" size="sm" onClick={async (ev) => {
+                            ev?.stopPropagation();
+                            if (!noteData) return;
+                            const res = await fetch("/api/notes", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: noteData.id, contenu: editContent }) });
+                            if (res.ok) {
+                              const updated = await res.json();
+                              setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+                              setHistorique((prev) => prev.map((h, idx) => idx === i ? { ...h, message: updated.contenu } : h));
+                              setEditingNote(null);
+                              toast("Note modifiée");
+                            }
+                          }}>Enregistrer</Button>
+                          <Button C={C} variant="ghost" size="sm" onClick={(ev) => { ev?.stopPropagation(); setEditingNote(null); }}>Annuler</Button>
+                        </div>
+                      </div>
+                    ) : isNote ? (
                       <span style={{ whiteSpace: "pre-wrap" }}>
                         {a.message.replace(/^Note : /, "").split(/(@\w+|\/api\/files\/\S+)/g).map((part, pi) =>
                           part.startsWith("@")
@@ -2660,6 +2684,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   )}
                   <div style={{ fontSize: 11, color: C.textDim, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
                     {a.chargee} · {a.time}
+                    {isNote && noteData && editingNote !== noteData.id && (
+                      <button onClick={(e) => { e.stopPropagation(); setEditingNote(noteData.id); setEditContent(noteData.contenu); }}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }} title="Modifier la note">
+                        <Edit3 size={11} color={C.textDim} />
+                      </button>
+                    )}
                     {isNote && noteData && (
                       <button onClick={async (e) => {
                         e.stopPropagation();
@@ -2906,325 +2936,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       )}
 
       {/* Tab: Notes */}
-      {tab === "notes" && (
-        <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Notes internes</h3>
-
-          {/* New note form */}
-          <div style={{ marginBottom: 20, position: "relative" }}>
-            <textarea
-              ref={noteTextareaRef}
-              placeholder="Ajouter une note... (tapez @ pour mentionner)"
-              value={newNote}
-              onChange={(e) => {
-                setNewNote(e.target.value);
-                const pos = e.target.selectionStart || 0;
-                const textBefore = e.target.value.slice(0, pos);
-                const atMatch = textBefore.match(/@(\w*)$/);
-                if (atMatch) {
-                  setShowMentionMenu(true);
-                  setMentionFilter(atMatch[1].toLowerCase());
-                  setMentionCursorPos(pos);
-                } else {
-                  setShowMentionMenu(false);
-                }
-              }}
-              onKeyDown={(e) => { if (showMentionMenu && e.key === "Escape") setShowMentionMenu(false); }}
-              rows={3}
-              style={{
-                width: "100%", padding: "10px 14px", borderRadius: 10,
-                border: `1px solid ${C.border}`, background: C.bg, color: C.text,
-                fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box",
-              }}
-            />
-            {/* Mention dropdown */}
-            {showMentionMenu && (
-              <div className="dropdown-menu" style={{
-                position: "absolute", zIndex: 50, background: C.surface,
-                border: `1px solid ${C.border}`, borderRadius: 10,
-                boxShadow: C.shadowHover, maxHeight: 160, overflowY: "auto",
-                width: 200, maxWidth: "calc(100vw - 32px)", bottom: "100%", marginBottom: 4,
-              }}>
-                {mentionUsers
-                  .filter((u) => u.prenom.toLowerCase().includes(mentionFilter) || u.nom.toLowerCase().includes(mentionFilter))
-                  .map((u) => (
-                    <button key={u.id} onClick={() => {
-                      const before = newNote.slice(0, mentionCursorPos - mentionFilter.length - 1);
-                      const after = newNote.slice(mentionCursorPos);
-                      setNewNote(`${before}@${u.prenom} ${after}`);
-                      setShowMentionMenu(false);
-                      noteTextareaRef.current?.focus();
-                    }} style={{
-                      width: "100%", padding: "8px 12px", border: "none",
-                      background: "transparent", cursor: "pointer", textAlign: "left",
-                      fontSize: 13, color: C.text, display: "flex", alignItems: "center", gap: 8,
-                    }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                    >
-                      <div style={{
-                        width: 24, height: 24, borderRadius: 6,
-                        background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 10, fontWeight: 700, color: "#fff",
-                      }}>
-                        {(u.prenom || "")[0] || ""}{(u.nom || "")[0] || "?"}
-                      </div>
-                      {u.prenom} {u.nom}
-                    </button>
-                  ))
-                }
-                {mentionUsers.filter((u) => u.prenom.toLowerCase().includes(mentionFilter) || u.nom.toLowerCase().includes(mentionFilter)).length === 0 && (
-                  <div style={{ padding: "8px 12px", fontSize: 12, color: C.textDim }}>Aucun utilisateur</div>
-                )}
-              </div>
-            )}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <label style={{
-                  padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`,
-                  background: "transparent", cursor: "pointer", fontSize: 12, color: C.textMuted,
-                  display: "flex", alignItems: "center", gap: 4,
-                }}>
-                  <Paperclip size={13} />
-                  {noteFile ? noteFile.name : "Joindre"}
-                  <input type="file" style={{ display: "none" }} onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file && file.size > 10 * 1024 * 1024) { alert("Fichier trop volumineux (max 10 Mo)"); return; }
-                    setNoteFile(file || null);
-                  }} />
-                </label>
-                {noteFile && (
-                  <Button C={C} variant="ghost" size="sm" onClick={() => setNoteFile(null)} style={{ color: C.textDim }}>
-                    <X size={12} />
-                  </Button>
-                )}
-              </div>
-              <Button
-                C={C}
-                variant="primary"
-                disabled={!newNote.trim() && !noteFile}
-                icon={<StickyNote size={13} />}
-                onClick={async () => {
-                  if (!newNote.trim() && !noteFile) return;
-                  if (isDemoMode) {
-                    handleDemoAction("Note ajoutée");
-                    setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote || `[Pièce jointe : ${noteFile?.name}]`, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" } }, ...prev]);
-                    setNewNote(""); setNoteFile(null);
-                    guide.showSuggestion("note-ajoutee"); toast("Note ajoutée");
-                    return;
-                  }
-                  if (!client?.id) return;
-                  let fichierUrl = null;
-                  let fichierNom = null;
-                  let fichierTaille = null;
-                  if (noteFile) {
-                    const formData = new FormData();
-                    formData.append("file", noteFile);
-                    formData.append("entrepriseId", client.id);
-                    const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-                    if (uploadRes.ok) {
-                      const uploadData = await uploadRes.json();
-                      fichierUrl = uploadData.url;
-                      fichierNom = noteFile.name;
-                      fichierTaille = noteFile.size;
-                    }
-                  }
-                  const res = await fetch("/api/notes", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      contenu: newNote || `[Pièce jointe : ${fichierNom}]`,
-                      entrepriseId: client.id,
-                      fichierUrl, fichierNom, fichierTaille,
-                    }),
-                  });
-                  if (res.ok) {
-                    const note = await res.json();
-                    setNotes((prev) => [note, ...prev]);
-                    setNewNote(""); setNoteFile(null);
-                    guide.showSuggestion("note-ajoutee"); toast("Note ajoutée");
-                  }
-                }}
-                style={{
-                  background: (newNote.trim() || noteFile) ? "linear-gradient(135deg, #16a34a, #15803d)" : "#94a3b8",
-                }}
-              >
-                Ajouter
-              </Button>
-            </div>
-          </div>
-
-          {/* Notes list */}
-          {notes.length === 0 ? (
-            <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>
-              Aucune note pour cette entreprise
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {notes.map((note) => (
-                <div
-                  key={note.id}
-                  style={{
-                    padding: "14px 16px", borderRadius: 10,
-                    background: note.epinglee ? C.warningDim : C.bg,
-                    border: `1px solid ${note.epinglee ? "rgba(217,119,6,0.2)" : C.border}`,
-                    position: "relative",
-                  }}
-                >
-                  {/* Header */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      {note.epinglee && <Pin size={12} color={C.warning} />}
-                      <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>
-                        {note.auteur.prenom} {note.auteur.nom}
-                      </span>
-                      <span style={{ fontSize: 11, color: C.textDim }}>
-                        · {new Date(note.createdAt).toLocaleDateString("fr-FR")}{" "}
-                        {new Date(note.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", gap: 4 }}>
-                      {/* Pin toggle */}
-                      <Button
-                        C={C}
-                        variant="ghost"
-                        size="sm"
-                        onClick={async () => {
-                          const res = await fetch("/api/notes", {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ id: note.id, epinglee: !note.epinglee }),
-                          });
-                          if (res.ok) {
-                            const updated = await res.json();
-                            setNotes((prev) =>
-                              prev.map((n) => (n.id === updated.id ? updated : n))
-                                .sort((a, b) => (a.epinglee === b.epinglee ? 0 : a.epinglee ? -1 : 1))
-                            );
-                          }
-                        }}
-                        style={{ width: 26, height: 26 }}
-                        title={note.epinglee ? "Désépingler" : "Épingler"}
-                      >
-                        <Pin size={13} color={note.epinglee ? C.warning : C.textDim} />
-                      </Button>
-                      {/* Edit */}
-                      <Button
-                        C={C}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (editingNote === note.id) {
-                            setEditingNote(null);
-                          } else {
-                            setEditingNote(note.id);
-                            setEditContent(note.contenu);
-                          }
-                        }}
-                        style={{ width: 26, height: 26 }}
-                        title="Modifier"
-                      >
-                        <Edit3 size={13} color={C.textDim} />
-                      </Button>
-                      {/* Delete */}
-                      <Button
-                        C={C}
-                        variant="danger"
-                        size="sm"
-                        onClick={async () => {
-                          if (!window.confirm("Supprimer cette note ?")) return;
-                          const res = await fetch(`/api/notes?id=${note.id}`, { method: "DELETE" });
-                          if (res.ok) {
-                            setNotes((prev) => prev.filter((n) => n.id !== note.id));
-                          }
-                        }}
-                        style={{ width: 26, height: 26 }}
-                        title="Supprimer"
-                      >
-                        <Trash2 size={13} color={C.textDim} />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  {editingNote === note.id ? (
-                    <div>
-                      <textarea
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        rows={3}
-                        style={{
-                          width: "100%", padding: "8px 12px", borderRadius: 8,
-                          border: `1px solid ${C.border}`, background: C.surface, color: C.text,
-                          fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box",
-                        }}
-                      />
-                      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                        <Button
-                          C={C}
-                          variant="primary"
-                          size="sm"
-                          onClick={async () => {
-                            const res = await fetch("/api/notes", {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ id: note.id, contenu: editContent }),
-                            });
-                            if (res.ok) {
-                              const updated = await res.json();
-                              setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
-                              setEditingNote(null);
-                            }
-                          }}
-                        >
-                          Enregistrer
-                        </Button>
-                        <Button
-                          C={C}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingNote(null)}
-                        >
-                          Annuler
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                        {note.contenu.split(/(@\w+|\/api\/files\/\S+)/g).map((part, pi) =>
-                          part.startsWith("@")
-                            ? <span key={pi} style={{ color: C.accent, fontWeight: 600, background: C.accentDim, padding: "0 4px", borderRadius: 4 }}>{part}</span>
-                            : part.startsWith("/api/files/")
-                              ? <a key={pi} href={part} target="_blank" rel="noopener noreferrer" style={{ color: C.accent, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}><Paperclip size={12} />{part.split("_").slice(-1)[0] || part.split("/").pop()}</a>
-                            : part
-                        )}
-                      </div>
-                      {note.fichierUrl && (
-                        <a href={fixFileUrl(note.fichierUrl)} target="_blank" rel="noopener noreferrer" style={{
-                          display: "inline-flex", alignItems: "center", gap: 6,
-                          marginTop: 8, padding: "6px 10px", borderRadius: 6,
-                          background: C.bg, border: `1px solid ${C.border}`,
-                          fontSize: 12, color: C.blue, textDecoration: "none",
-                        }}>
-                          <Paperclip size={12} />
-                          {note.fichierNom || "Pièce jointe"}
-                          {note.fichierTaille && (
-                            <span style={{ color: C.textDim }}>
-                              ({(note.fichierTaille / 1024).toFixed(0)} Ko)
-                            </span>
-                          )}
-                        </a>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </>
   );
 }
