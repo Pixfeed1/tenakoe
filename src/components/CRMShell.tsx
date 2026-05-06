@@ -298,6 +298,7 @@ export function CRMShell({
           <DashboardView
             key={navKey}
             C={C}
+            role={user.role}
             onSelectClient={(client) => openClient(client as typeof selectedClient & object)}
             onNavigate={(v) => navigateTo(v as View)}
             serverStats={initialStats}

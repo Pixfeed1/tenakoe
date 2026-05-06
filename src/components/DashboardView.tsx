@@ -33,6 +33,7 @@ interface AlerteData {
 
 interface DashboardViewProps {
   C: Theme;
+  role?: string;
   onSelectClient: (client: PipelineItem | Client) => void;
   onNavigate?: (view: string) => void;
   serverStats?: ServerStats | null;
@@ -44,6 +45,7 @@ interface DashboardViewProps {
 
 export function DashboardView({
   C,
+  role,
   onSelectClient,
   onNavigate,
   serverStats,
@@ -53,6 +55,18 @@ export function DashboardView({
   serverAlertes,
 }: DashboardViewProps) {
   const clientsData = serverClients || [];
+  const [filtreChargee, setFiltreChargee] = useState("");
+  const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
+  const [pipelineFilter, setPipelineFilter] = useState("");
+  const peutVoirToutesChargees = role === "ADMIN";
+
+  useEffect(() => {
+    if (peutVoirToutesChargees) {
+      fetch("/api/users").then((r) => r.ok ? r.json() : [])
+        .then((data) => setChargees(data.filter((u: { role?: string; actif?: boolean }) => u.actif && u.role !== "PRESCRIPTEUR")))
+        .catch(() => {});
+    }
+  }, [peutVoirToutesChargees]);
 
   const STATS = [
     { label: "Nouveaux leads", value: String(serverStats?.nouveaux ?? 0), change: "", up: null as boolean | null, Icon: Zap, colorKey: "blue" },
@@ -243,6 +257,73 @@ export function DashboardView({
         ) : null;
       })()}
 
+      {/* Chargée filter + Pipeline status chips */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
+          {pipeline.map((col) => {
+            const count = filtreChargee ? col.items.filter((i) => (i as unknown as { chargeeId?: string }).chargeeId === filtreChargee).length : colFiltered.items.length;
+            const isActive = pipelineFilter === col.id;
+            return (
+              <button key={col.id} onClick={() => setPipelineFilter(isActive ? "" : col.id)} style={{
+                padding: "4px 10px", borderRadius: 999, border: `1px solid ${isActive ? C.accent + "60" : C.border}`,
+                background: isActive ? C.accentDim : C.surface, color: isActive ? C.accentText : C.textMuted,
+                fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                transition: "all 0.15s",
+              }}>
+                {col.status} <span style={{ color: isActive ? C.accent : C.textDim, marginLeft: 4 }}>{count}</span>
+              </button>
+            );
+          })}
+          {pipelineFilter && (
+            <button onClick={() => setPipelineFilter("")} style={{ padding: "4px 8px", borderRadius: 999, border: "none", background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer" }}>
+              Tout afficher
+            </button>
+          )}
+        </div>
+        {peutVoirToutesChargees && (
+          <select value={filtreChargee} onChange={(e) => setFiltreChargee(e.target.value)}
+            style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }}>
+            <option value="">Toutes les chargées</option>
+            {chargees.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+          </select>
+        )}
+      </div>
+
+      {/* À traiter */}
+      {(() => {
+        const alertItems: Array<{ label: string; detail: string; entrepriseId?: string; entrepriseNom?: string; color: string }> = [];
+        for (const col of pipeline) {
+          for (const item of col.items) {
+            if (filtreChargee && (item as unknown as { chargeeId?: string }).chargeeId !== filtreChargee) continue;
+            if ((item as unknown as { enRetard?: boolean }).enRetard) {
+              alertItems.push({ label: item.nom, detail: "Étape en retard", entrepriseId: item.id, entrepriseNom: item.nom, color: C.danger });
+            }
+          }
+        }
+        if (alertItems.length === 0) return null;
+        return (
+          <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, padding: "12px 16px", marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.danger, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              <AlertTriangle size={14} /> À traiter ({alertItems.length})
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {alertItems.slice(0, 5).map((a, i) => (
+                <div key={i} onClick={() => a.entrepriseId && onSelectClient({ id: a.entrepriseId, nom: a.entrepriseNom || "" })}
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6, cursor: "pointer", fontSize: 12, transition: "background 0.1s" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: a.color, flexShrink: 0 }} />
+                  <span style={{ fontWeight: 600, color: C.text }}>{a.label}</span>
+                  <span style={{ color: C.textDim }}>— {a.detail}</span>
+                </div>
+              ))}
+              {alertItems.length > 5 && <span style={{ fontSize: 11, color: C.textDim, paddingLeft: 14 }}>+{alertItems.length - 5} autres</span>}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Pipeline */}
       <GuideTooltip id="pipeline" C={C} style={{ marginBottom: 28 }}>
       <div>
@@ -250,7 +331,7 @@ export function DashboardView({
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>
             Pipeline prospects
             <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, marginLeft: 8 }}>
-              {pipelineWithDemo.reduce((sum, col) => sum + col.items.length, 0)} total
+              {pipelineWithDemo.reduce((sum, col) => sum + colFiltered.items.length, 0)} total
             </span>
             <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim, marginLeft: 8 }}>
               Glisser-déposer pour changer le statut
@@ -258,7 +339,10 @@ export function DashboardView({
           </h2>
         </div>
         <div className="pipeline-columns" data-guide="pipeline" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
-          {pipelineWithDemo.map((col, colIdx) => (
+          {pipelineWithDemo.filter((col) => !pipelineFilter || col.id === pipelineFilter).map((col, colIdx) => {
+            const colItems = filtreChargee ? col.items.filter((i) => (i as unknown as { chargeeId?: string }).chargeeId === filtreChargee) : col.items;
+            const colFiltered = { ...col, items: colItems };
+            return (
             <div
               key={col.id}
               {...(colIdx === 1 ? { "data-guide": "pipeline-col-2" } : {})}
@@ -283,11 +367,11 @@ export function DashboardView({
                     padding: "1px 8px", borderRadius: 6,
                   }}
                 >
-                  {col.items.length}
+                  {colFiltered.items.length}
                 </span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
-                {(expandedCols[col.id] ? col.items : col.items.slice(0, PIPELINE_MAX)).map((item, itemIdx) => {
+                {(expandedCols[col.id] ? colFiltered.items : colFiltered.items.slice(0, PIPELINE_MAX)).map((item, itemIdx) => {
                   const demo = isDemo(item);
                   const isFirstCard = colIdx === 0 && itemIdx === 0;
                   return (
@@ -319,16 +403,16 @@ export function DashboardView({
                   </div>
                   );
                 })}
-                {col.items.length > PIPELINE_MAX && !expandedCols[col.id] && (
+                {colFiltered.items.length > PIPELINE_MAX && !expandedCols[col.id] && (
                   <button onClick={() => setExpandedCols((p) => ({ ...p, [col.id]: true }))} style={{
                     padding: "8px 0", borderRadius: 8, border: `1px dashed ${C.border}`,
                     background: "transparent", color: C.textMuted, fontSize: 11,
                     fontWeight: 600, cursor: "pointer", textAlign: "center", width: "100%",
                   }}>
-                    Voir les {col.items.length - PIPELINE_MAX} autres
+                    Voir les {colFiltered.items.length - PIPELINE_MAX} autres
                   </button>
                 )}
-                {col.items.length > PIPELINE_MAX && expandedCols[col.id] && (
+                {colFiltered.items.length > PIPELINE_MAX && expandedCols[col.id] && (
                   <button onClick={() => setExpandedCols((p) => ({ ...p, [col.id]: false }))} style={{
                     padding: "6px 0", borderRadius: 8, border: "none",
                     background: "transparent", color: C.textDim, fontSize: 11,
@@ -337,7 +421,7 @@ export function DashboardView({
                     Réduire
                   </button>
                 )}
-                {col.items.length === 0 && (
+                {colFiltered.items.length === 0 && (
                   <div
                     style={{
                       padding: 16, textAlign: "center", fontSize: 12, color: C.textDim,
@@ -349,7 +433,7 @@ export function DashboardView({
                 )}
               </div>
             </div>
-          ))}
+          ); })}
         </div>
       </div>
       </GuideTooltip>
@@ -382,7 +466,7 @@ export function DashboardView({
                   fontSize: 12, fontWeight: 700, color: C.text,
                   background: C.surfaceHover, padding: "2px 8px", borderRadius: 6,
                 }}>
-                  {col.items.length}
+                  {colFiltered.items.length}
                 </span>
               </div>
             ))}
