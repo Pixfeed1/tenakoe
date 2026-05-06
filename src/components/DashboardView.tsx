@@ -261,7 +261,7 @@ export function DashboardView({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
           {pipeline.map((col) => {
-            const count = filtreChargee ? col.items.filter((i) => (i as unknown as { chargeeId?: string }).chargeeId === filtreChargee).length : colFiltered.items.length;
+            const count = filtreChargee ? col.items.filter((i) => (i as unknown as { chargeeId?: string }).chargeeId === filtreChargee).length : col.items.length;
             const isActive = pipelineFilter === col.id;
             return (
               <button key={col.id} onClick={() => setPipelineFilter(isActive ? "" : col.id)} style={{
