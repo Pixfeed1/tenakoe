@@ -43,7 +43,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
-  const existing = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, interesseTNK: true, miseEnRelation: true } });
+  const existing = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, interesseTNK: true, miseEnRelation: true, chargeeId: true } });
 
   const data: Record<string, unknown> = {};
   if (body.archive !== undefined) data.archive = body.archive;
@@ -77,7 +77,10 @@ export async function PATCH(
   }
   if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
   if (body.depotId !== undefined) data.depotId = body.depotId || null;
-  if (body.chargeeId !== undefined) data.chargeeId = body.chargeeId || null;
+  if (body.chargeeId !== undefined) {
+    data.chargeeId = body.chargeeId || null;
+    await prisma.projet.updateMany({ where: { entrepriseId: id }, data: { chargeeId: body.chargeeId || null } });
+  }
   if (body.apporteurId !== undefined) data.apporteurId = body.apporteurId || null;
   if (body.numeroCarte !== undefined) data.numeroCarte = body.numeroCarte;
   if (body.eligible !== undefined) { data.eligible = body.eligible; data.dateEligible = new Date(); }
@@ -104,6 +107,7 @@ export async function PATCH(
   // Log tracked field changes
   const logs: string[] = [];
   if (body.interesseTNK !== undefined && body.interesseTNK !== existing?.interesseTNK) logs.push(`Intéressé TNK : ${body.interesseTNK}`);
+  if (body.chargeeId !== undefined && body.chargeeId !== existing?.chargeeId) logs.push(`Chargée de projet : ${body.chargeeId ? "attribuée" : "désattribuée"}`);
   if (body.miseEnRelation !== undefined && body.miseEnRelation !== existing?.miseEnRelation) logs.push(`Mise en relation : ${body.miseEnRelation}`);
   if (logs.length > 0) {
     await prisma.logActivite.create({

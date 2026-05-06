@@ -304,6 +304,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           prenomConseiller: data.prenomConseiller || "",
           emailConseiller2: data.emailConseiller || "",
           telephoneConseiller: data.telephoneConseiller || "",
+          chargeeEntreprise: data.chargee ? { id: data.chargee.id, prenom: data.chargee.prenom, nom: data.chargee.nom } : null,
           dateEnCours: data.dateEnCours || "",
           dateDepose: data.dateDepose || "",
           dateQualifie: data.dateQualifie || "",
@@ -1313,14 +1314,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
               <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Chargée de projet</span>
               <select
-                value={projets[0]?.chargee?.id || ""}
+                value={(entrepriseData as Record<string, unknown>)?.chargeeEntreprise ? ((entrepriseData as Record<string, unknown>).chargeeEntreprise as { id: string }).id : (projets[0]?.chargee?.id || "")}
                 onChange={async (e) => {
-                  const projetId = projets[0]?.id;
-                  if (!projetId || isDemoMode) return;
+                  if (!client?.id || isDemoMode) return;
                   const newChargeeId = e.target.value || null;
-                  const newChargee = mentionUsers.find((u) => u.id === newChargeeId) || null;
-                  setProjets((prev) => prev.map((p, i) => i === 0 ? { ...p, chargee: newChargee ? { id: newChargee.id, prenom: newChargee.prenom, nom: newChargee.nom } : null } : p));
-                  await fetch(`/api/projets/${projetId}`, {
+                  const newChargee = newChargeeId ? mentionUsers.find((u) => u.id === newChargeeId) || null : null;
+                  setEntrepriseData((prev) => prev ? { ...prev, chargeeEntreprise: newChargee ? { id: newChargee.id, prenom: newChargee.prenom, nom: newChargee.nom } : null } : prev);
+                  setProjets((prev) => prev.map((p) => ({ ...p, chargee: newChargee ? { id: newChargee.id, prenom: newChargee.prenom, nom: newChargee.nom } : null })));
+                  await fetch(`/api/entreprises/${client.id}`, {
                     method: "PATCH", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ chargeeId: newChargeeId }),
                   }).catch(() => {});

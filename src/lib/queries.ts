@@ -68,7 +68,7 @@ export async function getPipelineData(user?: CurrentUser | null) {
     entreprises.filter(filterFn).map((e) => ({
       id: e.id,
       nom: e.nom,
-      chargee: e.projets[0]?.chargee?.prenom || "—",
+      chargee: (e as unknown as { chargee?: { prenom: string } }).chargee?.prenom || e.projets[0]?.chargee?.prenom || "—",
       prescripteur: prescripteurLabel[e.prescripteur || "PDB"] || "PDB",
       date: e.updatedAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
       siret: e.siret || "",
@@ -147,7 +147,7 @@ export async function getClientsWithProgress(user?: CurrentUser | null) {
       id: e.id,
       nom: e.nom,
       siret: e.siret,
-      chargee: e.projets[0]?.chargee?.prenom || "—",
+      chargee: (e as unknown as { chargee?: { prenom: string } }).chargee?.prenom || e.projets[0]?.chargee?.prenom || "—",
       statut: statutLabel[e.statutFacturation || "FACTURE_PAYEE"] || "En cours",
       qualif: qualif ? qualifLabel[qualif] || qualif : "—",
       docs: docsRecu,
@@ -207,6 +207,7 @@ export async function getEntrepriseDetail(id: string) {
       depotConfig: { select: { id: true, nom: true } },
       apporteur: { select: { id: true, nom: true, prenom: true, structure: true } },
       conseiller: { select: { id: true, nom: true, prenom: true, email: true, telephone: true, prescripteurType: true } },
+      chargee: { select: { id: true, prenom: true, nom: true } },
       projets: {
         include: {
           chargee: { select: { id: true, prenom: true, nom: true } },
