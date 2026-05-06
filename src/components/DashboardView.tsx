@@ -331,7 +331,7 @@ export function DashboardView({
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>
             Pipeline prospects
             <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, marginLeft: 8 }}>
-              {pipelineWithDemo.reduce((sum, col) => sum + colFiltered.items.length, 0)} total
+              {pipelineWithDemo.reduce((sum, col) => sum + col.items.length, 0)} total
             </span>
             <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim, marginLeft: 8 }}>
               Glisser-déposer pour changer le statut
