@@ -52,6 +52,7 @@ model User {
   notes         Note[]
   alertes       Alerte[]
   entreprisesAttribuees Entreprise[] @relation("ChargeeEntreprise")
+  projetsSupprimes Projet[] @relation("ProjetDeletedBy")
 }
 
 // ============================================================
@@ -264,6 +265,9 @@ model Projet {
   chantiers      Chantier[]
   sourceImport   SourceImport? @default(MANUEL)
   sourceId       String?
+  deletedAt      DateTime?
+  deletedById    String?
+  deletedBy      User?   @relation("ProjetDeletedBy", fields: [deletedById], references: [id])
 }
 
 model AntenneQualibat {

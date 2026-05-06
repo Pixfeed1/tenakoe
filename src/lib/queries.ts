@@ -209,6 +209,7 @@ export async function getEntrepriseDetail(id: string) {
       conseiller: { select: { id: true, nom: true, prenom: true, email: true, telephone: true, prescripteurType: true } },
       chargee: { select: { id: true, prenom: true, nom: true } },
       projets: {
+        where: { deletedAt: null },
         include: {
           chargee: { select: { id: true, prenom: true, nom: true } },
           qualifications: {

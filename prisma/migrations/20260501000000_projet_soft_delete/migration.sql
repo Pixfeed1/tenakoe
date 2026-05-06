@@ -1,0 +1,5 @@
+ALTER TABLE "Projet" ADD COLUMN "deletedAt" TIMESTAMP(3);
+ALTER TABLE "Projet" ADD COLUMN "deletedById" TEXT;
+ALTER TABLE "Projet" ADD CONSTRAINT "Projet_deletedById_fkey"
+    FOREIGN KEY ("deletedById") REFERENCES "User"("id")
+    ON DELETE SET NULL ON UPDATE CASCADE;

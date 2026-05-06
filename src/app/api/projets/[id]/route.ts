@@ -12,14 +12,27 @@ export async function PATCH(
 
   const { id } = await params;
 
-  const projet = await prisma.projet.findUnique({ where: { id }, select: { chargeeId: true } });
+  const projet = await prisma.projet.findUnique({ where: { id }, select: { chargeeId: true, deletedAt: true, nom: true, entrepriseId: true } });
   if (!projet) return NextResponse.json({ error: "Projet non trouve" }, { status: 404 });
+
+  const body = await request.json();
+
+  // Restore from trash
+  if (body.restore === true) {
+    await prisma.projet.update({ where: { id }, data: { deletedAt: null, deletedById: null } });
+    await prisma.logActivite.create({ data: { type: "MODIFICATION", description: `Projet "${projet.nom}" restauré depuis la corbeille`, entite: "Projet", entiteId: id, userId: user.id } });
+    return NextResponse.json({ success: true, restored: true });
+  }
+
+  // Block PATCH on soft-deleted projet
+  if (projet.deletedAt) {
+    return NextResponse.json({ error: "Ce projet est dans la corbeille. Restaurez-le d'abord." }, { status: 409 });
+  }
 
   if (user.role === "CHARGEE" && projet.chargeeId !== user.id) {
     return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
   }
 
-  const body = await request.json();
   const data: Record<string, unknown> = {};
   if (body.nom !== undefined) data.nom = body.nom;
   if (body.description !== undefined) data.description = body.description;
@@ -81,4 +94,24 @@ export async function PATCH(
     },
   });
   return NextResponse.json(full);
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+
+  const { id } = await params;
+  const projet = await prisma.projet.findUnique({ where: { id }, select: { chargeeId: true, deletedAt: true, nom: true, entrepriseId: true } });
+  if (!projet) return NextResponse.json({ error: "Projet non trouvé" }, { status: 404 });
+  if (projet.deletedAt) return NextResponse.json({ error: "Projet déjà supprimé" }, { status: 409 });
+  if (user.role === "CHARGEE" && projet.chargeeId !== user.id) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+
+  await prisma.projet.update({ where: { id }, data: { deletedAt: new Date(), deletedById: user.id } });
+  await prisma.logActivite.create({ data: { type: "SUPPRESSION", description: `Projet "${projet.nom}" mis en corbeille`, entite: "Projet", entiteId: id, userId: user.id } });
+
+  return NextResponse.json({ success: true });
 }

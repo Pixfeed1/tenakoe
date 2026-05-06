@@ -1813,6 +1813,21 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     <div style={{ fontSize: 11, color: C.textDim, flexShrink: 0, whiteSpace: "nowrap" }}>
                       {etapesDone}/{etapesTotal} étapes
                     </div>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!window.confirm(`Supprimer le projet "${p.nom}" ?\n\nLe projet sera mis en corbeille pendant 30 jours, puis supprimé définitivement.`)) return;
+                        const res = await fetch(`/api/projets/${p.id}`, { method: "DELETE" });
+                        if (res.ok) {
+                          setProjets((prev) => prev.filter((pr) => pr.id !== p.id));
+                          toast("Projet mis en corbeille");
+                        }
+                      }}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 }}
+                      title="Supprimer le projet"
+                    >
+                      <Trash2 size={14} color={C.textDim} />
+                    </button>
                   </div>
 
                   {isProjetOpen && (
