@@ -80,7 +80,7 @@ export function TransmissionsView({ C, role }: { C: Theme; role?: string }) {
       .catch(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(); }, [filterCanal, showArchived]);
+  useEffect(() => { fetchData(); }, [filterCanal, showArchived, search, dateFrom, dateTo]);
 
   useEffect(() => {
     if (peutVoirToutesChargees) {
@@ -219,17 +219,12 @@ export function TransmissionsView({ C, role }: { C: Theme; role?: string }) {
           <Search size={14} color={C.textDim} />
           <input placeholder="Rechercher (objet, contenu, destinataire)..."
             value={search} onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && searchNow()}
             style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
         </div>
         <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
           style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }} />
         <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
           style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }} />
-        <button type="button" onClick={searchNow} style={{
-          padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`,
-          background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
-        }}>Filtrer</button>
         <select value={filterDirection} onChange={(e) => setFilterDirection(e.target.value)} style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }}>
           <option value="">Direction</option>
           <option value="SORTANT">Sortant</option>
