@@ -84,6 +84,54 @@ export async function PATCH(
         },
       });
     }
+
+    // Mails automatiques (non bloquants)
+    if (etape.projet.entrepriseId) {
+      import("@/lib/mail-signature").then(async ({ getSignature }) => {
+        const { sendMail } = await import("@/lib/mail");
+        const entreprise = await prisma.entreprise.findUnique({
+          where: { id: etape.projet.entrepriseId! },
+          include: { contacts: { take: 1 }, projets: { include: { chargee: { select: { id: true, prenom: true, nom: true, email: true, telephone: true, smtpHost: true, smtpPort: true, smtpUser: true, smtpPass: true } } }, take: 1 } },
+        });
+        if (!entreprise) return;
+        const chargee = entreprise.projets[0]?.chargee;
+        const contact = entreprise.contacts[0];
+        const nomContact = contact ? `${contact.prenom} ${contact.nom}` : entreprise.nom;
+        const signature = getSignature({ prenom: chargee?.prenom || user.name.split(" ")[0] || "", nom: chargee?.nom || user.name.split(" ").slice(1).join(" ") || "", email: chargee?.email || user.email, telephone: chargee?.telephone });
+        const smtp = chargee?.smtpHost && chargee?.smtpUser && chargee?.smtpPass ? { host: chargee.smtpHost, port: chargee.smtpPort || 587, user: chargee.smtpUser, pass: chargee.smtpPass } : undefined;
+        const lienFiche = `https://tenakoe.pixfeed.net/dashboard?view=ClientDetail&clientId=${entreprise.id}`;
+
+        // Mail client sur étapes spécifiques
+        if (etape.ordre === 2 && entreprise.email) {
+          sendMail({
+            to: entreprise.email,
+            subject: "Votre dossier est pris en charge — Tenakoe",
+            html: `<p>Bonjour ${nomContact},</p><p>Votre dossier a été pris en charge par ${chargee?.prenom || "votre chargée de projet"}. Elle sera votre interlocutrice pour votre qualification RGE.</p><p>Cordialement,<br/>L'équipe Tenakoe</p><br/>${signature}`,
+            from: chargee?.smtpUser ? `"${chargee.prenom} ${chargee.nom}" <${chargee.smtpUser}>` : undefined,
+            smtp,
+          }).catch(() => {});
+        }
+        if (etape.ordre === 17 && entreprise.email) {
+          sendMail({
+            to: entreprise.email,
+            subject: "Votre dossier a été déposé — Tenakoe",
+            html: `<p>Bonjour ${nomContact},</p><p>Votre dossier a été déposé auprès du certificateur. Nous vous tiendrons informé de la suite.</p><p>Cordialement,<br/>L'équipe Tenakoe</p><br/>${signature}`,
+            from: chargee?.smtpUser ? `"${chargee.prenom} ${chargee.nom}" <${chargee.smtpUser}>` : undefined,
+            smtp,
+          }).catch(() => {});
+        }
+
+        // Notification interne (toutes étapes)
+        const destInternes = ["elise.leal@tenakoe.fr", "kelly@tenakoe.fr"];
+        if (chargee?.email && !destInternes.includes(chargee.email)) destInternes.push(chargee.email);
+        sendMail({
+          to: destInternes.join(", "),
+          subject: `${entreprise.nom} — Étape ${etape.ordre} terminée : ${etape.nom}`,
+          html: `<p><strong>${entreprise.nom}</strong> — Étape ${etape.ordre}/${22} terminée :</p><p><em>${etape.nom}</em></p><p><a href="${lienFiche}">Ouvrir la fiche →</a></p><br/>${signature}`,
+          smtp,
+        }).catch(() => {});
+      }).catch(() => {});
+    }
   }
 
   // Si on annule une étape, la réactiver, désactiver la suivante, rollback statut
