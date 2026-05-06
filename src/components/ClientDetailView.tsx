@@ -1270,7 +1270,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             ))}
             {/* Facturation */}
             <div className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Facturation</span>
+              <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Statut d&apos;avancement</span>
               <div>
                 <select
                   value={entrepriseData?.statutFacturation || "DEVIS_A_FAIRE"}
