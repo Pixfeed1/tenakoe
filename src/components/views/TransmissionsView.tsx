@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { formatPhone } from "@/lib/format";
 import {
   Mail, MessageSquare, Phone, Search, ArrowUpRight, ArrowDownLeft,
-  Archive, Eye, EyeOff, ChevronDown, ChevronUp, Send, X, Plus,
+  Archive, Eye, EyeOff, ChevronDown, ChevronUp, Send, X, Plus, Download,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -22,7 +22,10 @@ interface Transmission {
   dateEnvoi: string;
   lu: boolean;
   archive: boolean;
-  expediteur: { prenom: string; nom: string } | null;
+  statutEnvoi: string | null;
+  automatique: boolean;
+  expediteur: { id: string; prenom: string; nom: string } | null;
+  expediteurEmail: string | null;
   entreprise: { id: string; nom: string } | null;
 }
 
@@ -33,11 +36,17 @@ const CANAL_COLORS: Record<string, string> = {
   EMAIL: "blue", SMS: "purple", TELEPHONE: "accent",
 };
 
-export function TransmissionsView({ C }: { C: Theme }) {
+export function TransmissionsView({ C, role }: { C: Theme; role?: string }) {
   const [transmissions, setTransmissions] = useState<Transmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCanal, setFilterCanal] = useState("");
+  const [filterDirection, setFilterDirection] = useState("");
+  const [filterChargee, setFilterChargee] = useState("");
+  const [filterStatut, setFilterStatut] = useState("");
+  const [filterEntreprise, setFilterEntreprise] = useState("");
   const [search, setSearch] = useState("");
+  const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
+  const peutVoirToutesChargees = role === "ADMIN";
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showArchived, setShowArchived] = useState(false);
@@ -73,6 +82,11 @@ export function TransmissionsView({ C }: { C: Theme }) {
   useEffect(() => { fetchData(); }, [filterCanal, showArchived]);
 
   useEffect(() => {
+    if (peutVoirToutesChargees) {
+      fetch("/api/users").then((r) => r.ok ? r.json() : [])
+        .then((data) => setChargees(data.filter((u: { role?: string; actif?: boolean }) => u.actif && u.role !== "PRESCRIPTEUR")))
+        .catch(() => {});
+    }
     fetch("/api/mail-templates").then((r) => r.ok ? r.json() : []).then(setMailTemplates).catch(() => {});
     fetch("/api/entreprises").then((r) => r.ok ? r.json() : []).then((data) => {
       setEntreprises(data.map((e: { id: string; nom: string; email: string | null }) => ({ id: e.id, nom: e.nom, email: e.email })));
@@ -128,12 +142,39 @@ export function TransmissionsView({ C }: { C: Theme }) {
     setSending(false);
   };
 
+  const filtered = transmissions.filter((t) => {
+    if (filterDirection && t.direction !== filterDirection) return false;
+    if (filterChargee && t.expediteur?.id !== filterChargee) return false;
+    if (filterStatut && t.statutEnvoi !== filterStatut) return false;
+    if (filterEntreprise && !t.entreprise?.nom.toLowerCase().includes(filterEntreprise.toLowerCase())) return false;
+    return true;
+  });
+
+  const anyExtraFilter = !!(filterDirection || filterChargee || filterStatut || filterEntreprise);
+  const resetExtraFilters = () => { setFilterDirection(""); setFilterChargee(""); setFilterStatut(""); setFilterEntreprise(""); };
+
+  const exportCSV = () => {
+    const headers = ["Date", "Canal", "Direction", "Destinataire", "Objet", "Expéditeur", "Entreprise", "Statut"];
+    const rows = filtered.map((t) => [
+      new Date(t.dateEnvoi).toLocaleDateString("fr-FR"),
+      t.canal, t.direction === "SORTANT" ? "Sortant" : "Entrant",
+      t.destinataire, t.objet || "", t.expediteur ? `${t.expediteur.prenom} ${t.expediteur.nom}` : "",
+      t.entreprise?.nom || "", t.statutEnvoi || "",
+    ]);
+    const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows].map((r) => r.map(esc).join(";")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `transmissions-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const stats = {
-    total: transmissions.length,
-    EMAIL: transmissions.filter((t) => t.canal === "EMAIL").length,
-    SMS: transmissions.filter((t) => t.canal === "SMS").length,
-    TELEPHONE: transmissions.filter((t) => t.canal === "TELEPHONE").length,
-    nonLu: transmissions.filter((t) => !t.lu).length,
+    total: filtered.length,
+    EMAIL: filtered.filter((t) => t.canal === "EMAIL").length,
+    SMS: filtered.filter((t) => t.canal === "SMS").length,
+    TELEPHONE: filtered.filter((t) => t.canal === "TELEPHONE").length,
+    nonLu: filtered.filter((t) => !t.lu).length,
   };
 
   const inputStyle: React.CSSProperties = {
@@ -188,6 +229,25 @@ export function TransmissionsView({ C }: { C: Theme }) {
           padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`,
           background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
         }}>Filtrer</button>
+        <select value={filterDirection} onChange={(e) => setFilterDirection(e.target.value)} style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }}>
+          <option value="">Direction</option>
+          <option value="SORTANT">Sortant</option>
+          <option value="ENTRANT">Entrant</option>
+        </select>
+        {peutVoirToutesChargees && (
+          <select value={filterChargee} onChange={(e) => setFilterChargee(e.target.value)} style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }}>
+            <option value="">Chargée</option>
+            {chargees.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+          </select>
+        )}
+        <select value={filterStatut} onChange={(e) => setFilterStatut(e.target.value)} style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }}>
+          <option value="">Statut</option>
+          <option value="ENVOYE">Envoyé</option>
+          <option value="DELIVRE">Délivré</option>
+          <option value="ECHEC">Échec</option>
+        </select>
+        <input placeholder="Entreprise..." value={filterEntreprise} onChange={(e) => setFilterEntreprise(e.target.value)}
+          style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, width: 140, outline: "none" }} />
         <button onClick={() => setShowArchived(!showArchived)} style={{
           padding: "8px 14px", borderRadius: 10,
           border: `1px solid ${showArchived ? C.warning : C.border}`,
@@ -195,8 +255,10 @@ export function TransmissionsView({ C }: { C: Theme }) {
           color: showArchived ? C.warning : C.textMuted, fontSize: 12, cursor: "pointer",
           display: "flex", alignItems: "center", gap: 4,
         }}>
-          <Archive size={12} /> {showArchived ? "Archives" : "Voir archives"}
+          <Archive size={12} /> {showArchived ? "Archives" : "Archives"}
         </button>
+        <Button C={C} variant="secondary" size="sm" icon={<Download size={13} />} disabled={filtered.length === 0} onClick={exportCSV}>CSV</Button>
+        {anyExtraFilter && <Button C={C} variant="ghost" size="sm" onClick={resetExtraFilters} icon={<X size={12} />}>Réinitialiser</Button>}
       </div>
 
       {/* Compose */}
@@ -313,11 +375,11 @@ export function TransmissionsView({ C }: { C: Theme }) {
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: C.shadow }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>
-        ) : transmissions.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>
             {showArchived ? "Aucune transmission archivée" : "Aucune transmission trouvée"}
           </div>
-        ) : transmissions.map((t) => {
+        ) : filtered.map((t) => {
           const CanalIcon = CANAL_ICONS[t.canal] || Mail;
           const canalColor = CANAL_COLORS[t.canal] || "blue";
           const isSortant = t.direction === "SORTANT";
