@@ -474,6 +474,9 @@ export function DashboardView({
         </div>
       )}
 
+      {/* Mini stats: Qualifiés + Top prescripteurs */}
+      <DashboardExtras C={C} />
+
       {/* Bottom Grid */}
       <div className="bottom-grid" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20 }}>
         {/* Clients Table */}
@@ -549,5 +552,71 @@ export function DashboardView({
         </GuideTooltip>
       </div>
     </>
+  );
+}
+
+// ===================== DASHBOARD EXTRAS =====================
+function DashboardExtras({ C }: { C: Theme }) {
+  const [data, setData] = useState<{ qualifiesCeMois: number; qualifiesMoisDernier: number; topPrescripteurs: Array<{ nom: string; count: number }> } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/dashboard-stats").then((r) => r.ok ? r.json() : null).then(setData).catch(() => {});
+  }, []);
+
+  if (!data) return null;
+
+  const maxBar = Math.max(data.qualifiesCeMois, data.qualifiesMoisDernier, 1);
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+      {/* Mini graphique qualifiés */}
+      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 14px", color: C.text }}>Dossiers qualifiés</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 11, color: C.textDim, width: 80 }}>Ce mois</span>
+            <div style={{ flex: 1, height: 20, background: C.bg, borderRadius: 6, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${(data.qualifiesCeMois / maxBar) * 100}%`, background: "linear-gradient(135deg, #16a34a, #15803d)", borderRadius: 6, transition: "width 0.5s ease" }} />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 700, color: C.accent, minWidth: 24, textAlign: "right" }}>{data.qualifiesCeMois}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 11, color: C.textDim, width: 80 }}>Mois dernier</span>
+            <div style={{ flex: 1, height: 20, background: C.bg, borderRadius: 6, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${(data.qualifiesMoisDernier / maxBar) * 100}%`, background: C.border, borderRadius: 6, transition: "width 0.5s ease" }} />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 700, color: C.textDim, minWidth: 24, textAlign: "right" }}>{data.qualifiesMoisDernier}</span>
+          </div>
+        </div>
+        {data.qualifiesCeMois > data.qualifiesMoisDernier && (
+          <div style={{ marginTop: 10, fontSize: 11, color: C.accent, fontWeight: 600 }}>
+            +{data.qualifiesCeMois - data.qualifiesMoisDernier} vs mois dernier
+          </div>
+        )}
+      </div>
+
+      {/* Top prescripteurs */}
+      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 14px", color: C.text }}>Top prescripteurs ce mois</h3>
+        {data.topPrescripteurs.length === 0 ? (
+          <div style={{ fontSize: 12, color: C.textDim }}>Aucun lead ce mois</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {data.topPrescripteurs.map((p, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px", borderRadius: 8 }}>
+                <span style={{
+                  width: 22, height: 22, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, fontWeight: 700, color: i === 0 ? "#fff" : C.textDim,
+                  background: i === 0 ? C.accent : C.bg,
+                }}>{i + 1}</span>
+                <span style={{ flex: 1, fontSize: 12, fontWeight: 500, color: C.text }}>{p.nom}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? C.accent : C.text }}>{p.count}</span>
+                <span style={{ fontSize: 10, color: C.textDim }}>lead{p.count > 1 ? "s" : ""}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
