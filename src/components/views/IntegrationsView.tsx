@@ -442,8 +442,6 @@ export function IntegrationsView({ C }: { C: Theme }) {
         })}
       </div>
 
-      {/* Test envoi email */}
-      <EmailTestSection C={C} />
     </>
   );
 }

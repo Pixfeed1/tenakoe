@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { GuideTooltip } from "@/components/GuideSystem";
 import { getStatusIcon, AVAILABLE_ICONS } from "@/lib/icons";
 
-type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "antennes" | "notifications" | "import" | "securite" | "compte";
+type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "antennes" | "notifications" | "import" | "securite" | "compte" | "test-email";
 
 const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }> = [
   { id: "utilisateurs", label: "Utilisateurs", Icon: Users },
@@ -27,6 +27,7 @@ const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: n
   { id: "import", label: "Import / Export", Icon: Download },
   { id: "securite", label: "Sécurité", Icon: Shield },
   { id: "compte", label: "Mon compte", Icon: Users },
+  { id: "test-email", label: "Test email", Icon: Mail },
 ];
 
 const inputStyle = (C: Theme): React.CSSProperties => ({
@@ -72,6 +73,7 @@ export function ParametresView({ C, role }: { C: Theme; role?: string }) {
       {tab === "antennes" && <AntennesQualibatTab C={C} />}
       {tab === "securite" && <SecuriteTab C={C} />}
       {tab === "compte" && <MonCompteTab C={C} />}
+      {tab === "test-email" && <TestEmailTab C={C} />}
     </>
   );
 }
@@ -1361,6 +1363,101 @@ function AntennesQualibatTab({ C }: { C: Theme }) {
           </div>
         ))}
         {filtered.length === 0 && <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucune antenne</div>}
+      </div>
+    </div>
+  );
+}
+
+// ===================== TEST EMAIL TAB =====================
+function TestEmailTab({ C }: { C: Theme }) {
+  const { toast } = useToast();
+  const [templates, setTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string }>>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [destinataire, setDestinataire] = useState("");
+  const [sending, setSending] = useState(false);
+  const [lastResult, setLastResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/mail-templates").then((r) => r.ok ? r.json() : []).then(setTemplates).catch(() => {});
+    fetch("/api/users/me").then((r) => r.ok ? r.json() : null).then((u: { email?: string } | null) => { if (u?.email) setDestinataire(u.email); }).catch(() => {});
+  }, []);
+
+  const sendTest = async () => {
+    if (!destinataire.trim()) { toast("Adresse email requise"); return; }
+    setSending(true);
+    setLastResult(null);
+    const tpl = templates.find((t) => t.id === selectedTemplate);
+    const contenu = tpl?.contenu
+      ?.replace(/\{\{civilite\}\}/g, "M.")
+      ?.replace(/\{\{nom\}\}/g, "DUPONT")
+      ?.replace(/\{\{chargee\}\}/g, "Kelly Coquillas")
+      ?.replace(/\{\{date_commission\}\}/g, new Date().toLocaleDateString("fr-FR"))
+      ?.replace(/\{\{date_limite\}\}/g, new Date(Date.now() + 15 * 86400000).toLocaleDateString("fr-FR"))
+      || "<p>Ceci est un email de test depuis Tenakoe CRM.</p>";
+    const objet = tpl ? `[TEST] ${tpl.objet}` : "[TEST] Email de test Tenakoe";
+    const res = await fetch("/api/send-mail", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to: destinataire.trim(), subject: objet, html: contenu }),
+    });
+    setSending(false);
+    if (res.ok) {
+      setLastResult({ ok: true, msg: `Mail envoyé à ${destinataire}` });
+      toast(`Mail de test envoyé à ${destinataire}`);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setLastResult({ ok: false, msg: data.error || "Erreur lors de l'envoi" });
+      toast(data.error || "Erreur lors de l'envoi");
+    }
+  };
+
+  const isStyle = (theme: Theme): React.CSSProperties => ({
+    width: "100%", padding: "8px 12px", borderRadius: 8,
+    border: `1px solid ${theme.border}`, background: theme.bg, color: theme.text,
+    fontSize: 13, outline: "none", boxSizing: "border-box",
+  });
+
+  return (
+    <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 24, boxShadow: C.shadow }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 6px", color: C.text }}>Test d&apos;envoi email</h3>
+      <p style={{ fontSize: 13, color: C.textDim, margin: "0 0 20px" }}>
+        Envoyez un email de test pour vérifier le rendu des modèles et la signature dans votre boîte mail.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+        <div>
+          <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 6 }}>Modèle de mail</label>
+          <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} style={isStyle(C)}>
+            <option value="">Email simple (sans modèle)</option>
+            {templates.map((t) => <option key={t.id} value={t.id}>{t.nom}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 6 }}>Adresse de destination</label>
+          <input type="email" value={destinataire} onChange={(e) => setDestinataire(e.target.value)} placeholder="votre@email.com" style={isStyle(C)} />
+        </div>
+      </div>
+      {selectedTemplate && (() => {
+        const tpl = templates.find((t) => t.id === selectedTemplate);
+        if (!tpl) return null;
+        return (
+          <div style={{ marginBottom: 20, padding: 14, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 11, color: C.textDim, marginBottom: 4 }}>Aperçu de l&apos;objet :</div>
+            <div style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>[TEST] {tpl.objet}</div>
+            <div style={{ fontSize: 11, color: C.textDim, marginTop: 10, marginBottom: 4 }}>Variables remplacées par :</div>
+            <div style={{ fontSize: 11, color: C.textMuted }}>
+              {"{{civilite}} → M. · {{nom}} → DUPONT · {{chargee}} → Kelly · {{date_commission}} → aujourd'hui · {{date_limite}} → J+15"}
+            </div>
+          </div>
+        );
+      })()}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <Button C={C} variant="primary" onClick={sendTest} disabled={sending || !destinataire.trim()} loading={sending} icon={<Mail size={14} />}>
+          {sending ? "Envoi en cours..." : "Envoyer le test"}
+        </Button>
+        {lastResult && (
+          <span style={{ fontSize: 12, color: lastResult.ok ? C.accentText : C.danger, fontWeight: 500 }}>
+            {lastResult.ok ? "✓ " : "✗ "}{lastResult.msg}
+          </span>
+        )}
       </div>
     </div>
   );
