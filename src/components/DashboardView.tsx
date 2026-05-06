@@ -308,7 +308,7 @@ export function DashboardView({
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {alertItems.slice(0, 5).map((a, i) => (
-                <div key={i} onClick={() => a.entrepriseId && onSelectClient({ id: a.entrepriseId, nom: a.entrepriseNom || "" })}
+                <div key={i} onClick={() => a.entrepriseId && onSelectClient({ id: a.entrepriseId, nom: a.entrepriseNom || "" } as PipelineItem)}
                   style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6, cursor: "pointer", fontSize: 12, transition: "background 0.1s" }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
