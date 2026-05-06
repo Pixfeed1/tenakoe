@@ -404,12 +404,62 @@ export async function POST(request: NextRequest) {
 
         if (artisan.siret && artisan.siret.length > 5) {
           const bySiret = await prisma.entreprise.findFirst({ where: { siret: artisan.siret } });
-          if (bySiret) { results.skipped++; results.skippedBySiret++; continue; }
+          if (bySiret) {
+            if (!bySiret.sourceImport || bySiret.sourceImport === "CAPSULE") {
+              await prisma.entreprise.update({
+                where: { id: bySiret.id },
+                data: {
+                  ...(artisan.email && !bySiret.email ? { email: artisan.email } : {}),
+                  ...(artisan.telephone && !bySiret.telephone ? { telephone: artisan.telephone } : {}),
+                  ...(artisan.adresse && !bySiret.adresse ? { adresse: artisan.adresse } : {}),
+                  ...(artisan.numeroCarte && !bySiret.numeroCarte ? { numeroCarte: artisan.numeroCarte } : {}),
+                  sourceImport: "NOTION",
+                  sourceId,
+                },
+              });
+              const existingContact = await prisma.contact.findFirst({ where: { entrepriseId: bySiret.id } });
+              if (!existingContact && artisan.nomArtisan && !isFieldPlaceholder(artisan.nomArtisan)) {
+                await prisma.contact.create({
+                  data: { nom: artisan.nomArtisan, prenom: artisan.prenomArtisan || "?", email: artisan.email, telephone: artisan.telephone, entrepriseId: bySiret.id, sourceImport: "NOTION", sourceId: sourceId + "-contact" },
+                });
+                results.contacts++;
+              }
+              results.total++;
+            } else {
+              results.skipped++; results.skippedBySiret++;
+            }
+            continue;
+          }
         }
 
         if (artisan.email && artisan.email.includes("@") && !isInternalEmail(artisan.email)) {
           const byEmail = await prisma.entreprise.findFirst({ where: { email: { equals: artisan.email, mode: "insensitive" } } });
-          if (byEmail) { results.skipped++; results.skippedByEmail++; continue; }
+          if (byEmail) {
+            if (!byEmail.sourceImport || byEmail.sourceImport === "CAPSULE") {
+              await prisma.entreprise.update({
+                where: { id: byEmail.id },
+                data: {
+                  ...(artisan.siret && !byEmail.siret ? { siret: artisan.siret } : {}),
+                  ...(artisan.telephone && !byEmail.telephone ? { telephone: artisan.telephone } : {}),
+                  ...(artisan.adresse && !byEmail.adresse ? { adresse: artisan.adresse } : {}),
+                  ...(artisan.numeroCarte && !byEmail.numeroCarte ? { numeroCarte: artisan.numeroCarte } : {}),
+                  sourceImport: "NOTION",
+                  sourceId,
+                },
+              });
+              const existingContact = await prisma.contact.findFirst({ where: { entrepriseId: byEmail.id } });
+              if (!existingContact && artisan.nomArtisan && !isFieldPlaceholder(artisan.nomArtisan)) {
+                await prisma.contact.create({
+                  data: { nom: artisan.nomArtisan, prenom: artisan.prenomArtisan || "?", email: artisan.email, telephone: artisan.telephone, entrepriseId: byEmail.id, sourceImport: "NOTION", sourceId: sourceId + "-contact" },
+                });
+                results.contacts++;
+              }
+              results.total++;
+            } else {
+              results.skipped++; results.skippedByEmail++;
+            }
+            continue;
+          }
         }
 
         // Resolve prescripteur early (needed for enrichment + creation)
