@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Moon, Sun, LogOut, AlertTriangle, ChevronUp, ChevronDown, Download } from "lucide-react";
+import { Moon, Sun, LogOut, AlertTriangle, ChevronUp, ChevronDown } from "lucide-react";
+import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import { signOut } from "next-auth/react";
 import { LIGHT, DARK, type Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -345,16 +346,10 @@ export function PrescripteurView({ user, demoMode, prescripteurType, embedded }:
         <div style={{ fontSize: 13, color: C.textDim }}>
           {loading ? "Chargement..." : `${filteredSorted.length} lead${filteredSorted.length > 1 ? "s" : ""}${filteredSorted.length !== leads.length ? ` sur ${leads.length}` : ""}`}
         </div>
-        <Button
-          C={C}
-          variant="primary"
-          size="sm"
-          icon={<Download size={13} />}
-          disabled={filteredSorted.length === 0}
-          onClick={() => exportToCSV(filteredSorted)}
-        >
-          Exporter CSV
-        </Button>
+        <ExportDropdown C={C} disabled={filteredSorted.length === 0} filename="leads-prescripteur" title="Leads prescripteur"
+          headers={["Nom entreprise", "Artisan", "Email", "Téléphone", "SIRET", "N° carte", "Dépôt", "Conseiller", "Date transmission", "Date prise en charge", "Intéressé TNK", "Éligible", "Statut", "Étape", "Alerte abandon", "Date alerte"]}
+          rows={filteredSorted.map((l) => { const a = getLatestAlerte(l); return [l.nom, l.artisan, l.email || "", l.telephone || "", l.siret || "", stripCardPrefix(l.numeroCarte) || "", l.depot || "", l.conseiller || "", l.dateTransmission, l.dateStatutPrise || "", l.interesseTNK || "NSP", l.eligible === "OUI" ? "Oui" : l.eligible === "NON" ? "Non" : "À vérifier", l.statut, l.etape ? `Étape ${l.etape.ordre}/${l.etape.total} — ${l.etape.nom}` : "", a ? a.label : "", a?.date ? new Date(a.date).toLocaleDateString("fr-FR") : ""]; })}
+        />
       </div>
 
       {loading ? (

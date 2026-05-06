@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Search, Download, Archive, X } from "lucide-react";
+import { Users, Search, Archive, X } from "lucide-react";
+import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -162,8 +163,10 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
             {prescripteurs.map((p) => <option key={p.type} value={p.type}>{p.nom}</option>)}
           </select>
         )}
-        <Button C={C} variant="secondary" onClick={exportCSV} icon={<Download size={13} />} size="sm">CSV</Button>
-        <Button C={C} variant="secondary" onClick={exportXLS} icon={<Download size={13} />} size="sm">Excel</Button>
+        <ExportDropdown C={C} disabled={clients.length === 0} filename="clients" title="Clients"
+          headers={["Entreprise", "SIRET", "Chargée", "Qualification", "Documents", "Statut"]}
+          rows={clients.map((c) => { const dt = c.documents.length; const dr = c.documents.filter((d) => d.recu).length; return [c.nom, c.siret || "", c.projets?.[0]?.chargee?.prenom || "", QUALIF_LABELS[c.projets?.[0]?.qualifications?.[0]?.type || ""] || "", `${dr}/${dt}`, FACTURATION_LABELS[c.statutFacturation || ""] || ""]; })}
+        />
         <Button C={C} variant="secondary" onClick={() => setShowArchived(!showArchived)} icon={<Archive size={13} />}
           style={{
             border: `1px solid ${showArchived ? C.warning : C.border}`,

@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/Toast";
 import {
-  Zap, Plus, Check, X, ChevronDown, Building2, Mail, Phone, MapPin, Edit3, Download,
+  Zap, Plus, Check, X, ChevronDown, Building2, Mail, Phone, MapPin, Edit3,
 } from "lucide-react";
+import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -214,21 +215,10 @@ export function LeadsView({ C }: { C: Theme }) {
           <Zap size={18} color={C.blue} />
           <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{leads.length} leads</span>
         </div>
-        <Button C={C} variant="secondary" size="sm" icon={<Download size={13} />} disabled={leads.length === 0} onClick={() => {
-          const headers = ["Entreprise", "Artisan", "Email", "Téléphone", "SIRET", "N° carte", "Prescripteur", "Dépôt", "Date", "Statut"];
-          const rows = leads.map((l) => [
-            l.nomEntreprise || "", `${l.prenomArtisan} ${l.nomArtisan}`,
-            l.email || "", l.telephone || "", l.siret || "", l.numeroCarte || "",
-            PRESCRIPTEUR_LABELS[l.prescripteur] || l.prescripteur, l.depot || "",
-            new Date(l.createdAt).toLocaleDateString("fr-FR"), l.statut,
-          ]);
-          const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
-          const csv = [headers, ...rows].map((r) => r.map(esc).join(";")).join("\n");
-          const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a"); a.href = url; a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-          URL.revokeObjectURL(url);
-        }}>CSV</Button>
+        <ExportDropdown C={C} disabled={leads.length === 0} filename="leads" title="Leads"
+          headers={["Entreprise", "Artisan", "Email", "Téléphone", "SIRET", "N° carte", "Prescripteur", "Dépôt", "Date", "Statut"]}
+          rows={leads.map((l) => [l.nomEntreprise || "", `${l.prenomArtisan} ${l.nomArtisan}`, l.email || "", l.telephone || "", l.siret || "", l.numeroCarte || "", PRESCRIPTEUR_LABELS[l.prescripteur] || l.prescripteur, l.depot || "", new Date(l.createdAt).toLocaleDateString("fr-FR"), l.statut])}
+        />
       </div>
 
       {/* New lead form */}

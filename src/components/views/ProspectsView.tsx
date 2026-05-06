@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Target, Search, Filter, Archive, X, Download } from "lucide-react";
+import { Target, Search, Filter, Archive, X } from "lucide-react";
+import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -168,20 +169,10 @@ export function ProspectsView({ C, onSelectClient, role }: { C: Theme; onSelectC
           }}>
           {showArchived ? "Archives" : "Archives"}
         </Button>
-        <Button C={C} variant="secondary" size="sm" icon={<Download size={13} />} disabled={prospects.length === 0} onClick={() => {
-          const headers = ["Entreprise", "SIRET", "Chargée", "Prescripteur", "Statut", "Éligible", "Intéressé TNK", "Dernière MAJ"];
-          const rows = prospects.map((e) => [
-            e.nom, e.siret || "", e.projets?.[0]?.chargee?.prenom || "", e.prescripteur || "",
-            statutLabels[e.statutPrise] || e.statutPrise, e.eligible || "", e.interesseTNK || "",
-            new Date(e.updatedAt).toLocaleDateString("fr-FR"),
-          ]);
-          const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
-          const csv = [headers, ...rows].map((r) => r.map(esc).join(";")).join("\n");
-          const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a"); a.href = url; a.download = `prospects-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-          URL.revokeObjectURL(url);
-        }}>CSV</Button>
+        <ExportDropdown C={C} disabled={prospects.length === 0} filename="prospects" title="Prospects"
+          headers={["Entreprise", "SIRET", "Chargée", "Prescripteur", "Statut", "Éligible", "Intéressé TNK", "Dernière MAJ"]}
+          rows={prospects.map((e) => [e.nom, e.siret || "", e.projets?.[0]?.chargee?.prenom || "", e.prescripteur || "", statutLabels[e.statutPrise] || e.statutPrise, e.eligible || "", e.interesseTNK || "", new Date(e.updatedAt).toLocaleDateString("fr-FR")])}
+        />
         {anyFilter && <Button C={C} variant="ghost" size="sm" onClick={resetAll} icon={<X size={12} />}>Réinitialiser</Button>}
       </div>
 

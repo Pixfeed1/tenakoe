@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import DOMPurify from "dompurify";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { ExportDropdown } from "@/components/ui/ExportDropdown";
 
 interface Transmission {
   id: string;
@@ -257,7 +258,10 @@ export function TransmissionsView({ C, role }: { C: Theme; role?: string }) {
         }}>
           <Archive size={12} /> {showArchived ? "Archives" : "Archives"}
         </button>
-        <Button C={C} variant="secondary" size="sm" icon={<Download size={13} />} disabled={filtered.length === 0} onClick={exportCSV}>CSV</Button>
+        <ExportDropdown C={C} disabled={filtered.length === 0} filename="transmissions" title="Transmissions"
+          headers={["Date", "Canal", "Direction", "Destinataire", "Objet", "Expéditeur", "Entreprise", "Statut"]}
+          rows={filtered.map((t) => [new Date(t.dateEnvoi).toLocaleDateString("fr-FR"), t.canal, t.direction === "SORTANT" ? "Sortant" : "Entrant", t.destinataire, t.objet || "", t.expediteur ? `${t.expediteur.prenom} ${t.expediteur.nom}` : "", t.entreprise?.nom || "", t.statutEnvoi || ""])}
+        />
         {anyExtraFilter && <Button C={C} variant="ghost" size="sm" onClick={resetExtraFilters} icon={<X size={12} />}>Réinitialiser</Button>}
       </div>
 
