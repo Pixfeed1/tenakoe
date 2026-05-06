@@ -172,7 +172,7 @@ export function DossiersView({ C, onSelectClient, role }: { C: Theme; onSelectCl
         {peutVoirToutesChargees && (
           <select value={filtreChargee} onChange={(e) => setFiltreChargee(e.target.value)} style={ss}>
             <option value="">Toutes les chargées</option>
-            {chargees.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+            {chargees.map((c) => <option key={c.id} value={c.id}>{c.prenom}</option>)}
           </select>
         )}
         {statutsPrise.length > 0 && (

@@ -302,7 +302,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           conseillerTelephone: data.conseiller?.telephone || "",
           nomConseiller: data.nomConseiller || "",
           prenomConseiller: data.prenomConseiller || "",
-          emailConseiller2: data.emailConseiller || "",
+          emailConseiller: data.emailConseiller || "",
           telephoneConseiller: data.telephoneConseiller || "",
           chargeeEntrepriseId: data.chargee?.id || "",
           chargeeEntreprisePrenom: data.chargee?.prenom || "",
@@ -939,7 +939,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Prescripteur", key: "prescripteur", value: entrepriseData?.prescripteur || client?.prescripteur || "—", Icon: Building2 },
               { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
-              { label: "Conseiller", key: "conseiller", value: entrepriseData?.conseillerNom ? `${entrepriseData.conseillerNom}${entrepriseData.conseillerEmail ? " · " + entrepriseData.conseillerEmail : ""}${entrepriseData.conseillerTelephone ? " · " + entrepriseData.conseillerTelephone : ""}` : "—", Icon: UserCircle },
               { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
             ].map((f, i) => {
               const saveField = async (val: string) => {
@@ -1099,13 +1098,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             })}
           </div>
           {/* Coordonnées conseiller */}
-          {(entrepriseData?.nomConseiller || entrepriseData?.prenomConseiller || entrepriseData?.emailConseiller2 || entrepriseData?.telephoneConseiller) && (
+          {entrepriseData && (
             <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
               <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Coordonnées conseiller prescripteur</h3>
               {[
                 { label: "Nom", key: "nomConseiller", value: entrepriseData?.nomConseiller || "—", Icon: UserCircle },
                 { label: "Prénom", key: "prenomConseiller", value: entrepriseData?.prenomConseiller || "—", Icon: UserCircle },
-                { label: "Email", key: "emailConseiller", value: entrepriseData?.emailConseiller2 || "—", Icon: Mail },
+                { label: "Email", key: "emailConseiller", value: entrepriseData?.emailConseiller || "—", Icon: Mail },
                 { label: "Téléphone", key: "telephoneConseiller", value: entrepriseData?.telephoneConseiller || "—", Icon: Phone },
               ].map((f, i) => (
                 <div key={i} className="info-row" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < 3 ? `1px solid ${C.border}` : "none", cursor: "pointer" }}
@@ -1121,7 +1120,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       onBlur={async () => {
                         const val = editFieldValue;
                         if (val !== (f.value === "—" ? "" : f.value) && client?.id && !isDemoMode) {
-                          setEntrepriseData((prev) => prev ? { ...prev, [f.key === "emailConseiller" ? "emailConseiller2" : f.key]: val } : prev);
+                          setEntrepriseData((prev) => prev ? { ...prev, [f.key]: val } : prev);
                           await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [f.key]: val }) });
                         }
                         setEditingField(null);
@@ -3167,10 +3166,10 @@ function QualifCertificateur({
                 <option value="">-- Sélectionner --</option>
                 {antennes.map((a) => <option key={a.id} value={a.id}>{a.nom}{a.delegation ? ` (${a.delegation})` : ""}</option>)}
               </select>
-              {selectedAntenne && (selectedAntenne.email || selectedAntenne.telephone) && (
-                <div style={{ fontSize: 9, color: C.textDim, marginTop: 3, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {selectedAntenne.email && <span>{selectedAntenne.email}</span>}
-                  {selectedAntenne.telephone && <span>{formatPhone(selectedAntenne.telephone)}</span>}
+              {selectedAntenne && (
+                <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                  <input type="email" readOnly value={selectedAntenne.email || ""} placeholder="Email" style={{ ...iStyle, flex: 1, fontSize: 9, padding: "3px 6px", background: C.bg, color: C.textDim }} />
+                  <input type="tel" readOnly value={selectedAntenne.telephone ? formatPhone(selectedAntenne.telephone) : ""} placeholder="Téléphone" style={{ ...iStyle, flex: 1, fontSize: 9, padding: "3px 6px", background: C.bg, color: C.textDim }} />
                 </div>
               )}
               {!selectedAntenne && qualif.emailCertificateur && (

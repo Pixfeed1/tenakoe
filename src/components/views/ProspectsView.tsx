@@ -133,7 +133,7 @@ export function ProspectsView({ C, onSelectClient, role }: { C: Theme; onSelectC
         {peutVoirToutesChargees && (
           <select value={filtreChargee} onChange={(e) => setFiltreChargee(e.target.value)} style={ss}>
             <option value="">Toutes les chargées</option>
-            {chargees.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+            {chargees.map((c) => <option key={c.id} value={c.id}>{c.prenom}</option>)}
           </select>
         )}
         <select value={filterStatut} onChange={(e) => setFilterStatut(e.target.value)} style={ss}>
