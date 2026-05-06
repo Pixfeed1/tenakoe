@@ -226,7 +226,7 @@ export function TransmissionsView({ C, role }: { C: Theme; role?: string }) {
           style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }} />
         <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
           style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }} />
-        <button onClick={searchNow} style={{
+        <button type="button" onClick={searchNow} style={{
           padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`,
           background: C.surface, color: C.textMuted, fontSize: 12, cursor: "pointer",
         }}>Filtrer</button>
