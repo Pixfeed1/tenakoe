@@ -260,7 +260,7 @@ export function DashboardView({
       {/* Chargée filter + Pipeline status chips */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
-          {pipeline.map((col) => {
+          {pipelineProspects.map((col) => {
             const count = filtreChargee ? col.items.filter((i) => (i as unknown as { chargeeId?: string }).chargeeId === filtreChargee).length : col.items.length;
             const isActive = pipelineFilter === col.id;
             return (
