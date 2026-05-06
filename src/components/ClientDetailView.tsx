@@ -304,6 +304,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           prenomConseiller: data.prenomConseiller || "",
           emailConseiller2: data.emailConseiller || "",
           telephoneConseiller: data.telephoneConseiller || "",
+          dateEnCours: data.dateEnCours || "",
+          dateDepose: data.dateDepose || "",
+          dateQualifie: data.dateQualifie || "",
           numeroCarte: data.numeroCarte || "",
           qualification: firstQualif ? qualifMap[firstQualif.type] || firstQualif.type : "",
           qualificationId: firstQualif?.id || "",
@@ -1374,9 +1377,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   { label: "Prise en charge", date: entrepriseData?.dateStatutPrise, apiKey: "dateStatutPrise" },
                   { label: "Injoignable", date: entrepriseData?.interesseTNK === "INJOIGNABLE" ? entrepriseData?.dateInteresseTNK : null, apiKey: "dateInteresseTNK" },
                   { label: "Payé", date: entrepriseData?.statutFacturation === "FACTURE_PAYEE" ? entrepriseData?.dateStatutFacturation : null, apiKey: "dateStatutFacturation" },
-                  { label: "En cours", date: firstActive?.dateRealisee },
-                  { label: "Déposé", date: etape17?.done ? etape17.dateRealisee : null },
-                  { label: "Qualifié", date: etape19?.done ? etape19.dateRealisee : null },
+                  { label: "En cours", date: entrepriseData?.dateEnCours || firstActive?.dateRealisee || null, apiKey: "dateEnCours" },
+                  { label: "Déposé", date: entrepriseData?.dateDepose || (etape17?.done ? etape17.dateRealisee : null), apiKey: "dateDepose" },
+                  { label: "Qualifié", date: entrepriseData?.dateQualifie || (etape19?.done ? etape19.dateRealisee : null), apiKey: "dateQualifie" },
                 ];
                 return (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px", fontSize: 12 }}>

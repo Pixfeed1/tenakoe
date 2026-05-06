@@ -118,6 +118,9 @@ model Entreprise {
   eligible              String?            @default("A_VERIFIER")
   eligibleCommentaire   String?
   dateEligible          DateTime?
+  dateEnCours           DateTime?
+  dateDepose            DateTime?
+  dateQualifie          DateTime?
   relanceJoindre1              Boolean  @default(false)
   dateRelanceJoindre1          DateTime?
   relanceJoindre2              Boolean  @default(false)
