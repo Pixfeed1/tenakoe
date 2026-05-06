@@ -6,6 +6,7 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { GuideTooltip } from "@/components/GuideSystem";
 import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
 
 interface IntegrationConfig {
   key: string;
@@ -440,7 +441,81 @@ export function IntegrationsView({ C }: { C: Theme }) {
           );
         })}
       </div>
+
+      {/* Test envoi email */}
+      <EmailTestSection C={C} />
     </>
+  );
+}
+
+// ===================== EMAIL TEST SECTION =====================
+function EmailTestSection({ C }: { C: Theme }) {
+  const { toast } = useToast();
+  const [templates, setTemplates] = useState<Array<{ id: string; nom: string; objet: string; contenu: string }>>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [destinataire, setDestinataire] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/mail-templates").then((r) => r.ok ? r.json() : []).then(setTemplates).catch(() => {});
+    fetch("/api/users/me").then((r) => r.ok ? r.json() : null).then((u) => { if (u?.email) setDestinataire(u.email); }).catch(() => {});
+  }, []);
+
+  const sendTest = async () => {
+    if (!destinataire.trim()) { toast("Adresse email requise"); return; }
+    setSending(true);
+    const tpl = templates.find((t) => t.id === selectedTemplate);
+    const contenu = tpl?.contenu
+      ?.replace(/\{\{civilite\}\}/g, "M.")
+      ?.replace(/\{\{nom\}\}/g, "DUPONT")
+      ?.replace(/\{\{chargee\}\}/g, "Kelly Coquillas")
+      ?.replace(/\{\{date_commission\}\}/g, new Date().toLocaleDateString("fr-FR"))
+      ?.replace(/\{\{date_limite\}\}/g, new Date(Date.now() + 15 * 86400000).toLocaleDateString("fr-FR"))
+      || "<p>Ceci est un email de test depuis Tenakoe CRM.</p>";
+    const objet = tpl ? `[TEST] ${tpl.objet}` : "[TEST] Email de test Tenakoe";
+
+    const res = await fetch("/api/send-mail", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to: destinataire.trim(), subject: objet, html: contenu }),
+    });
+    setSending(false);
+    if (res.ok) {
+      toast(`Mail de test envoyé à ${destinataire}`);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast(data.error || "Erreur lors de l'envoi");
+    }
+  };
+
+  const ss: React.CSSProperties = {
+    padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`,
+    background: C.bg, color: C.text, fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box",
+  };
+
+  return (
+    <div style={{ marginTop: 24, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+      <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Test d&apos;envoi email</h3>
+      <p style={{ fontSize: 12, color: C.textDim, marginBottom: 14 }}>
+        Envoyez un email de test pour vérifier le rendu des modèles dans votre boîte mail.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+        <div>
+          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Modèle de mail</label>
+          <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} style={ss}>
+            <option value="">Email simple (sans modèle)</option>
+            {templates.map((t) => <option key={t.id} value={t.id}>{t.nom}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Adresse de destination</label>
+          <input type="email" value={destinataire} onChange={(e) => setDestinataire(e.target.value)} placeholder="votre@email.com" style={ss} />
+        </div>
+      </div>
+      <Button C={C} variant="primary" size="sm" onClick={sendTest} disabled={sending || !destinataire.trim()} loading={sending}>
+        {sending ? "Envoi en cours..." : "Envoyer le test"}
+      </Button>
+    </div>
   );
 }
 
