@@ -42,6 +42,10 @@ function extractVal(prop: Record<string, unknown> | null): string | null {
     case "date": return ((prop.date as { start: string })?.start) || null;
     case "checkbox": return (prop.checkbox as boolean) ? "true" : "false";
     case "relation": return ((prop.relation as Array<{ id: string }>)?.[0]?.id) || null;
+    case "multi_select": {
+      const items = prop.multi_select as Array<{ name: string }>;
+      return items?.length > 0 ? items.map(s => s.name).join(", ") : null;
+    }
     default: return null;
   }
 }
