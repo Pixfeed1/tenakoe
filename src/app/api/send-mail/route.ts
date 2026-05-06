@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendMail, type SmtpConfig } from "@/lib/mail";
+import { isGmailOAuthAvailable, sendGmailMessage } from "@/lib/gmail";
 import { prisma } from "@/lib/prisma";
 import { hydrateTemplate } from "@/lib/format";
 import { getSignature } from "@/lib/mail-signature";
@@ -61,11 +62,18 @@ export async function POST(request: NextRequest) {
     });
     const htmlWithSignature = `${content || ""}<br/><br/>${signature}`;
 
-    const result = await sendMail({
-      to, subject, html: htmlWithSignature, cc, bcc,
-      from: `"${fromName}" <${userSmtp?.user || fromEmail}>`,
-      smtp: userSmtp,
-    });
+    // Try Gmail OAuth first, then SMTP fallback
+    let result: { messageId: string };
+    const gmailAvailable = await isGmailOAuthAvailable();
+    if (gmailAvailable && !userSmtp) {
+      result = await sendGmailMessage({ to, subject, html: htmlWithSignature, fromName, cc, bcc });
+    } else {
+      result = await sendMail({
+        to, subject, html: htmlWithSignature, cc, bcc,
+        from: `"${fromName}" <${userSmtp?.user || fromEmail}>`,
+        smtp: userSmtp,
+      });
+    }
 
     // Enregistrer la transmission
     await prisma.transmission.create({

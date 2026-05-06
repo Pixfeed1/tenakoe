@@ -218,3 +218,51 @@ export async function getGmailStatus() {
     dernierSync: integration.dernierSync,
   };
 }
+
+export async function isGmailOAuthAvailable(): Promise<boolean> {
+  try {
+    const integration = await prisma.integration.findFirst({
+      where: { id: "gmail-oauth", actif: true },
+    });
+    if (!integration?.config) return false;
+    const config = JSON.parse(integration.config);
+    return !!(config.access_token && config.refresh_token && config.email);
+  } catch { return false; }
+}
+
+export async function sendGmailMessage(opts: {
+  to: string;
+  subject: string;
+  html: string;
+  fromName?: string;
+  cc?: string;
+  bcc?: string;
+}): Promise<{ messageId: string }> {
+  const { gmail, config } = await getAuthenticatedGmail();
+  const fromAddress = opts.fromName
+    ? `"${opts.fromName}" <${config.email}>`
+    : config.email;
+
+  const headers = [
+    `From: ${fromAddress}`,
+    `To: ${opts.to}`,
+    opts.cc ? `Cc: ${opts.cc}` : null,
+    opts.bcc ? `Bcc: ${opts.bcc}` : null,
+    `Subject: =?utf-8?B?${Buffer.from(opts.subject).toString("base64")}?=`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/html; charset=utf-8",
+    "Content-Transfer-Encoding: base64",
+  ].filter(Boolean).join("\r\n");
+
+  const body = Buffer.from(opts.html).toString("base64");
+  const raw = Buffer.from(`${headers}\r\n\r\n${body}`)
+    .toString("base64")
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+  const res = await gmail.users.messages.send({
+    userId: "me",
+    requestBody: { raw },
+  });
+
+  return { messageId: res.data.id || "" };
+}
