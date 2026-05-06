@@ -406,6 +406,22 @@ export async function POST(request: NextRequest) {
         const bySource = await prisma.entreprise.findFirst({ where: { sourceImport: "NOTION", sourceId } });
         if (bySource) { results.skipped++; continue; }
 
+        // Resolve prescripteur + depot early (needed for enrichment + creation)
+        let prescripteur = db.prescripteur || null;
+        if (!prescripteur && artisan.prescripteurRelationId) {
+          const relTitle = await resolveRelation(artisan.prescripteurRelationId, headers);
+          if (relTitle) prescripteur = mapPrescripteur(relTitle);
+        }
+        if (!prescripteur && artisan.prescripteurDirect) {
+          prescripteur = mapPrescripteur(artisan.prescripteurDirect);
+        }
+        if (artisan.depot && !artisan.depotId) {
+          const depotConfig = await prisma.depotConfig.findFirst({
+            where: { nom: { equals: artisan.depot, mode: "insensitive" } },
+          });
+          if (depotConfig) artisan.depotId = depotConfig.id;
+        }
+
         if (artisan.siret && artisan.siret.length > 5) {
           const bySiret = await prisma.entreprise.findFirst({ where: { siret: artisan.siret } });
           if (bySiret) {
@@ -417,6 +433,8 @@ export async function POST(request: NextRequest) {
                   ...(artisan.telephone && !bySiret.telephone ? { telephone: artisan.telephone } : {}),
                   ...(artisan.adresse && !bySiret.adresse ? { adresse: artisan.adresse } : {}),
                   ...(artisan.numeroCarte && !bySiret.numeroCarte ? { numeroCarte: artisan.numeroCarte } : {}),
+                  ...(prescripteur && !bySiret.prescripteur ? { prescripteur } : {}),
+                  ...(artisan.depotId && !bySiret.depotId ? { depotId: artisan.depotId } : {}),
                   sourceImport: "NOTION",
                   sourceId,
                 },
@@ -447,6 +465,8 @@ export async function POST(request: NextRequest) {
                   ...(artisan.telephone && !byEmail.telephone ? { telephone: artisan.telephone } : {}),
                   ...(artisan.adresse && !byEmail.adresse ? { adresse: artisan.adresse } : {}),
                   ...(artisan.numeroCarte && !byEmail.numeroCarte ? { numeroCarte: artisan.numeroCarte } : {}),
+                  ...(prescripteur && !byEmail.prescripteur ? { prescripteur } : {}),
+                  ...(artisan.depotId && !byEmail.depotId ? { depotId: artisan.depotId } : {}),
                   sourceImport: "NOTION",
                   sourceId,
                 },
@@ -466,24 +486,6 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Resolve prescripteur early (needed for enrichment + creation)
-        let prescripteur = db.prescripteur || null;
-        if (!prescripteur && artisan.prescripteurRelationId) {
-          const relTitle = await resolveRelation(artisan.prescripteurRelationId, headers);
-          if (relTitle) prescripteur = mapPrescripteur(relTitle);
-        }
-        if (!prescripteur && artisan.prescripteurDirect) {
-          prescripteur = mapPrescripteur(artisan.prescripteurDirect);
-        }
-
-        // Resolve depot name to depotId
-        if (artisan.depot && !artisan.depotId) {
-          const depotConfig = await prisma.depotConfig.findFirst({
-            where: { nom: { equals: artisan.depot, mode: "insensitive" } },
-          });
-          if (depotConfig) artisan.depotId = depotConfig.id;
-        }
-
         // Check 4 : same name (case-insensitive, trim)
         const byNom = await prisma.entreprise.findFirst({
           where: { nom: { equals: artisan.nom.trim(), mode: "insensitive" } },
@@ -499,6 +501,7 @@ export async function POST(request: NextRequest) {
                 ...(artisan.telephone && !byNom.telephone ? { telephone: artisan.telephone } : {}),
                 ...(artisan.adresse && !byNom.adresse ? { adresse: artisan.adresse } : {}),
                 ...(prescripteur && !byNom.prescripteur ? { prescripteur } : {}),
+                ...(artisan.depotId && !byNom.depotId ? { depotId: artisan.depotId } : {}),
                 sourceImport: "NOTION",
                 sourceId,
               },
