@@ -8,7 +8,7 @@ export default withAuth(
     const method = req.method;
 
     // Routes admin uniquement (sauf /api/users/me accessible à tous)
-    const adminRoutes = ["/api/users", "/api/cron"];
+    const adminRoutes = ["/api/users"];
     if (adminRoutes.some((r) => path.startsWith(r)) && !path.startsWith("/api/users/me") && token?.role !== "ADMIN") {
       return NextResponse.json({ error: "Accès refusé — admin uniquement" }, { status: 403 });
     }
@@ -46,5 +46,5 @@ export default withAuth(
 
 export const config = {
   // Exclude /api/auth and /api/leads (public form submission) from auth
-  matcher: ["/dashboard/:path*", "/api/((?!auth|leads|prescripteur-config|depot-config).*)"],
+  matcher: ["/dashboard/:path*", "/api/((?!auth|leads|prescripteur-config|depot-config|cron).*)"],
 };
