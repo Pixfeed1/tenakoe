@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { GuideTooltip } from "@/components/GuideSystem";
 import { getStatusIcon, AVAILABLE_ICONS } from "@/lib/icons";
 
-type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "antennes" | "notifications" | "import" | "securite" | "compte" | "test-email";
+type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "antennes" | "notifications" | "import" | "securite" | "compte";
 
 const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }> = [
   { id: "utilisateurs", label: "Utilisateurs", Icon: Users },
@@ -27,7 +27,6 @@ const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: n
   { id: "import", label: "Import / Export", Icon: Download },
   { id: "securite", label: "Sécurité", Icon: Shield },
   { id: "compte", label: "Mon compte", Icon: Users },
-  { id: "test-email", label: "Test email", Icon: Mail },
 ];
 
 const inputStyle = (C: Theme): React.CSSProperties => ({
@@ -73,7 +72,6 @@ export function ParametresView({ C, role }: { C: Theme; role?: string }) {
       {tab === "antennes" && <AntennesQualibatTab C={C} />}
       {tab === "securite" && <SecuriteTab C={C} />}
       {tab === "compte" && <MonCompteTab C={C} />}
-      {tab === "test-email" && <TestEmailTab C={C} />}
     </>
   );
 }
@@ -676,8 +674,30 @@ function MailTemplatesTab({ C }: { C: Theme }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ nom: "", objet: "", contenu: "" });
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState("");
 
-  useEffect(() => { fetch("/api/mail-templates").then((r) => r.ok ? r.json() : []).then(setTemplates).catch(() => {}); }, []);
+  useEffect(() => {
+    fetch("/api/mail-templates").then((r) => r.ok ? r.json() : []).then(setTemplates).catch(() => {});
+    fetch("/api/users/me").then((r) => r.ok ? r.json() : null).then((u: { email?: string } | null) => { if (u?.email) setUserEmail(u.email); }).catch(() => {});
+  }, []);
+
+  const sendTest = async (tpl: { objet: string; contenu: string }) => {
+    if (!userEmail) { toast("Email utilisateur non trouvé"); return; }
+    const contenu = tpl.contenu
+      .replace(/\{\{civilite\}\}/g, "M.")
+      .replace(/\{\{nom\}\}/g, "DUPONT")
+      .replace(/\{\{chargee\}\}/g, "Kelly Coquillas")
+      .replace(/\{\{date_commission\}\}/g, new Date().toLocaleDateString("fr-FR"))
+      .replace(/\{\{date_limite\}\}/g, new Date(Date.now() + 15 * 86400000).toLocaleDateString("fr-FR"));
+    const res = await fetch("/api/send-mail", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to: userEmail, subject: `[TEST] ${tpl.objet}`, html: contenu }),
+    });
+    if (res.ok) { toast(`Test envoyé à ${userEmail}`); }
+    else { const d = await res.json().catch(() => ({})); toast(d.error || "Erreur d'envoi"); }
+    setTestingId(null);
+  };
 
   const add = async () => {
     if (!form.nom || !form.objet) return;
@@ -730,6 +750,10 @@ function MailTemplatesTab({ C }: { C: Theme }) {
             <button onClick={() => setPreviewId(previewId === t.id ? null : t.id)} style={{
               padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, cursor: "pointer",
             }}>Aperçu</button>
+            <button onClick={async () => { setTestingId(t.id); await sendTest(t); }} disabled={testingId === t.id} style={{
+              padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
+              background: testingId === t.id ? C.surfaceHover : C.blueDim, color: testingId === t.id ? C.textDim : C.blue,
+            }}>{testingId === t.id ? "Envoi..." : "Tester"}</button>
             <button onClick={() => toggleActif(t.id, t.actif)} style={{
               padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
               background: t.actif ? C.accentDim : C.surfaceHover, color: t.actif ? C.accentText : C.textDim,

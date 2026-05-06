@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Download, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 
 interface ExportDropdownProps {
@@ -60,7 +60,7 @@ export function ExportDropdown({ C, headers, rows, filename, title, disabled }: 
         disabled={disabled}
         style={{
           display: "inline-flex", alignItems: "center", gap: 6,
-          padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+          padding: "8px 12px", borderRadius: 10, fontSize: 13, fontWeight: 600,
           border: `1px solid ${C.border}`, background: C.surface, color: disabled ? C.textDim : C.textMuted,
           cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1,
           transition: "all 0.15s",
@@ -68,7 +68,6 @@ export function ExportDropdown({ C, headers, rows, filename, title, disabled }: 
         onMouseEnter={(e) => { if (!disabled) { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)"; } }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
       >
-        <Download size={13} />
         Exporter
         <ChevronDown size={11} style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
       </button>
@@ -86,8 +85,7 @@ export function ExportDropdown({ C, headers, rows, filename, title, disabled }: 
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
           >
-            <span style={{ fontSize: 14 }}>📄</span>
-            Export CSV
+              CSV
           </button>
           <button onClick={exportExcel} disabled={exporting} style={{
             width: "100%", padding: "10px 14px", border: "none", borderTop: `1px solid ${C.border}`,
@@ -97,8 +95,7 @@ export function ExportDropdown({ C, headers, rows, filename, title, disabled }: 
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
           >
-            <span style={{ fontSize: 14 }}>📊</span>
-            {exporting ? "Génération..." : "Export Excel"}
+              {exporting ? "Génération..." : "Excel"}
           </button>
         </div>
       )}
