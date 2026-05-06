@@ -321,7 +321,7 @@ export function CRMShell({
         {view === "Transmissions" && <TransmissionsView key={navKey} C={C} role={user.role} />}
         {view === "Documents" && <DocumentsView key={navKey} C={C} />}
         {view === "Ressources" && <RessourcesView key={navKey} C={C} role={user.role} />}
-        {view === "Facturation" && <FacturationView key={navKey} C={C} onSelectClient={openClient} />}
+        {view === "Facturation" && <FacturationView key={navKey} C={C} onSelectClient={openClient} role={user.role} />}
         {view === "Historique" && <HistoriqueView key={navKey} C={C} onSelectClient={openClient} />}
         {view === "Apporteurs" && <ApporteursView key={navKey} C={C} />}
         {view === "Intégrations" && <IntegrationsView key={navKey} C={C} />}

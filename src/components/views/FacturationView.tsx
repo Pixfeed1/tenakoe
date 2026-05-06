@@ -6,6 +6,7 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import type { PipelineColumn } from "@/lib/data";
 import { getStatusIcon } from "@/lib/icons";
 
@@ -16,7 +17,8 @@ interface Entreprise {
   prescripteur: string | null;
   statutFacturation: string | null;
   updatedAt: string;
-  projets: Array<{ chargee: { prenom: string } | null }>;
+  chargeeId: string | null;
+  projets: Array<{ chargee: { id: string; prenom: string; nom: string } | null }>;
 }
 
 // Fallback labels/styles (used before config loads)
@@ -53,10 +55,18 @@ interface FactStatutConfig {
   actif: boolean;
 }
 
-export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClient: (c: { id: string; nom: string; siret?: string }) => void }) {
+export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelectClient: (c: { id: string; nom: string; siret?: string }) => void; role?: string }) {
   const [entreprises, setEntreprises] = useState<Entreprise[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatut, setFilterStatut] = useState("");
+  const [search, setSearch] = useState("");
+  const [filtreChargee, setFiltreChargee] = useState("");
+  const [filtrePrescripteur, setFiltrePrescripteur] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
+  const [prescripteurs, setPrescripteurs] = useState<Array<{ type: string; nom: string }>>([]);
+  const peutVoirToutesChargees = role === "ADMIN";
   const [showAbby, setShowAbby] = useState(false);
   const [abbyAction, setAbbyAction] = useState<string | null>(null);
   const [abbyMsg, setAbbyMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -77,12 +87,19 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
         setStatutsConfig(factCols.map((c) => ({ code: c.statutCode || c.id.toUpperCase(), nom: c.status, couleur: c.colorKey, actif: true })));
       })
       .catch(() => {});
-    // Entreprises for the table — only those with statutFacturation
     fetch("/api/entreprises?facturation=true")
       .then((r) => r.json())
       .then((data) => { setEntreprises(data); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+    if (peutVoirToutesChargees) {
+      fetch("/api/users").then((r) => r.ok ? r.json() : [])
+        .then((data) => setChargees(data.filter((u: { role?: string; actif?: boolean }) => u.actif && u.role !== "PRESCRIPTEUR")))
+        .catch(() => {});
+    }
+    fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : [])
+      .then((data) => setPrescripteurs(Array.isArray(data) ? data.filter((c: { actif?: boolean }) => c.actif) : []))
+      .catch(() => {});
+  }, [peutVoirToutesChargees]);
 
   // Build dynamic label/style maps
   const statutLabels: Record<string, string> = { ...FALLBACK_LABELS };
@@ -92,9 +109,20 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
     statutStyles[s.code] = colorToFactThemeKey(s.couleur);
   }
 
+  const anyFilter = !!(search || filtreChargee || filtrePrescripteur || dateFrom || dateTo);
+  const resetFilters = () => { setSearch(""); setFiltreChargee(""); setFiltrePrescripteur(""); setDateFrom(""); setDateTo(""); setFilterStatut(""); };
+
   const filtered = entreprises.filter((e) => {
     if (!e.statutFacturation) return false;
     if (filterStatut && e.statutFacturation !== filterStatut) return false;
+    if (search && !e.nom.toLowerCase().includes(search.toLowerCase()) && !(e.siret || "").includes(search)) return false;
+    if (filtreChargee && e.chargeeId !== filtreChargee) return false;
+    if (filtrePrescripteur && e.prescripteur !== filtrePrescripteur) return false;
+    if (dateFrom || dateTo) {
+      const d = new Date(e.updatedAt);
+      if (dateFrom && d < new Date(dateFrom)) return false;
+      if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
+    }
     return true;
   });
 
@@ -261,6 +289,44 @@ export function FacturationView({ C, onSelectClient }: { C: Theme; onSelectClien
           </div>
         ))}
       </div>
+
+      {/* Filters */}
+      <div className="filter-bar" style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 180, display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface }}>
+          <Search size={14} color={C.textDim} />
+          <input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)}
+            style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
+        </div>
+        {peutVoirToutesChargees && (
+          <select value={filtreChargee} onChange={(e) => setFiltreChargee(e.target.value)}
+            style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }}>
+            <option value="">Toutes les chargées</option>
+            {chargees.map((c) => <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>)}
+          </select>
+        )}
+        {prescripteurs.length > 0 && (
+          <select value={filtrePrescripteur} onChange={(e) => setFiltrePrescripteur(e.target.value)}
+            style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }}>
+            <option value="">Prescripteur</option>
+            {prescripteurs.map((p) => <option key={p.type} value={p.type}>{p.nom}</option>)}
+          </select>
+        )}
+        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+          style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }} />
+        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+          style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }} />
+        <ExportDropdown C={C} disabled={filtered.length === 0} filename="facturation" title="Facturation"
+          headers={["Entreprise", "SIRET", "Chargée", "Prescripteur", "Statut", "Dernière MAJ"]}
+          rows={filtered.map((e) => [e.nom, e.siret || "", e.projets?.[0]?.chargee?.prenom || "", e.prescripteur || "", statutLabels[e.statutFacturation || ""] || "", new Date(e.updatedAt).toLocaleDateString("fr-FR")])}
+        />
+        {(anyFilter || filterStatut) && <Button C={C} variant="ghost" size="sm" onClick={resetFilters} icon={<X size={12} />}>Réinitialiser</Button>}
+      </div>
+
+      {filtered.length !== entreprises.filter((e) => !!e.statutFacturation).length && (
+        <div style={{ fontSize: 12, color: C.textDim, marginBottom: 12 }}>
+          {filtered.length} résultat{filtered.length > 1 ? "s" : ""} sur {entreprises.filter((e) => !!e.statutFacturation).length} total
+        </div>
+      )}
 
       {/* Table */}
       <div data-guide="pipeline-facturation" style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: C.shadow, overflow: "hidden" }}>
