@@ -466,7 +466,7 @@ export function DashboardView({
                   fontSize: 12, fontWeight: 700, color: C.text,
                   background: C.surfaceHover, padding: "2px 8px", borderRadius: 6,
                 }}>
-                  {colFiltered.items.length}
+                  {col.items.length}
                 </span>
               </div>
             ))}
