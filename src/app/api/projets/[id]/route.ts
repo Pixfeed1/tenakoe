@@ -55,7 +55,7 @@ export async function PATCH(
       const created = await prisma.projetQualification.upsert({
         where: { projetId_type: { projetId: id, type: q.type } },
         update: {},
-        create: { projetId: id, type: q.type },
+        create: { projetId: id, type: q.type, certificateurType: q.certificateurType || null },
       });
       const hasChantiers = await prisma.chantier.count({ where: { projetQualificationId: created.id } });
       if (hasChantiers === 0) {

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       entrepriseId: body.entrepriseId,
       chargeeId: body.chargeeId || user.id,
       qualifications: body.qualifications
-        ? { createMany: { data: body.qualifications } }
+        ? { createMany: { data: (body.qualifications as Array<{ type: string }>).map((q) => ({ type: q.type, certificateurType: body.certificateurType || null })) } }
         : undefined,
     },
     include: { qualifications: true },

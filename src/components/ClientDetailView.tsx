@@ -67,7 +67,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [newContact, setNewContact] = useState({ nom: "", prenom: "", email: "", telephone: "", fonction: "" });
   const [showAddTache, setShowAddTache] = useState(false);
   const [showAddProjet, setShowAddProjet] = useState(false);
-  const [newProjetForm, setNewProjetForm] = useState<{ nom: string; qualifications: Array<{ code: string; nom: string }>; chargeeId: string }>({ nom: "", qualifications: [], chargeeId: "" });
+  const [newProjetForm, setNewProjetForm] = useState<{ nom: string; qualifications: Array<{ code: string; nom: string }>; chargeeId: string; certificateurType: string }>({ nom: "", qualifications: [], chargeeId: "", certificateurType: "Qualibat" });
   const [qualifSearch, setQualifSearch] = useState("");
   const [qualifResults, setQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
   const [nomenclatureMap, setNomenclatureMap] = useState<Record<string, string>>({});
@@ -1676,8 +1676,23 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               </Button>
             </div>
 
-            {showAddProjet && (
+            {showAddProjet && (() => {
+              const isNewQualibat = newProjetForm.certificateurType === "Qualibat";
+              return (
               <div style={{ padding: 14, borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 14 }}>
+                <div style={{ marginBottom: 10 }}>
+                  <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Certificateur *</label>
+                  <select
+                    value={newProjetForm.certificateurType}
+                    onChange={(e) => setNewProjetForm({ ...newProjetForm, certificateurType: e.target.value, qualifications: [] })}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }}
+                  >
+                    <option value="Qualibat">Qualibat</option>
+                    <option value="Qualifelec">Qualifelec</option>
+                    <option value="Qualit&apos;EnR">Qualit&apos;EnR</option>
+                    <option value="Certibat">Certibat</option>
+                  </select>
+                </div>
                 <div className="grid-responsive" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   <input placeholder="Nom du projet *" value={newProjetForm.nom} onChange={(e) => setNewProjetForm({ ...newProjetForm, nom: e.target.value })}
                     style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }} />
@@ -1689,39 +1704,67 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     ))}
                   </select>
                 </div>
-                {/* Multi-qualification search + list */}
+                {/* Qualifications: nomenclature search for Qualibat, free text for others */}
                 <div style={{ marginBottom: 10 }}>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      placeholder="+ Ajouter une qualification (code ou nom)..."
-                      value={qualifSearch}
-                      onChange={(e) => {
-                        setQualifSearch(e.target.value);
-                        if (e.target.value.length >= 2) {
-                          fetch(`/api/nomenclature-qualibat?search=${encodeURIComponent(e.target.value)}`)
-                            .then((r) => r.json()).then(setQualifResults).catch(() => {});
-                        } else { setQualifResults([]); }
-                      }}
-                      style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }}
-                    />
-                    {qualifResults.length > 0 && (
-                      <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadowHover, maxHeight: 180, overflowY: "auto" }}>
-                        {qualifResults.filter((q) => !newProjetForm.qualifications.some((s) => s.code === q.code)).map((q) => (
-                          <button key={q.code} onClick={() => {
-                            setNewProjetForm({ ...newProjetForm, qualifications: [...newProjetForm.qualifications, { code: q.code, nom: q.nom }] });
-                            setQualifSearch(""); setQualifResults([]);
-                          }} style={{ width: "100%", padding: "6px 10px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", fontSize: 11, color: C.text, borderBottom: `1px solid ${C.border}` }}
-                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                          >
-                            <span style={{ fontWeight: 700, color: C.blue }}>{q.code}</span>
-                            <span style={{ marginLeft: 6 }}>{q.nom}</span>
-                            <span style={{ marginLeft: 6, fontSize: 10, color: C.textDim }}>{q.categorie}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {isNewQualibat ? (
+                    <div style={{ position: "relative" }}>
+                      <input
+                        placeholder="+ Ajouter une qualification (code ou nom)..."
+                        value={qualifSearch}
+                        onChange={(e) => {
+                          setQualifSearch(e.target.value);
+                          if (e.target.value.length >= 2) {
+                            fetch(`/api/nomenclature-qualibat?search=${encodeURIComponent(e.target.value)}`)
+                              .then((r) => r.json()).then(setQualifResults).catch(() => {});
+                          } else { setQualifResults([]); }
+                        }}
+                        style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }}
+                      />
+                      {qualifResults.length > 0 && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadowHover, maxHeight: 180, overflowY: "auto" }}>
+                          {qualifResults.filter((q) => !newProjetForm.qualifications.some((s) => s.code === q.code)).map((q) => (
+                            <button key={q.code} onClick={() => {
+                              setNewProjetForm({ ...newProjetForm, qualifications: [...newProjetForm.qualifications, { code: q.code, nom: q.nom }] });
+                              setQualifSearch(""); setQualifResults([]);
+                            }} style={{ width: "100%", padding: "6px 10px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", fontSize: 11, color: C.text, borderBottom: `1px solid ${C.border}` }}
+                              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                            >
+                              <span style={{ fontWeight: 700, color: C.blue }}>{q.code}</span>
+                              <span style={{ marginLeft: 6 }}>{q.nom}</span>
+                              <span style={{ marginLeft: 6, fontSize: 10, color: C.textDim }}>{q.categorie}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        placeholder="Nom de la qualification (ex: SPV1, PAC...)"
+                        value={qualifSearch}
+                        onChange={(e) => setQualifSearch(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && qualifSearch.trim()) {
+                            e.preventDefault();
+                            const code = qualifSearch.trim().toUpperCase().slice(0, 20);
+                            if (!newProjetForm.qualifications.some((q) => q.code === code)) {
+                              setNewProjetForm({ ...newProjetForm, qualifications: [...newProjetForm.qualifications, { code, nom: qualifSearch.trim() }] });
+                            }
+                            setQualifSearch("");
+                          }
+                        }}
+                        style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }}
+                      />
+                      <Button C={C} variant="secondary" size="sm" disabled={!qualifSearch.trim()} onClick={() => {
+                        const code = qualifSearch.trim().toUpperCase().slice(0, 20);
+                        if (!newProjetForm.qualifications.some((q) => q.code === code)) {
+                          setNewProjetForm({ ...newProjetForm, qualifications: [...newProjetForm.qualifications, { code, nom: qualifSearch.trim() }] });
+                        }
+                        setQualifSearch("");
+                      }}>Ajouter</Button>
+                    </div>
+                  )}
                   {newProjetForm.qualifications.length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
                       {newProjetForm.qualifications.map((q) => (
@@ -1741,20 +1784,20 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <Button C={C} variant="primary" disabled={!newProjetForm.nom || newProjetForm.qualifications.length === 0} onClick={async () => {
                     if (isDemoMode) {
                       handleDemoAction("Projet créé");
-                      setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualifications.map((q) => ({ type: q.code })), etapes: [] }]);
+                      setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualifications.map((q) => ({ type: q.code, certificateurType: newProjetForm.certificateurType })), etapes: [] }]);
                       setShowAddProjet(false);
-                      setNewProjetForm({ nom: "", qualifications: [], chargeeId: "" });
+                      setNewProjetForm({ nom: "", qualifications: [], chargeeId: "", certificateurType: "Qualibat" });
                       guide.showSuggestion("nouveau-projet"); toast("Projet créé");
                       return;
                     }
                     if (!client?.id) return;
-                    const payload: Record<string, unknown> = { nom: newProjetForm.nom, entrepriseId: client.id };
+                    const payload: Record<string, unknown> = { nom: newProjetForm.nom, entrepriseId: client.id, certificateurType: newProjetForm.certificateurType };
                     if (newProjetForm.qualifications.length > 0) payload.qualifications = newProjetForm.qualifications.map((q) => ({ type: q.code }));
                     if (newProjetForm.chargeeId) payload.chargeeId = newProjetForm.chargeeId;
                     const res = await fetch("/api/projets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                     if (res.ok) {
                       setShowAddProjet(false);
-                      setNewProjetForm({ nom: "", qualifications: [], chargeeId: "" });
+                      setNewProjetForm({ nom: "", qualifications: [], chargeeId: "", certificateurType: "Qualibat" });
                       guide.showSuggestion("nouveau-projet"); toast("Projet créé");
                       fetch(`/api/entreprises/${client.id}`).then((r) => r.ok ? r.json() : null).then((data) => {
                         if (data?.projets) setProjets(data.projets);
@@ -1763,7 +1806,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   }}>Créer</Button>
                 </div>
               </div>
-            )}
+              );
+            })()}
 
             {projets.length === 0 ? (
               <div style={{ padding: 16, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun projet</div>
@@ -1904,21 +1948,82 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         </div>
 
                         {/* Inline add-qualification picker */}
-                        {addingQualifToProjet === p.id && (
+                        {addingQualifToProjet === p.id && (() => {
+                          const existingCert = qualifs.find((q) => q.certificateurType)?.certificateurType || "Qualibat";
+                          const isExistingQualibat = existingCert === "Qualibat";
+                          const addQualifAction = async (code: string, nom: string) => {
+                            setAddingQualifToProjet(null); setAddQualifSearch(""); setAddQualifResults([]);
+                            if (isDemoMode) {
+                              setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: [...pr.qualifications, { id: `demo-q-${Date.now()}`, type: code }] } : pr));
+                              return;
+                            }
+                            try {
+                              const res = await fetch(`/api/projets/${p.id}`, {
+                                method: "PATCH", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ addQualifications: [{ type: code, certificateurType: existingCert }] }),
+                              });
+                              if (!res.ok) throw new Error();
+                              const updated = await res.json();
+                              setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: updated.qualifications } : pr));
+                              const added = updated.qualifications.find((qq: { type: string; id: string }) => qq.type === code);
+                              if (added) setActiveQualifByProjet((prev) => ({ ...prev, [p.id]: added.id }));
+                              toast("Qualification ajoutée");
+                            } catch { toast("Erreur lors de l'ajout"); }
+                          };
+                          return (
                           <div style={{ position: "relative", margin: "10px 0 4px" }}>
-                            <input
-                              autoFocus
-                              placeholder="Code ou nom de la qualification..."
-                              value={addQualifSearch}
-                              onChange={(e) => {
-                                setAddQualifSearch(e.target.value);
-                                if (e.target.value.length >= 2) {
-                                  fetch(`/api/nomenclature-qualibat?search=${encodeURIComponent(e.target.value)}`)
-                                    .then((r) => r.json()).then(setAddQualifResults).catch(() => {});
-                                } else { setAddQualifResults([]); }
-                              }}
-                              style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }}
-                            />
+                            {isExistingQualibat ? (
+                              <>
+                                <input
+                                  autoFocus
+                                  placeholder="Code ou nom de la qualification..."
+                                  value={addQualifSearch}
+                                  onChange={(e) => {
+                                    setAddQualifSearch(e.target.value);
+                                    if (e.target.value.length >= 2) {
+                                      fetch(`/api/nomenclature-qualibat?search=${encodeURIComponent(e.target.value)}`)
+                                        .then((r) => r.json()).then(setAddQualifResults).catch(() => {});
+                                    } else { setAddQualifResults([]); }
+                                  }}
+                                  style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }}
+                                />
+                                {addQualifResults.length > 0 && (
+                                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadowHover, maxHeight: 240, overflowY: "auto", marginTop: 4 }}>
+                                    {addQualifResults.filter((q) => !qualifs.some((qq) => qq.type === q.code)).map((q) => (
+                                      <button key={q.code} onClick={() => addQualifAction(q.code, q.nom)}
+                                        style={{ width: "100%", padding: "6px 10px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", fontSize: 11, color: C.text, borderBottom: `1px solid ${C.border}` }}
+                                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                                      >
+                                        <span style={{ fontWeight: 700, color: C.blue }}>{q.code}</span>
+                                        <span style={{ marginLeft: 6 }}>{q.nom}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <input
+                                  autoFocus
+                                  placeholder={`Nom de la qualification ${existingCert}...`}
+                                  value={addQualifSearch}
+                                  onChange={(e) => setAddQualifSearch(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && addQualifSearch.trim()) {
+                                      e.preventDefault();
+                                      const code = addQualifSearch.trim().toUpperCase().slice(0, 20);
+                                      if (!qualifs.some((q) => q.type === code)) addQualifAction(code, addQualifSearch.trim());
+                                    }
+                                  }}
+                                  style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }}
+                                />
+                                <Button C={C} variant="secondary" size="sm" disabled={!addQualifSearch.trim()} onClick={() => {
+                                  const code = addQualifSearch.trim().toUpperCase().slice(0, 20);
+                                  if (!qualifs.some((q) => q.type === code)) addQualifAction(code, addQualifSearch.trim());
+                                }}>Ajouter</Button>
+                              </div>
+                            )}
                             <button
                               onClick={() => { setAddingQualifToProjet(null); setAddQualifSearch(""); setAddQualifResults([]); }}
                               style={{ position: "absolute", right: 6, top: 6, padding: 4, border: "none", background: "transparent", cursor: "pointer" }}
@@ -1926,45 +2031,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             >
                               <X size={14} color={C.textDim} />
                             </button>
-                            {addQualifResults.length > 0 && (
-                              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, boxShadow: C.shadowHover, maxHeight: 240, overflowY: "auto", marginTop: 4 }}>
-                                {addQualifResults.filter((q) => !qualifs.some((qq) => qq.type === q.code)).map((q) => (
-                                  <button
-                                    key={q.code}
-                                    onClick={async () => {
-                                      const newCode = q.code;
-                                      setAddingQualifToProjet(null); setAddQualifSearch(""); setAddQualifResults([]);
-                                      if (isDemoMode) {
-                                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: [...pr.qualifications, { id: `demo-q-${Date.now()}`, type: newCode }] } : pr));
-                                        return;
-                                      }
-                                      try {
-                                        const res = await fetch(`/api/projets/${p.id}`, {
-                                          method: "PATCH", headers: { "Content-Type": "application/json" },
-                                          body: JSON.stringify({ addQualifications: [{ type: newCode }] }),
-                                        });
-                                        if (!res.ok) throw new Error();
-                                        const updated = await res.json();
-                                        setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: updated.qualifications } : pr));
-                                        const added = updated.qualifications.find((qq: { type: string; id: string }) => qq.type === newCode);
-                                        if (added) setActiveQualifByProjet((prev) => ({ ...prev, [p.id]: added.id }));
-                                        toast("Qualification ajoutée");
-                                      } catch {
-                                        toast("Erreur lors de l'ajout");
-                                      }
-                                    }}
-                                    style={{ width: "100%", padding: "6px 10px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", fontSize: 11, color: C.text, borderBottom: `1px solid ${C.border}` }}
-                                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-                                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                                  >
-                                    <span style={{ fontWeight: 700, color: C.blue }}>{q.code}</span>
-                                    <span style={{ marginLeft: 6 }}>{q.nom}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
                           </div>
-                        )}
+                          );
+                        })()}
 
                         {/* Active qualification content */}
                         {activeQualif && activeQualif.id && (() => {
