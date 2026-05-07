@@ -62,6 +62,18 @@ const INTEGRATIONS: IntegrationConfig[] = [
     ],
   },
   {
+    key: "spothit",
+    nom: "Spot-Hit",
+    description: "Envoi de SMS en France — solution française, 0.045€/SMS",
+    type: "sms",
+    logo: "/logos/spothit.svg",
+    color: "#E91E63",
+    fields: [
+      { key: "api_key", label: "Clé API", type: "password", placeholder: "Votre clé API Spot-Hit" },
+      { key: "expediteur", label: "Expéditeur (max 11 chars)", type: "text", placeholder: "Tenakoe" },
+    ],
+  },
+  {
     key: "brevo",
     nom: "Brevo",
     description: "Email marketing, SMS et automatisation — ex-Sendinblue",

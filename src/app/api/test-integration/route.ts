@@ -50,6 +50,25 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: false, msg: "Clé API invalide" });
       }
 
+      case "spothit": {
+        if (!config.api_key) {
+          return NextResponse.json({ ok: false, msg: "Clé API requise" });
+        }
+        const spRes = await fetch("https://www.spot-hit.fr/api/credits", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ key: config.api_key }).toString(),
+        });
+        if (spRes.ok) {
+          const spData = await spRes.json();
+          if (spData.resultat) {
+            return NextResponse.json({ ok: true, msg: `Connexion réussie — Crédit: ${spData.credits ?? "?"}€` });
+          }
+          return NextResponse.json({ ok: false, msg: `Erreur: ${spData.erreurs?.join(", ") || "Clé invalide"}` });
+        }
+        return NextResponse.json({ ok: false, msg: "Impossible de joindre Spot-Hit" });
+      }
+
       case "brevo": {
         if (!config.api_key) {
           return NextResponse.json({ ok: false, msg: "Clé API requise" });

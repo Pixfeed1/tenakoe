@@ -771,7 +771,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     }),
                   });
                   if (res.ok) {
-                    setSendStatus({ type: "success", msg: "SMS envoyé" }); toast("SMS envoyé");
+                    const data = await res.json();
+                    const via = data.provider ? ` via ${data.provider}` : "";
+                    setSendStatus({ type: "success", msg: `SMS envoyé${via}` }); toast(`SMS envoyé${via}`);
                     fetch("/api/guide", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "aEnvoyeSms" }) }).catch(() => {});
                     guide.showSuggestion("sms-envoye");
                     setSmsBody("");

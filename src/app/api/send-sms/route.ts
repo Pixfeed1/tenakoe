@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       triggerWebhook("SMS_ENVOYE", { entrepriseId, destinataire: to });
     }).catch(() => {});
 
-    return NextResponse.json({ success: true, sid: result.sid });
+    return NextResponse.json({ success: true, sid: result.sid, provider: result.provider });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erreur inconnue";
     return NextResponse.json({ error: `Échec envoi : ${message}` }, { status: 500 });
