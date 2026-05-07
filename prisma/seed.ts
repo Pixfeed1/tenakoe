@@ -106,32 +106,36 @@ async function main() {
   const statutsPrise = [
     { code: "NOUVEAU", nom: "Nouveau", couleur: "#ef4444", ordre: 1, parDefaut: true, icone: "zap" },
     { code: "PRISE_EN_CHARGE", nom: "Prise en charge", couleur: "#16a34a", ordre: 2, icone: "user-check" },
-    { code: "PRISE_EN_CHARGE_A_RELANCER", nom: "À relancer", couleur: "#d97706", ordre: 3, icone: "refresh-cw" },
+    { code: "A_RELANCER", nom: "À relancer", couleur: "#d97706", ordre: 3, icone: "refresh-cw" },
+    { code: "INJOIGNABLE_LEAD_ABANDONNE", nom: "Injoignable - lead abandonné", couleur: "#6b7280", ordre: 4, icone: "x-circle" },
   ];
   for (const s of statutsPrise) {
     await prisma.statutPriseConfig.upsert({
-      where: { code: s.code }, update: { icone: s.icone },
+      where: { code: s.code },
+      update: { nom: s.nom, couleur: s.couleur, ordre: s.ordre, parDefaut: s.parDefaut || false, icone: s.icone },
       create: { code: s.code, nom: s.nom, couleur: s.couleur, ordre: s.ordre, parDefaut: s.parDefaut || false, icone: s.icone },
     });
   }
 
   const statutsFacturation = [
-    { code: "DEVIS_A_FAIRE", nom: "Devis à faire", couleur: "#94a3b8", ordre: 1, icone: "file-text" },
+    { code: "SANS_OBJET", nom: "Sans objet", couleur: "#94a3b8", ordre: 1, parDefaut: true, icone: "minus-circle" },
     { code: "DEVIS_ENVOYE", nom: "Devis envoyé", couleur: "#7c3aed", ordre: 2, icone: "send" },
     { code: "DEVIS_SIGNE", nom: "Devis signé", couleur: "#3b82f6", ordre: 3, icone: "file-check" },
     { code: "FACTURE_ENVOYEE", nom: "Facture envoyée", couleur: "#2563eb", ordre: 4, icone: "credit-card" },
-    { code: "FACTURE_PAYEE", nom: "Facture payée", couleur: "#16a34a", ordre: 5, declencheConversion: true, icone: "check-circle" },
-    { code: "DOSSIER_DEPOSE", nom: "Dossier déposé", couleur: "#0ea5e9", ordre: 6, icone: "folder-check" },
-    { code: "DOSSIER_COMPLEMENT", nom: "Demande de complément", couleur: "#d97706", ordre: 7, icone: "alert-triangle" },
-    { code: "QUALIFIE", nom: "Qualifié", couleur: "#16a34a", ordre: 8, icone: "award" },
-    { code: "REFUSE", nom: "Refusé", couleur: "#dc2626", ordre: 9, icone: "x-circle" },
-    { code: "DOSSIER_EN_APPEL", nom: "En appel", couleur: "#f59e0b", ordre: 10, icone: "gavel" },
+    { code: "FACTURE_PAYEE_COLLECTE", nom: "Facture payée — collecte en cours", couleur: "#16a34a", ordre: 5, declencheConversion: true, icone: "check-circle" },
+    { code: "PAYE_ABANDONNE_NON_REACTIF", nom: "Payé abandonné non réactif", couleur: "#94a3b8", ordre: 6, icone: "user-x" },
+    { code: "DOSSIER_DEPOSE", nom: "Dossier déposé", couleur: "#0ea5e9", ordre: 7, icone: "folder-check" },
+    { code: "DEMANDE_COMPLEMENT", nom: "Demande de compléments", couleur: "#d97706", ordre: 8, icone: "alert-triangle" },
+    { code: "QUALIFIE", nom: "Qualifié", couleur: "#16a34a", ordre: 9, icone: "award" },
+    { code: "REFUSE", nom: "Refusé", couleur: "#dc2626", ordre: 10, icone: "x-circle" },
+    { code: "EN_APPEL", nom: "En appel", couleur: "#f59e0b", ordre: 11, icone: "gavel" },
   ];
   for (const s of statutsFacturation) {
+    const rec = s as Record<string, unknown>;
     await prisma.statutFacturationConfig.upsert({
       where: { code: s.code },
-      update: { declencheConversion: (s as Record<string, unknown>).declencheConversion ? true : false, icone: s.icone },
-      create: { code: s.code, nom: s.nom, couleur: s.couleur, ordre: s.ordre, parDefaut: (s as Record<string, unknown>).parDefaut ? true : false, declencheConversion: (s as Record<string, unknown>).declencheConversion ? true : false, icone: s.icone },
+      update: { nom: s.nom, couleur: s.couleur, ordre: s.ordre, parDefaut: rec.parDefaut ? true : false, declencheConversion: rec.declencheConversion ? true : false, icone: s.icone },
+      create: { code: s.code, nom: s.nom, couleur: s.couleur, ordre: s.ordre, parDefaut: rec.parDefaut ? true : false, declencheConversion: rec.declencheConversion ? true : false, icone: s.icone },
     });
   }
   console.log("Pipeline statuts created");
