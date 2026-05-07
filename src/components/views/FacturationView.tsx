@@ -23,29 +23,31 @@ interface Entreprise {
 
 // Fallback labels/styles (used before config loads)
 const FALLBACK_LABELS: Record<string, string> = {
-  DEVIS_A_FAIRE: "Devis à faire",
+  SANS_OBJET: "Sans objet",
   DEVIS_ENVOYE: "Devis envoyé",
   DEVIS_SIGNE: "Devis signé",
   FACTURE_ENVOYEE: "Facture envoyée",
-  FACTURE_PAYEE: "Facture payée",
+  FACTURE_PAYEE_COLLECTE: "Facture payée — collecte en cours",
+  PAYE_ABANDONNE_NON_REACTIF: "Payé abandonné non réactif",
   DOSSIER_DEPOSE: "Dossier déposé",
-  DOSSIER_COMPLEMENT: "Complément demandé",
+  DEMANDE_COMPLEMENT: "Demande de compléments",
   QUALIFIE: "Qualifié",
   REFUSE: "Refusé",
-  DOSSIER_EN_APPEL: "En appel",
+  EN_APPEL: "En appel",
 };
 
 const FALLBACK_STYLES: Record<string, { color: string; bg: string }> = {
-  DEVIS_A_FAIRE: { color: "warning", bg: "warningDim" },
+  SANS_OBJET: { color: "warning", bg: "warningDim" },
   DEVIS_ENVOYE: { color: "blue", bg: "blueDim" },
   DEVIS_SIGNE: { color: "blue", bg: "blueDim" },
   FACTURE_ENVOYEE: { color: "purple", bg: "purpleDim" },
-  FACTURE_PAYEE: { color: "accent", bg: "accentDim" },
+  FACTURE_PAYEE_COLLECTE: { color: "accent", bg: "accentDim" },
+  PAYE_ABANDONNE_NON_REACTIF: { color: "warning", bg: "warningDim" },
   DOSSIER_DEPOSE: { color: "purple", bg: "purpleDim" },
-  DOSSIER_COMPLEMENT: { color: "warning", bg: "warningDim" },
+  DEMANDE_COMPLEMENT: { color: "warning", bg: "warningDim" },
   QUALIFIE: { color: "accent", bg: "accentDim" },
   REFUSE: { color: "danger", bg: "dangerDim" },
-  DOSSIER_EN_APPEL: { color: "warning", bg: "warningDim" },
+  EN_APPEL: { color: "warning", bg: "warningDim" },
 };
 
 interface FactStatutConfig {
@@ -127,10 +129,10 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
   });
 
   // Stats
-  const devisAFaire = entreprises.filter((e) => e.statutFacturation === "DEVIS_A_FAIRE").length;
+  const sansObjet = entreprises.filter((e) => e.statutFacturation === "SANS_OBJET").length;
   const devisEnvoye = entreprises.filter((e) => e.statutFacturation === "DEVIS_ENVOYE" || e.statutFacturation === "DEVIS_SIGNE").length;
   const factureEnCours = entreprises.filter((e) => e.statutFacturation === "FACTURE_ENVOYEE").length;
-  const facturePayee = entreprises.filter((e) => e.statutFacturation === "FACTURE_PAYEE").length;
+  const facturePayee = entreprises.filter((e) => e.statutFacturation === "FACTURE_PAYEE_COLLECTE").length;
 
   return (
     <>
@@ -150,7 +152,7 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
         <div style={{ display: "flex", gap: 6 }}>
           <Button C={C} variant="secondary" onClick={async () => {
             setAbbyAction("sync"); setAbbyMsg(null);
-            const payees = entreprises.filter((e) => e.statutFacturation === "FACTURE_PAYEE");
+            const payees = entreprises.filter((e) => e.statutFacturation === "FACTURE_PAYEE_COLLECTE");
             let synced = 0;
             for (const ent of payees) {
               try {
@@ -262,10 +264,10 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
       {/* Stats */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         {[
-          { label: "Devis à faire", count: devisAFaire, Icon: FileText, color: "warning", filter: "DEVIS_A_FAIRE", guide: "" },
+          { label: "Sans objet", count: sansObjet, Icon: FileText, color: "warning", filter: "SANS_OBJET", guide: "" },
           { label: "Devis envoyés", count: devisEnvoye, Icon: Clock, color: "blue", filter: "DEVIS_ENVOYE", guide: "factu-col-devis-envoye" },
           { label: "Factures en cours", count: factureEnCours, Icon: CreditCard, color: "purple", filter: "FACTURE_ENVOYEE", guide: "" },
-          { label: "Factures payées", count: facturePayee, Icon: Check, color: "accent", filter: "FACTURE_PAYEE", guide: "" },
+          { label: "Factures payées", count: facturePayee, Icon: Check, color: "accent", filter: "FACTURE_PAYEE_COLLECTE", guide: "" },
         ].map((s) => (
           <div key={s.filter}
             {...(s.guide ? { "data-guide": s.guide } : {})}
@@ -348,7 +350,7 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
             </thead>
             <tbody>
               {filtered.map((e, rowIdx) => {
-                const style = statutStyles[e.statutFacturation || ""] || FALLBACK_STYLES.DEVIS_A_FAIRE;
+                const style = statutStyles[e.statutFacturation || ""] || FALLBACK_STYLES.SANS_OBJET;
                 return (
                   <tr key={e.id}
                     {...(rowIdx === 0 ? { "data-guide": "factu-card-first" } : {})}
@@ -373,21 +375,20 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
                     </td>
                     <td style={{ padding: "12px 14px" }} onClick={(ev) => ev.stopPropagation()}>
                       <div style={{ display: "flex", gap: 4 }}>
-                        {(e.statutFacturation === "DEVIS_A_FAIRE" || e.statutFacturation === "FACTURE_PAYEE") && (
+                        {(e.statutFacturation === "SANS_OBJET" || e.statutFacturation === "FACTURE_PAYEE_COLLECTE") && (
                           <button data-guide="btn-abby" onClick={async () => {
                             setAbbyMsg(null);
                             try {
-                              // Sync client first, then create estimate
                               await fetch("/api/abby", {
                                 method: "POST", headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ action: "sync-client", entrepriseId: e.id }),
                               });
-                              const action = e.statutFacturation === "DEVIS_A_FAIRE" ? "create-estimate" : "create-invoice";
+                              const action = e.statutFacturation === "SANS_OBJET" ? "create-estimate" : "create-invoice";
                               const res = await fetch("/api/abby", {
                                 method: "POST", headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ action, customerId: e.id, lines: [] }),
                               });
-                              if (res.ok) setAbbyMsg({ type: "success", msg: `${e.statutFacturation === "DEVIS_A_FAIRE" ? "Devis" : "Facture"} créé(e) dans Abby pour ${e.nom}` });
+                              if (res.ok) setAbbyMsg({ type: "success", msg: `${e.statutFacturation === "SANS_OBJET" ? "Devis" : "Facture"} créé(e) dans Abby pour ${e.nom}` });
                               else { const err = await res.json(); setAbbyMsg({ type: "error", msg: err.error }); }
                             } catch { setAbbyMsg({ type: "error", msg: "Erreur réseau" }); }
                           }} style={{
@@ -395,7 +396,7 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
                             background: C.accentDim, color: C.accentText, fontSize: 10,
                             fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
                           }}>
-                            {e.statutFacturation === "DEVIS_A_FAIRE" ? "Créer devis" : "Créer facture"}
+                            {e.statutFacturation === "SANS_OBJET" ? "Créer devis" : "Créer facture"}
                           </button>
                         )}
                         <a data-guide="btn-voir-abby" href="https://app.abby.fr" target="_blank" rel="noopener noreferrer" style={{

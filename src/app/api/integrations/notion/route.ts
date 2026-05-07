@@ -289,11 +289,11 @@ async function mapStatut(statutName: string | null): Promise<string> {
     "nouveau": "NOUVEAU", "new": "NOUVEAU",
     "prise en charge": "PRISE_EN_CHARGE", "en charge": "PRISE_EN_CHARGE",
     "contacté": "PRISE_EN_CHARGE", "contacted": "PRISE_EN_CHARGE",
-    "à relancer": "PRISE_EN_CHARGE_A_RELANCER", "relance": "PRISE_EN_CHARGE_A_RELANCER",
+    "à relancer": "A_RELANCER", "relance": "A_RELANCER",
     "en cours": "PRISE_EN_CHARGE", "in progress": "PRISE_EN_CHARGE",
     "qualifié": "PRISE_EN_CHARGE", "qualified": "PRISE_EN_CHARGE",
     "gagné": "PRISE_EN_CHARGE", "won": "PRISE_EN_CHARGE",
-    "perdu": "PRISE_EN_CHARGE_A_RELANCER", "lost": "PRISE_EN_CHARGE_A_RELANCER",
+    "perdu": "INJOIGNABLE_LEAD_ABANDONNE", "lost": "INJOIGNABLE_LEAD_ABANDONNE",
   };
   return manual[statutName.toLowerCase().trim()] || "NOUVEAU";
 }

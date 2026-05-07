@@ -27,12 +27,14 @@ interface Entreprise {
 const FALLBACK_LABELS: Record<string, string> = {
   NOUVEAU: "Nouveau",
   PRISE_EN_CHARGE: "Prise en charge",
-  PRISE_EN_CHARGE_A_RELANCER: "À relancer",
+  A_RELANCER: "À relancer",
+  INJOIGNABLE_LEAD_ABANDONNE: "Injoignable - lead abandonné",
 };
 const FALLBACK_COLORS: Record<string, { color: string; bg: string }> = {
   NOUVEAU: { color: "blue", bg: "blueDim" },
   PRISE_EN_CHARGE: { color: "accent", bg: "accentDim" },
-  PRISE_EN_CHARGE_A_RELANCER: { color: "warning", bg: "warningDim" },
+  A_RELANCER: { color: "warning", bg: "warningDim" },
+  INJOIGNABLE_LEAD_ABANDONNE: { color: "danger", bg: "dangerDim" },
 };
 
 interface StatutConfig {
@@ -138,7 +140,7 @@ export function ProspectsView({ C, onSelectClient, role }: { C: Theme; onSelectC
         )}
         <select value={filterStatut} onChange={(e) => setFilterStatut(e.target.value)} style={ss}>
           <option value="">Tous les statuts</option>
-          {(statutsPrise.length > 0 ? statutsPrise : [{ code: "NOUVEAU", nom: "Nouveau" }, { code: "PRISE_EN_CHARGE", nom: "Prise en charge" }, { code: "PRISE_EN_CHARGE_A_RELANCER", nom: "À relancer" }]).map((s) => (
+          {(statutsPrise.length > 0 ? statutsPrise : [{ code: "NOUVEAU", nom: "Nouveau" }, { code: "PRISE_EN_CHARGE", nom: "Prise en charge" }, { code: "A_RELANCER", nom: "À relancer" }, { code: "INJOIGNABLE_LEAD_ABANDONNE", nom: "Injoignable - lead abandonné" }]).map((s) => (
             <option key={s.code} value={s.code}>{s.nom}</option>
           ))}
         </select>

@@ -175,9 +175,9 @@ export function DashboardView({
 
     // Trigger suggestion toast after drag & drop (guide mode)
     if (targetCode === "PRISE_EN_CHARGE") guide.showSuggestion("lead-pris-en-charge");
-    else if (targetCode === "PRISE_EN_CHARGE_A_RELANCER") guide.showSuggestion("lead-a-relancer");
+    else if (targetCode === "A_RELANCER") guide.showSuggestion("lead-a-relancer");
     else if (targetCode === "DEVIS_ENVOYE") guide.showSuggestion("devis-envoye");
-    else if (targetCode === "FACTURE_PAYEE") guide.showSuggestion("facture-payee");
+    else if (targetCode === "FACTURE_PAYEE_COLLECTE") guide.showSuggestion("facture-payee");
     else guide.showSuggestion("lead-pris-en-charge");
     window.dispatchEvent(new CustomEvent("tenakoe:pipeline-drop"));
   };

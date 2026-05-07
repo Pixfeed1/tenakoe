@@ -26,10 +26,12 @@ interface ClientRow {
 interface StatutConfig { code: string; nom: string; couleur: string; ordre: number; actif: boolean }
 
 const FACTURATION_LABELS: Record<string, string> = {
-  FACTURE_PAYEE: "Collecte en cours",
+  FACTURE_PAYEE_COLLECTE: "Collecte en cours",
   DOSSIER_DEPOSE: "Dossier déposé",
-  DOSSIER_COMPLEMENT: "Complément demandé",
+  DEMANDE_COMPLEMENT: "Demande de compléments",
   QUALIFIE: "Qualifié",
+  REFUSE: "Refusé",
+  EN_APPEL: "En appel",
 };
 
 const QUALIF_LABELS: Record<string, string> = {
@@ -221,8 +223,8 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
                     </td>
                     <td style={{ padding: "12px 14px" }}>
                       <Badge
-                        color={statut === "QUALIFIE" ? C.accentText : statut === "DOSSIER_DEPOSE" ? C.purple : C.warning}
-                        bg={statut === "QUALIFIE" ? C.accentDim : statut === "DOSSIER_DEPOSE" ? C.purpleDim : C.warningDim}
+                        color={statut === "QUALIFIE" ? C.accentText : statut === "DOSSIER_DEPOSE" ? C.purple : statut === "REFUSE" ? C.text : C.warning}
+                        bg={statut === "QUALIFIE" ? C.accentDim : statut === "DOSSIER_DEPOSE" ? C.purpleDim : statut === "REFUSE" ? C.border : C.warningDim}
                       >
                         {FACTURATION_LABELS[statut] || statut || "—"}
                       </Badge>

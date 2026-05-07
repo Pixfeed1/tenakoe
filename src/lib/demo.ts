@@ -33,7 +33,7 @@ export const DEMO_ENTREPRISE = {
   mailAbandonEnvoye: false,
   dateMailAbandon: null,
   statutPrise: "PRISE_EN_CHARGE",
-  statutFacturation: "DEVIS_A_FAIRE",
+  statutFacturation: "SANS_OBJET",
   dateStatutPrise: daysAgo(3),
   dateStatutFacturation: null,
   dateInteresseTNK: daysAgo(3),

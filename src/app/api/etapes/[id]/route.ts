@@ -55,7 +55,7 @@ export async function PATCH(
       2:  { statutPrise: "PRISE_EN_CHARGE" },
       4:  { statutFacturation: "DEVIS_ENVOYE" },
       5:  { statutFacturation: "FACTURE_ENVOYEE" },
-      6:  { statutFacturation: "FACTURE_PAYEE" },
+      6:  { statutFacturation: "FACTURE_PAYEE_COLLECTE" },
       10: { statutPrise: "PRISE_EN_CHARGE" },
       17: { statutFacturation: "DOSSIER_DEPOSE" },
       19: { statutFacturation: "QUALIFIE" },
@@ -67,7 +67,7 @@ export async function PATCH(
         dateStatutPrise: new Date(),
       };
       const vals = Object.values(statutUpdate);
-      if (vals.some((v) => ["QUALIFIE", "TERMINE", "FACTURE_PAYEE"].includes(v as string))) {
+      if (vals.some((v) => ["QUALIFIE", "FACTURE_PAYEE_COLLECTE"].includes(v as string))) {
         updateData.estClient = true;
       }
       await prisma.entreprise.update({
@@ -141,7 +141,7 @@ export async function PATCH(
       2:  { statutPrise: "PRISE_EN_CHARGE" },
       4:  { statutFacturation: "DEVIS_ENVOYE" },
       5:  { statutFacturation: "FACTURE_ENVOYEE" },
-      6:  { statutFacturation: "FACTURE_PAYEE" },
+      6:  { statutFacturation: "FACTURE_PAYEE_COLLECTE" },
       10: { statutPrise: "PRISE_EN_CHARGE" },
       17: { statutFacturation: "DOSSIER_DEPOSE" },
       19: { statutFacturation: "QUALIFIE" },
@@ -175,7 +175,7 @@ export async function PATCH(
       }
 
       if (currentMapping.statutFacturation) {
-        let restoredFact = "DEVIS_A_FAIRE";
+        let restoredFact = "SANS_OBJET";
         for (const prev of previousEtapes) {
           const m = statutMap[prev.ordre];
           if (m?.statutFacturation) { restoredFact = m.statutFacturation; break; }
@@ -186,7 +186,7 @@ export async function PATCH(
       }
 
       // estClient: repasser à false seulement si aucune étape qualifiante ne reste terminée
-      const qualifyingStatuses = ["QUALIFIE", "TERMINE", "FACTURE_PAYEE"];
+      const qualifyingStatuses = ["QUALIFIE", "FACTURE_PAYEE_COLLECTE"];
       const remainingQualifying = previousEtapes.some((prev) => {
         const m = statutMap[prev.ordre];
         if (!m) return false;

@@ -76,8 +76,7 @@ export async function PATCH(
       const statutConfig = await prisma.statutFacturationConfig.findFirst({
         where: { code: statutFacturation },
       });
-      // Trigger conversion if config says so, OR if code is FACTURE_PAYEE (safety fallback)
-      const shouldConvert = statutConfig?.declencheConversion || statutFacturation === "FACTURE_PAYEE";
+      const shouldConvert = statutConfig?.declencheConversion || statutFacturation === "FACTURE_PAYEE_COLLECTE";
       if (shouldConvert) {
         const { convertToClient } = await import("@/lib/conversion");
         await convertToClient(id);

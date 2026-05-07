@@ -17,10 +17,10 @@ export async function getDashboardStats(user?: CurrentUser | null) {
     await Promise.all([
       prisma.entreprise.count({ where: { ...entFilter, statutPrise: "NOUVEAU" } }),
       prisma.entreprise.count({ where: { ...entFilter, statutPrise: "PRISE_EN_CHARGE" } }),
-      prisma.entreprise.count({ where: { ...entFilter, statutPrise: "PRISE_EN_CHARGE_A_RELANCER" } }),
+      prisma.entreprise.count({ where: { ...entFilter, statutPrise: "A_RELANCER" } }),
       prisma.projet.count({ where: { ...projFilter, actif: true } }),
       prisma.tache.count({ where: { ...tacheFilter, enRetard: true, statut: { not: "TERMINEE" } } }),
-      prisma.entreprise.count({ where: { ...entFilter, statutFacturation: "FACTURE_PAYEE" } }),
+      prisma.entreprise.count({ where: { ...entFilter, statutFacturation: "FACTURE_PAYEE_COLLECTE" } }),
     ]);
 
   return {
@@ -104,7 +104,7 @@ export async function getClientsWithProgress(user?: CurrentUser | null) {
   const entFilter = user ? { ...getEntrepriseFilter(user), ...entrepriseScopeFilter(user) } : {};
 
   const entreprises = await prisma.entreprise.findMany({
-    where: { ...entFilter, statutFacturation: "FACTURE_PAYEE" },
+    where: { ...entFilter, statutFacturation: "FACTURE_PAYEE_COLLECTE" },
     include: {
       projets: {
         include: {
@@ -148,7 +148,7 @@ export async function getClientsWithProgress(user?: CurrentUser | null) {
       nom: e.nom,
       siret: e.siret,
       chargee: (e as unknown as { chargee?: { prenom: string } }).chargee?.prenom || e.projets[0]?.chargee?.prenom || "—",
-      statut: statutLabel[e.statutFacturation || "FACTURE_PAYEE"] || "En cours",
+      statut: statutLabel[e.statutFacturation || "FACTURE_PAYEE_COLLECTE"] || "En cours",
       qualif: qualif ? qualifLabel[qualif] || qualif : "—",
       docs: docsRecu,
       docsTotal,

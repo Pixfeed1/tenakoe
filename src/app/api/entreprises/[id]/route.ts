@@ -88,12 +88,12 @@ export async function PATCH(
   if (body.statutPrise !== undefined) {
     data.statutPrise = body.statutPrise;
     data.dateStatutPrise = new Date();
-    if (["QUALIFIE", "TERMINE", "FACTURE_PAYEE"].includes(body.statutPrise)) data.estClient = true;
+    if (["QUALIFIE", "FACTURE_PAYEE_COLLECTE"].includes(body.statutPrise)) data.estClient = true;
   }
   if (body.statutFacturation !== undefined) {
     data.statutFacturation = body.statutFacturation;
     data.dateStatutFacturation = new Date();
-    if (body.statutFacturation === "FACTURE_PAYEE") data.estClient = true;
+    if (body.statutFacturation === "FACTURE_PAYEE_COLLECTE") data.estClient = true;
   }
   const dateOverrides = ["dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK", "dateEligible", "dateEnCours", "dateDepose", "dateQualifie"];
   for (const dk of dateOverrides) {

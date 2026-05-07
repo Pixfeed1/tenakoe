@@ -96,6 +96,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [addQualifResults, setAddQualifResults] = useState<Array<{ code: string; nom: string; categorie: string }>>([]);
   const [depotConfigs, setDepotConfigs] = useState<Array<{ id: string; nom: string }>>([]);
   const [apporteurs, setApporteurs] = useState<Array<{ id: string; nom: string; prenom: string | null; structure: string | null }>>([]);
+  const [statutsPrise, setStatutsPrise] = useState<Array<{ code: string; nom: string; couleur: string }>>([]);
+  const [statutsFacturation, setStatutsFacturation] = useState<Array<{ code: string; nom: string; couleur: string }>>([]);
   const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string; role?: string }>>([]);
   const [showMentionMenu, setShowMentionMenu] = useState(false);
   const [showNoteForm, setShowNoteForm] = useState(false);
@@ -388,6 +390,14 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     fetch("/api/antennes-qualibat")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setAntennes(data))
+      .catch(() => {});
+
+    fetch("/api/pipeline-config")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { statutsPrise?: Array<{ code: string; nom: string; couleur: string; actif: boolean }>; statutsFacturation?: Array<{ code: string; nom: string; couleur: string; actif: boolean }> } | null) => {
+        if (data?.statutsPrise) setStatutsPrise(data.statutsPrise.filter((s) => s.actif));
+        if (data?.statutsFacturation) setStatutsFacturation(data.statutsFacturation.filter((s) => s.actif));
+      })
       .catch(() => {});
 
     // Fetch transmissions + notes as historique
@@ -1205,14 +1215,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   }}
                   style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
                 >
-                  <option value="NOUVEAU">Nouveau</option>
-                  <option value="PRISE_EN_CHARGE">Prise en charge</option>
-                  <option value="PRISE_EN_CHARGE_A_RELANCER">À relancer</option>
-                  <option value="INJOIGNABLE">Injoignable</option>
-                  <option value="EN_COURS">En cours</option>
-                  <option value="ABANDONNE">Abandonné</option>
-                  <option value="QUALIFIE">Qualifié</option>
-                  <option value="TERMINE">Terminé</option>
+                  {statutsPrise.map((s) => (
+                    <option key={s.code} value={s.code}>{s.nom}</option>
+                  ))}
                 </select>
                 {entrepriseData?.dateStatutPrise && (
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, marginTop: 2 }}>
@@ -1275,7 +1280,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Statut d&apos;avancement</span>
               <div>
                 <select
-                  value={entrepriseData?.statutFacturation || "DEVIS_A_FAIRE"}
+                  value={entrepriseData?.statutFacturation || "SANS_OBJET"}
                   onChange={async (e) => {
                     if (!client?.id || isDemoMode) return;
                     const val = e.target.value;
@@ -1284,16 +1289,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   }}
                   style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 600 }}
                 >
-                  <option value="DEVIS_A_FAIRE">Devis à faire</option>
-                  <option value="DEVIS_ENVOYE">Devis envoyé</option>
-                  <option value="DEVIS_SIGNE">Devis signé</option>
-                  <option value="FACTURE_ENVOYEE">Facture envoyée</option>
-                  <option value="FACTURE_PAYEE">Facture payée</option>
-                  <option value="DOSSIER_DEPOSE">Dossier déposé</option>
-                  <option value="DOSSIER_COMPLEMENT">Demande complément</option>
-                  <option value="QUALIFIE">Qualifié</option>
-                  <option value="REFUSE">Refusé</option>
-                  <option value="DOSSIER_EN_APPEL">En appel</option>
+                  {statutsFacturation.map((s) => (
+                    <option key={s.code} value={s.code}>{s.nom}</option>
+                  ))}
                 </select>
                 {entrepriseData?.dateStatutFacturation && (
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim, marginTop: 2 }}>
@@ -1410,7 +1408,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   { label: "Nouveau", date: entrepriseData?.createdAt, apiKey: "createdAt" },
                   { label: "Prise en charge", date: entrepriseData?.dateStatutPrise, apiKey: "dateStatutPrise" },
                   { label: "Injoignable", date: entrepriseData?.interesseTNK === "INJOIGNABLE" ? entrepriseData?.dateInteresseTNK : null, apiKey: "dateInteresseTNK" },
-                  { label: "Payé", date: entrepriseData?.statutFacturation === "FACTURE_PAYEE" ? entrepriseData?.dateStatutFacturation : null, apiKey: "dateStatutFacturation" },
+                  { label: "Payé", date: entrepriseData?.statutFacturation === "FACTURE_PAYEE_COLLECTE" ? entrepriseData?.dateStatutFacturation : null, apiKey: "dateStatutFacturation" },
                   { label: "En cours", date: entrepriseData?.dateEnCours || firstActive?.dateRealisee || null, apiKey: "dateEnCours" },
                   { label: "Déposé", date: entrepriseData?.dateDepose || (etape17?.done ? etape17.dateRealisee : null), apiKey: "dateDepose" },
                   { label: "Qualifié", date: entrepriseData?.dateQualifie || (etape19?.done ? etape19.dateRealisee : null), apiKey: "dateQualifie" },
@@ -2958,34 +2956,15 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
 // FORMAT HELPERS
 // ========================
 
-function formatStatutPrise(statut?: string): string {
-  const map: Record<string, string> = {
-    NOUVEAU: "Nouveau",
-    PRISE_EN_CHARGE: "Prise en charge faite",
-    PRISE_EN_CHARGE_A_RELANCER: "À relancer",
-  };
-  return map[statut || ""] || "Prise en charge faite";
+function formatStatut(code: string | undefined, configs: Array<{ code: string; nom: string }>): string {
+  if (!code) return "—";
+  const found = configs.find((c) => c.code === code);
+  return found?.nom || code;
 }
 
 function formatInteretTNK(interet?: string): string {
   const map: Record<string, string> = { OUI: "Oui", NON: "Non", NSP: "NSP", INJOIGNABLE: "Injoignable" };
   return map[interet || ""] || "Oui";
-}
-
-function formatStatutFacturation(statut?: string): string {
-  const map: Record<string, string> = {
-    DEVIS_A_FAIRE: "Devis à faire",
-    DEVIS_ENVOYE: "Devis envoyé",
-    DEVIS_SIGNE: "Devis signé",
-    FACTURE_ENVOYEE: "Facture envoyée",
-    FACTURE_PAYEE: "Facture payée",
-    DOSSIER_DEPOSE: "Dossier déposé",
-    DOSSIER_COMPLEMENT: "Demande complément",
-    QUALIFIE: "Qualifié",
-    REFUSE: "Refusé",
-    DOSSIER_EN_APPEL: "En appel",
-  };
-  return map[statut || ""] || "—";
 }
 
 interface ChantierDocFull { id: string; nom: string; fichierUrl: string | null; fichierNom: string | null; fichierTaille: number | null }
