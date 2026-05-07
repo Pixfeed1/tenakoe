@@ -1,0 +1,13 @@
+-- AlterTable
+ALTER TABLE "Projet" ADD COLUMN "statutPrise" TEXT DEFAULT 'NOUVEAU',
+ADD COLUMN "statutFacturation" TEXT DEFAULT 'SANS_OBJET',
+ADD COLUMN "dateStatutPrise" TIMESTAMP(3),
+ADD COLUMN "dateStatutFacturation" TIMESTAMP(3),
+ADD COLUMN "dateInteresseTNK" TIMESTAMP(3),
+ADD COLUMN "dateMiseEnRelation" TIMESTAMP(3),
+ADD COLUMN "dateQualification" TIMESTAMP(3),
+ADD COLUMN "dateEligible" TIMESTAMP(3),
+ADD COLUMN "dateEnCours" TIMESTAMP(3),
+ADD COLUMN "dateDepose" TIMESTAMP(3),
+ADD COLUMN "dateQualifie" TIMESTAMP(3),
+ADD COLUMN "eligible" TEXT DEFAULT 'A_VERIFIER';

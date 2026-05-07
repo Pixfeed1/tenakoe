@@ -104,6 +104,14 @@ export async function PATCH(
 
   const updated = await prisma.entreprise.update({ where: { id }, data });
 
+  // Propagate statut changes to all active projets (transition compat)
+  if (body.statutPrise !== undefined || body.statutFacturation !== undefined) {
+    const projetPatch: Record<string, unknown> = {};
+    if (body.statutPrise !== undefined) { projetPatch.statutPrise = body.statutPrise; projetPatch.dateStatutPrise = new Date(); }
+    if (body.statutFacturation !== undefined) { projetPatch.statutFacturation = body.statutFacturation; projetPatch.dateStatutFacturation = new Date(); }
+    await prisma.projet.updateMany({ where: { entrepriseId: id, deletedAt: null }, data: projetPatch });
+  }
+
   // Log tracked field changes
   const logs: string[] = [];
   if (body.interesseTNK !== undefined && body.interesseTNK !== existing?.interesseTNK) logs.push(`Intéressé TNK : ${body.interesseTNK}`);

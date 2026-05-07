@@ -263,6 +263,20 @@ model Projet {
   taches         Tache[]
   bonsDeCommande BonDeCommande[]
   chantiers      Chantier[]
+  // Statuts et dates de progression (par projet, indépendants de l'Entreprise)
+  statutPrise            String?   @default("NOUVEAU")
+  statutFacturation      String?   @default("SANS_OBJET")
+  dateStatutPrise        DateTime?
+  dateStatutFacturation  DateTime?
+  dateInteresseTNK       DateTime?
+  dateMiseEnRelation     DateTime?
+  dateQualification      DateTime?
+  dateEligible           DateTime?
+  dateEnCours            DateTime?
+  dateDepose             DateTime?
+  dateQualifie           DateTime?
+  eligible               String?   @default("A_VERIFIER")
+
   sourceImport   SourceImport? @default(MANUEL)
   sourceId       String?
   deletedAt      DateTime?

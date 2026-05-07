@@ -46,6 +46,16 @@ export async function PATCH(
   if (body.emailCertificateur !== undefined) data.emailCertificateur = body.emailCertificateur;
   if (body.bonCommandeDemande !== undefined) { data.bonCommandeDemande = body.bonCommandeDemande; data.dateBonCommandeDemande = body.bonCommandeDemande ? new Date() : null; }
   if (body.bonCommandePaye !== undefined) { data.bonCommandePaye = body.bonCommandePaye; data.dateBonCommandePaye = body.bonCommandePaye ? new Date() : null; }
+  // Statuts et dates de progression par projet
+  if (body.statutPrise !== undefined) { data.statutPrise = body.statutPrise; data.dateStatutPrise = new Date(); }
+  if (body.statutFacturation !== undefined) { data.statutFacturation = body.statutFacturation; data.dateStatutFacturation = new Date(); }
+  if (body.eligible !== undefined) { data.eligible = body.eligible; data.dateEligible = new Date(); }
+  const projetDateOverrides = ["dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK", "dateMiseEnRelation", "dateQualification", "dateEligible", "dateEnCours", "dateDepose", "dateQualifie"];
+  for (const dk of projetDateOverrides) {
+    if (body[dk] !== undefined && body.statutPrise === undefined && body.statutFacturation === undefined) {
+      data[dk] = body[dk] ? new Date(body[dk] as string) : null;
+    }
+  }
 
   const updated = await prisma.projet.update({ where: { id }, data });
 
