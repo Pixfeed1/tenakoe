@@ -15,6 +15,18 @@ interface EtapeInfo {
   date: string | null;
 }
 
+interface ProjetInfo {
+  id: string;
+  nom: string;
+  chargee: string;
+  qualifications: string[];
+  statut: string;
+  statutCouleur: string;
+  etape: EtapeInfo | null;
+  docsRecu: number;
+  docsTotal: number;
+}
+
 interface Lead {
   id: string;
   nom: string;
@@ -31,7 +43,8 @@ interface Lead {
   dateStatutPriseISO: string | null;
   statut: string;
   statutCouleur: string;
-  etape: EtapeInfo | null;
+  etape?: EtapeInfo | null;
+  projets?: ProjetInfo[];
   interesseTNK: string;
   dateInteresseTNK: string | null;
   eligible: string;
@@ -227,8 +240,8 @@ function getColValue(lead: Lead, key: ColKey): string {
     case "dateTransmission": return lead.dateTransmission || "";
     case "dateStatutPrise": return lead.dateStatutPrise || "";
     case "statut":
-      return [lead.statut, lead.etape ? `Étape ${lead.etape.ordre}/${lead.etape.total} — ${lead.etape.nom}` : ""]
-        .filter(Boolean).join(" ");
+      if (lead.projets?.length) return lead.projets.map((p) => `${p.nom}: ${p.statut}`).join(" | ");
+      return lead.statut;
     case "interesseTNK": return lead.interesseTNK || "NSP";
     case "eligible": return lead.eligible === "OUI" ? "Oui" : lead.eligible === "NON" ? "Non" : "À vérifier";
     case "alerte": {
@@ -490,14 +503,22 @@ export function PrescripteurView({ user, demoMode, prescripteurType, embedded }:
                       </td>
                       <td style={cellStyle}>
                         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                          <Badge color={lead.statutCouleur} bg={lead.statutCouleur + "18"}>
-                            {lead.statut}
-                          </Badge>
-                          {lead.etape && (
-                            <span style={{ fontSize: 10, color: C.textDim, whiteSpace: "nowrap" }}>
-                              Étape {lead.etape.ordre}/{lead.etape.total} — {lead.etape.nom}
-                              {lead.etape.date && ` · ${new Date(lead.etape.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}`}
-                            </span>
+                          {lead.projets && lead.projets.length > 0 ? lead.projets.map((p) => (
+                            <div key={p.id} style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                              {lead.projets!.length > 1 && <span style={{ fontSize: 9, color: C.textDim, fontWeight: 600 }}>{p.nom}</span>}
+                              <Badge color={p.statutCouleur} bg={p.statutCouleur + "18"}>
+                                {p.statut}
+                              </Badge>
+                              {p.etape && (
+                                <span style={{ fontSize: 10, color: C.textDim, whiteSpace: "nowrap" }}>
+                                  Étape {p.etape.ordre}/{p.etape.total}
+                                </span>
+                              )}
+                            </div>
+                          )) : (
+                            <Badge color={lead.statutCouleur} bg={lead.statutCouleur + "18"}>
+                              {lead.statut}
+                            </Badge>
                           )}
                         </div>
                       </td>

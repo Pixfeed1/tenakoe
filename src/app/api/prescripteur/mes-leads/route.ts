@@ -35,18 +35,18 @@ export async function GET(request: NextRequest) {
       contacts: { take: 1 },
       depotConfig: { select: { nom: true } },
       projets: {
+        where: { deletedAt: null },
         include: {
           chargee: { select: { prenom: true } },
+          qualifications: { select: { type: true, certificateurType: true } },
           documents: { select: { recu: true } },
           etapes: { orderBy: { ordre: "asc" } },
         },
-        take: 1,
       },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  // Batch-load LeadFormulaires linked to these entreprises (for conseiller info)
   const entrepriseIds = entreprises.map((e) => e.id);
   const formulaires = entrepriseIds.length > 0
     ? await prisma.leadFormulaire.findMany({
@@ -72,7 +72,22 @@ export async function GET(request: NextRequest) {
   const statutMap: Record<string, { label: string; couleur: string }> = {
     NOUVEAU: { label: "Nouveau", couleur: "#ef4444" },
     PRISE_EN_CHARGE: { label: "Prise en charge", couleur: "#0d9488" },
-    PRISE_EN_CHARGE_A_RELANCER: { label: "À relancer", couleur: "#d97706" },
+    A_RELANCER: { label: "À relancer", couleur: "#d97706" },
+    INJOIGNABLE_LEAD_ABANDONNE: { label: "Injoignable", couleur: "#6b7280" },
+  };
+
+  const facturationMap: Record<string, { label: string; couleur: string }> = {
+    SANS_OBJET: { label: "Sans objet", couleur: "#94a3b8" },
+    DEVIS_ENVOYE: { label: "Devis envoyé", couleur: "#7c3aed" },
+    DEVIS_SIGNE: { label: "Devis signé", couleur: "#3b82f6" },
+    FACTURE_ENVOYEE: { label: "Facture envoyée", couleur: "#2563eb" },
+    FACTURE_PAYEE_COLLECTE: { label: "Collecte en cours", couleur: "#16a34a" },
+    PAYE_ABANDONNE_NON_REACTIF: { label: "Payé abandonné", couleur: "#94a3b8" },
+    DOSSIER_DEPOSE: { label: "Dossier déposé", couleur: "#0ea5e9" },
+    DEMANDE_COMPLEMENT: { label: "Demande de compléments", couleur: "#d97706" },
+    QUALIFIE: { label: "Qualifié", couleur: "#16a34a" },
+    REFUSE: { label: "Refusé", couleur: "#dc2626" },
+    EN_APPEL: { label: "En appel", couleur: "#f59e0b" },
   };
 
   const leads = await Promise.all(entreprises.map(async (ent) => {
@@ -81,23 +96,8 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    const docsTotal = ent.projets[0]?.documents?.length || 0;
-    const docsRecu = ent.projets[0]?.documents?.filter((d) => d.recu).length || 0;
     const contact = ent.contacts[0];
     const form = formByEntrepriseId.get(ent.id);
-
-    const facturationMap: Record<string, { label: string; couleur: string }> = {
-      DEVIS_A_FAIRE: { label: "Devis à faire", couleur: "#94a3b8" },
-      DEVIS_ENVOYE: { label: "Devis envoyé", couleur: "#ea580c" },
-      DEVIS_SIGNE: { label: "Devis signé", couleur: "#0d9488" },
-      FACTURE_ENVOYEE: { label: "Facture envoyée", couleur: "#0d9488" },
-      FACTURE_PAYEE: { label: docsTotal > 0 ? `Collecte en cours (${docsRecu}/${docsTotal})` : "Facture payée", couleur: "#16a34a" },
-      DOSSIER_DEPOSE: { label: "Dossier déposé", couleur: "#0d9488" },
-      DOSSIER_COMPLEMENT: { label: "Demande de complément", couleur: "#d97706" },
-      QUALIFIE: { label: "Qualifié", couleur: "#16a34a" },
-      REFUSE: { label: "Refusé", couleur: "#dc2626" },
-      DOSSIER_EN_APPEL: { label: "En appel", couleur: "#f59e0b" },
-    };
 
     const statutInfo = facturationMap[ent.statutFacturation || ""] || statutMap[ent.statutPrise] || { label: ent.statutPrise, couleur: "#94a3b8" };
 
@@ -105,27 +105,34 @@ export async function GET(request: NextRequest) {
       ? `${lastLog.createdAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })} — ${lastLog.description.split(" — ").pop()}`
       : `${ent.createdAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })} — Transmis`;
 
-    // Feuille de route — active step
-    const etapes = ent.projets[0]?.etapes || [];
-    const etapesTotal = etapes.length;
-    const etapeActive = etapes.find((e) => e.active);
-    const etapeInfo = etapeActive
-      ? {
-          ordre: etapeActive.ordre,
-          total: etapesTotal,
-          nom: etapeActive.nom,
-          date: etapeActive.dateRealisee?.toISOString() || etapeActive.dateObjectif?.toISOString() || null,
-        }
-      : null;
-
-    // Conseiller from LeadFormulaire
     const conseillerParts = [form?.prenomConseiller, form?.nomConseiller].filter(Boolean);
     const conseiller = conseillerParts.length > 0 ? conseillerParts.join(" ") : null;
 
-    // Artisan from contact or formulaire fallback
     let artisan = "—";
     if (contact) artisan = `${contact.prenom} ${contact.nom}`;
     else if (form) artisan = `${form.prenomArtisan} ${form.nomArtisan}`;
+
+    const projetsInfo = ent.projets.map((p) => {
+      const docsTotal = p.documents?.length || 0;
+      const docsRecu = p.documents?.filter((d) => d.recu).length || 0;
+      const etapes = p.etapes || [];
+      const etapeActive = etapes.find((e) => e.active);
+      const qualifs = p.qualifications?.map((q) => q.certificateurType ? `${q.certificateurType}: ${q.type}` : q.type) || [];
+      const pFact = facturationMap[(p as unknown as { statutFacturation?: string }).statutFacturation || ""];
+      const pPrise = statutMap[(p as unknown as { statutPrise?: string }).statutPrise || ""];
+      const pStatut = pFact || pPrise || statutInfo;
+      return {
+        id: p.id,
+        nom: p.nom,
+        chargee: p.chargee?.prenom || "—",
+        qualifications: qualifs,
+        statut: docsTotal > 0 && pStatut.label.includes("Collecte") ? `${pStatut.label} (${docsRecu}/${docsTotal})` : pStatut.label,
+        statutCouleur: pStatut.couleur,
+        etape: etapeActive ? { ordre: etapeActive.ordre, total: etapes.length, nom: etapeActive.nom } : null,
+        docsRecu,
+        docsTotal,
+      };
+    });
 
     return {
       id: ent.id,
@@ -143,7 +150,7 @@ export async function GET(request: NextRequest) {
       dateStatutPriseISO: ent.dateStatutPrise?.toISOString() || null,
       statut: statutInfo.label,
       statutCouleur: statutInfo.couleur,
-      etape: etapeInfo,
+      projets: projetsInfo,
       interesseTNK: ent.interesseTNK || "NSP",
       dateInteresseTNK: ent.dateInteresseTNK?.toISOString() || null,
       eligible: ent.eligible || "A_VERIFIER",
