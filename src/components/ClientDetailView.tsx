@@ -1397,23 +1397,55 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               );
             })()}
 
-            {/* Synthèse des dates */}
-            <div style={{ paddingTop: 10, borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>Synthèse des dates</div>
-              {(() => {
-                const etape17 = tracks.find((t) => t.nom.toLowerCase().includes("depot") || t.nom.toLowerCase().includes("dépôt"));
-                const etape19 = tracks.find((t) => t.nom.toLowerCase().includes("obtention"));
-                const firstActive = tracks.find((t) => t.active);
-                const dateRows: Array<{ label: string; date: string | undefined | null; apiKey?: string }> = [
-                  { label: "Nouveau", date: entrepriseData?.createdAt, apiKey: "createdAt" },
-                  { label: "Prise en charge", date: entrepriseData?.dateStatutPrise, apiKey: "dateStatutPrise" },
-                  { label: "Injoignable", date: entrepriseData?.interesseTNK === "INJOIGNABLE" ? entrepriseData?.dateInteresseTNK : null, apiKey: "dateInteresseTNK" },
-                  { label: "Payé", date: entrepriseData?.statutFacturation === "FACTURE_PAYEE_COLLECTE" ? entrepriseData?.dateStatutFacturation : null, apiKey: "dateStatutFacturation" },
-                  { label: "En cours", date: entrepriseData?.dateEnCours || firstActive?.dateRealisee || null, apiKey: "dateEnCours" },
-                  { label: "Déposé", date: entrepriseData?.dateDepose || (etape17?.done ? etape17.dateRealisee : null), apiKey: "dateDepose" },
-                  { label: "Qualifié", date: entrepriseData?.dateQualifie || (etape19?.done ? etape19.dateRealisee : null), apiKey: "dateQualifie" },
-                ];
+            {/* Synthèse des dates — par projet */}
+            {(() => {
+              const activeProjets = projets.filter((p) => p.etapes || true);
+              if (activeProjets.length > 1) {
                 return (
+                  <div style={{ paddingTop: 10, borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>Synthèse globale</div>
+                    <div style={{ fontSize: 12 }}>
+                      {activeProjets.map((proj) => {
+                        const pStatut = (proj as unknown as { statutPrise?: string }).statutPrise || entrepriseData?.statutPrise || "NOUVEAU";
+                        const pFact = (proj as unknown as { statutFacturation?: string }).statutFacturation || entrepriseData?.statutFacturation || "SANS_OBJET";
+                        const pDate = (proj as unknown as { dateStatutFacturation?: string }).dateStatutFacturation || (proj as unknown as { dateStatutPrise?: string }).dateStatutPrise;
+                        return (
+                          <div key={proj.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0", borderBottom: `1px solid ${C.border}` }}>
+                            <span style={{ color: C.text, fontWeight: 500 }}>{proj.nom}</span>
+                            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                              <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 999, background: C.accentDim, color: C.accentText, fontWeight: 600 }}>
+                                {formatStatut(pStatut, statutsPrise)} · {formatStatut(pFact, statutsFacturation)}
+                              </span>
+                              {pDate && <span style={{ fontSize: 10, color: C.textDim }}>{new Date(pDate).toLocaleDateString("fr-FR")}</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            {projets.map((proj) => {
+              const pData = proj as unknown as Record<string, string | null | undefined>;
+              const projetEtapes = proj.etapes || [];
+              const etape17 = projetEtapes.find((t: { nom: string }) => t.nom.toLowerCase().includes("depot") || t.nom.toLowerCase().includes("dépôt"));
+              const etape19 = projetEtapes.find((t: { nom: string }) => t.nom.toLowerCase().includes("obtention"));
+              const firstActive = projetEtapes.find((t: { active: boolean }) => t.active);
+              const dateRows: Array<{ label: string; date: string | undefined | null; apiKey?: string }> = [
+                { label: "Nouveau", date: pData.dateStatutPrise || entrepriseData?.createdAt, apiKey: "dateStatutPrise" },
+                { label: "Prise en charge", date: pData.dateStatutPrise, apiKey: "dateStatutPrise" },
+                { label: "Payé", date: pData.statutFacturation === "FACTURE_PAYEE_COLLECTE" ? pData.dateStatutFacturation : null, apiKey: "dateStatutFacturation" },
+                { label: "En cours", date: pData.dateEnCours || (firstActive as unknown as { dateRealisee?: string })?.dateRealisee || null, apiKey: "dateEnCours" },
+                { label: "Déposé", date: pData.dateDepose || ((etape17 as unknown as { done?: boolean; dateRealisee?: string })?.done ? (etape17 as unknown as { dateRealisee?: string }).dateRealisee : null), apiKey: "dateDepose" },
+                { label: "Qualifié", date: pData.dateQualifie || ((etape19 as unknown as { done?: boolean; dateRealisee?: string })?.done ? (etape19 as unknown as { dateRealisee?: string }).dateRealisee : null), apiKey: "dateQualifie" },
+              ];
+              return (
+                <div key={proj.id} style={{ paddingTop: 10, borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
+                    {projets.length > 1 ? `Dates — ${proj.nom}` : "Synthèse des dates"}
+                  </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px", fontSize: 12 }}>
                     {dateRows.map((r) => (
                       <div key={r.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0" }}>
@@ -1424,8 +1456,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             value={r.date ? new Date(r.date).toISOString().slice(0, 10) : ""}
                             onChange={async (e) => {
                               const val = e.target.value ? new Date(e.target.value).toISOString() : null;
-                              setEntrepriseData((prev) => prev ? { ...prev, [r.apiKey!]: val || "" } : prev);
-                              await fetch(`/api/entreprises/${client.id}`, {
+                              setProjets((prev) => prev.map((pr) => pr.id === proj.id ? { ...pr, [r.apiKey!]: val || null } as typeof pr : pr));
+                              await fetch(`/api/projets/${proj.id}`, {
                                 method: "PATCH", headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ [r.apiKey!]: val }),
                               }).catch(() => {});
@@ -1445,9 +1477,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                       </div>
                     ))}
                   </div>
-                );
-              })()}
-            </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Formation (unifié) */}
