@@ -1088,7 +1088,7 @@ function ImportExportTab({ C }: { C: Theme }) {
             { label: "Entreprises", count: stats.entreprises },
             { label: "Contacts", count: stats.contacts },
             { label: "Projets", count: stats.projets },
-            { label: "Leads", count: stats.leads },
+            { label: "Leads formulaire", count: stats.leads },
           ].map((s) => (
             <div key={s.label} style={{ padding: "10px 16px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}`, textAlign: "center" }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: C.text }}>{s.count}</div>

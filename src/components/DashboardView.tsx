@@ -69,7 +69,7 @@ export function DashboardView({
   }, [peutVoirToutesChargees]);
 
   const STATS = [
-    { label: "Nouveaux leads", value: String(serverStats?.nouveaux ?? 0), change: "", up: null as boolean | null, Icon: Zap, colorKey: "blue" },
+    { label: "Nouveaux prospects", value: String(serverStats?.nouveaux ?? 0), change: "", up: null as boolean | null, Icon: Zap, colorKey: "blue" },
     { label: "Prospects actifs", value: String(serverStats?.prospects ?? 0), change: "", up: null as boolean | null, Icon: Target, colorKey: "accent" },
     { label: "Dossiers en cours", value: String(serverStats?.dossiers ?? 0), change: "", up: null as boolean | null, Icon: ClipboardList, colorKey: "purple" },
     { label: "En retard", value: String(serverStats?.enRetard ?? 0), change: "", up: null as boolean | null, Icon: Clock, colorKey: "danger" },

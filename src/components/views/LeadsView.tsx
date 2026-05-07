@@ -313,7 +313,7 @@ export function LeadsView({ C }: { C: Theme }) {
           <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>
         ) : leads.length === 0 ? (
           <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>
-            Aucun lead en attente. Cliquez sur "Nouveau lead" pour en créer un.
+            Aucun lead en attente de conversion. Les nouveaux contacts arrivés via le formulaire public apparaîtront ici.
           </div>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>

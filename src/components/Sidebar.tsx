@@ -9,25 +9,25 @@ import { SearchBar } from "@/components/SearchBar";
 import { useGuide } from "@/components/GuideSystem";
 
 const NAV_ITEMS = [
-  { Icon: LayoutDashboard, label: "Dashboard", guide: "nav-dashboard" },
-  { Icon: Zap, label: "Leads", guide: "nav-leads" },
-  { Icon: Target, label: "Prospects", guide: "nav-prospects" },
-  { Icon: Users, label: "Clients", guide: "nav-clients" },
-  { Icon: FolderOpen, label: "Dossiers", guide: "nav-dossiers" },
-  { Icon: Send, label: "Transmissions", guide: "nav-transmissions" },
-  { Icon: File, label: "Documents", guide: "nav-documents" },
-  { Icon: BookOpen, label: "Ressources", guide: "nav-ressources" },
-  { Icon: CreditCard, label: "Facturation", guide: "nav-facturation" },
-  { Icon: Clock, label: "Historique", guide: "nav-historique" },
-  { Icon: Handshake, label: "Apporteurs", guide: "nav-apporteurs" },
+  { Icon: LayoutDashboard, label: "Dashboard", navKey: "Dashboard", guide: "nav-dashboard" },
+  { Icon: Zap, label: "Inbox formulaire", navKey: "Leads", guide: "nav-leads" },
+  { Icon: Target, label: "Prospects", navKey: "Prospects", guide: "nav-prospects" },
+  { Icon: Users, label: "Clients", navKey: "Clients", guide: "nav-clients" },
+  { Icon: FolderOpen, label: "Dossiers", navKey: "Dossiers", guide: "nav-dossiers" },
+  { Icon: Send, label: "Transmissions", navKey: "Transmissions", guide: "nav-transmissions" },
+  { Icon: File, label: "Documents", navKey: "Documents", guide: "nav-documents" },
+  { Icon: BookOpen, label: "Ressources", navKey: "Ressources", guide: "nav-ressources" },
+  { Icon: CreditCard, label: "Facturation", navKey: "Facturation", guide: "nav-facturation" },
+  { Icon: Clock, label: "Historique", navKey: "Historique", guide: "nav-historique" },
+  { Icon: Handshake, label: "Apporteurs", navKey: "Apporteurs", guide: "nav-apporteurs" },
 ];
 
-const NAV_BOTTOM = [
+const NAV_BOTTOM: Array<{ Icon: typeof Plug; label: string; navKey?: string }> = [
   { Icon: Plug, label: "Intégrations" },
   { Icon: Settings, label: "Paramètres" },
 ];
 
-const NAV_BOTTOM_ADMIN = [
+const NAV_BOTTOM_ADMIN: Array<{ Icon: typeof Eye; label: string; navKey?: string }> = [
   { Icon: Eye, label: "Vue prescripteur" },
 ];
 
@@ -90,12 +90,12 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
           Menu principal
         </div>
         {NAV_ITEMS.map((item) => {
-          const isActive = activeNav === item.label;
+          const isActive = activeNav === (item.navKey || item.label);
           return (
             <button
               key={item.label}
               data-guide={item.guide}
-              onClick={() => { onNav(item.label); onNavMobile?.(); }}
+              onClick={() => { onNav(item.navKey || item.label); onNavMobile?.(); }}
               style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 10,
                 padding: "9px 12px", borderRadius: 10, border: "none", cursor: "pointer",
@@ -128,11 +128,11 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
           Système
         </div>
         {[...NAV_BOTTOM, ...(user?.role !== "PRESCRIPTEUR" ? NAV_BOTTOM_ADMIN : [])].map((item) => {
-          const isActive = activeNav === item.label;
+          const isActive = activeNav === (item.navKey || item.label);
           return (
           <button
             key={item.label}
-            onClick={() => { onNav(item.label); onNavMobile?.(); }}
+            onClick={() => { onNav(item.navKey || item.label); onNavMobile?.(); }}
             style={{
               width: "100%", display: "flex", alignItems: "center", gap: 10,
               padding: "9px 12px", borderRadius: 10, border: "none", cursor: "pointer",

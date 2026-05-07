@@ -254,8 +254,8 @@ export function CRMShell({
             </GuideTooltip>
             {(() => {
               const actions: Partial<Record<View, { label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; action: () => void }>> = {
-                Dashboard: { label: "Nouveau lead", Icon: Zap, action: () => navigateTo("Leads") },
-                Leads: { label: "Nouveau lead", Icon: Plus, action: () => {
+                Dashboard: { label: "Nouveau contact", Icon: Zap, action: () => navigateTo("Leads") },
+                Leads: { label: "Nouveau contact", Icon: Plus, action: () => {
                   // Scroll to top to show the form — handled by LeadsView
                   const event = new CustomEvent("tenakoe:new-lead");
                   window.dispatchEvent(event);
