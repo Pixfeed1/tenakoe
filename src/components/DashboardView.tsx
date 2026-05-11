@@ -396,6 +396,17 @@ export function DashboardView({
                       <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{item.nom}</span>
                       {demo && <span style={demoBadgeStyle}>DÉMO</span>}
                     </div>
+                    {(item as PipelineItem).etatAvancement && (
+                      <div style={{
+                        display: "inline-flex", alignItems: "center",
+                        padding: "2px 8px", borderRadius: 6,
+                        background: ((item as PipelineItem).etatAvancementCouleur || C.textDim) + "18",
+                        color: (item as PipelineItem).etatAvancementCouleur || C.textDim,
+                        fontSize: 10, fontWeight: 600, marginBottom: 4, width: "fit-content",
+                      }}>
+                        {(item as PipelineItem).etatAvancement}
+                      </div>
+                    )}
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ fontSize: 11, color: C.textDim }}>{item.chargee} · {item.prescripteur}</span>
                       <span style={{ fontSize: 11, color: C.textDim }}>{item.date}</span>

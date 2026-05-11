@@ -64,15 +64,25 @@ export async function getPipelineData(user?: CurrentUser | null) {
     prisma.statutFacturationConfig.findMany({ where: { actif: true }, orderBy: { ordre: "asc" } }),
   ]);
 
+  const factLabelMap: Record<string, { label: string; couleur: string }> = {};
+  for (const s of statutsFactConfig) {
+    factLabelMap[s.code] = { label: s.nom, couleur: s.couleur };
+  }
+
   const mapItems = (filterFn: (e: typeof entreprises[0]) => boolean) =>
-    entreprises.filter(filterFn).map((e) => ({
-      id: e.id,
-      nom: e.nom,
-      chargee: (e as unknown as { chargee?: { prenom: string } }).chargee?.prenom || e.projets[0]?.chargee?.prenom || "—",
-      prescripteur: prescripteurLabel[e.prescripteur || "PDB"] || "PDB",
-      date: e.updatedAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
-      siret: e.siret || "",
-    }));
+    entreprises.filter(filterFn).map((e) => {
+      const fact = factLabelMap[e.statutFacturation || ""];
+      return {
+        id: e.id,
+        nom: e.nom,
+        chargee: (e as unknown as { chargee?: { prenom: string } }).chargee?.prenom || e.projets[0]?.chargee?.prenom || "—",
+        prescripteur: prescripteurLabel[e.prescripteur || "PDB"] || "PDB",
+        date: e.updatedAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+        siret: e.siret || "",
+        etatAvancement: fact?.label || null,
+        etatAvancementCouleur: fact?.couleur || null,
+      };
+    });
 
   // Prise en charge columns
   const priseColumns = statutsPriseConfig.map((col) => ({
