@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       ville: body.ville,
       email: body.email,
       telephone: body.telephone,
-      prescripteur: body.prescripteur,
+      prescripteur: body.prescripteur || "PDB",
       numeroCarte: body.numeroCarte,
       depotId,
       interesseTNK: body.interesseTNK,
