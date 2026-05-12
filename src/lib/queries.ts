@@ -104,7 +104,7 @@ export async function getPipelineData(user?: CurrentUser | null) {
       icone: col.icone || "circle",
       pipelineType: "facturation" as const,
       statutCode: col.code,
-      items: mapItems((e) => e.statutFacturation === col.code),
+      items: mapItems((e) => e.statutFacturation === col.code && e.statutPrise !== "NOUVEAU"),
     }));
 
   return [...priseColumns, ...factColumns];
