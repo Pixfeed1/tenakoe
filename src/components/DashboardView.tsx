@@ -87,28 +87,16 @@ export function DashboardView({
   const [dragging, setDragging] = useState<{ itemId: string; colId: string } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
-  const [kanbanMode, setKanbanMode] = useState<"prise" | "facturation">(() => {
-    if (typeof window === "undefined") return "prise";
-    return (localStorage.getItem("tenakoe-kanban-mode") as "prise" | "facturation") || "prise";
-  });
-  const switchKanbanMode = (mode: "prise" | "facturation") => {
-    setKanbanMode(mode);
-    setPipelineFilter("");
-    if (typeof window !== "undefined") localStorage.setItem("tenakoe-kanban-mode", mode);
-  };
 
-  const activeColumns = kanbanMode === "prise" ? pipelineProspects : pipelineFacturation;
-  const pipelineWithDemo = guide.active && kanbanMode === "prise"
-    ? activeColumns.map((col, i) => {
-        if (i === 0) {
-          const demoItems = Object.values(DEMO_PIPELINE_ITEMS).filter(
-            (d) => !col.items.some((item) => item.id === d.id)
-          );
-          return { ...col, items: [...demoItems, ...col.items] };
-        }
-        return col;
-      })
-    : activeColumns;
+  const pipelineWithDemo = guide.active ? pipelineProspects.map((col, i) => {
+    if (i === 0) {
+      const demoItems = Object.values(DEMO_PIPELINE_ITEMS).filter(
+        (d) => !col.items.some((item) => item.id === d.id)
+      );
+      return { ...col, items: [...demoItems, ...col.items] };
+    }
+    return col;
+  }) : pipelineProspects;
   const PIPELINE_MAX = 5;
 
   // Poll pipeline every 30s for new leads / status changes
@@ -271,7 +259,7 @@ export function DashboardView({
       {/* Chargée filter + Pipeline status chips */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
-          {activeColumns.map((col) => {
+          {pipelineProspects.map((col) => {
             const count = filtreChargee ? col.items.filter((i) => (i as unknown as { chargeeId?: string }).chargeeId === filtreChargee).length : col.items.length;
             const isActive = pipelineFilter === col.id;
             return (
@@ -338,28 +326,16 @@ export function DashboardView({
       {/* Pipeline */}
       <GuideTooltip id="pipeline" C={C} style={{ marginBottom: 28 }}>
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span>{kanbanMode === "prise" ? "Pipeline prospects" : "Pipeline facturation"}</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: C.accent }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>
+            Pipeline prospects
+            <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, marginLeft: 8 }}>
               {pipelineWithDemo.reduce((sum, col) => sum + col.items.length, 0)} total
             </span>
-            <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim }}>
+            <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim, marginLeft: 8 }}>
               Glisser-déposer pour changer le statut
             </span>
           </h2>
-          <div style={{ display: "inline-flex", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 3, gap: 2 }}>
-            {(["prise", "facturation"] as const).map((mode) => (
-              <button key={mode} onClick={() => switchKanbanMode(mode)} style={{
-                padding: "6px 14px", borderRadius: 7, border: "none",
-                background: kanbanMode === mode ? C.accent : "transparent",
-                color: kanbanMode === mode ? "#fff" : C.textMuted,
-                fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
-              }}>
-                {mode === "prise" ? "Prise en charge" : "Facturation"}
-              </button>
-            ))}
-          </div>
         </div>
         <div className="pipeline-columns" data-guide="pipeline" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
           {pipelineWithDemo.filter((col) => !pipelineFilter || col.id === pipelineFilter).map((col, colIdx) => {
@@ -370,7 +346,7 @@ export function DashboardView({
               key={col.id}
               {...(colIdx === 1 ? { "data-guide": "pipeline-col-2" } : {})}
               style={{
-                flex: kanbanMode === "facturation" ? "0 0 180px" : 1, minWidth: kanbanMode === "facturation" ? 180 : 200, padding: 8, borderRadius: 12,
+                flex: 1, minWidth: 200, padding: 8, borderRadius: 12,
                 background: dragOver === col.id ? C.accentDim : "transparent",
                 border: `2px dashed ${dragOver === col.id ? C.accent : "transparent"}`,
                 transition: "all 0.2s",
@@ -472,14 +448,19 @@ export function DashboardView({
       </div>
       </GuideTooltip>
 
-      {/* Facturation summary */}
-      {kanbanMode === "prise" && pipelineFacturation.length > 0 && (
-        <div style={{
-          background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-          padding: "16px 20px", marginBottom: 24, boxShadow: C.shadow,
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: C.text }}>Facturation</h2>
+      {/* Kanban facturation */}
+      {pipelineFacturation.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>
+              Pipeline facturation
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, marginLeft: 8 }}>
+                {pipelineFacturation.reduce((acc, c) => acc + c.items.length, 0)} dossiers
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim, marginLeft: 8 }}>
+                Glisser-déposer pour changer le statut
+              </span>
+            </h2>
             <button onClick={() => onNavigate?.("Facturation")} style={{
               padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
               background: "transparent", color: C.blue, fontSize: 12, fontWeight: 600, cursor: "pointer",
@@ -487,23 +468,78 @@ export function DashboardView({
               Voir le détail
             </button>
           </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {pipelineFacturation.map((col) => (
-              <div key={col.id} style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "8px 14px", borderRadius: 10,
-                background: C.bg, border: `1px solid ${C.border}`,
-              }}>
-                {(() => { const Icon = getStatusIcon(col.icone); return <Icon size={12} color={col.colorKey || C.textDim} />; })()}
-                <span style={{ fontSize: 12, color: C.textMuted }}>{col.status}</span>
-                <span style={{
-                  fontSize: 12, fontWeight: 700, color: C.text,
-                  background: C.surfaceHover, padding: "2px 8px", borderRadius: 6,
-                }}>
-                  {col.items.length}
-                </span>
-              </div>
-            ))}
+          <div className="pipeline-columns" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+            {pipelineFacturation.map((col) => {
+              const colItems = filtreChargee ? col.items.filter((i) => (i as unknown as { chargeeId?: string }).chargeeId === filtreChargee) : col.items;
+              const colFiltered = { ...col, items: colItems };
+              return (
+                <div key={col.id} style={{
+                  flex: "0 0 180px", minWidth: 180, padding: 8, borderRadius: 12,
+                  background: dragOver === col.id ? C.accentDim : "transparent",
+                  border: `2px dashed ${dragOver === col.id ? C.accent : "transparent"}`,
+                  transition: "all 0.2s",
+                }}
+                  onDragOver={(e) => onDragOverHandler(e, col.id)}
+                  onDrop={(e) => onDrop(e, col.id)}
+                  onDragLeave={() => setDragOver(null)}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "0 4px" }}>
+                    {(() => { const Icon = getStatusIcon(col.icone); return <Icon size={14} color={col.colorKey} />; })()}
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{col.status}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: col.colorKey, backgroundColor: col.colorKey + "18", padding: "1px 8px", borderRadius: 6 }}>
+                      {colFiltered.items.length}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
+                    {(expandedCols[col.id] ? colFiltered.items : colFiltered.items.slice(0, PIPELINE_MAX)).map((item) => (
+                      <div key={item.id} draggable onDragStart={(e) => onDragStart(e, item.id, col.id)}
+                        style={{
+                          background: C.surface, borderRadius: 10, padding: "12px 14px",
+                          border: `1px solid ${C.border}`, cursor: "grab",
+                          borderLeft: `3px solid ${col.colorKey}`,
+                          boxShadow: C.shadow, transition: "all 0.15s", userSelect: "none",
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadowHover; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = C.shadow; }}
+                        onClick={() => onSelectClient(item)}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                          <GripVertical size={12} color={C.textDim} />
+                          <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{item.nom}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span style={{ fontSize: 11, color: C.textDim }}>{item.chargee} · {item.prescripteur}</span>
+                          <span style={{ fontSize: 11, color: C.textDim }}>{item.date}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {colFiltered.items.length > PIPELINE_MAX && !expandedCols[col.id] && (
+                      <button onClick={() => setExpandedCols((p) => ({ ...p, [col.id]: true }))} style={{
+                        padding: "8px 0", borderRadius: 8, border: `1px dashed ${C.border}`,
+                        background: "transparent", color: C.textMuted, fontSize: 11,
+                        fontWeight: 600, cursor: "pointer", textAlign: "center", width: "100%",
+                      }}>
+                        Voir les {colFiltered.items.length - PIPELINE_MAX} autres
+                      </button>
+                    )}
+                    {colFiltered.items.length > PIPELINE_MAX && expandedCols[col.id] && (
+                      <button onClick={() => setExpandedCols((p) => ({ ...p, [col.id]: false }))} style={{
+                        padding: "6px 0", borderRadius: 8, border: "none",
+                        background: "transparent", color: C.textDim, fontSize: 11,
+                        cursor: "pointer", textAlign: "center", width: "100%",
+                      }}>
+                        Réduire
+                      </button>
+                    )}
+                    {colFiltered.items.length === 0 && (
+                      <div style={{ padding: 16, textAlign: "center", fontSize: 12, color: C.textDim, border: `1px dashed ${C.border}`, borderRadius: 8 }}>
+                        Déposer ici
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
