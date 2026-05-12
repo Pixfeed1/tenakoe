@@ -980,7 +980,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Téléphone", key: "telephone", value: formatPhone(entrepriseData?.telephone), Icon: Phone },
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "N° département", key: "departement", value: entrepriseData?.departement || "—", Icon: Building2, required: true },
-              { label: "Prescripteur", key: "prescripteur", value: (() => { const code = entrepriseData?.prescripteur || client?.prescripteur; if (!code) return "—"; const found = prescripteurConfigs.find((p) => p.type === code); return found?.nom || code; })(), Icon: Building2 },
+              { label: "Prescripteur", key: "prescripteur", value: (() => { const code = entrepriseData?.prescripteur || client?.prescripteur; if (!code) return "—"; if (code === "AUTRE") return "Autre (aucun prescripteur)"; const found = prescripteurConfigs.find((p) => p.type === code); return found?.nom || code; })(), Icon: Building2 },
               { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
               { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
@@ -1074,6 +1074,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     {prescripteurConfigs.map((p) => (
                       <option key={p.id} value={p.type}>{p.nom}</option>
                     ))}
+                    <option value="AUTRE">Autre (aucun prescripteur)</option>
                   </select>
                 ) : editingField === f.key && f.key === "depotId" ? (
                   <select
