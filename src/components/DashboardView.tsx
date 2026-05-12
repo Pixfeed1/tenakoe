@@ -87,17 +87,28 @@ export function DashboardView({
   const [dragging, setDragging] = useState<{ itemId: string; colId: string } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
+  const [kanbanMode, setKanbanMode] = useState<"prise" | "facturation">(() => {
+    if (typeof window === "undefined") return "prise";
+    return (localStorage.getItem("tenakoe-kanban-mode") as "prise" | "facturation") || "prise";
+  });
+  const switchKanbanMode = (mode: "prise" | "facturation") => {
+    setKanbanMode(mode);
+    setPipelineFilter("");
+    if (typeof window !== "undefined") localStorage.setItem("tenakoe-kanban-mode", mode);
+  };
 
-  // Inject demo items into first column when guide mode is active
-  const pipelineWithDemo = guide.active ? pipelineProspects.map((col, i) => {
-    if (i === 0) {
-      const demoItems = Object.values(DEMO_PIPELINE_ITEMS).filter(
-        (d) => !col.items.some((item) => item.id === d.id)
-      );
-      return { ...col, items: [...demoItems, ...col.items] };
-    }
-    return col;
-  }) : pipelineProspects;
+  const activeColumns = kanbanMode === "prise" ? pipelineProspects : pipelineFacturation;
+  const pipelineWithDemo = guide.active && kanbanMode === "prise"
+    ? activeColumns.map((col, i) => {
+        if (i === 0) {
+          const demoItems = Object.values(DEMO_PIPELINE_ITEMS).filter(
+            (d) => !col.items.some((item) => item.id === d.id)
+          );
+          return { ...col, items: [...demoItems, ...col.items] };
+        }
+        return col;
+      })
+    : activeColumns;
   const PIPELINE_MAX = 5;
 
   // Poll pipeline every 30s for new leads / status changes
@@ -260,7 +271,7 @@ export function DashboardView({
       {/* Chargée filter + Pipeline status chips */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
-          {pipelineProspects.map((col) => {
+          {activeColumns.map((col) => {
             const count = filtreChargee ? col.items.filter((i) => (i as unknown as { chargeeId?: string }).chargeeId === filtreChargee).length : col.items.length;
             const isActive = pipelineFilter === col.id;
             return (
@@ -327,16 +338,28 @@ export function DashboardView({
       {/* Pipeline */}
       <GuideTooltip id="pipeline" C={C} style={{ marginBottom: 28 }}>
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text }}>
-            Pipeline prospects
-            <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, marginLeft: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: C.text, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span>{kanbanMode === "prise" ? "Pipeline prospects" : "Pipeline facturation"}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: C.accent }}>
               {pipelineWithDemo.reduce((sum, col) => sum + col.items.length, 0)} total
             </span>
-            <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim, marginLeft: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim }}>
               Glisser-déposer pour changer le statut
             </span>
           </h2>
+          <div style={{ display: "inline-flex", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 3, gap: 2 }}>
+            {(["prise", "facturation"] as const).map((mode) => (
+              <button key={mode} onClick={() => switchKanbanMode(mode)} style={{
+                padding: "6px 14px", borderRadius: 7, border: "none",
+                background: kanbanMode === mode ? C.accent : "transparent",
+                color: kanbanMode === mode ? "#fff" : C.textMuted,
+                fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
+              }}>
+                {mode === "prise" ? "Prise en charge" : "Facturation"}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="pipeline-columns" data-guide="pipeline" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
           {pipelineWithDemo.filter((col) => !pipelineFilter || col.id === pipelineFilter).map((col, colIdx) => {
@@ -347,7 +370,7 @@ export function DashboardView({
               key={col.id}
               {...(colIdx === 1 ? { "data-guide": "pipeline-col-2" } : {})}
               style={{
-                flex: 1, minWidth: 200, padding: 8, borderRadius: 12,
+                flex: kanbanMode === "facturation" ? "0 0 180px" : 1, minWidth: kanbanMode === "facturation" ? 180 : 200, padding: 8, borderRadius: 12,
                 background: dragOver === col.id ? C.accentDim : "transparent",
                 border: `2px dashed ${dragOver === col.id ? C.accent : "transparent"}`,
                 transition: "all 0.2s",
@@ -450,7 +473,7 @@ export function DashboardView({
       </GuideTooltip>
 
       {/* Facturation summary */}
-      {pipelineFacturation.length > 0 && (
+      {kanbanMode === "prise" && pipelineFacturation.length > 0 && (
         <div style={{
           background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
           padding: "16px 20px", marginBottom: 24, boxShadow: C.shadow,
