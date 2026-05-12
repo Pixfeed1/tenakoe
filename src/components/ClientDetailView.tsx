@@ -1499,11 +1499,22 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             value={r.date ? new Date(r.date).toISOString().slice(0, 10) : ""}
                             onChange={async (e) => {
                               const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                              const previousValue = (proj as unknown as Record<string, string | null>)[r.apiKey!];
                               setProjets((prev) => prev.map((pr) => pr.id === proj.id ? { ...pr, [r.apiKey!]: val || null } as typeof pr : pr));
-                              await fetch(`/api/projets/${proj.id}`, {
-                                method: "PATCH", headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ [r.apiKey!]: val }),
-                              }).catch(() => {});
+                              try {
+                                const res = await fetch(`/api/projets/${proj.id}`, {
+                                  method: "PATCH", headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ [r.apiKey!]: val }),
+                                });
+                                if (!res.ok) {
+                                  setProjets((prev) => prev.map((pr) => pr.id === proj.id ? { ...pr, [r.apiKey!]: previousValue ?? null } as typeof pr : pr));
+                                  const errData = await res.json().catch(() => ({ error: null }));
+                                  toast(errData.error || `Erreur ${res.status}`);
+                                }
+                              } catch {
+                                setProjets((prev) => prev.map((pr) => pr.id === proj.id ? { ...pr, [r.apiKey!]: previousValue ?? null } as typeof pr : pr));
+                                toast("Erreur réseau");
+                              }
                             }}
                             style={{
                               padding: "1px 4px", borderRadius: 4, border: `1px solid ${r.date ? "transparent" : C.border}`,

@@ -30,7 +30,19 @@ export async function PATCH(
   }
 
   if (user.role === "CHARGEE" && projet.chargeeId !== user.id) {
-    return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+    const collaborativeFields = new Set([
+      "statutPrise", "statutFacturation", "eligible",
+      "dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK",
+      "dateMiseEnRelation", "dateQualification", "dateEligible",
+      "dateEnCours", "dateDepose", "dateQualifie",
+    ]);
+    const restrictedFields = Object.keys(body).filter((k) => !collaborativeFields.has(k));
+    if (restrictedFields.length > 0) {
+      return NextResponse.json(
+        { error: `Accès refusé — champs réservés à la chargée titulaire : ${restrictedFields.join(", ")}` },
+        { status: 403 }
+      );
+    }
   }
 
   const data: Record<string, unknown> = {};
