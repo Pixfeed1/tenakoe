@@ -51,6 +51,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     id: string; contenu: string; epinglee: boolean; createdAt: string;
     auteur: { id: string; prenom: string; nom: string };
     fichierUrl?: string | null; fichierNom?: string | null; fichierTaille?: number | null;
+    fichiers?: Array<{ id: string; url: string; nom: string; taille: number }>;
   }>>([]);
   const [newNote, setNewNote] = useState("");
   const [editingNote, setEditingNote] = useState<string | null>(null);
@@ -105,7 +106,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [mentionFilter, setMentionFilter] = useState("");
   const [mentionCursorPos, setMentionCursorPos] = useState(0);
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const [noteFile, setNoteFile] = useState<File | null>(null);
+  const [noteFiles, setNoteFiles] = useState<File[]>([]);
 
   const handleFileUpload = async (file: File) => {
     if (!client?.id) return;
@@ -2738,42 +2739,65 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   )}
                 </div>
               )}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-                <label style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", fontSize: 12, color: C.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
-                  <Paperclip size={13} />
-                  {noteFile ? noteFile.name : "Joindre"}
-                  <input type="file" style={{ display: "none" }} onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file && file.size > 10 * 1024 * 1024) { alert("Fichier trop volumineux (max 10 Mo)"); return; }
-                    setNoteFile(file || null);
-                  }} />
-                </label>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <Button C={C} variant="ghost" size="sm" onClick={() => { setShowNoteForm(false); setNewNote(""); setNoteFile(null); }}>Annuler</Button>
-                  <Button C={C} variant="primary" size="sm" disabled={!newNote.trim() && !noteFile} onClick={async () => {
-                    if (!newNote.trim() && !noteFile) return;
-                    if (isDemoMode) {
-                      setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote || `[Pièce jointe : ${noteFile?.name}]`, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" } }, ...prev]);
-                      setHistorique((prev) => [{ type: "NOTE", message: newNote, chargee: "Vous", time: "À l'instant", sortDate: Date.now() }, ...prev]);
-                      setNewNote(""); setNoteFile(null); setShowNoteForm(false); toast("Note ajoutée");
-                      return;
-                    }
-                    if (!client?.id) return;
-                    let fichierUrl = null; let fichierNom = null; let fichierTaille = null;
-                    if (noteFile) {
-                      const fd = new FormData(); fd.append("file", noteFile); fd.append("entrepriseId", client.id);
-                      const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
-                      if (uploadRes.ok) { const d = await uploadRes.json(); fichierUrl = d.url; fichierNom = noteFile.name; fichierTaille = noteFile.size; }
-                    }
-                    const res = await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contenu: newNote || `[Pièce jointe : ${fichierNom}]`, entrepriseId: client.id, fichierUrl, fichierNom, fichierTaille }) });
-                    if (res.ok) {
-                      const note = await res.json();
-                      setNotes((prev) => [note, ...prev]);
-                      setHistorique((prev) => [{ type: "NOTE", message: note.contenu, chargee: `${note.auteur.prenom} ${note.auteur.nom}`, time: "À l'instant", sortDate: Date.now() }, ...prev]);
-                      setNewNote(""); setNoteFile(null); setShowNoteForm(false); toast("Note ajoutée");
-                    }
-                  }}>Ajouter</Button>
+              <div style={{ marginTop: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <label style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", fontSize: 12, color: C.textMuted, display: "flex", alignItems: "center", gap: 4 }}>
+                    <Paperclip size={13} />
+                    {noteFiles.length > 0 ? `${noteFiles.length} fichier(s)` : "Joindre"}
+                    <input type="file" multiple style={{ display: "none" }} onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      const tooBig = files.find((f) => f.size > 10 * 1024 * 1024);
+                      if (tooBig) { alert(`Fichier "${tooBig.name}" trop volumineux (max 10 Mo)`); return; }
+                      if (noteFiles.length + files.length > 10) { alert("Maximum 10 fichiers par note"); return; }
+                      setNoteFiles((prev) => [...prev, ...files]);
+                      e.target.value = "";
+                    }} />
+                  </label>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <Button C={C} variant="ghost" size="sm" onClick={() => { setShowNoteForm(false); setNewNote(""); setNoteFiles([]); }}>Annuler</Button>
+                    <Button C={C} variant="primary" size="sm" disabled={!newNote.trim() && noteFiles.length === 0} onClick={async () => {
+                      if (!newNote.trim() && noteFiles.length === 0) return;
+                      if (isDemoMode) {
+                        setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote || `[${noteFiles.length} pièce(s) jointe(s)]`, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" }, fichiers: [] }, ...prev]);
+                        setHistorique((prev) => [{ type: "NOTE", message: newNote, chargee: "Vous", time: "À l'instant", sortDate: Date.now() }, ...prev]);
+                        setNewNote(""); setNoteFiles([]); setShowNoteForm(false); toast("Note ajoutée");
+                        return;
+                      }
+                      if (!client?.id) return;
+                      const uploadedFiles: Array<{ url: string; nom: string; taille: number }> = [];
+                      for (const file of noteFiles) {
+                        const fd = new FormData(); fd.append("file", file); fd.append("entrepriseId", client.id);
+                        try {
+                          const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
+                          if (uploadRes.ok) { const d = await uploadRes.json(); uploadedFiles.push({ url: d.url, nom: file.name, taille: file.size }); }
+                          else { toast(`Erreur upload "${file.name}"`); }
+                        } catch { toast(`Erreur réseau sur "${file.name}"`); }
+                      }
+                      const res = await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contenu: newNote || `[${uploadedFiles.length} pièce(s) jointe(s)]`, entrepriseId: client.id, fichiers: uploadedFiles }) });
+                      if (res.ok) {
+                        const note = await res.json();
+                        setNotes((prev) => [note, ...prev]);
+                        setHistorique((prev) => [{ type: "NOTE", message: note.contenu, chargee: `${note.auteur.prenom} ${note.auteur.nom}`, time: "À l'instant", sortDate: Date.now() }, ...prev]);
+                        setNewNote(""); setNoteFiles([]); setShowNoteForm(false);
+                        toast(uploadedFiles.length > 0 ? `Note ajoutée (${uploadedFiles.length} pièce(s) jointe(s))` : "Note ajoutée");
+                      } else { toast("Erreur création note"); }
+                    }}>Ajouter</Button>
+                  </div>
                 </div>
+                {noteFiles.length > 0 && (
+                  <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+                    {noteFiles.map((file, idx) => (
+                      <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "3px 8px", borderRadius: 6, background: C.bg, border: `1px solid ${C.border}`, fontSize: 11, color: C.textMuted }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <Paperclip size={10} /> {file.name} <span style={{ color: C.textDim, fontSize: 10 }}>({Math.round(file.size / 1024)} Ko)</span>
+                        </span>
+                        <button type="button" onClick={() => setNoteFiles((prev) => prev.filter((_, i) => i !== idx))} style={{ border: "none", background: "transparent", color: C.textDim, cursor: "pointer", padding: "2px 4px" }}>
+                          <X size={11} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2844,10 +2868,21 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     {a.statutEnvoi === "ECHEC" && <Badge color="#ef4444" bg="rgba(239,68,68,0.1)">Échec</Badge>}
                     {a.statutEnvoi === "ENVOYE" && a.automatique && <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Envoyé</Badge>}
                   </div>
-                  {noteData?.fichierUrl && (
+                  {noteData?.fichierUrl && (!noteData.fichiers || noteData.fichiers.length === 0) && (
                     <a href={fixFileUrl(noteData.fichierUrl)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 8px", borderRadius: 4, background: C.bg, border: `1px solid ${C.border}`, fontSize: 11, color: C.blue, textDecoration: "none" }}>
                       <Paperclip size={10} /> {noteData.fichierNom || "Pièce jointe"}
                     </a>
+                  )}
+                  {noteData?.fichiers && noteData.fichiers.length > 0 && (
+                    <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 2 }}>
+                      {noteData.fichiers.map((f) => (
+                        <a key={f.id} href={fixFileUrl(f.url)} download={f.nom} target="_blank" rel="noreferrer"
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: C.blue, textDecoration: "none", padding: "2px 0" }}>
+                          <Paperclip size={10} /> {f.nom}
+                          <span style={{ color: C.textDim, fontSize: 10 }}>({Math.round(f.taille / 1024)} Ko)</span>
+                        </a>
+                      ))}
+                    </div>
                   )}
                   <div style={{ fontSize: 11, color: C.textDim, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
                     {a.chargee} · {a.time}

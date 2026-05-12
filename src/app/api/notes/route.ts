@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     where: { entrepriseId },
     include: {
       auteur: { select: { id: true, prenom: true, nom: true } },
+      fichiers: { orderBy: { createdAt: "asc" } },
     },
     orderBy: [{ epinglee: "desc" }, { createdAt: "desc" }],
   });
@@ -42,12 +43,16 @@ export async function POST(request: NextRequest) {
       epinglee: body.epinglee ?? false,
       auteurId: user.id,
       entrepriseId: body.entrepriseId,
-      fichierUrl: body.fichierUrl || null,
-      fichierNom: body.fichierNom || null,
-      fichierTaille: body.fichierTaille || null,
+      fichierUrl: body.fichierUrl || (Array.isArray(body.fichiers) && body.fichiers[0]?.url) || null,
+      fichierNom: body.fichierNom || (Array.isArray(body.fichiers) && body.fichiers[0]?.nom) || null,
+      fichierTaille: body.fichierTaille || (Array.isArray(body.fichiers) && body.fichiers[0]?.taille) || null,
+      fichiers: Array.isArray(body.fichiers) && body.fichiers.length > 0
+        ? { create: body.fichiers.map((f: { url: string; nom: string; taille: number }) => ({ url: f.url, nom: f.nom, taille: f.taille })) }
+        : undefined,
     },
     include: {
       auteur: { select: { id: true, prenom: true, nom: true } },
+      fichiers: true,
     },
   });
 

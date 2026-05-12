@@ -621,6 +621,19 @@ model Note {
   entrepriseId  String
   entreprise    Entreprise @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
   alertes       Alerte[]
+  fichiers      NoteFichier[]
+}
+
+model NoteFichier {
+  id        String   @id @default(cuid())
+  noteId    String
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  url       String
+  nom       String
+  taille    Int
+  createdAt DateTime @default(now())
+
+  @@index([noteId])
 }
 
 // ============================================================
