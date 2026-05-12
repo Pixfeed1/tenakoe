@@ -336,6 +336,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           dateInteresseTNK: data.dateInteresseTNK || "",
           dateMiseEnRelation: data.dateMiseEnRelation || "",
           dateQualification: data.dateQualification || "",
+          archive: data.archive ? "true" : "false",
         });
       })
       .catch(() => {});
@@ -540,6 +541,30 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           ))}
         </div>
         </GuideTooltip>
+        {!isDemoMode && client?.id && (
+          <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
+            <Button C={C} variant="secondary" size="sm" icon={<FolderOpen size={13} />}
+              onClick={async () => {
+                const isArchived = entrepriseData?.archive === "true";
+                if (!window.confirm(isArchived ? "Désarchiver cette entreprise ?" : "Archiver cette entreprise ?")) return;
+                const res = await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ archive: !isArchived }) });
+                if (res.ok) { setEntrepriseData((prev) => prev ? { ...prev, archive: String(!isArchived) } : prev); toast(isArchived ? "Entreprise désarchivée" : "Entreprise archivée"); }
+              }}
+            >
+              {entrepriseData?.archive === "true" ? "Désarchiver" : "Archiver"}
+            </Button>
+            <Button C={C} variant="secondary" size="sm" icon={<Trash2 size={13} />}
+              onClick={async () => {
+                if (!window.confirm(`Supprimer "${entrepriseData?.nom || client.nom}" ?\n\nL'entreprise sera mise en corbeille pendant 30 jours.`)) return;
+                const res = await fetch(`/api/entreprises/${client.id}`, { method: "DELETE" });
+                if (res.ok) { toast("Entreprise mise en corbeille"); onBack(); }
+                else { const data = await res.json(); toast(data.error || "Erreur"); }
+              }}
+            >
+              Supprimer
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Mail Composer */}

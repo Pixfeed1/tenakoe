@@ -40,14 +40,16 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
  * - PRESCRIPTEUR : voit uniquement les entreprises de son enseigne
  */
 export function getEntrepriseFilter(user: CurrentUser) {
-  if (user.role === "ADMIN") return {};
+  const base = { deletedAt: null };
+  if (user.role === "ADMIN") return base;
 
   if (user.role === "PRESCRIPTEUR" && user.prescripteurType) {
-    return { prescripteur: user.prescripteurType as never };
+    return { ...base, prescripteur: user.prescripteurType as never };
   }
 
   // CHARGEE
   return {
+    ...base,
     projets: {
       some: { chargeeId: user.id },
     },

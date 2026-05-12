@@ -156,6 +156,8 @@ model Entreprise {
   conseiller    Conseiller? @relation(fields: [conseillerId], references: [id])
   chargeeId     String?
   chargee       User? @relation("ChargeeEntreprise", fields: [chargeeId], references: [id])
+  deletedAt     DateTime?
+  deletedById   String?
 }
 
 model Conseiller {

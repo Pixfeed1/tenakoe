@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     where: {
       prescripteur: prescripteurType,
       archive: false,
+      deletedAt: null,
     },
     include: {
       contacts: { take: 1 },

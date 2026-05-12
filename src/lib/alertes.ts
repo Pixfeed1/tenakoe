@@ -193,6 +193,7 @@ export async function checkAndCreateAlertes() {
 
   const nouveauxProspects = await prisma.entreprise.findMany({
     where: {
+      deletedAt: null,
       statutPrise: "NOUVEAU",
       createdAt: { lt: quaranteHuitH },
     },

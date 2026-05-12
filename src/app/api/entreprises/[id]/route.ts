@@ -43,6 +43,21 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json();
+
+  if (body.restore === true) {
+    const existing = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, deletedAt: true } });
+    if (!existing) return NextResponse.json({ error: "Entreprise non trouvée" }, { status: 404 });
+    if (!existing.deletedAt) return NextResponse.json({ error: "Entreprise pas en corbeille" }, { status: 409 });
+    await prisma.entreprise.update({ where: { id }, data: { deletedAt: null, deletedById: null } });
+    await prisma.logActivite.create({ data: { type: "MODIFICATION", description: `Entreprise "${existing.nom}" restaurée depuis la corbeille`, entite: "Entreprise", entiteId: id, userId: user.id } });
+    return NextResponse.json({ success: true, restored: true });
+  }
+
+  const checkDeleted = await prisma.entreprise.findUnique({ where: { id }, select: { deletedAt: true } });
+  if (checkDeleted?.deletedAt) {
+    return NextResponse.json({ error: "Cette entreprise est dans la corbeille. Restaurez-la d'abord." }, { status: 409 });
+  }
+
   const existing = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, interesseTNK: true, miseEnRelation: true, chargeeId: true } });
 
   const data: Record<string, unknown> = {};
@@ -124,4 +139,28 @@ export async function PATCH(
   }
 
   return NextResponse.json(updated);
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+
+  const { id } = await params;
+  const entreprise = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, deletedAt: true } });
+  if (!entreprise) return NextResponse.json({ error: "Entreprise non trouvée" }, { status: 404 });
+  if (entreprise.deletedAt) return NextResponse.json({ error: "Entreprise déjà supprimée" }, { status: 409 });
+
+  if (user.role !== "ADMIN") {
+    const canAccess = await userCanAccessEntreprise(user, id);
+    if (!canAccess) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
+
+  await prisma.entreprise.update({ where: { id }, data: { deletedAt: new Date(), deletedById: user.id } });
+  await prisma.logActivite.create({ data: { type: "SUPPRESSION", description: `Entreprise "${entreprise.nom}" mise en corbeille`, entite: "Entreprise", entiteId: id, userId: user.id } });
+
+  return NextResponse.json({ success: true });
 }
