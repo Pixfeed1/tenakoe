@@ -98,6 +98,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [apporteurs, setApporteurs] = useState<Array<{ id: string; nom: string; prenom: string | null; structure: string | null }>>([]);
   const [statutsPrise, setStatutsPrise] = useState<Array<{ code: string; nom: string; couleur: string }>>([]);
   const [statutsFacturation, setStatutsFacturation] = useState<Array<{ code: string; nom: string; couleur: string }>>([]);
+  const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ id: string; type: string; nom: string }>>([]);
   const [mentionUsers, setMentionUsers] = useState<Array<{ id: string; prenom: string; nom: string; role?: string }>>([]);
   const [showMentionMenu, setShowMentionMenu] = useState(false);
   const [showNoteForm, setShowNoteForm] = useState(false);
@@ -381,6 +382,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
     fetch("/api/depot-config")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setDepotConfigs(data))
+      .catch(() => {});
+
+    fetch("/api/prescripteur-config")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setPrescripteurConfigs(Array.isArray(data) ? data.filter((p: { actif?: boolean }) => p.actif) : []))
       .catch(() => {});
 
     fetch("/api/apporteurs")
@@ -973,7 +979,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Téléphone", key: "telephone", value: formatPhone(entrepriseData?.telephone), Icon: Phone },
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "N° département", key: "departement", value: entrepriseData?.departement || "—", Icon: Building2, required: true },
-              { label: "Prescripteur", key: "prescripteur", value: entrepriseData?.prescripteur || client?.prescripteur || "—", Icon: Building2 },
+              { label: "Prescripteur", key: "prescripteur", value: (() => { const code = entrepriseData?.prescripteur || client?.prescripteur; if (!code) return "—"; const found = prescripteurConfigs.find((p) => p.type === code); return found?.nom || code; })(), Icon: Building2 },
               { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
               { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
@@ -1044,9 +1050,19 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 {editingField === f.key && f.key === "prescripteur" ? (
                   <select
                     autoFocus
-                    value={editFieldValue}
-                    onChange={(e) => setEditFieldValue(e.target.value)}
-                    onBlur={() => saveField(editFieldValue)}
+                    value={entrepriseData?.prescripteur || ""}
+                    onChange={async (e) => {
+                      const val = e.target.value;
+                      setEntrepriseData((prev) => prev ? { ...prev, prescripteur: val } : prev);
+                      if (client?.id && !isDemoMode) {
+                        await fetch(`/api/entreprises/${client.id}`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ prescripteur: val || null }),
+                        });
+                      }
+                      setEditingField(null);
+                    }}
+                    onBlur={() => setEditingField(null)}
                     style={{
                       flex: 1, padding: "4px 8px", borderRadius: 6,
                       border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
@@ -1054,9 +1070,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     }}
                   >
                     <option value="">Aucun</option>
-                    <option value="PDB">PDB</option>
-                    <option value="POINT_P">Point P</option>
-                    <option value="BIGMAT">Big Mat</option>
+                    {prescripteurConfigs.map((p) => (
+                      <option key={p.id} value={p.type}>{p.nom}</option>
+                    ))}
                   </select>
                 ) : editingField === f.key && f.key === "depotId" ? (
                   <select
