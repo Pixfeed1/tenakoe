@@ -539,6 +539,8 @@ export async function POST(request: NextRequest) {
           estClient = artisan.statutPaiement.toLowerCase().includes("pay");
         }
 
+        if (!prescripteur) prescripteur = "PDB";
+
         // CREATE
         const entreprise = await prisma.entreprise.create({
           data: {

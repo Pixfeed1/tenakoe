@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
             codePostal: org.addresses?.[0]?.zip || null,
             sourceImport: "CAPSULE",
             sourceId: String(org.id),
+            prescripteur: "PDB",
           },
         });
         results.entreprises++;
