@@ -62,17 +62,32 @@ export async function POST(request: NextRequest) {
     });
     const htmlWithSignature = `${content || ""}<br/><br/>${signature}`;
 
-    // Try Gmail OAuth first, then SMTP fallback
+    // Priorité : OAuth si disponible, SMTP en vrai fallback
     let result: { messageId: string };
     const gmailAvailable = await isGmailOAuthAvailable(session.user.id);
-    if (gmailAvailable && !userSmtp) {
-      result = await sendGmailMessage({ to, subject, html: htmlWithSignature, fromName, cc, bcc, userId: session.user.id });
+
+    const sendViaSmtp = () => sendMail({
+      to, subject, html: htmlWithSignature, cc, bcc,
+      from: `"${fromName}" <${userSmtp?.user || fromEmail}>`,
+      smtp: userSmtp,
+    });
+
+    if (gmailAvailable) {
+      try {
+        result = await sendGmailMessage({ to, subject, html: htmlWithSignature, fromName, cc, bcc, userId: session.user.id });
+      } catch (oauthError) {
+        console.warn("[send-mail] OAuth Gmail a échoué, tentative SMTP fallback:", oauthError);
+        if (!userSmtp) throw oauthError;
+        result = await sendViaSmtp();
+      }
     } else {
-      result = await sendMail({
-        to, subject, html: htmlWithSignature, cc, bcc,
-        from: `"${fromName}" <${userSmtp?.user || fromEmail}>`,
-        smtp: userSmtp,
-      });
+      if (!userSmtp) {
+        return NextResponse.json(
+          { error: "Aucun compte email configuré. Va dans Paramètres → Intégrations pour connecter ton compte." },
+          { status: 400 }
+        );
+      }
+      result = await sendViaSmtp();
     }
 
     // Enregistrer la transmission

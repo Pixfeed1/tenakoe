@@ -170,6 +170,7 @@ export function IntegrationsView({ C }: { C: Theme }) {
   const [configs, setConfigs] = useState<Record<string, Record<string, string>>>({});
   const [testing, setTesting] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
+  const [gmailOauthConnected, setGmailOauthConnected] = useState(false);
 
   useEffect(() => {
     fetch("/api/integrations")
@@ -337,7 +338,7 @@ export function IntegrationsView({ C }: { C: Theme }) {
               {isExpanded && (
                 <div style={{ padding: "0 22px 20px", borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
                   {/* Gmail OAuth */}
-                  {integ.oauth && <GmailOAuthSection C={C} />}
+                  {integ.oauth && <GmailOAuthSection C={C} onConnectedChange={setGmailOauthConnected} />}
 
                   {/* Webhooks custom panel */}
                   {integ.customPanel && integ.key === "make" && <WebhooksPanel C={C} />}
@@ -358,10 +359,19 @@ export function IntegrationsView({ C }: { C: Theme }) {
                   )}
 
                   {/* Config fields */}
-                  {integ.fields.length > 0 && (
+                  {integ.fields.length > 0 && (() => {
+                    const isGmailSmtpDisabled = integ.key === "gmail" && gmailOauthConnected;
+                    return (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                      {integ.fields.map((f) => (
-                        <div key={f.key} style={{ gridColumn: f.type === "url" ? "1 / -1" : undefined }}>
+                      {isGmailSmtpDisabled && (
+                        <div style={{ gridColumn: "1 / -1", padding: "8px 12px", borderRadius: 8, background: C.accentDim, color: C.accentText, fontSize: 11, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                          OAuth Gmail connecté — les champs SMTP ci-dessous sont désactivés (utilisés uniquement si l&apos;OAuth tombe en panne).
+                        </div>
+                      )}
+                      {integ.fields.map((f) => {
+                        const fieldDisabled = isGmailSmtpDisabled && (f.key === "smtp_host" || f.key === "smtp_user" || f.key === "smtp_pass");
+                        return (
+                        <div key={f.key} style={{ gridColumn: f.type === "url" ? "1 / -1" : undefined, opacity: fieldDisabled ? 0.45 : 1, pointerEvents: fieldDisabled ? "none" : "auto" }}>
                           {f.type === "toggle" ? (
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
                               <span style={{ fontSize: 13, color: C.text }}>{f.label}</span>
@@ -383,18 +393,22 @@ export function IntegrationsView({ C }: { C: Theme }) {
                                 placeholder={f.placeholder}
                                 value={config[f.key] || ""}
                                 onChange={(e) => updateConfig(integ.key, f.key, e.target.value)}
+                                disabled={fieldDisabled}
                                 style={{
                                   width: "100%", padding: "8px 12px", borderRadius: 8,
-                                  border: `1px solid ${C.border}`, background: C.bg, color: C.text,
+                                  border: `1px solid ${C.border}`, background: fieldDisabled ? C.surface : C.bg, color: C.text,
                                   fontSize: 13, outline: "none", boxSizing: "border-box",
+                                  cursor: fieldDisabled ? "not-allowed" : "text",
                                 }}
                               />
                             </>
                           )}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Test result */}
                   {test && (
@@ -530,19 +544,20 @@ function EmailTestSection({ C }: { C: Theme }) {
 }
 
 // ===================== GMAIL OAUTH SECTION =====================
-function GmailOAuthSection({ C }: { C: Theme }) {
+function GmailOAuthSection({ C, onConnectedChange }: { C: Theme; onConnectedChange?: (connected: boolean) => void }) {
   const [status, setStatus] = useState<{ connected: boolean; email?: string; syncEntrant?: boolean; syncSortant?: boolean; dernierSync?: string } | null>(null);
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then(setStatus).catch(() => {});
+    fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then((s) => { setStatus(s); onConnectedChange?.(!!s?.connected); }).catch(() => {});
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "gmail-oauth-success") {
-        fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then(setStatus).catch(() => {});
+        fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then((s) => { setStatus(s); onConnectedChange?.(!!s?.connected); }).catch(() => {});
       }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const connect = async () => {
@@ -557,14 +572,14 @@ function GmailOAuthSection({ C }: { C: Theme }) {
     if (!window.confirm("Déconnecter Gmail ?")) return;
     await fetch("/api/auth/gmail", { method: "DELETE" });
     setStatus({ connected: false });
+    onConnectedChange?.(false);
   };
 
   const syncNow = async () => {
     setSyncing(true);
     await fetch("/api/cron/sync-gmail", { method: "POST" });
     setSyncing(false);
-    // Refresh status
-    fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then(setStatus).catch(() => {});
+    fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null).then((s) => { setStatus(s); onConnectedChange?.(!!s?.connected); }).catch(() => {});
   };
 
   return (
