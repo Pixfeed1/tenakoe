@@ -4,24 +4,24 @@ import { getGmailAuthUrl, getGmailStatus, revokeGmail } from "@/lib/gmail";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
-  const status = await getGmailStatus();
+  const status = await getGmailStatus(user.id);
   return NextResponse.json(status);
 }
 
 export async function POST() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
-  const url = getGmailAuthUrl();
+  const url = getGmailAuthUrl(user.id);
   return NextResponse.json({ url });
 }
 
 export async function DELETE() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
-  await revokeGmail();
+  await revokeGmail(user.id);
   return NextResponse.json({ success: true });
 }

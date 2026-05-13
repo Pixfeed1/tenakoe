@@ -15,95 +15,79 @@ function getOAuth2Client() {
   );
 }
 
-export function getGmailAuthUrl() {
+export function getGmailAuthUrl(userId: string) {
   const oauth2 = getOAuth2Client();
   return oauth2.generateAuthUrl({
     access_type: "offline",
     scope: SCOPES,
     prompt: "consent",
+    state: userId,
   });
 }
 
-export async function handleGmailCallback(code: string) {
+export async function handleGmailCallback(code: string, userId: string) {
   const oauth2 = getOAuth2Client();
   const { tokens } = await oauth2.getToken(code);
 
-  // Get email address
   oauth2.setCredentials(tokens);
   const gmail = google.gmail({ version: "v1", auth: oauth2 });
   const profile = await gmail.users.getProfile({ userId: "me" });
 
-  // Save tokens in Integration
-  await prisma.integration.upsert({
-    where: { id: "gmail-oauth" },
+  if (!tokens.access_token || !tokens.refresh_token) {
+    throw new Error("Tokens manquants — réautorisez avec prompt: consent");
+  }
+
+  await prisma.gmailAccount.upsert({
+    where: { userId },
     update: {
-      actif: true,
-      config: JSON.stringify({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expiry_date: tokens.expiry_date,
-        email: profile.data.emailAddress,
-        sync_entrant: "true",
-        sync_sortant: "true",
-      }),
-      dernierSync: new Date(),
+      email: profile.data.emailAddress!,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiryDate: tokens.expiry_date ? BigInt(tokens.expiry_date) : null,
     },
     create: {
-      id: "gmail-oauth",
-      nom: "Gmail",
-      type: "email",
-      actif: true,
-      config: JSON.stringify({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expiry_date: tokens.expiry_date,
-        email: profile.data.emailAddress,
-        sync_entrant: "true",
-        sync_sortant: "true",
-      }),
+      userId,
+      email: profile.data.emailAddress!,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiryDate: tokens.expiry_date ? BigInt(tokens.expiry_date) : null,
     },
   });
 
   return profile.data.emailAddress;
 }
 
-async function getAuthenticatedGmail() {
-  const integration = await prisma.integration.findFirst({
-    where: { id: "gmail-oauth", actif: true },
-  });
-  if (!integration?.config) throw new Error("Gmail non connecté");
+async function getAuthenticatedGmail(userId: string) {
+  const account = await prisma.gmailAccount.findUnique({ where: { userId } });
+  if (!account) throw new Error(`Gmail non connecté pour cet utilisateur`);
 
-  const config = JSON.parse(integration.config);
   const oauth2 = getOAuth2Client();
   oauth2.setCredentials({
-    access_token: config.access_token,
-    refresh_token: config.refresh_token,
-    expiry_date: config.expiry_date,
+    access_token: account.accessToken,
+    refresh_token: account.refreshToken,
+    expiry_date: account.expiryDate ? Number(account.expiryDate) : undefined,
   });
 
-  // Auto-refresh token
   oauth2.on("tokens", async (tokens) => {
-    const updated = { ...config };
-    if (tokens.access_token) updated.access_token = tokens.access_token;
-    if (tokens.expiry_date) updated.expiry_date = tokens.expiry_date;
-    await prisma.integration.update({
-      where: { id: "gmail-oauth" },
-      data: { config: JSON.stringify(updated) },
-    });
+    const data: Record<string, unknown> = {};
+    if (tokens.access_token) data.accessToken = tokens.access_token;
+    if (tokens.expiry_date) data.expiryDate = BigInt(tokens.expiry_date);
+    if (tokens.refresh_token) data.refreshToken = tokens.refresh_token;
+    if (Object.keys(data).length > 0) {
+      await prisma.gmailAccount.update({ where: { userId }, data });
+    }
   });
 
-  return { gmail: google.gmail({ version: "v1", auth: oauth2 }), config };
+  return { gmail: google.gmail({ version: "v1", auth: oauth2 }), email: account.email };
 }
 
-export async function syncIncomingEmails() {
-  const { gmail, config } = await getAuthenticatedGmail();
-  if (config.sync_entrant !== "true") return { synced: 0 };
+export async function syncIncomingEmails(userId: string) {
+  const account = await prisma.gmailAccount.findUnique({ where: { userId } });
+  if (!account?.syncEntrant) return { synced: 0 };
 
-  // Get last sync time
-  const integration = await prisma.integration.findFirst({ where: { id: "gmail-oauth" } });
-  const lastSync = integration?.dernierSync || new Date(Date.now() - 3600000); // Default 1h ago
+  const { gmail, email } = await getAuthenticatedGmail(userId);
 
-  // Fetch recent messages
+  const lastSync = account.dernierSync || new Date(Date.now() - 3600000);
   const afterTimestamp = Math.floor(lastSync.getTime() / 1000);
   const res = await gmail.users.messages.list({
     userId: "me",
@@ -115,13 +99,11 @@ export async function syncIncomingEmails() {
   let synced = 0;
 
   for (const msg of messages) {
-    // Check if already synced
     const existing = await prisma.transmission.findFirst({
       where: { gmailMessageId: msg.id },
     });
     if (existing) continue;
 
-    // Get full message
     const full = await gmail.users.messages.get({
       userId: "me",
       id: msg.id!,
@@ -134,14 +116,11 @@ export async function syncIncomingEmails() {
     const date = headers.find((h) => h.name?.toLowerCase() === "date")?.value;
     const to = headers.find((h) => h.name?.toLowerCase() === "to")?.value || "";
 
-    // Extract email from "Name <email>" format
     const emailMatch = from.match(/<([^>]+)>/) || [null, from];
     const senderEmail = (emailMatch[1] || from).toLowerCase().trim();
 
-    // Check if this is an incoming email (not sent by us)
-    if (senderEmail === config.email?.toLowerCase()) continue;
+    if (senderEmail === email.toLowerCase()) continue;
 
-    // Try to match to an entreprise or contact
     const contact = await prisma.contact.findFirst({
       where: { email: { equals: senderEmail, mode: "insensitive" } },
       include: { entreprise: true },
@@ -151,9 +130,8 @@ export async function syncIncomingEmails() {
       where: { email: { equals: senderEmail, mode: "insensitive" } },
     });
 
-    if (!entreprise) continue; // Skip non-matched emails
+    if (!entreprise) continue;
 
-    // Get body text
     let body = "";
     const parts = full.data.payload?.parts || [];
     const textPart = parts.find((p) => p.mimeType === "text/plain");
@@ -163,7 +141,6 @@ export async function syncIncomingEmails() {
       body = Buffer.from(full.data.payload.body.data, "base64").toString("utf-8");
     }
 
-    // Create transmission
     await prisma.transmission.create({
       data: {
         canal: "EMAIL",
@@ -171,7 +148,7 @@ export async function syncIncomingEmails() {
         destinataire: to,
         expediteurEmail: senderEmail,
         objet: subject,
-        contenu: body.slice(0, 5000), // Limit body size
+        contenu: body.slice(0, 5000),
         dateEnvoi: date ? new Date(date) : new Date(),
         gmailMessageId: msg.id,
         gmailThreadId: msg.threadId,
@@ -182,52 +159,42 @@ export async function syncIncomingEmails() {
     synced++;
   }
 
-  // Update last sync
-  await prisma.integration.update({
-    where: { id: "gmail-oauth" },
+  await prisma.gmailAccount.update({
+    where: { userId },
     data: { dernierSync: new Date() },
   });
 
   return { synced };
 }
 
-export async function revokeGmail() {
-  const { config } = await getAuthenticatedGmail();
-  const oauth2 = getOAuth2Client();
-  if (config.access_token) {
-    await oauth2.revokeToken(config.access_token).catch(() => {});
+export async function revokeGmail(userId: string) {
+  const { gmail } = await getAuthenticatedGmail(userId).catch(() => ({ gmail: null }));
+  if (gmail) {
+    const account = await prisma.gmailAccount.findUnique({ where: { userId } });
+    if (account) {
+      const oauth2 = getOAuth2Client();
+      await oauth2.revokeToken(account.accessToken).catch(() => {});
+    }
   }
-  await prisma.integration.update({
-    where: { id: "gmail-oauth" },
-    data: { actif: false, config: null },
-  });
+  await prisma.gmailAccount.delete({ where: { userId } }).catch(() => {});
 }
 
-export async function getGmailStatus() {
-  const integration = await prisma.integration.findFirst({
-    where: { id: "gmail-oauth" },
-  });
-  if (!integration?.config || !integration.actif) return { connected: false };
+export async function getGmailStatus(userId: string) {
+  const account = await prisma.gmailAccount.findUnique({ where: { userId } });
+  if (!account) return { connected: false };
 
-  const config = JSON.parse(integration.config);
   return {
     connected: true,
-    email: config.email,
-    syncEntrant: config.sync_entrant === "true",
-    syncSortant: config.sync_sortant === "true",
-    dernierSync: integration.dernierSync,
+    email: account.email,
+    syncEntrant: account.syncEntrant,
+    syncSortant: account.syncSortant,
+    dernierSync: account.dernierSync,
   };
 }
 
-export async function isGmailOAuthAvailable(): Promise<boolean> {
-  try {
-    const integration = await prisma.integration.findFirst({
-      where: { id: "gmail-oauth", actif: true },
-    });
-    if (!integration?.config) return false;
-    const config = JSON.parse(integration.config);
-    return !!(config.access_token && config.refresh_token && config.email);
-  } catch { return false; }
+export async function isGmailOAuthAvailable(userId: string): Promise<boolean> {
+  const account = await prisma.gmailAccount.findUnique({ where: { userId } });
+  return !!account;
 }
 
 export async function sendGmailMessage(opts: {
@@ -237,11 +204,12 @@ export async function sendGmailMessage(opts: {
   fromName?: string;
   cc?: string;
   bcc?: string;
+  userId: string;
 }): Promise<{ messageId: string }> {
-  const { gmail, config } = await getAuthenticatedGmail();
+  const { gmail, email } = await getAuthenticatedGmail(opts.userId);
   const fromAddress = opts.fromName
-    ? `"${opts.fromName}" <${config.email}>`
-    : config.email;
+    ? `"${opts.fromName}" <${email}>`
+    : email;
 
   const headers = [
     `From: ${fromAddress}`,

@@ -53,6 +53,7 @@ model User {
   alertes       Alerte[]
   entreprisesAttribuees Entreprise[] @relation("ChargeeEntreprise")
   projetsSupprimes Projet[] @relation("ProjetDeletedBy")
+  gmailAccount     GmailAccount?
 }
 
 // ============================================================
@@ -714,6 +715,23 @@ model Integration {
   dernierSync DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model GmailAccount {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email         String
+  accessToken   String    @db.Text
+  refreshToken  String    @db.Text
+  expiryDate    BigInt?
+  syncEntrant   Boolean   @default(true)
+  syncSortant   Boolean   @default(true)
+  dernierSync   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 // ============================================================

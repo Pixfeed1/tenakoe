@@ -64,9 +64,9 @@ export async function POST(request: NextRequest) {
 
     // Try Gmail OAuth first, then SMTP fallback
     let result: { messageId: string };
-    const gmailAvailable = await isGmailOAuthAvailable();
+    const gmailAvailable = await isGmailOAuthAvailable(session.user.id);
     if (gmailAvailable && !userSmtp) {
-      result = await sendGmailMessage({ to, subject, html: htmlWithSignature, fromName, cc, bcc });
+      result = await sendGmailMessage({ to, subject, html: htmlWithSignature, fromName, cc, bcc, userId: session.user.id });
     } else {
       result = await sendMail({
         to, subject, html: htmlWithSignature, cc, bcc,
