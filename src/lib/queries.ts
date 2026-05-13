@@ -41,9 +41,10 @@ export async function getPipelineData(user?: CurrentUser | null) {
       statutFacturation: { notIn: ["QUALIFIE", "REFUSE"] },
     },
     include: {
+      chargee: { select: { id: true, prenom: true } },
       projets: {
         include: {
-          chargee: { select: { prenom: true } },
+          chargee: { select: { id: true, prenom: true } },
         },
         take: 1,
       },
@@ -75,7 +76,8 @@ export async function getPipelineData(user?: CurrentUser | null) {
       return {
         id: e.id,
         nom: e.nom,
-        chargee: (e as unknown as { chargee?: { prenom: string } }).chargee?.prenom || e.projets[0]?.chargee?.prenom || "—",
+        chargeeId: e.chargee?.id || e.projets[0]?.chargee?.id || null,
+        chargee: e.chargee?.prenom || e.projets[0]?.chargee?.prenom || "—",
         prescripteur: prescripteurLabel[e.prescripteur || "PDB"] || "PDB",
         date: e.updatedAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
         siret: e.siret || "",
