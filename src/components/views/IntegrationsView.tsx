@@ -365,7 +365,7 @@ export function IntegrationsView({ C }: { C: Theme }) {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                       {isGmailSmtpDisabled && (
                         <div style={{ gridColumn: "1 / -1", padding: "8px 12px", borderRadius: 8, background: C.accentDim, color: C.accentText, fontSize: 11, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
-                          OAuth Gmail connecté — les champs SMTP ci-dessous sont désactivés (utilisés uniquement si l&apos;OAuth tombe en panne).
+                          OAuth Gmail connecté — les champs SMTP sont désactivés. Déconnecte l&apos;OAuth si tu veux utiliser le SMTP à la place.
                         </div>
                       )}
                       {integ.fields.map((f) => {

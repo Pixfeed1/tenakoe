@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import {
   Settings, Users, Columns3, Building2, Mail, ClipboardList, FileText,
-  Bell, Download, Upload, Shield, Plus, Trash2, Check, X, Save, Eye, EyeOff, Edit2,
+  Bell, Download, Upload, Shield, Plus, Trash2, Check, X, Save, Eye, EyeOff, Edit2, CheckCircle2,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -1197,6 +1197,13 @@ function MonCompteTab({ C }: { C: Theme }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userInfo, setUserInfo] = useState({ email: "", nom: "", prenom: "", telephone: "" });
+  const [gmailOauthConnected, setGmailOauthConnected] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/gmail").then((r) => r.ok ? r.json() : null)
+      .then((data) => setGmailOauthConnected(!!data?.connected))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/users/me").then((r) => r.ok ? r.json() : null).then((data) => {
@@ -1263,20 +1270,25 @@ function MonCompteTab({ C }: { C: Theme }) {
         <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 14px" }}>
           Configurez votre propre serveur SMTP pour envoyer les mails depuis votre adresse. Si vide, le SMTP global Tenakoe est utilisé.
         </p>
+        {gmailOauthConnected && (
+          <div style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 14, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+            <CheckCircle2 size={14} /> OAuth Gmail connecté — les champs SMTP sont désactivés. Déconnecte-le dans Intégrations si tu veux utiliser le SMTP.
+          </div>
+        )}
         {loading ? (
           <div style={{ color: C.textDim, fontSize: 13 }}>Chargement...</div>
         ) : (
-          <>
+          <div style={{ opacity: gmailOauthConnected ? 0.45 : 1, pointerEvents: gmailOauthConnected ? "none" : "auto" }}>
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
-              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Serveur SMTP</label><input style={iStyle} placeholder="smtp.gmail.com" value={smtp.host} onChange={(e) => setSmtp({ ...smtp, host: e.target.value })} /></div>
-              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Port</label><input style={iStyle} placeholder="587" value={smtp.port} onChange={(e) => setSmtp({ ...smtp, port: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Serveur SMTP</label><input style={{ ...iStyle, cursor: gmailOauthConnected ? "not-allowed" : "text" }} disabled={gmailOauthConnected} placeholder="smtp.gmail.com" value={smtp.host} onChange={(e) => setSmtp({ ...smtp, host: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Port</label><input style={{ ...iStyle, cursor: gmailOauthConnected ? "not-allowed" : "text" }} disabled={gmailOauthConnected} placeholder="587" value={smtp.port} onChange={(e) => setSmtp({ ...smtp, port: e.target.value })} /></div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
-              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Identifiant (email)</label><input style={iStyle} placeholder="kelly@tenakoe.fr" value={smtp.user} onChange={(e) => setSmtp({ ...smtp, user: e.target.value })} /></div>
-              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Mot de passe (App Password)</label><input type="password" style={iStyle} placeholder="xxxx xxxx xxxx xxxx" value={smtp.pass} onChange={(e) => setSmtp({ ...smtp, pass: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Identifiant (email)</label><input style={{ ...iStyle, cursor: gmailOauthConnected ? "not-allowed" : "text" }} disabled={gmailOauthConnected} placeholder="kelly@tenakoe.fr" value={smtp.user} onChange={(e) => setSmtp({ ...smtp, user: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Mot de passe (App Password)</label><input type="password" style={{ ...iStyle, cursor: gmailOauthConnected ? "not-allowed" : "text" }} disabled={gmailOauthConnected} placeholder="xxxx xxxx xxxx xxxx" value={smtp.pass} onChange={(e) => setSmtp({ ...smtp, pass: e.target.value })} /></div>
             </div>
-            <Button C={C} variant="primary" onClick={save} loading={saving}>Sauvegarder</Button>
-          </>
+            <Button C={C} variant="primary" onClick={save} loading={saving} disabled={gmailOauthConnected}>Sauvegarder</Button>
+          </div>
         )}
       </div>
     </div>
