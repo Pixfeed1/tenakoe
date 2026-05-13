@@ -75,7 +75,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   interface BonDeCommande { id: string; qualificationCode: string; reference: string | null; montant: number | null; paye: boolean; datePaiement: string | null; dateEmission: string | null; commentaire: string | null }
   interface ChantierDoc { id: string; nom: string; fichierUrl: string | null; fichierNom: string | null; fichierTaille: number | null }
   interface ChantierData { id: string; numero: number; nom: string | null; description: string | null; devisRecu: boolean; devisFichierUrl: string | null; devisFichierNom: string | null; dateDevis: string | null; factureRecue: boolean; factureFichierUrl: string | null; factureFichierNom: string | null; dateFacture: string | null; attestationRecue: boolean; attestationFichierUrl: string | null; attestationFichierNom: string | null; dateAttestation: string | null; photosRecues: boolean; photosFichierUrl: string | null; photosFichierNom: string | null; datePhotos: string | null; documents: ChantierDoc[] }
-  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string; niveauVise?: string | null; niveauObtenu?: string | null; rges?: Array<{ id: string; rgeCode: string }>; chantiers?: ChantierData[]; certificateurType?: string | null; emailCertificateur?: string | null; antenneQualibatId?: string | null; identifiantCertificateur?: string | null; motDePasseCertificateur?: string | null; interlocuteurCertificateur?: string | null; dateCommission?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; chargee?: { id: string; prenom: string; nom: string } | null }>>([]);
+  const [projets, setProjets] = useState<Array<{ id: string; nom: string; qualifications: Array<{ id?: string; type: string; niveauVise?: string | null; niveauObtenu?: string | null; rges?: Array<{ id: string; rgeCode: string }>; chantiers?: ChantierData[]; certificateurType?: string | null; emailCertificateur?: string | null; antenneQualibatId?: string | null; identifiantCertificateur?: string | null; motDePasseCertificateur?: string | null; interlocuteurCertificateur?: string | null; dateCommission?: string | null; bonCommandeDemande?: boolean; dateBonCommandeDemande?: string | null; bonCommandePaye?: boolean; dateBonCommandePaye?: string | null; bonCommandeFichierUrl?: string | null; bonCommandeFichierNom?: string | null; bonsCommandeFichiers?: Array<{ id: string; url: string; nom: string; taille?: number | null; type?: string | null }> }>; etapes: Array<{ terminee: boolean; active: boolean; nom: string }>; bonsDeCommande?: BonDeCommande[]; chargee?: { id: string; prenom: string; nom: string } | null }>>([]);
   const [nomenclatureRGE, setNomenclatureRGE] = useState<Array<{ code: string; nom: string }>>([]);
   const [showAddBon, setShowAddBon] = useState<string | null>(null);
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
@@ -3215,6 +3215,8 @@ function QualifCertificateur({
     dateBonCommandePaye?: string | null;
     bonCommandeFichierUrl?: string | null;
     bonCommandeFichierNom?: string | null;
+    bonsCommandeFichiers?: Array<{ id: string; url: string; nom: string; taille?: number | null; type?: string | null }>;
+    id?: string;
   };
   antennes: Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>;
   updateQualif: (patch: Record<string, unknown>) => Promise<void> | void;
@@ -3431,7 +3433,7 @@ function QualifCertificateur({
               }}
               onDateChange={(d) => updateQualif({ dateBonCommandePaye: d })}
             />
-            {qualif.bonCommandeFichierUrl ? (
+            {qualif.bonCommandeFichierUrl && (!qualif.bonsCommandeFichiers || qualif.bonsCommandeFichiers.length === 0) && (
               <a href={fixFileUrl(qualif.bonCommandeFichierUrl)} download={qualif.bonCommandeFichierNom || "bon-commande"} style={{
                 display: "inline-flex", alignItems: "center", gap: 3,
                 padding: "4px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
@@ -3439,23 +3441,41 @@ function QualifCertificateur({
               }}>
                 <Download size={10} /> {qualif.bonCommandeFichierNom ? qualif.bonCommandeFichierNom.slice(0, 20) : "Fichier"}
               </a>
-            ) : null}
+            )}
+            {qualif.bonsCommandeFichiers?.map((f) => (
+              <div key={f.id} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "4px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600, background: C.blueDim, color: C.blue }}>
+                <a href={fixFileUrl(f.url)} download={f.nom} style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "inherit", textDecoration: "none" }}>
+                  <Download size={10} /> {f.nom.length > 20 ? f.nom.slice(0, 20) + "…" : f.nom}
+                </a>
+                <button type="button" onClick={async () => {
+                  if (!confirm(`Supprimer "${f.nom}" ?`)) return;
+                  const res = await fetch(`/api/qualifications/${qualif.id}/fichiers/${f.id}`, { method: "DELETE" });
+                  if (res.ok) updateQualif({ bonsCommandeFichiers: (qualif.bonsCommandeFichiers || []).filter((x) => x.id !== f.id) });
+                }} style={{ background: "transparent", border: "none", color: C.textDim, cursor: "pointer", padding: "0 2px", fontSize: 10 }} title="Supprimer">×</button>
+              </div>
+            ))}
             <label style={{
               display: "inline-flex", alignItems: "center", gap: 3,
               padding: "4px 8px", borderRadius: 999, cursor: "pointer",
               border: `1px solid ${C.border}`, background: "transparent",
               fontSize: 10, color: C.textDim,
-            }} title="Uploader le bon de commande">
-              <Upload size={10} />
-              <input type="file" style={{ display: "none" }} onChange={async (ev) => {
-                const file = ev.target.files?.[0];
-                if (!file) return;
-                const fd = new FormData(); fd.append("file", file);
-                const res = await fetch("/api/upload", { method: "POST", body: fd });
-                if (res.ok) {
-                  const { url } = await res.json();
-                  updateQualif({ bonCommandeFichierUrl: url, bonCommandeFichierNom: file.name });
+            }} title="Ajouter un document (bon de commande, facture, etc.)">
+              <Upload size={10} /> Ajouter
+              <input type="file" multiple style={{ display: "none" }} onChange={async (ev) => {
+                const files = Array.from(ev.target.files || []);
+                if (files.length === 0) return;
+                const tooBig = files.find((fl) => fl.size > 10 * 1024 * 1024);
+                if (tooBig) { alert(`Fichier "${tooBig.name}" trop volumineux (max 10 Mo)`); return; }
+                const uploaded: Array<{ id: string; url: string; nom: string; taille?: number | null; type?: string | null }> = [];
+                for (const file of files) {
+                  const fd = new FormData(); fd.append("file", file);
+                  const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+                  if (!upRes.ok) continue;
+                  const { url } = await upRes.json();
+                  const createRes = await fetch(`/api/qualifications/${qualif.id}/fichiers`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, nom: file.name, taille: file.size }) });
+                  if (createRes.ok) uploaded.push(await createRes.json());
                 }
+                if (uploaded.length > 0) updateQualif({ bonsCommandeFichiers: [...(qualif.bonsCommandeFichiers || []), ...uploaded] });
                 ev.target.value = "";
               }} />
             </label>

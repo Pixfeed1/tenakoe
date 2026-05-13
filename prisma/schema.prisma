@@ -350,8 +350,22 @@ model ProjetQualification {
 
   rges                      ProjetQualificationRGE[]
   chantiers                 Chantier[]
+  bonsCommandeFichiers      BonCommandeFichier[]
 
   @@unique([projetId, type])
+}
+
+model BonCommandeFichier {
+  id                    String              @id @default(cuid())
+  projetQualificationId String
+  projetQualification   ProjetQualification @relation(fields: [projetQualificationId], references: [id], onDelete: Cascade)
+  url                   String
+  nom                   String
+  taille                Int?
+  type                  String?
+  createdAt             DateTime            @default(now())
+
+  @@index([projetQualificationId])
 }
 
 model NomenclatureRGE {

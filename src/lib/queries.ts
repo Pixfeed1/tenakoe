@@ -227,6 +227,7 @@ export async function getEntrepriseDetail(id: string) {
               rges: true,
               chantiers: { include: { documents: true }, orderBy: { numero: "asc" } },
               antenneQualibat: true,
+              bonsCommandeFichiers: { orderBy: { createdAt: "asc" } },
             },
           },
           etapes: { orderBy: { ordre: "asc" } },
