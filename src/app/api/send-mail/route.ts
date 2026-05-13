@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     let userSmtp: SmtpConfig | null = null;
     const dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { smtpHost: true, smtpPort: true, smtpUser: true, smtpPass: true, telephone: true },
+      select: { smtpHost: true, smtpPort: true, smtpUser: true, smtpPass: true, telephone: true, prenom: true, nom: true },
     });
     if (dbUser?.smtpHost && dbUser?.smtpUser && dbUser?.smtpPass) {
       userSmtp = { host: dbUser.smtpHost, port: dbUser.smtpPort || 587, user: dbUser.smtpUser, pass: dbUser.smtpPass };
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
     // Ajouter la signature automatique
     const nameParts = (fromName || "").split(" ");
     const signature = getSignature({
-      prenom: nameParts[0] || "",
-      nom: nameParts.slice(1).join(" ") || "",
+      prenom: dbUser?.prenom || nameParts[0] || "",
+      nom: dbUser?.nom || nameParts.slice(1).join(" ") || "",
       email: fromEmail || "",
       telephone: dbUser?.telephone,
     });
