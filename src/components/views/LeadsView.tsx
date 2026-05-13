@@ -50,6 +50,7 @@ export function LeadsView({ C }: { C: Theme }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ nomArtisan: "", prenomArtisan: "", nomEntreprise: "", email: "", telephone: "" });
+  const [sortBy, setSortBy] = useState<"nom_asc" | "nom_desc" | "recent" | "ancien">("recent");
 
   // Form state
   const [form, setForm] = useState({
@@ -307,7 +308,15 @@ export function LeadsView({ C }: { C: Theme }) {
         </div>
       )}
 
-      {/* Leads list */}
+      {/* Sort + Leads list */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }}>
+          <option value="recent">Plus récent</option>
+          <option value="ancien">Plus ancien</option>
+          <option value="nom_asc">Nom A-Z</option>
+          <option value="nom_desc">Nom Z-A</option>
+        </select>
+      </div>
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: C.shadow, overflow: "hidden" }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>
@@ -328,7 +337,15 @@ export function LeadsView({ C }: { C: Theme }) {
               </tr>
             </thead>
             <tbody>
-              {leads.map((lead) => (
+              {[...leads].sort((a, b) => {
+                switch (sortBy) {
+                  case "nom_asc": return (a.nomEntreprise || a.nomArtisan).localeCompare(b.nomEntreprise || b.nomArtisan, "fr", { sensitivity: "base" });
+                  case "nom_desc": return (b.nomEntreprise || b.nomArtisan).localeCompare(a.nomEntreprise || a.nomArtisan, "fr", { sensitivity: "base" });
+                  case "recent": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  case "ancien": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                  default: return 0;
+                }
+              }).map((lead) => (
                 <React.Fragment key={lead.id}>
                 <tr style={{ borderBottom: `1px solid ${C.border}`, transition: "background 0.15s" }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}

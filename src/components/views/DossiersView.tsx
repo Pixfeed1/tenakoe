@@ -56,6 +56,7 @@ export function DossiersView({ C, onSelectClient, role }: { C: Theme; onSelectCl
   const [filtreDepot, setFiltreDepot] = useState("");
   const [filtreDepartement, setFiltreDepartement] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<"nom_asc" | "nom_desc" | "recent" | "ancien">("nom_asc");
 
   // Reference data
   const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
@@ -151,6 +152,14 @@ export function DossiersView({ C, onSelectClient, role }: { C: Theme; onSelectCl
     if (filtreDepot && e.depotId !== filtreDepot) return false;
     if (filtreDepartement && e.departement?.toLowerCase() !== filtreDepartement.toLowerCase()) return false;
     return true;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case "nom_asc": return a.entreprise.nom.localeCompare(b.entreprise.nom, "fr", { sensitivity: "base" });
+      case "nom_desc": return b.entreprise.nom.localeCompare(a.entreprise.nom, "fr", { sensitivity: "base" });
+      case "recent": return (b.id || "").localeCompare(a.id || "");
+      case "ancien": return (a.id || "").localeCompare(b.id || "");
+      default: return 0;
+    }
   });
 
   const ss: React.CSSProperties = { padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" };
@@ -204,6 +213,12 @@ export function DossiersView({ C, onSelectClient, role }: { C: Theme; onSelectCl
           Plus de filtres{advancedCount > 0 ? ` (${advancedCount})` : ""}
           <ChevronDown size={12} style={{ transition: "transform 0.2s", transform: showAdvancedFilters ? "rotate(180deg)" : "rotate(0deg)" }} />
         </button>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} style={ss}>
+          <option value="nom_asc">Nom A-Z</option>
+          <option value="nom_desc">Nom Z-A</option>
+          <option value="recent">Plus récent</option>
+          <option value="ancien">Plus ancien</option>
+        </select>
         <button onClick={() => setShowArchived(!showArchived)} style={{
           ...ss, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
           border: `1px solid ${showArchived ? C.warning : C.border}`,

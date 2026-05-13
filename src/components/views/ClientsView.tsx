@@ -48,6 +48,7 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
   const [filtreChargee, setFiltreChargee] = useState("");
   const [filtreStatut, setFiltreStatut] = useState("");
   const [filtrePrescripteur, setFiltrePrescripteur] = useState("");
+  const [sortBy, setSortBy] = useState<"nom_asc" | "nom_desc" | "recent" | "ancien">("nom_asc");
 
   const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
   const [statutsPrise, setStatutsPrise] = useState<StatutConfig[]>([]);
@@ -90,6 +91,14 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
     if (filtreStatut && c.statutPrise !== filtreStatut && c.statutFacturation !== filtreStatut) return false;
     if (filtrePrescripteur && c.prescripteur !== filtrePrescripteur) return false;
     return true;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case "nom_asc": return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" });
+      case "nom_desc": return b.nom.localeCompare(a.nom, "fr", { sensitivity: "base" });
+      case "recent": return (b.id || "").localeCompare(a.id || "");
+      case "ancien": return (a.id || "").localeCompare(b.id || "");
+      default: return 0;
+    }
   });
 
   const resetAll = () => { setSearch(""); setFiltreChargee(""); setFiltreStatut(""); setFiltrePrescripteur(""); };
@@ -165,6 +174,12 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
             {prescripteurs.map((p) => <option key={p.type} value={p.type}>{p.nom}</option>)}
           </select>
         )}
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} style={ss}>
+          <option value="nom_asc">Nom A-Z</option>
+          <option value="nom_desc">Nom Z-A</option>
+          <option value="recent">Plus récent</option>
+          <option value="ancien">Plus ancien</option>
+        </select>
         <ExportDropdown C={C} disabled={clients.length === 0} filename="clients" title="Clients"
           headers={["Entreprise", "SIRET", "Chargée", "Qualification", "Documents", "Statut"]}
           rows={clients.map((c) => { const dt = c.documents.length; const dr = c.documents.filter((d) => d.recu).length; return [c.nom, c.siret || "", c.projets?.[0]?.chargee?.prenom || "", QUALIF_LABELS[c.projets?.[0]?.qualifications?.[0]?.type || ""] || "", `${dr}/${dt}`, FACTURATION_LABELS[c.statutFacturation || ""] || ""]; })}
