@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { BookOpen, Search, Plus, X, Download, Trash2, FileText, FileSpreadsheet, Image as ImageIcon, File, Upload } from "lucide-react";
+import { BookOpen, Search, Plus, X, Download, Trash2, FileText, FileSpreadsheet, Image as ImageIcon, File, Upload, Pencil } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { fixFileUrl } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
@@ -52,6 +52,8 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [editingRessource, setEditingRessource] = useState<{ id: string; nom: string; description: string; categorie: string } | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
 
   const fetchRessources = useCallback(() => {
     fetch("/api/ressources").then((r) => r.ok ? r.json() : []).then((data) => { setRessources(data); setLoading(false); }).catch(() => setLoading(false));
@@ -95,6 +97,24 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
     if (!confirm(`Supprimer la ressource "${nom}" ?`)) return;
     const res = await fetch(`/api/ressources/${id}`, { method: "DELETE" });
     if (res.ok) { fetchRessources(); toast("Ressource supprimée"); }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingRessource) return;
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/ressources/${editingRessource.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nom: editingRessource.nom, description: editingRessource.description, categorie: editingRessource.categorie || null }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setRessources((prev) => prev.map((r) => r.id === updated.id ? { ...r, ...updated } : r));
+        setEditingRessource(null);
+        toast("Ressource mise à jour");
+      } else { alert("Erreur lors de la mise à jour"); }
+    } catch { alert("Erreur réseau"); }
+    finally { setEditSaving(false); }
   };
 
   const inputStyle: React.CSSProperties = { width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" };
@@ -238,14 +258,45 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
                     <Download size={11} /> Télécharger
                   </a>
                   {isAdmin && (
-                    <button onClick={() => handleDelete(r.id, r.nom)} style={{ padding: "6px 10px", borderRadius: 6, border: "none", background: "transparent", cursor: "pointer" }}>
-                      <Trash2 size={12} color="#ef4444" />
-                    </button>
+                    <>
+                      <button onClick={() => setEditingRessource({ id: r.id, nom: r.nom, description: r.description || "", categorie: r.categorie || "" })} title="Modifier" style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                        <Pencil size={12} color={C.textDim} />
+                      </button>
+                      <button onClick={() => handleDelete(r.id, r.nom)} title="Supprimer" style={{ padding: "6px 10px", borderRadius: 6, border: "none", background: "transparent", cursor: "pointer" }}>
+                        <Trash2 size={12} color="#ef4444" />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+      {editingRessource && (
+        <div onClick={(e) => { if (e.target === e.currentTarget) setEditingRessource(null); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
+          <div style={{ background: C.surface, borderRadius: 12, padding: 24, width: "100%", maxWidth: 500, boxShadow: C.shadow }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 600, color: C.text }}>Modifier la ressource</h3>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Titre</label>
+              <input value={editingRessource.nom} onChange={(e) => setEditingRessource({ ...editingRessource, nom: e.target.value })} style={inputStyle} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Description</label>
+              <textarea value={editingRessource.description} onChange={(e) => setEditingRessource({ ...editingRessource, description: e.target.value })} rows={3} style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }} />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Catégorie</label>
+              <input list="categories-edit-list" value={editingRessource.categorie} onChange={(e) => setEditingRessource({ ...editingRessource, categorie: e.target.value })} placeholder="Ex : QUALIBAT, CERTIBAT..." style={inputStyle} />
+              <datalist id="categories-edit-list">{allCategories.map((c) => <option key={c} value={c} />)}</datalist>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button onClick={() => setEditingRessource(null)} disabled={editSaving} style={{ padding: "8px 16px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.text, cursor: "pointer", fontSize: 13 }}>Annuler</button>
+              <button onClick={handleUpdate} disabled={editSaving || !editingRessource.nom.trim()} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600, opacity: editSaving || !editingRessource.nom.trim() ? 0.5 : 1 }}>
+                {editSaving ? "Enregistrement..." : "Enregistrer"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
