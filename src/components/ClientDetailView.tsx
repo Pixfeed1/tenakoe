@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
-  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip, Handshake, CheckCircle, XCircle, Circle, Clock,
+  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip, Handshake, CheckCircle, XCircle, Circle, Clock, Pencil, RotateCcw,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -2485,14 +2485,28 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               {d.recu && d.conformite === "NON_CONFORME" && (
                 <Badge color="#ef4444" bg="rgba(239,68,68,0.1)">Non conforme</Badge>
               )}
-              {d.recu && !d.conformite && d.id && (
+              {d.recu && d.id && (
                 <div style={{ display: "flex", gap: 4, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-                  <button onClick={() => { if (d.id) updateConformite(d.id, "CONFORME"); }} title="Conforme" style={{ padding: 3, borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex" }}>
-                    <CheckCircle size={14} color="#16a34a" />
-                  </button>
-                  <button onClick={() => { if (d.id) { setNonConformeDocId(d.id); setNonConformeMotif(""); } }} title="Non conforme" style={{ padding: 3, borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex" }}>
-                    <XCircle size={14} color="#ef4444" />
-                  </button>
+                  {d.conformite !== "CONFORME" && (
+                    <button onClick={() => { if (d.id) updateConformite(d.id, "CONFORME"); }} title={d.conformite === "NON_CONFORME" ? "Passer en conforme" : "Marquer conforme"} style={{ padding: 3, borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex" }}>
+                      <CheckCircle size={14} color="#16a34a" />
+                    </button>
+                  )}
+                  {d.conformite !== "NON_CONFORME" && (
+                    <button onClick={() => { if (d.id) { setNonConformeDocId(d.id); setNonConformeMotif(d.notes || ""); } }} title={d.conformite === "CONFORME" ? "Passer en non conforme" : "Marquer non conforme"} style={{ padding: 3, borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex" }}>
+                      <XCircle size={14} color="#ef4444" />
+                    </button>
+                  )}
+                  {d.conformite === "NON_CONFORME" && (
+                    <button onClick={() => { if (d.id) { setNonConformeDocId(d.id); setNonConformeMotif(d.notes || ""); } }} title="Modifier le motif" style={{ padding: 3, borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex" }}>
+                      <Pencil size={14} color={C.textDim} />
+                    </button>
+                  )}
+                  {d.conformite && (
+                    <button onClick={() => { if (d.id) updateConformite(d.id, null); }} title="Annuler le statut" style={{ padding: 3, borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex" }}>
+                      <RotateCcw size={14} color={C.textDim} />
+                    </button>
+                  )}
                 </div>
               )}
               {d.id && (
