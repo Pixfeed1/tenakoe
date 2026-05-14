@@ -1540,7 +1540,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               const etape19 = projetEtapes.find((t: { nom: string }) => t.nom.toLowerCase().includes("obtention"));
               const firstActive = projetEtapes.find((t: { active: boolean }) => t.active);
               const dateRows: Array<{ label: string; date: string | undefined | null; apiKey?: string }> = [
-                { label: "Nouveau", date: pData.dateStatutPrise || entrepriseData?.createdAt, apiKey: "dateStatutPrise" },
+                { label: "Nouveau", date: entrepriseData?.createdAt, apiKey: undefined },
                 { label: "Prise en charge", date: pData.dateStatutPrise, apiKey: "dateStatutPrise" },
                 { label: "Payé", date: pData.statutFacturation === "FACTURE_PAYEE_COLLECTE" ? pData.dateStatutFacturation : null, apiKey: "dateStatutFacturation" },
                 { label: "En cours", date: pData.dateEnCours || (firstActive as unknown as { dateRealisee?: string })?.dateRealisee || null, apiKey: "dateEnCours" },
