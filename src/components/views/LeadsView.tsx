@@ -59,6 +59,7 @@ export function LeadsView({ C }: { C: Theme }) {
     depot: "", depotConfigId: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false, interesseAccompagnement: "",
     nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
+    datePriseEnCharge: "",
   });
   const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>>([]);
   const [depots, setDepots] = useState<Array<{ id: string; nom: string }>>([]);
@@ -93,6 +94,7 @@ export function LeadsView({ C }: { C: Theme }) {
     depot: "", depotConfigId: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false, interesseAccompagnement: "",
     nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
+    datePriseEnCharge: "",
   };
 
   const submitLead = async () => {
@@ -292,9 +294,15 @@ export function LeadsView({ C }: { C: Theme }) {
               <span style={{ fontSize: 12, color: C.text }}>Accepte partage coordonnées *</span>
             </div>
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Commentaires</label>
-            <textarea rows={2} style={{ ...inputStyle, resize: "vertical" }} value={form.commentaires} onChange={(e) => setForm({ ...form, commentaires: e.target.value })} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div>
+              <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Date de prise en charge (optionnel)</label>
+              <input type="date" style={inputStyle} value={form.datePriseEnCharge} onChange={(e) => setForm({ ...form, datePriseEnCharge: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Commentaires</label>
+              <textarea rows={2} style={{ ...inputStyle, resize: "vertical" }} value={form.commentaires} onChange={(e) => setForm({ ...form, commentaires: e.target.value })} />
+            </div>
           </div>
           {formError && (
             <div style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)", color: "#dc2626", fontSize: 12, fontWeight: 500 }}>

@@ -281,6 +281,8 @@ model Projet {
   dateEnCours            DateTime?
   dateDepose             DateTime?
   dateQualifie           DateTime?
+  dateRecours            DateTime?
+  dateRefuse             DateTime?
   eligible               String?   @default("A_VERIFIER")
 
   sourceImport   SourceImport? @default(MANUEL)

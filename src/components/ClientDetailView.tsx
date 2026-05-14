@@ -1546,6 +1546,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 { label: "En cours", date: pData.dateEnCours || (firstActive as unknown as { dateRealisee?: string })?.dateRealisee || null, apiKey: "dateEnCours" },
                 { label: "Déposé", date: pData.dateDepose || ((etape17 as unknown as { done?: boolean; dateRealisee?: string })?.done ? (etape17 as unknown as { dateRealisee?: string }).dateRealisee : null), apiKey: "dateDepose" },
                 { label: "Qualifié", date: pData.dateQualifie || ((etape19 as unknown as { done?: boolean; dateRealisee?: string })?.done ? (etape19 as unknown as { dateRealisee?: string }).dateRealisee : null), apiKey: "dateQualifie" },
+                { label: "Recours", date: pData.dateRecours, apiKey: "dateRecours" },
+                { label: "Refusé", date: pData.dateRefuse, apiKey: "dateRefuse" },
               ];
               return (
                 <div key={proj.id} style={{ paddingTop: 10, borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
