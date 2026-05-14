@@ -100,6 +100,8 @@ model Entreprise {
   miseEnRelationAutre String?
   formationsCommentaire String?
   commentaire           String?    @db.Text
+  relancesCommentaire        String?    @db.Text
+  alerteAbandonCommentaire   String?    @db.Text
   alerte1Envoyee     Boolean            @default(false)
   dateAlerte1        DateTime?
   alerte2Envoyee     Boolean            @default(false)

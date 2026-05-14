@@ -367,6 +367,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           relanceDevisFerme: data.relanceDevisFerme ? "true" : "false",
           dateRelanceDevisFerme: data.dateRelanceDevisFerme || "",
           commentaire: data.commentaire || "",
+          relancesCommentaire: data.relancesCommentaire || "",
+          alerteAbandonCommentaire: data.alerteAbandonCommentaire || "",
         });
       })
       .catch(() => {});
@@ -1763,6 +1765,26 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 </div>
               </div>
             ))}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, padding: "8px 0", borderTop: `1px solid ${C.border}` }}>
+              <MessageSquare size={14} color={C.textDim} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: C.textDim, minWidth: 90 }}>Commentaire</span>
+              {editingField === "relancesCommentaire" ? (
+                <input autoFocus value={editFieldValue} onChange={(e) => setEditFieldValue(e.target.value)}
+                  onBlur={async () => {
+                    setEntrepriseData((prev) => prev ? { ...prev, relancesCommentaire: editFieldValue } : prev);
+                    if (client?.id && !isDemoMode) await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ relancesCommentaire: editFieldValue }) }).catch(() => {});
+                    setEditingField(null);
+                  }}
+                  onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingField(null); }}
+                  style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.accent}`, background: C.bg, color: C.text, fontSize: 13, outline: "none" }}
+                />
+              ) : (
+                <span onClick={() => { setEditingField("relancesCommentaire"); setEditFieldValue(entrepriseData?.relancesCommentaire || ""); }}
+                  style={{ flex: 1, fontSize: 13, color: entrepriseData?.relancesCommentaire ? C.text : C.textDim, cursor: "pointer", padding: "4px 8px", borderRadius: 6, minHeight: 24 }}>
+                  {entrepriseData?.relancesCommentaire || "—"}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Procédure alerte avant abandon */}
@@ -1811,6 +1833,26 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   </label>
                 );
               })}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, padding: "8px 0", borderTop: `1px solid ${C.border}` }}>
+                <MessageSquare size={14} color={C.textDim} style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: C.textDim, minWidth: 90 }}>Commentaire</span>
+                {editingField === "alerteAbandonCommentaire" ? (
+                  <input autoFocus value={editFieldValue} onChange={(e) => setEditFieldValue(e.target.value)}
+                    onBlur={async () => {
+                      setEntrepriseData((prev) => prev ? { ...prev, alerteAbandonCommentaire: editFieldValue } : prev);
+                      if (client?.id && !isDemoMode) await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ alerteAbandonCommentaire: editFieldValue }) }).catch(() => {});
+                      setEditingField(null);
+                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingField(null); }}
+                    style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.accent}`, background: C.bg, color: C.text, fontSize: 13, outline: "none" }}
+                  />
+                ) : (
+                  <span onClick={() => { setEditingField("alerteAbandonCommentaire"); setEditFieldValue(entrepriseData?.alerteAbandonCommentaire || ""); }}
+                    style={{ flex: 1, fontSize: 13, color: entrepriseData?.alerteAbandonCommentaire ? C.text : C.textDim, cursor: "pointer", padding: "4px 8px", borderRadius: 6, minHeight: 24 }}>
+                    {entrepriseData?.alerteAbandonCommentaire || "—"}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
