@@ -369,6 +369,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           commentaire: data.commentaire || "",
           relancesCommentaire: data.relancesCommentaire || "",
           alerteAbandonCommentaire: data.alerteAbandonCommentaire || "",
+          createdAt: data.createdAt || "",
           leadSourceCustomFields: data.leadSource?.customFields || null,
           leadSourceChampsConfig: JSON.stringify(data.leadSource?.champsConfig || []),
         });
@@ -1580,7 +1581,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               const dateRows: Array<{ label: string; date: string | undefined | null; apiKey?: string }> = [
                 { label: "Nouveau", date: entrepriseData?.createdAt, apiKey: undefined },
                 { label: "Prise en charge", date: pData.dateStatutPrise, apiKey: "dateStatutPrise" },
-                { label: "Payé", date: pData.statutFacturation === "FACTURE_PAYEE_COLLECTE" ? pData.dateStatutFacturation : null, apiKey: "dateStatutFacturation" },
+                { label: "Payé", date: pData.dateStatutFacturation, apiKey: "dateStatutFacturation" },
                 { label: "En cours", date: pData.dateEnCours || (firstActive as unknown as { dateRealisee?: string })?.dateRealisee || null, apiKey: "dateEnCours" },
                 { label: "Déposé", date: pData.dateDepose || ((etape17 as unknown as { done?: boolean; dateRealisee?: string })?.done ? (etape17 as unknown as { dateRealisee?: string }).dateRealisee : null), apiKey: "dateDepose" },
                 { label: "Qualifié", date: pData.dateQualifie || ((etape19 as unknown as { done?: boolean; dateRealisee?: string })?.done ? (etape19 as unknown as { dateRealisee?: string }).dateRealisee : null), apiKey: "dateQualifie" },
@@ -1623,7 +1624,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                               padding: "1px 4px", borderRadius: 4, border: `1px solid ${r.date ? "transparent" : C.border}`,
                               background: "transparent", color: r.date ? C.text : C.textDim,
                               fontSize: 12, fontWeight: r.date ? 500 : 400, outline: "none", cursor: "pointer",
-                              width: 100, textAlign: "right",
+                              width: 130, minWidth: 130, textAlign: "right",
                             }}
                           />
                         ) : (
