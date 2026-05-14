@@ -678,6 +678,8 @@ function MailTemplatesTab({ C }: { C: Theme }) {
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
+  const [editingTemplate, setEditingTemplate] = useState<{ id: string; nom: string; objet: string; contenu: string } | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
 
   useEffect(() => {
     fetch("/api/mail-templates").then((r) => r.ok ? r.json() : []).then(setTemplates).catch(() => {});
@@ -718,6 +720,17 @@ function MailTemplatesTab({ C }: { C: Theme }) {
     setTemplates((p) => p.filter((t) => t.id !== id));
   };
 
+  const handleUpdate = async () => {
+    if (!editingTemplate || !editingTemplate.nom.trim() || !editingTemplate.objet.trim()) return;
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/mail-templates/${editingTemplate.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nom: editingTemplate.nom, objet: editingTemplate.objet, contenu: editingTemplate.contenu }) });
+      if (res.ok) { const updated = await res.json(); setTemplates((p) => p.map((t) => t.id === updated.id ? { ...t, ...updated } : t)); setEditingTemplate(null); toast("Template mis à jour"); }
+      else { toast("Erreur lors de la mise à jour"); }
+    } catch { toast("Erreur réseau"); }
+    finally { setEditSaving(false); }
+  };
+
   return (
     <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -756,6 +769,7 @@ function MailTemplatesTab({ C }: { C: Theme }) {
               padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
               background: testingId === t.id ? C.surfaceHover : C.blueDim, color: testingId === t.id ? C.textDim : C.blue,
             }}>{testingId === t.id ? "Envoi..." : "Tester"}</button>
+            <button onClick={() => setEditingTemplate({ id: t.id, nom: t.nom, objet: t.objet, contenu: t.contenu })} style={{ padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Modifier</button>
             <button onClick={() => toggleActif(t.id, t.actif)} style={{
               padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
               background: t.actif ? C.accentDim : C.surfaceHover, color: t.actif ? C.accentText : C.textDim,
@@ -768,6 +782,35 @@ function MailTemplatesTab({ C }: { C: Theme }) {
           )}
         </div>
       ))}
+
+      {editingTemplate && (
+        <div onClick={(e) => { if (e.target === e.currentTarget && !editSaving) setEditingTemplate(null); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
+          <div style={{ background: C.surface, borderRadius: 12, padding: 24, width: "100%", maxWidth: 700, maxHeight: "90vh", overflow: "auto", boxShadow: C.shadow }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 600, color: C.text }}>Modifier le template</h3>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Nom *</label>
+              <input value={editingTemplate.nom} onChange={(e) => setEditingTemplate({ ...editingTemplate, nom: e.target.value })} style={inputStyle(C)} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Objet du mail *</label>
+              <input value={editingTemplate.objet} onChange={(e) => setEditingTemplate({ ...editingTemplate, objet: e.target.value })} style={inputStyle(C)} />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Corps du mail</label>
+              <textarea value={editingTemplate.contenu} onChange={(e) => setEditingTemplate({ ...editingTemplate, contenu: e.target.value })} rows={12} style={{ ...inputStyle(C), resize: "vertical", fontFamily: "monospace", fontSize: 12, minHeight: 200 }} />
+              <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>
+                Variables : <code>{`{{civilite}}`}</code>, <code>{`{{nom}}`}</code>, <code>{`{{chargee}}`}</code>, <code>{`{{date_commission}}`}</code>, <code>{`{{date_limite}}`}</code>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button onClick={() => setEditingTemplate(null)} disabled={editSaving} style={{ padding: "8px 16px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.text, cursor: "pointer", fontSize: 13 }}>Annuler</button>
+              <button onClick={handleUpdate} disabled={editSaving || !editingTemplate.nom.trim() || !editingTemplate.objet.trim()} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600, opacity: editSaving || !editingTemplate.nom.trim() || !editingTemplate.objet.trim() ? 0.5 : 1 }}>
+                {editSaving ? "Enregistrement..." : "Enregistrer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
