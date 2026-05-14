@@ -366,6 +366,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           dateRelanceDevis4: data.dateRelanceDevis4 || "",
           relanceDevisFerme: data.relanceDevisFerme ? "true" : "false",
           dateRelanceDevisFerme: data.dateRelanceDevisFerme || "",
+          commentaire: data.commentaire || "",
         });
       })
       .catch(() => {});
@@ -1011,6 +1012,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
               { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
+              { label: "Commentaire", key: "commentaire", value: entrepriseData?.commentaire || "—", Icon: MessageSquare, multiline: true },
             ].map((f, i) => {
               const saveField = async (val: string) => {
                 const original = f.value === "\u2014" ? "" : f.value;
@@ -1156,6 +1158,19 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     <option value="">-- Aucun --</option>
                     {apporteurs.map((a) => <option key={a.id} value={a.id}>{a.prenom ? a.prenom + " " : ""}{a.nom}{a.structure ? ` (${a.structure})` : ""}</option>)}
                   </select>
+                ) : editingField === f.key && (f as { multiline?: boolean }).multiline ? (
+                  <textarea
+                    autoFocus
+                    value={editFieldValue}
+                    onChange={(e) => setEditFieldValue(e.target.value)}
+                    onBlur={() => saveField(editFieldValue)}
+                    rows={4}
+                    style={{
+                      flex: 1, padding: "8px 12px", borderRadius: 6,
+                      border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
+                      fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit", minHeight: 80,
+                    }}
+                  />
                 ) : editingField === f.key ? (
                   <input
                     autoFocus
@@ -1171,7 +1186,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   />
                 ) : (
                   <>
-                    <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{f.value}</span>
+                    <span style={{ fontSize: 13, color: C.text, fontWeight: 500, whiteSpace: (f as { multiline?: boolean }).multiline ? "pre-wrap" : "nowrap" }}>{f.value}</span>
                   </>
                 )}
                 {f.key !== "contact" && editingField !== f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}

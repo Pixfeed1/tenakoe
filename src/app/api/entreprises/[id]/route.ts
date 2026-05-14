@@ -78,6 +78,7 @@ export async function PATCH(
   if (body.miseEnRelation !== undefined) { data.miseEnRelation = body.miseEnRelation; data.dateMiseEnRelation = new Date(); }
   if (body.miseEnRelationAutre !== undefined) data.miseEnRelationAutre = body.miseEnRelationAutre;
   if (body.formationsCommentaire !== undefined) data.formationsCommentaire = body.formationsCommentaire;
+  if (body.commentaire !== undefined) data.commentaire = body.commentaire;
   if (body.alerte1Envoyee !== undefined) { data.alerte1Envoyee = body.alerte1Envoyee; data.dateAlerte1 = body.dateAlerte1 ? new Date(body.dateAlerte1) : (body.alerte1Envoyee ? new Date() : null); }
   if (body.alerte2Envoyee !== undefined) { data.alerte2Envoyee = body.alerte2Envoyee; data.dateAlerte2 = body.dateAlerte2 ? new Date(body.dateAlerte2) : (body.alerte2Envoyee ? new Date() : null); }
   if (body.mailAbandonEnvoye !== undefined) { data.mailAbandonEnvoye = body.mailAbandonEnvoye; data.dateMailAbandon = body.dateMailAbandon ? new Date(body.dateMailAbandon) : (body.mailAbandonEnvoye ? new Date() : null); }

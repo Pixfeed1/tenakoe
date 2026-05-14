@@ -99,6 +99,7 @@ model Entreprise {
   miseEnRelation     MiseEnRelation?    @default(SANS_OBJET)
   miseEnRelationAutre String?
   formationsCommentaire String?
+  commentaire           String?    @db.Text
   alerte1Envoyee     Boolean            @default(false)
   dateAlerte1        DateTime?
   alerte2Envoyee     Boolean            @default(false)
