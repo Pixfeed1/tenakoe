@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/Toast";
 import {
-  Zap, Plus, Check, X, ChevronDown, Building2, Mail, Phone, MapPin, Edit3,
+  Zap, Plus, Check, X, ChevronDown, ChevronUp, Building2, Mail, Phone, MapPin, Edit3,
+  Link2, TrendingUp, Copy, ExternalLink, Inbox,
 } from "lucide-react";
 import { ExportDropdown } from "@/components/ui/ExportDropdown";
 import type { Theme } from "@/lib/theme";
@@ -51,6 +52,10 @@ export function LeadsView({ C }: { C: Theme }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ nomArtisan: "", prenomArtisan: "", nomEntreprise: "", email: "", telephone: "" });
   const [sortBy, setSortBy] = useState<"nom_asc" | "nom_desc" | "recent" | "ancien">("recent");
+  const [prescSortMode, setPrescSortMode] = useState<"activite" | "alpha">("activite");
+  const [hideInactive, setHideInactive] = useState(false);
+  const [showAllPresc, setShowAllPresc] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Form state
   const [form, setForm] = useState({
@@ -195,22 +200,72 @@ export function LeadsView({ C }: { C: Theme }) {
   return (
     <>
       {/* Formulaires prescripteurs */}
-      <div style={{
-        background: C.blueDim, borderRadius: 12, padding: "14px 20px",
-        marginBottom: 16, border: `1px solid ${C.border}`,
-      }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8 }}>Formulaires de transmission prescripteur</div>
-        {prescripteurConfigs.map((p) => (
-          <div key={p.type} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: `1px solid ${C.border}20` }}>
-            {p.logoUrl && <img src={p.logoUrl} alt={p.nom} style={{ width: 22, height: 22, objectFit: "contain" }} />}
-            <span style={{ fontSize: 12, fontWeight: 600, color: C.text, width: 80 }}>{p.nom}</span>
-            <span style={{ fontSize: 11, color: C.blue, flex: 1 }}>{typeof window !== "undefined" ? window.location.origin : ""}{getFormUrl(p.type)}</span>
-            <Button C={C} variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${getFormUrl(p.type)}`); toast("Lien copié"); }}>Copier</Button>
-            <Button C={C} variant="secondary" size="sm" onClick={() => { window.open(getFormUrl(p.type), "_blank"); }}>Voir</Button>
+      {/* Section Liens prescripteur */}
+      {(() => {
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        const leadsThisMonth = (leads || []).reduce((acc: Record<string, number>, l) => {
+          if (l.prescripteur && new Date(l.createdAt) >= startOfMonth) acc[l.prescripteur] = (acc[l.prescripteur] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        const withStats = prescripteurConfigs.map((p) => ({ ...p, leadsCount: leadsThisMonth[p.type] || 0 }));
+        const filtered = hideInactive ? withStats.filter((p) => p.leadsCount > 0) : withStats;
+        const sorted = [...filtered].sort((a, b) => prescSortMode === "alpha" ? a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }) : (b.leadsCount - a.leadsCount || a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" })));
+        const visible = showAllPresc ? sorted : sorted.slice(0, 5);
+        const remaining = sorted.length - visible.length;
+        const handleCopy = (id: string, url: string) => { navigator.clipboard.writeText(url); setCopiedId(id); setTimeout(() => setCopiedId(null), 1500); toast("Lien copié"); };
+
+        return (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <p style={{ fontSize: 11, fontWeight: 500, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5, margin: 0, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Link2 size={12} /> Liens prescripteur <span style={{ color: C.textDim, fontWeight: 400 }}>({prescripteurConfigs.length})</span>
+              </p>
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                <select value={prescSortMode} onChange={(e) => setPrescSortMode(e.target.value as "activite" | "alpha")} style={{ fontSize: 11, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, cursor: "pointer" }}>
+                  <option value="activite">Tri : activité</option>
+                  <option value="alpha">Tri : alphabétique</option>
+                </select>
+                <button onClick={() => setHideInactive(!hideInactive)} style={{ fontSize: 11, color: hideInactive ? C.accentText : C.textMuted, cursor: "pointer", background: hideInactive ? C.accentDim : "transparent", border: "none", padding: "4px 8px", borderRadius: 4 }}>
+                  {hideInactive ? "Tout afficher" : "Masquer inactifs"}
+                </button>
+                <button onClick={() => { const all = sorted.map((p) => `${p.nom}: ${origin}${getFormUrl(p.type)}`).join("\n"); navigator.clipboard.writeText(all); toast(`${sorted.length} liens copiés`); }} style={{ fontSize: 11, color: C.accentText, cursor: "pointer", background: "transparent", border: "none", padding: "4px 8px" }}>
+                  Tout copier
+                </button>
+              </div>
+            </div>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: C.shadow, overflow: "hidden" }}>
+              {visible.length === 0 && <div style={{ padding: "20px 14px", textAlign: "center", color: C.textDim, fontSize: 13 }}>{hideInactive ? "Aucun prescripteur actif ce mois." : "Aucun prescripteur configuré."}</div>}
+              {visible.map((p, idx) => {
+                const url = `${origin}${getFormUrl(p.type)}`;
+                const isTop = idx === 0 && prescSortMode === "activite" && p.leadsCount > 0;
+                const isCopied = copiedId === p.type;
+                const initials = p.nom.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+                return (
+                  <div key={p.type} style={{ display: "flex", alignItems: "center", padding: "10px 14px", borderBottom: idx < visible.length - 1 ? `1px solid ${C.border}` : "none", gap: 12, opacity: p.leadsCount === 0 ? 0.55 : 1, transition: "background 0.15s" }} onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }} onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+                    {p.logoUrl ? <img src={p.logoUrl} alt={p.nom} style={{ width: 32, height: 32, borderRadius: 6, objectFit: "contain", flexShrink: 0, background: "#fff" }} /> : <div style={{ width: 32, height: 32, borderRadius: 6, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 500, fontSize: 13, flexShrink: 0 }}>{initials}</div>}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nom}</div>
+                      <div style={{ fontSize: 11, color: C.textDim, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{url.replace(/^https?:\/\//, "")}</div>
+                    </div>
+                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 999, fontWeight: 500, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 3, background: p.leadsCount === 0 ? C.bg : isTop ? C.blueDim : C.accentDim, color: p.leadsCount === 0 ? C.textDim : isTop ? C.blue : C.accentText }}>
+                      {isTop && <TrendingUp size={10} />}{p.leadsCount === 0 ? "0 ce mois" : `${p.leadsCount} lead${p.leadsCount > 1 ? "s" : ""}`}
+                    </span>
+                    <button onClick={() => handleCopy(p.type, url)} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: isCopied ? C.accentDim : "transparent", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: isCopied ? C.accentText : C.textMuted, whiteSpace: "nowrap" }}>
+                      {isCopied ? <Check size={11} /> : <Copy size={11} />}{isCopied ? "Copié" : "Copier"}
+                    </button>
+                    <a href={url} target="_blank" rel="noopener noreferrer" style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: C.textMuted, textDecoration: "none", whiteSpace: "nowrap" }}>
+                      <ExternalLink size={11} /> Voir
+                    </a>
+                  </div>
+                );
+              })}
+              {remaining > 0 && <div style={{ padding: "9px 14px", background: C.bg, textAlign: "center", borderTop: `1px solid ${C.border}` }}><button onClick={() => setShowAllPresc(true)} style={{ fontSize: 11, color: C.textMuted, cursor: "pointer", background: "transparent", border: "none" }}><ChevronDown size={12} style={{ verticalAlign: -1, marginRight: 2 }} />Voir {remaining} de plus</button></div>}
+              {showAllPresc && sorted.length > 5 && <div style={{ padding: "9px 14px", background: C.bg, textAlign: "center", borderTop: `1px solid ${C.border}` }}><button onClick={() => setShowAllPresc(false)} style={{ fontSize: 11, color: C.textMuted, cursor: "pointer", background: "transparent", border: "none" }}><ChevronUp size={12} style={{ verticalAlign: -1, marginRight: 2 }} />Réduire</button></div>}
+            </div>
           </div>
-        ))}
-        {prescripteurConfigs.length === 0 && <div style={{ fontSize: 12, color: C.textDim }}>Aucun prescripteur configuré</div>}
-      </div>
+        );
+      })()}
 
       {/* Action bar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -329,8 +384,13 @@ export function LeadsView({ C }: { C: Theme }) {
         {loading ? (
           <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>
         ) : leads.length === 0 ? (
-          <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>
-            Aucun lead en attente de conversion. Les nouveaux contacts arrivés via le formulaire public apparaîtront ici.
+          <div style={{ background: C.surface, border: `1px dashed ${C.border}`, borderRadius: 10, padding: "30px 24px", textAlign: "center" }}>
+            <Inbox size={28} color={C.textDim} style={{ marginBottom: 8, display: "inline-block" }} />
+            <p style={{ margin: "0 0 4px", fontSize: 13, color: C.textMuted }}>Aucun lead en attente de conversion</p>
+            <p style={{ margin: "0 0 14px", fontSize: 11, color: C.textDim }}>Les nouveaux contacts apparaîtront ici dès qu&apos;un prescripteur soumettra son formulaire.</p>
+            <button onClick={() => setShowForm(true)} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Plus size={11} /> Créer un lead manuel
+            </button>
           </div>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
