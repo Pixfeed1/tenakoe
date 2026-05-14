@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
       prenomConseiller: body.prenomConseiller || null,
       emailConseiller: body.emailConseiller || null,
       telephoneConseiller: body.telephoneConseiller || null,
+      customFields: body.customFields || null,
     },
   });
 

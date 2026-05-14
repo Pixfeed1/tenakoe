@@ -12,6 +12,7 @@ import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { GuideTooltip } from "@/components/GuideSystem";
 import { getStatusIcon, AVAILABLE_ICONS } from "@/lib/icons";
+import { FormBuilder as FormBuilderComponent, FormPreview as FormPreviewComponent } from "@/components/FormBuilder";
 
 type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "antennes" | "notifications" | "import" | "securite" | "compte" | "corbeille";
 
@@ -488,7 +489,11 @@ function PipelineTab({ C }: { C: Theme }) {
 // ===================== PRESCRIPTEURS =====================
 function PrescripteursTab({ C }: { C: Theme }) {
   const { toast } = useToast();
-  const [configs, setConfigs] = useState<Array<{ id: string; type: string; nom: string; logoUrl: string | null; actif: boolean }>>([]);
+  const [configs, setConfigs] = useState<Array<{ id: string; type: string; nom: string; logoUrl: string | null; couleur?: string | null; description?: string | null; actif: boolean; champs?: Array<{ id: string; key: string; label: string; type: string; placeholder?: string | null; helpText?: string | null; required: boolean; ordre: number; largeur: string; options?: string | null; nativeField?: string | null }> }>>([]);
+  const [wizardId, setWizardId] = useState<string | null>(null);
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
+  const [wizardConfig, setWizardConfig] = useState({ nom: "", couleur: "#3b82f6", description: "" });
+  const [wizardChamps, setWizardChamps] = useState<Array<{ id: string; key: string; label: string; type: string; placeholder?: string | null; helpText?: string | null; required: boolean; ordre: number; largeur: string; options?: string | null; nativeField?: string | null }>>([]);
   const [editLogoId, setEditLogoId] = useState<string | null>(null);
   const [editLogoUrl, setEditLogoUrl] = useState("");
   const [newNom, setNewNom] = useState("");
@@ -576,6 +581,17 @@ function PrescripteursTab({ C }: { C: Theme }) {
               background: expandedDepots === p.type ? C.blueDim : "transparent", color: expandedDepots === p.type ? C.blue : C.textDim,
             }}>
               Dépôts ({expandedDepots === p.type ? depots.length : "..."})
+            </button>
+            <button onClick={() => {
+              setWizardId(p.id);
+              setWizardStep(2);
+              setWizardConfig({ nom: p.nom, couleur: (p as unknown as { couleur?: string }).couleur || "#3b82f6", description: (p as unknown as { description?: string }).description || "" });
+              setWizardChamps((p as unknown as { champs?: typeof wizardChamps }).champs || []);
+            }} style={{
+              padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`, fontSize: 11, fontWeight: 600, cursor: "pointer",
+              background: "transparent", color: C.textDim,
+            }}>
+              Formulaire
             </button>
             <Badge color={C.textDim} bg={C.surfaceHover}>{p.type}</Badge>
             <button onClick={() => toggleActif(p.id, p.actif)} style={{
@@ -665,6 +681,44 @@ function PrescripteursTab({ C }: { C: Theme }) {
           Ajouter
         </button>
       </div>
+
+      {wizardId && (
+        <div onClick={(e) => { if (e.target === e.currentTarget) { setWizardId(null); setWizardStep(1); } }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
+          <div style={{ background: C.surface, borderRadius: 14, padding: 24, width: "100%", maxWidth: 960, maxHeight: "90vh", overflow: "auto", boxShadow: C.shadow }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.text }}>Configuration du formulaire — {wizardConfig.nom}</h3>
+              <div style={{ display: "flex", gap: 6 }}>
+                {([1, 2, 3] as const).map((s) => (
+                  <span key={s} style={{ padding: "4px 12px", borderRadius: 999, fontSize: 11, fontWeight: 600, background: wizardStep === s ? C.accent : C.surfaceHover, color: wizardStep === s ? "#fff" : C.textDim }}>
+                    {s === 1 ? "Infos" : s === 2 ? "Champs" : "Aperçu"}
+                  </span>
+                ))}
+              </div>
+            </div>
+            {wizardStep === 1 && (
+              <div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Couleur de marque</label>
+                  <input type="color" value={wizardConfig.couleur} onChange={(e) => setWizardConfig({ ...wizardConfig, couleur: e.target.value })} style={{ width: 48, height: 32, border: "none", cursor: "pointer" }} />
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Description (en tête du formulaire)</label>
+                  <textarea value={wizardConfig.description} onChange={(e) => setWizardConfig({ ...wizardConfig, description: e.target.value })} rows={3} style={inputStyle(C)} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                  <button onClick={() => { setWizardId(null); setWizardStep(1); }} style={{ padding: "8px 16px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.text, cursor: "pointer", fontSize: 13 }}>Annuler</button>
+                  <button onClick={async () => {
+                    await fetch("/api/prescripteur-config", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: wizardId, couleur: wizardConfig.couleur, description: wizardConfig.description }) });
+                    setWizardStep(2);
+                  }} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Suivant</button>
+                </div>
+              </div>
+            )}
+            {wizardStep === 2 && <FormBuilderComponent C={C} prescripteurConfigId={wizardId} champs={wizardChamps} setChamps={setWizardChamps} onPrev={() => setWizardStep(1)} onNext={() => setWizardStep(3)} />}
+            {wizardStep === 3 && <FormPreviewComponent C={C} config={wizardConfig} champs={wizardChamps} onPrev={() => setWizardStep(2)} onClose={() => { setWizardId(null); setWizardStep(1); fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : []).then(setConfigs).catch(() => {}); toast("Formulaire sauvegardé"); }} />}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

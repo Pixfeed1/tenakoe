@@ -719,6 +719,7 @@ model LeadFormulaire {
   prenomConseiller    String?
   emailConseiller     String?
   telephoneConseiller String?
+  customFields        String?    @db.Text
 }
 
 // ============================================================
@@ -814,11 +815,36 @@ model WebhookEvenement {
 // ============================================================
 
 model PrescripteurConfig {
-  id      String  @id @default(cuid())
-  type    String  @unique
-  nom     String
-  logoUrl String?
-  actif   Boolean @default(true)
+  id          String              @id @default(cuid())
+  type        String              @unique
+  nom         String
+  logoUrl     String?
+  couleur     String?
+  description String?             @db.Text
+  actif       Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt @default(now())
+  champs      ChampFormulaire[]
+}
+
+model ChampFormulaire {
+  id                   String             @id @default(cuid())
+  prescripteurConfigId String
+  prescripteurConfig   PrescripteurConfig @relation(fields: [prescripteurConfigId], references: [id], onDelete: Cascade)
+  key                  String
+  label                String
+  type                 String
+  placeholder          String?
+  helpText             String?
+  required             Boolean            @default(false)
+  ordre                Int                @default(0)
+  largeur              String             @default("full")
+  options              String?            @db.Text
+  nativeField          String?
+  createdAt            DateTime           @default(now())
+
+  @@unique([prescripteurConfigId, key])
+  @@index([prescripteurConfigId, ordre])
 }
 
 model DepotConfig {
