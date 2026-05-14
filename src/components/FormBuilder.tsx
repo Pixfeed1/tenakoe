@@ -60,7 +60,7 @@ function SortableCard({ champ, selected, onClick, onDelete, C }: {
       <div {...attributes} {...listeners} style={{ cursor: "grab", flexShrink: 0 }}><GripVertical size={14} color={C.textDim} /></div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{champ.label}</div>
-        <div style={{ fontSize: 11, color: C.textDim }}>{champ.type}{champ.nativeField ? ` (natif: ${champ.nativeField})` : ""}{champ.required ? " *" : ""}{champ.largeur === "half" ? " · demi-largeur" : ""}</div>
+        <div style={{ fontSize: 11, color: C.textDim }}>{champ.type}{champ.nativeField ? ` (natif: ${champ.nativeField})` : ""}{champ.required ? " *" : ""}{champ.largeur === "half" ? " · 1/2" : champ.largeur === "third" ? " · 1/3" : ""}</div>
       </div>
       <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><Trash2 size={13} color="#ef4444" /></button>
     </div>
@@ -86,9 +86,14 @@ function ChampProperties({ champ, onUpdate, C }: { champ: Champ; onUpdate: (u: P
           <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.text, cursor: "pointer" }}>
             <input type="checkbox" checked={champ.required} onChange={(e) => onUpdate({ required: e.target.checked })} /> Obligatoire
           </label>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.text, cursor: "pointer" }}>
-            <input type="checkbox" checked={champ.largeur === "half"} onChange={(e) => onUpdate({ largeur: e.target.checked ? "half" : "full" })} /> Demi-largeur
-          </label>
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            <span style={{ fontSize: 11, color: C.textDim }}>Largeur :</span>
+            {(["full", "half", "third"] as const).map((l) => (
+              <button key={l} type="button" onClick={() => onUpdate({ largeur: l })} style={{ padding: "2px 8px", borderRadius: 4, border: `1px solid ${champ.largeur === l ? C.accent : C.border}`, background: champ.largeur === l ? C.accentDim : "transparent", color: champ.largeur === l ? C.accentText : C.textDim, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>
+                {l === "full" ? "100%" : l === "half" ? "50%" : "33%"}
+              </button>
+            ))}
+          </div>
         </div>
       </>}
       {hasOptions && (
@@ -226,11 +231,11 @@ export function FormPreview({ C, config, champs, onPrev, onClose }: {
           <h2 style={{ fontSize: 18, fontWeight: 700, color: accent, margin: 0 }}>{config.nom}</h2>
           {config.description && <p style={{ fontSize: 13, color: C.textDim, margin: "6px 0 0" }}>{config.description}</p>}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10 }}>
           {champs.map((c) => {
-            const full = c.largeur === "full" || c.type === "title" || c.type === "textarea";
+            const span = c.type === "title" || c.type === "textarea" ? 6 : c.largeur === "third" ? 2 : c.largeur === "half" ? 3 : 6;
             return (
-              <div key={c.id} style={{ gridColumn: full ? "1 / -1" : undefined }}>
+              <div key={c.id} style={{ gridColumn: `span ${span}` }}>
                 {c.type === "title" ? (
                   <h3 style={{ fontSize: 14, fontWeight: 700, color: C.text, borderBottom: `2px solid ${accent}`, paddingBottom: 4, marginTop: 8 }}>{c.label}</h3>
                 ) : (

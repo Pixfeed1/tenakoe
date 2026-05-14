@@ -616,12 +616,17 @@ function PrescripteursTab({ C }: { C: Theme }) {
           {editLogoId === p.id && (
             <div style={{ padding: "0 12px 12px 34px" }}>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input
-                  placeholder="URL du logo (ex: /logos/pdb.png)"
-                  value={editLogoUrl}
-                  onChange={(e) => setEditLogoUrl(e.target.value)}
-                  style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
-                />
+                <label style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px dashed ${C.border}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                  <Upload size={12} /> {editLogoUrl ? "Changer le logo" : "Charger un logo"}
+                  <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const fd = new FormData(); fd.append("file", file);
+                    const res = await fetch("/api/upload", { method: "POST", body: fd });
+                    if (res.ok) { const { url } = await res.json(); setEditLogoUrl(url); }
+                  }} />
+                </label>
+                {editLogoUrl && <img src={editLogoUrl} alt="Aperçu" style={{ width: 32, height: 32, objectFit: "contain", borderRadius: 4 }} />}
                 <button onClick={async () => {
                   const res = await fetch("/api/prescripteur-config", {
                     method: "PATCH", headers: { "Content-Type": "application/json" },
