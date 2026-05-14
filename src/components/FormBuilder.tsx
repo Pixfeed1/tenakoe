@@ -74,16 +74,16 @@ function ChampProperties({ champ, onUpdate, C }: { champ: Champ; onUpdate: (u: P
   const [newOpt, setNewOpt] = useState("");
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 2 }}>Label</label>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 10px", alignItems: "flex-end" }}>
+      <div style={{ flex: "1 1 120px", minWidth: 100 }}><label style={{ fontSize: 10, color: C.textDim }}>Label</label>
         <input value={champ.label} onChange={(e) => onUpdate({ label: e.target.value })} style={iStyle} /></div>
       {champ.type !== "title" && <>
-        <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 2 }}>Placeholder</label>
+        <div style={{ flex: "1 1 120px", minWidth: 100 }}><label style={{ fontSize: 10, color: C.textDim }}>Placeholder</label>
           <input value={champ.placeholder || ""} onChange={(e) => onUpdate({ placeholder: e.target.value || null })} style={iStyle} /></div>
-        <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 2 }}>Texte d&apos;aide</label>
+        <div style={{ flex: "1 1 120px", minWidth: 100 }}><label style={{ fontSize: 10, color: C.textDim }}>Texte d&apos;aide</label>
           <input value={champ.helpText || ""} onChange={(e) => onUpdate({ helpText: e.target.value || null })} style={iStyle} /></div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.text, cursor: "pointer" }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: C.text, cursor: "pointer" }}>
             <input type="checkbox" checked={champ.required} onChange={(e) => onUpdate({ required: e.target.checked })} /> Obligatoire
           </label>
           <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
@@ -97,8 +97,8 @@ function ChampProperties({ champ, onUpdate, C }: { champ: Champ; onUpdate: (u: P
         </div>
       </>}
       {hasOptions && (
-        <div>
-          <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Options</label>
+        <div style={{ flex: "1 1 100%", minWidth: 0 }}>
+          <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 3 }}>Options</label>
           {opts.map((o, i) => (
             <div key={i} style={{ display: "flex", gap: 4, marginBottom: 4 }}>
               <input value={o} onChange={(e) => { const n = [...opts]; n[i] = e.target.value; onUpdate({ options: JSON.stringify(n) }); }} style={{ ...iStyle, flex: 1 }} />
@@ -197,7 +197,7 @@ export function FormBuilder({ C, prescripteurConfigId, champs, setChamps, onPrev
                   <div key={c.id}>
                     <SortableCard champ={c} selected={selectedId === c.id} onClick={() => setSelectedId(selectedId === c.id ? null : c.id)} onDelete={() => deleteChamp(c.id)} C={C} />
                     {selectedId === c.id && (
-                      <div style={{ padding: "10px 12px", marginTop: -1, borderRadius: "0 0 8px 8px", border: `1px solid ${C.accent}`, borderTop: "none", background: C.bg }}>
+                      <div style={{ padding: "8px 10px", marginTop: -1, borderRadius: "0 0 8px 8px", border: `1px solid ${C.accent}`, borderTop: "none", background: C.bg }}>
                         <ChampProperties champ={c} onUpdate={(u) => updateChamp(c.id, u)} C={C} />
                       </div>
                     )}
