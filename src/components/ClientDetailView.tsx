@@ -1012,7 +1012,6 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
               { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
-              { label: "Commentaire", key: "commentaire", value: entrepriseData?.commentaire || "—", Icon: MessageSquare, multiline: true },
             ].map((f, i) => {
               const saveField = async (val: string) => {
                 const original = f.value === "\u2014" ? "" : f.value;
@@ -1233,6 +1232,24 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               ))}
             </div>
           )}
+          {/* Bloc Commentaire libre */}
+          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 18, boxShadow: C.shadow }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <MessageSquare size={14} color={C.textDim} />
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: C.text, margin: 0 }}>Commentaire</h3>
+            </div>
+            <textarea
+              value={entrepriseData?.commentaire || ""}
+              onChange={(e) => setEntrepriseData((prev) => prev ? { ...prev, commentaire: e.target.value } : prev)}
+              onBlur={async (e) => {
+                if (!client?.id || isDemoMode) return;
+                await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ commentaire: e.target.value }) }).catch(() => {});
+              }}
+              placeholder="Notes libres sur l'entreprise..."
+              rows={5}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit", minHeight: 100, boxSizing: "border-box", lineHeight: 1.5 }}
+            />
+          </div>
           {/* BLOC 1 — Statut & Facturation (allégé) */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>
