@@ -369,6 +369,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           commentaire: data.commentaire || "",
           relancesCommentaire: data.relancesCommentaire || "",
           alerteAbandonCommentaire: data.alerteAbandonCommentaire || "",
+          leadSourceCustomFields: data.leadSource?.customFields || null,
+          leadSourceChampsConfig: JSON.stringify(data.leadSource?.champsConfig || []),
         });
       })
       .catch(() => {});
@@ -1252,6 +1254,42 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit", minHeight: 100, boxSizing: "border-box", lineHeight: 1.5 }}
             />
           </div>
+          {/* Bloc Informations complémentaires (champs custom prescripteur) */}
+          {(() => {
+            if (!entrepriseData?.leadSourceCustomFields) return null;
+            let customData: Record<string, string> = {};
+            try { customData = JSON.parse(entrepriseData.leadSourceCustomFields); } catch { return null; }
+            const keys = Object.keys(customData).filter((k) => { const v = customData[k]; return v !== "" && v !== null && v !== undefined && v !== "false"; });
+            if (keys.length === 0) return null;
+            let champsConfig: Array<{ key: string; label: string; type: string; options: string | null }> = [];
+            try { champsConfig = JSON.parse(entrepriseData.leadSourceChampsConfig || "[]"); } catch { /* ignore */ }
+            const getLabel = (key: string) => champsConfig.find((c) => c.key === key)?.label || key;
+            const getDisplayValue = (key: string, value: string) => {
+              const champ = champsConfig.find((c) => c.key === key);
+              if (!champ) return value;
+              if (champ.type === "checkbox") return value === "true" ? "Oui" : "Non";
+              if (champ.type === "multicheckbox") { try { const arr = JSON.parse(value); return Array.isArray(arr) ? arr.join(", ") : value; } catch { return value; } }
+              if (champ.type === "date" && value) { try { return new Date(value).toLocaleDateString("fr-FR"); } catch { return value; } }
+              return value;
+            };
+            return (
+              <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 18, boxShadow: C.shadow }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <FileText size={14} color={C.textDim} />
+                  <h3 style={{ fontSize: 13, fontWeight: 600, color: C.text, margin: 0 }}>Informations complémentaires</h3>
+                  <span style={{ fontSize: 11, color: C.textDim }}>(saisies par le prescripteur)</span>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", fontSize: 13 }}>
+                  {keys.map((key) => (
+                    <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "5px 0", borderBottom: `1px dashed ${C.border}`, gap: 12 }}>
+                      <span style={{ color: C.textMuted, fontSize: 12, flexShrink: 0 }}>{getLabel(key)}</span>
+                      <span style={{ color: C.text, fontWeight: 500, textAlign: "right", maxWidth: "65%", wordBreak: "break-word", whiteSpace: "pre-wrap" }}>{getDisplayValue(key, customData[key])}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
           {/* BLOC 1 — Statut & Facturation (allégé) */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Statut & Facturation</h3>

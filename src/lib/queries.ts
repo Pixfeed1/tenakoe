@@ -212,7 +212,7 @@ export async function getRecentActivity(limit = 10) {
 // ========================
 
 export async function getEntrepriseDetail(id: string) {
-  return prisma.entreprise.findUnique({
+  const entreprise = await prisma.entreprise.findUnique({
     where: { id },
     include: {
       contacts: true,
@@ -248,6 +248,25 @@ export async function getEntrepriseDetail(id: string) {
       },
     },
   });
+
+  if (!entreprise) return null;
+
+  const leadSource = await prisma.leadFormulaire.findFirst({
+    where: { entrepriseId: id },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, prescripteur: true, customFields: true, createdAt: true },
+  });
+
+  let champsConfig: Array<{ key: string; label: string; type: string; options: string | null }> = [];
+  if (leadSource?.prescripteur) {
+    const pc = await prisma.prescripteurConfig.findUnique({
+      where: { type: leadSource.prescripteur },
+      include: { champs: { orderBy: { ordre: "asc" } } },
+    });
+    if (pc?.champs) champsConfig = pc.champs.map((c) => ({ key: c.key, label: c.label, type: c.type, options: c.options }));
+  }
+
+  return { ...entreprise, leadSource: leadSource ? { ...leadSource, champsConfig } : null };
 }
 
 export async function getAlertes(userId: string) {
