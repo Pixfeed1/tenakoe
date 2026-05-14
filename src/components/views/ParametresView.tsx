@@ -601,6 +601,17 @@ function PrescripteursTab({ C }: { C: Theme }) {
             }}>
               {p.actif ? "Archiver" : "Réactiver"}
             </button>
+            <button onClick={async () => {
+              if (!window.confirm(`Supprimer définitivement "${p.nom}" ? Cette action est irréversible.`)) return;
+              const res = await fetch("/api/prescripteur-config", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: p.id }) });
+              if (res.ok) { setConfigs((prev) => prev.filter((c) => c.id !== p.id)); toast("Prescripteur supprimé"); }
+              else { const d = await res.json().catch(() => ({})); toast(d.error || "Erreur"); }
+            }} style={{
+              padding: "4px 10px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600, cursor: "pointer",
+              background: "transparent", color: "#ef4444",
+            }}>
+              <Trash2 size={12} />
+            </button>
           </div>
           {editLogoId === p.id && (
             <div style={{ padding: "0 12px 12px 34px" }}>

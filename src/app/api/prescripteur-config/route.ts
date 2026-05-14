@@ -3,12 +3,20 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
 
 export async function GET() {
-  const configs = await prisma.prescripteurConfig.findMany({
-    where: { actif: true },
-    orderBy: { nom: "asc" },
-    include: { champs: { orderBy: { ordre: "asc" } } },
-  });
-  return NextResponse.json(configs);
+  try {
+    const configs = await prisma.prescripteurConfig.findMany({
+      where: { actif: true },
+      orderBy: { nom: "asc" },
+      include: { champs: { orderBy: { ordre: "asc" } } },
+    });
+    return NextResponse.json(configs);
+  } catch {
+    const configs = await prisma.prescripteurConfig.findMany({
+      where: { actif: true },
+      orderBy: { nom: "asc" },
+    });
+    return NextResponse.json(configs);
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -18,13 +26,19 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   if (!body.nom) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
 
-  const type = body.nom.toUpperCase().replace(/[^A-Z0-9]/g, "_").replace(/_+/g, "_");
+  const type = body.nom.toUpperCase().replace(/[^A-Z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
 
-  const config = await prisma.prescripteurConfig.create({
-    data: { type, nom: body.nom, logoUrl: body.logoUrl || null, couleur: body.couleur || null, description: body.description || null },
-    include: { champs: true },
-  });
-  return NextResponse.json(config, { status: 201 });
+  try {
+    const existing = await prisma.prescripteurConfig.findUnique({ where: { type } });
+    if (existing) return NextResponse.json({ error: `Un prescripteur avec le code "${type}" existe déjà` }, { status: 409 });
+
+    const config = await prisma.prescripteurConfig.create({
+      data: { type, nom: body.nom, logoUrl: body.logoUrl || null, couleur: body.couleur || null, description: body.description || null },
+    });
+    return NextResponse.json(config, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Erreur création prescripteur" }, { status: 500 });
+  }
 }
 
 export async function PATCH(request: NextRequest) {
@@ -39,6 +53,22 @@ export async function PATCH(request: NextRequest) {
   if (body.couleur !== undefined) data.couleur = body.couleur;
   if (body.description !== undefined) data.description = body.description;
 
-  const config = await prisma.prescripteurConfig.update({ where: { id: body.id }, data, include: { champs: { orderBy: { ordre: "asc" } } } });
-  return NextResponse.json(config);
+  try {
+    const config = await prisma.prescripteurConfig.update({ where: { id: body.id }, data, include: { champs: { orderBy: { ordre: "asc" } } } });
+    return NextResponse.json(config);
+  } catch {
+    const config = await prisma.prescripteurConfig.update({ where: { id: body.id }, data });
+    return NextResponse.json(config);
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+
+  const body = await request.json();
+  if (!body.id) return NextResponse.json({ error: "id requis" }, { status: 400 });
+
+  await prisma.prescripteurConfig.delete({ where: { id: body.id } });
+  return NextResponse.json({ success: true });
 }
