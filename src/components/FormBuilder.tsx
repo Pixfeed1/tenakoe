@@ -170,8 +170,9 @@ export function FormBuilder({ C, prescripteurConfigId, champs, setChamps, onPrev
 
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "200px 1fr 260px", gap: 14, minHeight: 400 }}>
-        <div style={{ borderRight: `1px solid ${C.border}`, paddingRight: 12, overflowY: "auto", maxHeight: 500 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 320px", gap: 14, minHeight: 450 }}>
+        {/* Palette gauche */}
+        <div style={{ borderRight: `1px solid ${C.border}`, paddingRight: 12, overflowY: "auto", maxHeight: 550 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", marginBottom: 6 }}>Champs natifs</div>
           {NATIVE_FIELDS.map((nf) => (
             <button key={nf.nativeField} onClick={() => addChamp(nf.type, nf.nativeField, nf.label)} disabled={champs.some((c) => c.nativeField === nf.nativeField)} style={{ ...pStyle, opacity: champs.some((c) => c.nativeField === nf.nativeField) ? 0.4 : 1 }}>
@@ -186,24 +187,70 @@ export function FormBuilder({ C, prescripteurConfigId, champs, setChamps, onPrev
           ))}
         </div>
 
-        <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-          <SortableContext items={champs.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, overflowY: "auto", maxHeight: 500 }}>
-              {champs.length === 0 && <div style={{ color: C.textDim, padding: 40, textAlign: "center", fontSize: 13 }}>Cliquez sur un champ dans la palette pour commencer</div>}
-              {champs.map((c) => <SortableCard key={c.id} champ={c} selected={selectedId === c.id} onClick={() => setSelectedId(c.id)} onDelete={() => deleteChamp(c.id)} C={C} />)}
-            </div>
-          </SortableContext>
-        </DndContext>
+        {/* Centre : canvas + propriétés inline */}
+        <div style={{ overflowY: "auto", maxHeight: 550 }}>
+          <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+            <SortableContext items={champs.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {champs.length === 0 && <div style={{ color: C.textDim, padding: 40, textAlign: "center", fontSize: 13 }}>Cliquez sur un champ dans la palette pour commencer</div>}
+                {champs.map((c) => (
+                  <div key={c.id}>
+                    <SortableCard champ={c} selected={selectedId === c.id} onClick={() => setSelectedId(selectedId === c.id ? null : c.id)} onDelete={() => deleteChamp(c.id)} C={C} />
+                    {selectedId === c.id && (
+                      <div style={{ padding: "10px 12px", marginTop: -1, borderRadius: "0 0 8px 8px", border: `1px solid ${C.accent}`, borderTop: "none", background: C.bg }}>
+                        <ChampProperties champ={c} onUpdate={(u) => updateChamp(c.id, u)} C={C} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
 
-        <div style={{ borderLeft: `1px solid ${C.border}`, paddingLeft: 12, overflowY: "auto", maxHeight: 500 }}>
-          {selected ? (
-            <>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", marginBottom: 8 }}>Propriétés</div>
-              <ChampProperties champ={selected} onUpdate={(u) => updateChamp(selected.id, u)} C={C} />
-            </>
-          ) : (
-            <div style={{ color: C.textDim, fontSize: 12, padding: 20 }}>Sélectionnez un champ</div>
-          )}
+        {/* Droite : aperçu live */}
+        <div style={{ borderLeft: `1px solid ${C.border}`, paddingLeft: 14, overflowY: "auto", maxHeight: 550 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", marginBottom: 8 }}>Aperçu du formulaire</div>
+          <div style={{ padding: 14, borderRadius: 10, border: `1px solid ${C.border}`, background: C.bg }}>
+            {champs.length === 0 ? (
+              <div style={{ color: C.textDim, fontSize: 12, textAlign: "center", padding: 20 }}>Ajoutez des champs pour voir l&apos;aperçu</div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+                {champs.map((c) => {
+                  const span = c.type === "title" || c.type === "textarea" ? 6 : c.largeur === "third" ? 2 : c.largeur === "half" ? 3 : 6;
+                  return (
+                    <div key={c.id} style={{ gridColumn: `span ${span}` }}>
+                      {c.type === "title" ? (
+                        <h4 style={{ fontSize: 12, fontWeight: 700, color: C.text, borderBottom: `2px solid ${C.accent}`, paddingBottom: 3, margin: "6px 0 2px" }}>{c.label}</h4>
+                      ) : (
+                        <>
+                          <label style={{ fontSize: 10, color: C.textDim, display: "block", marginBottom: 2 }}>{c.label}{c.required ? " *" : ""}</label>
+                          {c.type === "textarea" ? (
+                            <textarea disabled rows={2} placeholder={c.placeholder || ""} style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.surface, color: C.textDim, fontSize: 10, resize: "none", boxSizing: "border-box" }} />
+                          ) : c.type === "select" ? (
+                            <select disabled style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.surface, color: C.textDim, fontSize: 10 }}>
+                              <option>{c.placeholder || "Choisir..."}</option>
+                            </select>
+                          ) : c.type === "checkbox" ? (
+                            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: C.text }}><input type="checkbox" disabled /> {c.placeholder || c.label}</label>
+                          ) : c.type === "radio" ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                              {(() => { try { return JSON.parse(c.options || "[]"); } catch { return []; } })().slice(0, 3).map((o: string) => (
+                                <label key={o} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: C.text }}><input type="radio" disabled /> {o}</label>
+                              ))}
+                            </div>
+                          ) : (
+                            <input disabled type={c.type === "siret" ? "text" : c.type} placeholder={c.placeholder || ""} style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: `1px solid ${C.border}`, background: C.surface, color: C.textDim, fontSize: 10, boxSizing: "border-box" }} />
+                          )}
+                          {c.helpText && <div style={{ fontSize: 9, color: C.textDim, marginTop: 1 }}>{c.helpText}</div>}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
