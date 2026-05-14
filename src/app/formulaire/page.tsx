@@ -22,7 +22,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [resolvedPrescripteur, setResolvedPrescripteur] = useState<string | null>(null);
   const [prescripteurInvalid, setPrescripteurInvalid] = useState(false);
   const [noParam, setNoParam] = useState(false);
-  const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; logoUrl?: string | null; actif: boolean }>>([]);
+  const [prescripteurConfigs, setPrescripteurConfigs] = useState<Array<{ type: string; nom: string; logoUrl?: string | null; couleur?: string | null; description?: string | null; actif: boolean; champs?: Array<{ id: string; key: string; label: string; type: string; placeholder?: string | null; helpText?: string | null; required: boolean; ordre: number; largeur: string; options?: string | null; nativeField?: string | null }> }>>([]);
   const [depots, setDepots] = useState<Array<{ id: string; nom: string }>>([]);
   const [form, setForm] = useState({
     nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "", departement: "",
@@ -34,6 +34,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [customValues, setCustomValues] = useState<Record<string, string>>({});
 
   useEffect(() => { setDark(localStorage.getItem("tenakoe-dark") === "true"); setReady(true); }, []);
 
@@ -213,7 +214,102 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
     );
   }
 
-  // Step 2: Main form
+  // Dynamic form config
+  const currentConfig = prescripteurConfigs.find((c) => c.type === resolvedPrescripteur);
+  const dynamicChamps = currentConfig?.champs?.length ? currentConfig.champs : null;
+
+  const handleDynamicSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!dynamicChamps) return;
+    const missingRequired = dynamicChamps.filter((c) => c.required && c.type !== "title").filter((c) => {
+      const v = c.nativeField ? form[c.nativeField as keyof typeof form] : customValues[c.key];
+      return !v || v === "" || v === "false";
+    });
+    if (missingRequired.length > 0) {
+      setError(`Champs obligatoires manquants : ${missingRequired.map((c) => c.label).join(", ")}`);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const native: Record<string, unknown> = { prescripteur: resolvedPrescripteur, acceptePartage: true };
+      const custom: Record<string, string> = {};
+      for (const c of dynamicChamps) {
+        if (c.type === "title") continue;
+        const v = c.nativeField ? String(form[c.nativeField as keyof typeof form] || "") : customValues[c.key] || "";
+        if (c.nativeField) native[c.nativeField] = v;
+        else if (v) custom[c.key] = v;
+      }
+      const res = await fetch("/api/leads", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...native, customFields: Object.keys(custom).length > 0 ? JSON.stringify(custom) : null }),
+      });
+      if (res.ok) { setSubmitted(true); }
+      else { const data = await res.json(); setError(data.error || "Erreur lors de l'envoi"); }
+    } catch { setError("Erreur réseau, veuillez réessayer"); }
+    setSubmitting(false);
+  };
+
+  const renderDynamicChamp = (c: NonNullable<typeof dynamicChamps>[0]) => {
+    const val = c.nativeField ? String(form[c.nativeField as keyof typeof form] || "") : customValues[c.key] || "";
+    const onChange = (v: string) => {
+      if (c.nativeField) setForm((prev) => ({ ...prev, [c.nativeField!]: v }));
+      else setCustomValues((prev) => ({ ...prev, [c.key]: v }));
+    };
+    if (c.type === "title") return <h3 key={c.id} style={{ gridColumn: "1 / -1", fontSize: 15, fontWeight: 700, color: C.text, borderBottom: `2px solid ${currentConfig?.couleur || C.accent}`, paddingBottom: 6, margin: "8px 0 0" }}>{c.label}</h3>;
+    const opts: string[] = c.options ? (() => { try { return JSON.parse(c.options!); } catch { return []; } })() : [];
+    return (
+      <div key={c.id}>
+        <label style={labelStyle}>{c.label}{c.required ? " *" : ""}</label>
+        {c.type === "textarea" ? <textarea rows={3} style={{ ...inputStyle, resize: "vertical" }} placeholder={c.placeholder || ""} value={val} onChange={(e) => onChange(e.target.value)} required={c.required} />
+        : c.type === "select" ? <select style={inputStyle} value={val} onChange={(e) => onChange(e.target.value)} required={c.required}><option value="">Choisir...</option>{opts.map((o) => <option key={o} value={o}>{o}</option>)}</select>
+        : c.type === "radio" ? <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{opts.map((o) => (
+            <label key={o} onClick={() => onChange(o)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 8, border: `1px solid ${val === o ? C.accent : C.border}`, background: val === o ? C.accentDim : "transparent", cursor: "pointer", fontSize: 13, color: C.text }}>
+              <div style={{ width: 14, height: 14, borderRadius: "50%", border: `2px solid ${val === o ? C.accent : C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>{val === o && <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.accent }} />}</div>{o}
+            </label>))}</div>
+        : c.type === "checkbox" ? <label onClick={() => onChange(val === "true" ? "false" : "true")} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: C.text }}><div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${val === "true" ? C.accent : C.border}`, background: val === "true" ? C.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{val === "true" && <CheckCircle2 size={10} color="#fff" />}</div>{c.placeholder || c.label}</label>
+        : <input type={c.type === "siret" ? "text" : c.type} style={inputStyle} placeholder={c.placeholder || ""} value={val} onChange={(e) => onChange(e.target.value)} required={c.required} pattern={c.type === "siret" ? "[0-9]{14}" : undefined} />}
+        {c.helpText && <div style={{ fontSize: 11, color: C.textDim, marginTop: 3 }}>{c.helpText}</div>}
+      </div>
+    );
+  };
+
+  // Dynamic form (if champs configured)
+  if (dynamicChamps) {
+    const accent = currentConfig?.couleur || "#16a34a";
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.bg, fontFamily: "'DM Sans', -apple-system, sans-serif", padding: "40px 16px" }}>
+        <div style={{ width: 600, maxWidth: "100%" }}>
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              {currentConfig?.logoUrl ? <img src={currentConfig.logoUrl.startsWith("http") || currentConfig.logoUrl.startsWith("/") ? currentConfig.logoUrl : `/${currentConfig.logoUrl}`} alt={currentConfig.nom} style={{ width: 48, height: 48, objectFit: "contain" }} /> : <img src="/logo.png" alt="Tenakoe" style={{ width: 44, height: 44, objectFit: "contain" }} />}
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{currentConfig?.nom || "Tenakoe"}</div>
+                {currentConfig?.description && <div style={{ fontSize: 12, color: C.textDim }}>{currentConfig.description}</div>}
+              </div>
+            </div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 6px" }}>Transmission d&apos;un artisan</h1>
+          </div>
+          <form onSubmit={handleDynamicSubmit}>
+            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+                {dynamicChamps.map((c) => {
+                  const span = c.type === "title" || c.type === "textarea" ? 6 : c.largeur === "third" ? 2 : c.largeur === "half" ? 3 : 6;
+                  return <div key={c.id} style={{ gridColumn: `span ${span}` }}>{renderDynamicChamp(c)}</div>;
+                })}
+              </div>
+            </div>
+            {error && <div style={{ padding: "12px 16px", borderRadius: 10, marginBottom: 16, background: C.dangerDim, color: C.danger, fontSize: 13, fontWeight: 500 }}>{error}</div>}
+            <button type="submit" disabled={submitting} style={{ width: "100%", padding: "14px 0", borderRadius: 12, border: "none", background: submitting ? "#94a3b8" : `linear-gradient(135deg, ${accent}, ${accent}dd)`, color: "#fff", fontSize: 15, fontWeight: 600, cursor: submitting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 2px 8px ${accent}40` }}>
+              <Send size={16} /> {submitting ? "Envoi en cours..." : "Transmettre"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2: Main form (legacy hardcoded fallback)
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
