@@ -25,6 +25,7 @@ export function DocumentsView({ C }: { C: Theme }) {
   const [search, setSearch] = useState("");
   const [filterRecu, setFilterRecu] = useState<string>("");
   const [expandedEnts, setExpandedEnts] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<"nom_asc" | "nom_desc" | "recent" | "ancien" | "progress">("progress");
 
   useEffect(() => {
     fetch("/api/documents")
@@ -98,14 +99,23 @@ export function DocumentsView({ C }: { C: Theme }) {
       </div>
 
       {/* Search */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", marginBottom: 20,
-        borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface,
-      }}>
-        <Search size={14} color={C.textDim} />
-        <input placeholder="Rechercher un document ou une entreprise..."
-          value={search} onChange={(e) => setSearch(e.target.value)}
-          style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", flex: 1,
+          borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface,
+        }}>
+          <Search size={14} color={C.textDim} />
+          <input placeholder="Rechercher un document ou une entreprise..."
+            value={search} onChange={(e) => setSearch(e.target.value)}
+            style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
+        </div>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }}>
+          <option value="progress">Progression</option>
+          <option value="nom_asc">Nom A-Z</option>
+          <option value="nom_desc">Nom Z-A</option>
+          <option value="recent">Plus récent</option>
+          <option value="ancien">Plus ancien</option>
+        </select>
       </div>
 
       {/* Grouped by entreprise — collapsible, sorted by progress */}
@@ -122,6 +132,10 @@ export function DocumentsView({ C }: { C: Theme }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {Array.from(byEntreprise.entries())
               .sort(([, a], [, b]) => {
+                if (sortBy === "nom_asc") return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" });
+                if (sortBy === "nom_desc") return b.nom.localeCompare(a.nom, "fr", { sensitivity: "base" });
+                if (sortBy === "recent") return Math.max(...b.docs.map((d) => new Date(d.dateReception || d.dateDemande || 0).getTime())) - Math.max(...a.docs.map((d) => new Date(d.dateReception || d.dateDemande || 0).getTime()));
+                if (sortBy === "ancien") return Math.max(...a.docs.map((d) => new Date(d.dateReception || d.dateDemande || 0).getTime())) - Math.max(...b.docs.map((d) => new Date(d.dateReception || d.dateDemande || 0).getTime()));
                 const pA = a.docs.filter((d) => d.recu).length / a.docs.length;
                 const pB = b.docs.filter((d) => d.recu).length / b.docs.length;
                 return pA - pB;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { BookOpen, Search, Plus, X, Download, Trash2, FileText, FileSpreadsheet, Image as ImageIcon, File, Upload, Pencil } from "lucide-react";
+import { BookOpen, Search, Plus, X, Download, Trash2, FileText, FileSpreadsheet, Image as ImageIcon, File, Upload, Pencil, LayoutGrid, List } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { fixFileUrl } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
@@ -54,6 +54,8 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
   const [dragActive, setDragActive] = useState(false);
   const [editingRessource, setEditingRessource] = useState<{ id: string; nom: string; description: string; categorie: string } | null>(null);
   const [editSaving, setEditSaving] = useState(false);
+  const [sortBy, setSortBy] = useState<"nom_asc" | "nom_desc" | "recent" | "ancien">("nom_asc");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const fetchRessources = useCallback(() => {
     fetch("/api/ressources").then((r) => r.ok ? r.json() : []).then((data) => { setRessources(data); setLoading(false); }).catch(() => setLoading(false));
@@ -68,6 +70,14 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
     if (filterCategorie && r.categorie !== filterCategorie) return false;
     if (search && !r.nom.toLowerCase().includes(search.toLowerCase()) && !(r.description || "").toLowerCase().includes(search.toLowerCase())) return false;
     return true;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case "nom_asc": return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" });
+      case "nom_desc": return b.nom.localeCompare(a.nom, "fr", { sensitivity: "base" });
+      case "recent": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case "ancien": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      default: return 0;
+    }
   });
 
   const handleUpload = async () => {
@@ -141,6 +151,16 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
           <option value="">Toutes les catégories</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} style={{ ...inputStyle, width: 150 }}>
+          <option value="nom_asc">Nom A-Z</option>
+          <option value="nom_desc">Nom Z-A</option>
+          <option value="recent">Plus récent</option>
+          <option value="ancien">Plus ancien</option>
+        </select>
+        <div style={{ display: "flex", gap: 0, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+          <button onClick={() => setViewMode("grid")} style={{ padding: "8px 12px", border: "none", cursor: "pointer", background: viewMode === "grid" ? C.accent : "transparent", color: viewMode === "grid" ? "#fff" : C.textDim, display: "flex", alignItems: "center" }} title="Vue grille"><LayoutGrid size={14} /></button>
+          <button onClick={() => setViewMode("list")} style={{ padding: "8px 12px", border: "none", cursor: "pointer", background: viewMode === "list" ? C.accent : "transparent", color: viewMode === "list" ? "#fff" : C.textDim, display: "flex", alignItems: "center" }} title="Vue liste"><List size={14} /></button>
+        </div>
       </div>
 
       {/* Add modal */}
@@ -231,9 +251,33 @@ export function RessourcesView({ C, role }: { C: Theme; role?: string }) {
           {ressources.length === 0 ? "Aucune ressource. Ajoutez le premier document !" : "Aucun résultat"}
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+        <div style={viewMode === "grid" ? { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 } : { display: "flex", flexDirection: "column" as const, gap: 8 }}>
           {filtered.map((r) => {
             const { Icon, color } = getFileIcon(r.fichierNom);
+            if (viewMode === "list") {
+              return (
+                <div key={r.id} style={{ background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12, boxShadow: C.shadow }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Icon size={16} color={color} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.nom}</div>
+                    <div style={{ fontSize: 11, color: C.textDim, display: "flex", gap: 8, marginTop: 2 }}>
+                      {r.categorie && <span>{r.categorie}</span>}
+                      <span>{new Date(r.createdAt).toLocaleDateString("fr-FR")}</span>
+                      {r.fichierTaille && <span>· {formatSize(r.fichierTaille)}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <a href={fixFileUrl(r.fichierUrl)} download={r.fichierNom} style={{ padding: "6px 10px", borderRadius: 6, background: C.blueDim, color: C.blue, fontSize: 11, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}><Download size={11} /> Télécharger</a>
+                    {isAdmin && (<>
+                      <button onClick={() => setEditingRessource({ id: r.id, nom: r.nom, description: r.description || "", categorie: r.categorie || "" })} title="Modifier" style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center" }}><Pencil size={12} color={C.textDim} /></button>
+                      <button onClick={() => handleDelete(r.id, r.nom)} title="Supprimer" style={{ padding: "6px 10px", borderRadius: 6, border: "none", background: "transparent", cursor: "pointer" }}><Trash2 size={12} color="#ef4444" /></button>
+                    </>)}
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={r.id} style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, padding: 14, boxShadow: C.shadow, display: "flex", flexDirection: "column", gap: 8 }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>

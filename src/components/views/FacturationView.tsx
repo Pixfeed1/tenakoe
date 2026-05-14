@@ -66,6 +66,7 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
   const [filtrePrescripteur, setFiltrePrescripteur] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [sortBy, setSortBy] = useState<"nom_asc" | "nom_desc" | "recent" | "ancien">("nom_asc");
   const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
   const [prescripteurs, setPrescripteurs] = useState<Array<{ type: string; nom: string }>>([]);
   const peutVoirToutesChargees = role === "ADMIN";
@@ -126,6 +127,14 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
       if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
     }
     return true;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case "nom_asc": return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" });
+      case "nom_desc": return b.nom.localeCompare(a.nom, "fr", { sensitivity: "base" });
+      case "recent": return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      case "ancien": return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+      default: return 0;
+    }
   });
 
   // Stats
@@ -317,6 +326,12 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
           style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }} />
         <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
           style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }} />
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }}>
+          <option value="nom_asc">Nom A-Z</option>
+          <option value="nom_desc">Nom Z-A</option>
+          <option value="recent">Plus récent</option>
+          <option value="ancien">Plus ancien</option>
+        </select>
         <ExportDropdown C={C} disabled={filtered.length === 0} filename="facturation" title="Facturation"
           headers={["Entreprise", "SIRET", "Chargée", "Prescripteur", "Statut", "Dernière MAJ"]}
           rows={filtered.map((e) => [e.nom, e.siret || "", e.projets?.[0]?.chargee?.prenom || "", e.prescripteur || "", statutLabels[e.statutFacturation || ""] || "", new Date(e.updatedAt).toLocaleDateString("fr-FR")])}
