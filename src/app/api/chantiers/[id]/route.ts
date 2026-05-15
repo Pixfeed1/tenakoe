@@ -41,6 +41,9 @@ export async function PATCH(
   if (body.attestationRecue !== undefined) { data.attestationRecue = body.attestationRecue; data.dateAttestation = body.attestationRecue ? new Date() : null; }
   if (body.attestationFichierUrl !== undefined) data.attestationFichierUrl = body.attestationFichierUrl;
   if (body.attestationFichierNom !== undefined) data.attestationFichierNom = body.attestationFichierNom;
+  if (body.photosRecues !== undefined) { data.photosRecues = body.photosRecues; data.datePhotos = body.photosRecues ? new Date() : null; }
+  if (body.photosFichierUrl !== undefined) data.photosFichierUrl = body.photosFichierUrl;
+  if (body.photosFichierNom !== undefined) data.photosFichierNom = body.photosFichierNom;
 
   const updated = await prisma.chantier.update({
     where: { id }, data,
