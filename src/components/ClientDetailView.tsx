@@ -1479,12 +1479,24 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   if (!client?.id || isDemoMode) return;
                   const newChargeeId = e.target.value || null;
                   const newChargee = newChargeeId ? mentionUsers.find((u) => u.id === newChargeeId) || null : null;
+                  const prevId = entrepriseData?.chargeeEntrepriseId || "";
+                  const prevPrenom = entrepriseData?.chargeeEntreprisePrenom || "";
+                  const prevNom = entrepriseData?.chargeeEntrepriseNom || "";
+                  const prevProjets = projets.map((p) => ({ id: p.id, chargee: p.chargee }));
                   setEntrepriseData((prev) => prev ? { ...prev, chargeeEntrepriseId: newChargee?.id || "", chargeeEntreprisePrenom: newChargee?.prenom || "", chargeeEntrepriseNom: newChargee?.nom || "" } : prev);
                   setProjets((prev) => prev.map((p) => ({ ...p, chargee: newChargee ? { id: newChargee.id, prenom: newChargee.prenom, nom: newChargee.nom } : null })));
-                  await fetch(`/api/entreprises/${client.id}`, {
-                    method: "PATCH", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ chargeeId: newChargeeId }),
-                  }).catch(() => {});
+                  try {
+                    const res = await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chargeeId: newChargeeId }) });
+                    if (!res.ok) {
+                      setEntrepriseData((prev) => prev ? { ...prev, chargeeEntrepriseId: prevId, chargeeEntreprisePrenom: prevPrenom, chargeeEntrepriseNom: prevNom } : prev);
+                      setProjets((prev) => prev.map((p) => { const old = prevProjets.find((pp) => pp.id === p.id); return { ...p, chargee: old?.chargee || p.chargee }; }));
+                      const d = await res.json().catch(() => ({})); toast((d as { error?: string }).error || "Erreur");
+                    }
+                  } catch {
+                    setEntrepriseData((prev) => prev ? { ...prev, chargeeEntrepriseId: prevId, chargeeEntreprisePrenom: prevPrenom, chargeeEntrepriseNom: prevNom } : prev);
+                    setProjets((prev) => prev.map((p) => { const old = prevProjets.find((pp) => pp.id === p.id); return { ...p, chargee: old?.chargee || p.chargee }; }));
+                    toast("Erreur réseau");
+                  }
                 }}
                 style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12 }}
               >

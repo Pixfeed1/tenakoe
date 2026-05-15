@@ -98,7 +98,6 @@ export async function PATCH(
   if (body.depotId !== undefined) data.depotId = body.depotId || null;
   if (body.chargeeId !== undefined) {
     data.chargeeId = body.chargeeId || null;
-    await prisma.projet.updateMany({ where: { entrepriseId: id }, data: { chargeeId: body.chargeeId || null } });
   }
   if (body.apporteurId !== undefined) data.apporteurId = body.apporteurId || null;
   if (body.numeroCarte !== undefined) data.numeroCarte = body.numeroCarte;
@@ -121,15 +120,19 @@ export async function PATCH(
     }
   }
 
-  const updated = await prisma.entreprise.update({ where: { id }, data });
-
-  // Propagate statut changes to all active projets (transition compat)
-  if (body.statutPrise !== undefined || body.statutFacturation !== undefined) {
-    const projetPatch: Record<string, unknown> = {};
-    if (body.statutPrise !== undefined) { projetPatch.statutPrise = body.statutPrise; projetPatch.dateStatutPrise = new Date(); }
-    if (body.statutFacturation !== undefined) { projetPatch.statutFacturation = body.statutFacturation; projetPatch.dateStatutFacturation = new Date(); }
-    await prisma.projet.updateMany({ where: { entrepriseId: id, deletedAt: null }, data: projetPatch });
-  }
+  const updated = await prisma.$transaction(async (tx) => {
+    const ent = await tx.entreprise.update({ where: { id }, data });
+    if (body.chargeeId !== undefined) {
+      await tx.projet.updateMany({ where: { entrepriseId: id, deletedAt: null }, data: { chargeeId: body.chargeeId || null } });
+    }
+    if (body.statutPrise !== undefined || body.statutFacturation !== undefined) {
+      const projetPatch: Record<string, unknown> = {};
+      if (body.statutPrise !== undefined) { projetPatch.statutPrise = body.statutPrise; projetPatch.dateStatutPrise = new Date(); }
+      if (body.statutFacturation !== undefined) { projetPatch.statutFacturation = body.statutFacturation; projetPatch.dateStatutFacturation = new Date(); }
+      await tx.projet.updateMany({ where: { entrepriseId: id, deletedAt: null }, data: projetPatch });
+    }
+    return ent;
+  });
 
   // Log tracked field changes
   const logs: string[] = [];
