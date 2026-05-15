@@ -11,8 +11,8 @@ export async function PATCH(
   if (!session) {
     return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
   }
-  if (session.user.role === "PRESCRIPTEUR") {
-    return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+  if (session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Seuls les administrateurs peuvent modifier le statut d'un dossier." }, { status: 403 });
   }
 
   const { id } = await params;
@@ -25,11 +25,6 @@ export async function PATCH(
   });
   if (!entreprise) {
     return NextResponse.json({ error: "Entreprise non trouvee" }, { status: 404 });
-  }
-
-  if (session.user.role === "CHARGEE") {
-    const hasAccess = entreprise.projets.some((p) => p.chargeeId === session.user.id);
-    if (!hasAccess) return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
   }
 
   const oldStatut = entreprise.statutPrise;

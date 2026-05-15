@@ -59,6 +59,7 @@ export function DashboardView({
   const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
   const [pipelineFilter, setPipelineFilter] = useState("");
   const peutVoirToutesChargees = role === "ADMIN";
+  const isAdmin = role === "ADMIN";
 
   useEffect(() => {
     if (peutVoirToutesChargees) {
@@ -332,9 +333,9 @@ export function DashboardView({
             <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, marginLeft: 8 }}>
               {pipelineWithDemo.reduce((sum, col) => sum + col.items.length, 0)} total
             </span>
-            <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim, marginLeft: 8 }}>
+            {isAdmin && <span style={{ fontSize: 12, fontWeight: 400, color: C.textDim, marginLeft: 8 }}>
               Glisser-déposer pour changer le statut
-            </span>
+            </span>}
           </h2>
         </div>
         <div className="pipeline-columns" data-guide="pipeline" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
@@ -351,9 +352,9 @@ export function DashboardView({
                 border: `2px dashed ${dragOver === col.id ? C.accent : "transparent"}`,
                 transition: "all 0.2s",
               }}
-              onDragOver={(e) => onDragOverHandler(e, col.id)}
-              onDrop={(e) => onDrop(e, col.id)}
-              onDragLeave={() => setDragOver(null)}
+              onDragOver={isAdmin ? (e) => onDragOverHandler(e, col.id) : undefined}
+              onDrop={isAdmin ? (e) => onDrop(e, col.id) : undefined}
+              onDragLeave={isAdmin ? () => setDragOver(null) : undefined}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "0 4px" }}>
                 {(() => { const Icon = getStatusIcon(col.icone); return <Icon size={14} color={col.colorKey} />; })()}
@@ -376,12 +377,12 @@ export function DashboardView({
                   return (
                   <div
                     key={item.id}
-                    draggable
+                    draggable={isAdmin}
                     {...(isFirstCard ? { "data-guide": "pipeline-card-first" } : {})}
-                    onDragStart={(e) => onDragStart(e, item.id, col.id)}
+                    onDragStart={isAdmin ? (e) => onDragStart(e, item.id, col.id) : undefined}
                     style={{
                       background: C.surface, borderRadius: 10, padding: "12px 14px",
-                      border: `1px solid ${C.border}`, cursor: "grab",
+                      border: `1px solid ${C.border}`, cursor: isAdmin ? "grab" : "pointer",
                       borderLeft: `3px solid ${col.colorKey}`,
                       boxShadow: C.shadow, transition: "all 0.15s", userSelect: "none",
                       ...(demo ? demoCardStyle : {}),
@@ -391,7 +392,7 @@ export function DashboardView({
                     onClick={() => { if (demo) { onSelectClient({ ...item, isDemo: true } as PipelineItem & { isDemo: boolean }); return; } onSelectClient(item); }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                      <GripVertical size={12} color={C.textDim} />
+                      {isAdmin && <GripVertical size={12} color={C.textDim} />}
                       <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{item.nom}</span>
                       {demo && <span style={demoBadgeStyle}>DÉMO</span>}
                     </div>
@@ -481,7 +482,7 @@ export function DashboardView({
                 }}
                   onDragOver={(e) => onDragOverHandler(e, col.id)}
                   onDrop={(e) => onDrop(e, col.id)}
-                  onDragLeave={() => setDragOver(null)}
+                  onDragLeave={isAdmin ? () => setDragOver(null) : undefined}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "0 4px" }}>
                     {(() => { const Icon = getStatusIcon(col.icone); return <Icon size={14} color={col.colorKey} />; })()}
@@ -492,10 +493,10 @@ export function DashboardView({
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
                     {(expandedCols[col.id] ? colFiltered.items : colFiltered.items.slice(0, PIPELINE_MAX)).map((item) => (
-                      <div key={item.id} draggable onDragStart={(e) => onDragStart(e, item.id, col.id)}
+                      <div key={item.id} draggable={isAdmin} onDragStart={isAdmin ? (e) => onDragStart(e, item.id, col.id) : undefined}
                         style={{
                           background: C.surface, borderRadius: 10, padding: "12px 14px",
-                          border: `1px solid ${C.border}`, cursor: "grab",
+                          border: `1px solid ${C.border}`, cursor: isAdmin ? "grab" : "pointer",
                           borderLeft: `3px solid ${col.colorKey}`,
                           boxShadow: C.shadow, transition: "all 0.15s", userSelect: "none",
                         }}
@@ -504,7 +505,7 @@ export function DashboardView({
                         onClick={() => onSelectClient(item)}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                          <GripVertical size={12} color={C.textDim} />
+                          {isAdmin && <GripVertical size={12} color={C.textDim} />}
                           <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{item.nom}</span>
                         </div>
                         <div style={{ display: "flex", justifyContent: "space-between" }}>
