@@ -370,6 +370,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           relancesCommentaire: data.relancesCommentaire || "",
           alerteAbandonCommentaire: data.alerteAbandonCommentaire || "",
           createdAt: data.createdAt || "",
+          dateNouveauOverride: data.dateNouveauOverride || "",
           leadSourceCustomFields: data.leadSource?.customFields || null,
           leadSourceChampsConfig: JSON.stringify(data.leadSource?.champsConfig || []),
           leadSourceCommentaires: data.leadSource?.commentaires || null,
@@ -1592,8 +1593,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               const etape17 = projetEtapes.find((t: { nom: string }) => t.nom.toLowerCase().includes("depot") || t.nom.toLowerCase().includes("dépôt"));
               const etape19 = projetEtapes.find((t: { nom: string }) => t.nom.toLowerCase().includes("obtention"));
               const firstActive = projetEtapes.find((t: { active: boolean }) => t.active);
-              const dateRows: Array<{ label: string; date: string | undefined | null; apiKey?: string }> = [
-                { label: "Nouveau", date: entrepriseData?.createdAt, apiKey: undefined },
+              const dateRows: Array<{ label: string; date: string | undefined | null; apiKey?: string; isEntrepriseField?: boolean }> = [
+                { label: "Nouveau", date: entrepriseData?.dateNouveauOverride || entrepriseData?.createdAt, apiKey: "dateNouveauOverride", isEntrepriseField: true },
                 { label: "Prise en charge", date: pData.dateStatutPrise, apiKey: "dateStatutPrise" },
                 { label: "Payé", date: pData.dateStatutFacturation, apiKey: "dateStatutFacturation" },
                 { label: "En cours", date: pData.dateEnCours || (firstActive as unknown as { dateRealisee?: string })?.dateRealisee || null, apiKey: "dateEnCours" },
@@ -1617,6 +1618,15 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             value={r.date ? new Date(r.date).toISOString().slice(0, 10) : ""}
                             onChange={async (e) => {
                               const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                              if (r.isEntrepriseField) {
+                                if (!client?.id) return;
+                                const prev = entrepriseData?.[r.apiKey!] || "";
+                                setEntrepriseData((p) => p ? { ...p, [r.apiKey!]: val || "" } : p);
+                                try {
+                                  const res = await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [r.apiKey!]: val }) });
+                                  if (!res.ok) { setEntrepriseData((p) => p ? { ...p, [r.apiKey!]: prev } : p); const d = await res.json().catch(() => ({})); toast((d as { error?: string }).error || `Erreur ${res.status}`); }
+                                } catch { setEntrepriseData((p) => p ? { ...p, [r.apiKey!]: prev } : p); toast("Erreur réseau"); }
+                              } else {
                               const previousValue = (proj as unknown as Record<string, string | null>)[r.apiKey!];
                               setProjets((prev) => prev.map((pr) => pr.id === proj.id ? { ...pr, [r.apiKey!]: val || null } as typeof pr : pr));
                               try {
@@ -1632,6 +1642,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                               } catch {
                                 setProjets((prev) => prev.map((pr) => pr.id === proj.id ? { ...pr, [r.apiKey!]: previousValue ?? null } as typeof pr : pr));
                                 toast("Erreur réseau");
+                              }
                               }
                             }}
                             style={{

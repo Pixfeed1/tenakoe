@@ -79,6 +79,7 @@ export async function PATCH(
   if (body.miseEnRelationAutre !== undefined) data.miseEnRelationAutre = body.miseEnRelationAutre;
   if (body.formationsCommentaire !== undefined) data.formationsCommentaire = body.formationsCommentaire;
   if (body.commentaire !== undefined) data.commentaire = body.commentaire;
+  if (body.dateNouveauOverride !== undefined) data.dateNouveauOverride = body.dateNouveauOverride ? new Date(body.dateNouveauOverride as string) : null;
   if (body.relancesCommentaire !== undefined) data.relancesCommentaire = body.relancesCommentaire;
   if (body.alerteAbandonCommentaire !== undefined) data.alerteAbandonCommentaire = body.alerteAbandonCommentaire;
   if (body.alerte1Envoyee !== undefined) { data.alerte1Envoyee = body.alerte1Envoyee; data.dateAlerte1 = body.dateAlerte1 ? new Date(body.dateAlerte1) : (body.alerte1Envoyee ? new Date() : null); }

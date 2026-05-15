@@ -89,6 +89,7 @@ model Entreprise {
   prenomConseiller    String?
   emailConseiller     String?
   telephoneConseiller String?
+  dateNouveauOverride DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   prescripteur       String?            @default("PDB")
