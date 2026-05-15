@@ -91,6 +91,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [callNote, setCallNote] = useState("");
   const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
   const [expandedProjets, setExpandedProjets] = useState<Record<string, boolean>>({});
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [activeQualifByProjet, setActiveQualifByProjet] = useState<Record<string, string>>({});
   const [addingQualifToProjet, setAddingQualifToProjet] = useState<string | null>(null);
   const [addQualifSearch, setAddQualifSearch] = useState("");
@@ -464,7 +465,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       const noteItems = notes.map((n) => ({
         id: undefined as string | undefined,
         type: "NOTE",
-        message: `Note : ${n.contenu.substring(0, 150)}${n.contenu.length > 150 ? "…" : ""}`,
+        message: `Note : ${n.contenu}`,
         chargee: `${n.auteur.prenom} ${n.auteur.nom}`,
         time: formatRelativeTime(new Date(n.createdAt)),
         sortDate: new Date(n.createdAt).getTime(),
@@ -3013,7 +3014,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             const ActIcon = ACTIVITY_ICONS[a.type] || FileText;
             const actColor = ACTIVITY_COLORS[a.type] || "textDim";
             const isNote = a.type === "NOTE";
-            const noteData = isNote ? notes.find((n) => a.message.includes(n.contenu.substring(0, 50))) : null;
+            const noteData = isNote ? notes.find((n) => a.message.includes(n.contenu.substring(0, 80))) : null;
             return (
               <div
                 key={i}
@@ -3056,17 +3057,30 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                           <Button C={C} variant="ghost" size="sm" onClick={(ev) => { ev?.stopPropagation(); setEditingNote(null); }}>Annuler</Button>
                         </div>
                       </div>
-                    ) : isNote ? (
-                      <span style={{ whiteSpace: "pre-wrap" }}>
-                        {a.message.replace(/^Note : /, "").split(/(@\w+|\/api\/files\/\S+)/g).map((part, pi) =>
-                          part.startsWith("@")
-                            ? <span key={pi} style={{ color: C.accent, fontWeight: 600, background: C.accentDim, padding: "0 4px", borderRadius: 4 }}>{part}</span>
-                            : part.startsWith("/api/files/")
-                              ? <a key={pi} href={part} target="_blank" rel="noopener noreferrer" style={{ color: C.accent, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }} onClick={(e) => e.stopPropagation()}><Paperclip size={12} />{part.split("_").slice(-1)[0] || part.split("/").pop()}</a>
-                              : part
-                        )}
-                      </span>
-                    ) : a.message}
+                    ) : isNote ? (() => {
+                      const noteId = noteData?.id || `idx-${i}`;
+                      const cleanedContent = a.message.replace(/^Note : /, "");
+                      const isLong = cleanedContent.length > 150;
+                      const isExpanded = expandedNotes.has(noteId);
+                      const displayedContent = isLong && !isExpanded ? cleanedContent.substring(0, 150) + "…" : cleanedContent;
+                      return (
+                        <span style={{ whiteSpace: "pre-wrap", flex: 1 }}>
+                          {displayedContent.split(/(@\w+|\/api\/files\/\S+)/g).map((part, pi) =>
+                            part.startsWith("@")
+                              ? <span key={pi} style={{ color: C.accent, fontWeight: 600, background: C.accentDim, padding: "0 4px", borderRadius: 4 }}>{part}</span>
+                              : part.startsWith("/api/files/")
+                                ? <a key={pi} href={part} target="_blank" rel="noopener noreferrer" style={{ color: C.accent, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }} onClick={(e) => e.stopPropagation()}><Paperclip size={12} />{part.split("_").slice(-1)[0] || part.split("/").pop()}</a>
+                                : part
+                          )}
+                          {isLong && (
+                            <button onClick={(e) => { e.stopPropagation(); setExpandedNotes((prev) => { const n = new Set(prev); if (n.has(noteId)) n.delete(noteId); else n.add(noteId); return n; }); }}
+                              style={{ marginLeft: 6, padding: "1px 6px", borderRadius: 4, border: "none", background: "transparent", color: C.accent, fontSize: 11, fontWeight: 500, cursor: "pointer" }}>
+                              {isExpanded ? "Réduire" : "Voir plus"}
+                            </button>
+                          )}
+                        </span>
+                      );
+                    })() : a.message}
                     {isNote && <Badge color={C.purple} bg={C.purpleDim}>Note</Badge>}
                     {a.automatique && <Badge color="#ea580c" bg="rgba(234,88,12,0.1)">Auto</Badge>}
                     {a.statutEnvoi === "ECHEC" && <Badge color="#ef4444" bg="rgba(239,68,68,0.1)">Échec</Badge>}
