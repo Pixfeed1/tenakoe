@@ -2095,7 +2095,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                         }
                       }}
                       style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 }}
-                      title="Supprimer le projet"
+                      title="Supprimer LE PROJET ENTIER (toutes ses qualifications)"
                     >
                       <Trash2 size={14} color={C.textDim} />
                     </button>
@@ -2137,28 +2137,50 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                             const dotColor = progressColor(qPct);
                             const isActive = q.id === activeQualifId;
                             const tabLabel = `${q.type}${nomenclatureMap[q.type] ? ` — ${nomenclatureMap[q.type].slice(0, 30)}${nomenclatureMap[q.type].length > 30 ? "…" : ""}` : ""}`;
+                            const handleRemoveQualif = async (e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              if (qualifs.length === 1) { alert("Impossible de supprimer la dernière qualification. Supprime le projet entier."); return; }
+                              if (!window.confirm(`Supprimer la qualification "${q.type}" ?\n\nLes chantiers associés seront aussi supprimés.`)) return;
+                              try {
+                                const res = await fetch(`/api/projets/${p.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ removeQualifications: [q.type] }) });
+                                if (!res.ok) throw new Error();
+                                const updated = await res.json();
+                                setProjets((prev) => prev.map((pr) => pr.id === p.id ? { ...pr, qualifications: updated.qualifications } : pr));
+                                if (isActive && updated.qualifications.length > 0) setActiveQualifByProjet((prev) => ({ ...prev, [p.id]: updated.qualifications[0].id }));
+                                toast("Qualification supprimée");
+                              } catch { toast("Erreur lors de la suppression"); }
+                            };
                             return (
-                              <button
-                                key={q.id}
-                                onClick={() => setActiveQualifByProjet((prev) => ({ ...prev, [p.id]: q.id! }))}
-                                style={{
-                                  display: "inline-flex", alignItems: "center", gap: 6,
-                                  padding: "7px 12px", border: "none",
-                                  background: isActive ? C.accentDim : "transparent",
-                                  color: isActive ? C.accentText : C.textMuted,
-                                  fontSize: 11, fontWeight: isActive ? 600 : 500,
-                                  cursor: "pointer",
-                                  borderBottom: `2px solid ${isActive ? C.accent : "transparent"}`,
-                                  marginBottom: -1,
-                                  borderRadius: "6px 6px 0 0",
-                                  transition: "background 0.15s",
-                                }}
-                                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-                                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                              <div key={q.id} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+                                onMouseEnter={(e) => { const b = e.currentTarget.querySelector("[data-del-btn]") as HTMLElement | null; if (b) b.style.opacity = "1"; }}
+                                onMouseLeave={(e) => { const b = e.currentTarget.querySelector("[data-del-btn]") as HTMLElement | null; if (b) b.style.opacity = "0"; }}
                               >
-                                <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
-                                <span>{tabLabel}</span>
-                              </button>
+                                <button
+                                  onClick={() => setActiveQualifByProjet((prev) => ({ ...prev, [p.id]: q.id! }))}
+                                  style={{
+                                    display: "inline-flex", alignItems: "center", gap: 6,
+                                    padding: "7px 26px 7px 12px", border: "none",
+                                    background: isActive ? C.accentDim : "transparent",
+                                    color: isActive ? C.accentText : C.textMuted,
+                                    fontSize: 11, fontWeight: isActive ? 600 : 500,
+                                    cursor: "pointer",
+                                    borderBottom: `2px solid ${isActive ? C.accent : "transparent"}`,
+                                    marginBottom: -1, borderRadius: "6px 6px 0 0", transition: "background 0.15s",
+                                  }}
+                                  onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                                  onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                                >
+                                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+                                  <span>{tabLabel}</span>
+                                </button>
+                                <button data-del-btn onClick={handleRemoveQualif} title="Supprimer cette qualification"
+                                  style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", width: 18, height: 18, padding: 0, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, opacity: 0, transition: "opacity 0.15s" }}
+                                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.1)"; }}
+                                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                                >
+                                  <X size={11} color="#ef4444" />
+                                </button>
+                              </div>
                             );
                           })}
                           <button
