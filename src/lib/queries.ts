@@ -254,7 +254,7 @@ export async function getEntrepriseDetail(id: string) {
   const leadSource = await prisma.leadFormulaire.findFirst({
     where: { entrepriseId: id },
     orderBy: { createdAt: "desc" },
-    select: { id: true, prescripteur: true, customFields: true, createdAt: true },
+    select: { id: true, prescripteur: true, customFields: true, createdAt: true, commentaires: true },
   });
 
   let champsConfig: Array<{ key: string; label: string; type: string; options: string | null }> = [];

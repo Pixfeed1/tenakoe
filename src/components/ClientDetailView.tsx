@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Mail, MessageSquare, Phone, Building2, FileText, FolderOpen,
   ClipboardList, RefreshCw, ChevronRight, X, Send, Upload, Check,
-  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip, Handshake, CheckCircle, XCircle, Circle, Clock, Pencil, RotateCcw,
+  Calendar, UserCircle, Zap, StickyNote, Pin, Trash2, Edit3, Plus, Download, Paperclip, Handshake, CheckCircle, XCircle, Circle, Clock, Pencil, RotateCcw, Quote,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -372,6 +372,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           createdAt: data.createdAt || "",
           leadSourceCustomFields: data.leadSource?.customFields || null,
           leadSourceChampsConfig: JSON.stringify(data.leadSource?.champsConfig || []),
+          leadSourceCommentaires: data.leadSource?.commentaires || null,
         });
       })
       .catch(() => {});
@@ -1255,6 +1256,19 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit", minHeight: 100, boxSizing: "border-box", lineHeight: 1.5 }}
             />
           </div>
+          {/* Bloc Commentaire prescripteur */}
+          {entrepriseData?.leadSourceCommentaires && (
+            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 18, boxShadow: C.shadow }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <Quote size={14} color={C.textDim} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: C.text, margin: 0 }}>Commentaire du prescripteur</h3>
+                <span style={{ fontSize: 11, color: C.textDim }}>(à la transmission)</span>
+              </div>
+              <div style={{ fontSize: 13, color: C.text, whiteSpace: "pre-wrap", padding: "10px 12px", background: C.bg, borderRadius: 8, borderLeft: `3px solid ${C.accent}`, lineHeight: 1.5 }}>
+                {entrepriseData.leadSourceCommentaires}
+              </div>
+            </div>
+          )}
           {/* Bloc Informations complémentaires (champs custom prescripteur) */}
           {(() => {
             if (!entrepriseData?.leadSourceCustomFields) return null;
