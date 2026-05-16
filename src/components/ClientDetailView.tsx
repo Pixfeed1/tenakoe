@@ -851,7 +851,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   <div dangerouslySetInnerHTML={{ __html: mailBody ? `<p>${mailBody.replace(/\n/g, "<br>")}</p>` : "<p style='color:#94a3b8'>(corps du message vide)</p>" }} />
                   <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px dashed #e2e8f0", clear: "both", overflow: "hidden" }}>
                     <div style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic", marginBottom: 8 }}>— Signature ajoutée automatiquement à l&apos;envoi —</div>
-                    <div dangerouslySetInnerHTML={{ __html: getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Tenakoe", nom: entrepriseData?.chargeeEntrepriseNom || "", email: entrepriseData?.email || "contact@tenakoe.fr" }) }} />
+                    <div dangerouslySetInnerHTML={{ __html: (() => {
+                      const sig = getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Tenakoe", nom: entrepriseData?.chargeeEntrepriseNom || "", email: "contact@tenakoe.fr" });
+                      return mailBody.toLowerCase().includes("cordialement") ? sig.replace(/<tr>\s*<td[^>]*>\s*<span[^>]*>Cordialement[^<]*<\/span>\s*<\/td>\s*<\/tr>/, "") : sig;
+                    })() }} />
                   </div>
                   {mailAttachments.length > 0 && (
                     <div style={{ marginTop: 12, paddingTop: 8, borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>

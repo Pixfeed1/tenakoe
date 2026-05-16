@@ -61,9 +61,10 @@ export async function POST(request: NextRequest) {
       telephone: dbUser?.telephone,
     });
     const contentHasPolite = (content || "").toLowerCase().includes("cordialement");
-    const htmlWithSignature = contentHasPolite
-      ? `${content || ""}<br/><br/>${signature.replace(/<tr>[\s\S]*?Cordialement[\s\S]*?<\/tr>/, "")}`
-      : `${content || ""}<br/><br/>${signature}`;
+    const cleanSignature = contentHasPolite
+      ? signature.replace(/<tr>\s*<td[^>]*>\s*<span[^>]*>Cordialement[^<]*<\/span>\s*<\/td>\s*<\/tr>/, "")
+      : signature;
+    const htmlWithSignature = `${content || ""}<br/><br/>${cleanSignature}`;
 
     // Logique exclusive : OAuth s'il est connecté, sinon SMTP s'il est configuré
     let result: { messageId: string };
