@@ -835,21 +835,27 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             </div>
           </div>
           {mailPreview && (
-            <div style={{ marginTop: 10, padding: 14, borderRadius: 10, border: `1px solid ${C.border}`, background: "#f8fafc" }}>
-              <div style={{ padding: "12px 16px", borderRadius: 8, background: "#fff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 13, lineHeight: 1.6 }}>
-                <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: 8, marginBottom: 10, fontSize: 12, color: "#64748b" }}>
-                  <div><strong>De :</strong> {entrepriseData?.chargeeEntreprisePrenom || "Tenakoe"} {entrepriseData?.chargeeEntrepriseNom || ""}</div>
-                  <div><strong>À :</strong> {mailTo || "—"}</div>
-                  {mailCc && <div><strong>CC :</strong> {mailCc}</div>}
-                  <div><strong>Objet :</strong> {mailSubject || "(sans objet)"}</div>
+            <div onClick={(e) => { if (e.target === e.currentTarget) setMailPreview(false); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
+              <div style={{ background: "#f8fafc", borderRadius: 12, padding: 20, width: "100%", maxWidth: 600, maxHeight: "80vh", overflow: "auto", boxShadow: "0 8px 40px rgba(0,0,0,0.2)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>Aperçu du mail</span>
+                  <button type="button" onClick={() => setMailPreview(false)} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={16} color="#64748b" /></button>
                 </div>
-                <div dangerouslySetInnerHTML={{ __html: mailBody ? `<p>${mailBody.replace(/\n/g, "<br>")}</p>` : "<p style='color:#94a3b8'>(corps du message vide)</p>" }} />
-                <div style={{ marginTop: 16 }} dangerouslySetInnerHTML={{ __html: getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Tenakoe", nom: entrepriseData?.chargeeEntrepriseNom || "", email: entrepriseData?.email || "contact@tenakoe.fr" }) }} />
-                {mailAttachments.length > 0 && (
-                  <div style={{ marginTop: 12, paddingTop: 8, borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
-                    <Paperclip size={10} style={{ verticalAlign: -1, marginRight: 4 }} /><strong>Pièces jointes :</strong> {mailAttachments.map((f) => `${f.name} (${(f.size / 1024 / 1024).toFixed(1)} Mo)`).join(", ")}
+                <div style={{ padding: "16px 20px", borderRadius: 8, background: "#fff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 13, lineHeight: 1.6 }}>
+                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: 8, marginBottom: 12, fontSize: 12, color: "#64748b" }}>
+                    <div><strong>De :</strong> {entrepriseData?.chargeeEntreprisePrenom || "Tenakoe"} {entrepriseData?.chargeeEntrepriseNom || ""}</div>
+                    <div><strong>À :</strong> {mailTo || "—"}</div>
+                    {mailCc && <div><strong>CC :</strong> {mailCc}</div>}
+                    <div><strong>Objet :</strong> {mailSubject || "(sans objet)"}</div>
                   </div>
-                )}
+                  <div dangerouslySetInnerHTML={{ __html: mailBody ? `<p>${mailBody.replace(/\n/g, "<br>")}</p>` : "<p style='color:#94a3b8'>(corps du message vide)</p>" }} />
+                  <div style={{ marginTop: 16 }} dangerouslySetInnerHTML={{ __html: getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Tenakoe", nom: entrepriseData?.chargeeEntrepriseNom || "", email: entrepriseData?.email || "contact@tenakoe.fr" }) }} />
+                  {mailAttachments.length > 0 && (
+                    <div style={{ marginTop: 12, paddingTop: 8, borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
+                      <Paperclip size={10} style={{ verticalAlign: -1, marginRight: 4 }} /><strong>Pièces jointes :</strong> {mailAttachments.map((f) => `${f.name} (${(f.size / 1024 / 1024).toFixed(1)} Mo)`).join(", ")}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
