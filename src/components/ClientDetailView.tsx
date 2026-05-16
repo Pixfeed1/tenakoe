@@ -1682,9 +1682,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
             <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 14px", color: C.text }}>Formation</h3>
             {(() => {
-              const qualifId = entrepriseData?.qualificationId;
+              const qualifId = entrepriseData?.qualificationId || projets.flatMap((p) => p.qualifications).find((q) => q.id)?.id || "";
               const toggleFormation = async (key: string) => {
-                if (!qualifId) return;
+                if (!qualifId) { toast("Aucune qualification trouvée pour ce dossier"); return; }
                 const checked = entrepriseData?.[key] === "true";
                 const newVal = !checked;
                 setEntrepriseData((prev) => prev ? { ...prev, [key]: String(newVal) } : prev);
