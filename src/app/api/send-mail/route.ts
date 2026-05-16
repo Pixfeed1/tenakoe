@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
       email: fromEmail || "",
       telephone: dbUser?.telephone,
     });
-    const htmlWithSignature = `${content || ""}<br/><br/>${signature}`;
+    const contentHasPolite = (content || "").toLowerCase().includes("cordialement");
+    const htmlWithSignature = contentHasPolite
+      ? `${content || ""}<br/><br/>${signature.replace(/<tr>[\s\S]*?Cordialement[\s\S]*?<\/tr>/, "")}`
+      : `${content || ""}<br/><br/>${signature}`;
 
     // Logique exclusive : OAuth s'il est connecté, sinon SMTP s'il est configuré
     let result: { messageId: string };

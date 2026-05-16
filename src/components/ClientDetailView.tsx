@@ -849,7 +849,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     <div><strong>Objet :</strong> {mailSubject || "(sans objet)"}</div>
                   </div>
                   <div dangerouslySetInnerHTML={{ __html: mailBody ? `<p>${mailBody.replace(/\n/g, "<br>")}</p>` : "<p style='color:#94a3b8'>(corps du message vide)</p>" }} />
-                  <div style={{ marginTop: 16, clear: "both", overflow: "hidden" }} dangerouslySetInnerHTML={{ __html: getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Tenakoe", nom: entrepriseData?.chargeeEntrepriseNom || "", email: entrepriseData?.email || "contact@tenakoe.fr" }) }} />
+                  <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px dashed #e2e8f0", clear: "both", overflow: "hidden" }}>
+                    <div style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic", marginBottom: 8 }}>— Signature ajoutée automatiquement à l&apos;envoi —</div>
+                    <div dangerouslySetInnerHTML={{ __html: getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Tenakoe", nom: entrepriseData?.chargeeEntrepriseNom || "", email: entrepriseData?.email || "contact@tenakoe.fr" }) }} />
+                  </div>
                   {mailAttachments.length > 0 && (
                     <div style={{ marginTop: 12, paddingTop: 8, borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
                       <Paperclip size={10} style={{ verticalAlign: -1, marginRight: 4 }} /><strong>Pièces jointes :</strong> {mailAttachments.map((f) => `${f.name} (${(f.size / 1024 / 1024).toFixed(1)} Mo)`).join(", ")}
