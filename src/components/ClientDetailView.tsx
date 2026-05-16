@@ -48,6 +48,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [mailBcc, setMailBcc] = useState("");
   const [sending, setSending] = useState(false);
   const [mailAttachments, setMailAttachments] = useState<File[]>([]);
+  const [mailPreview, setMailPreview] = useState(false);
   const [sendStatus, setSendStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [smsOpen, setSmsOpen] = useState(false);
   const [smsBody, setSmsBody] = useState("");
@@ -829,7 +830,29 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             >
               {sending ? "Envoi..." : "Envoyer"}
             </Button>
+            <Button C={C} variant="secondary" size="sm" onClick={() => setMailPreview(!mailPreview)} icon={<FileText size={12} />}>
+              {mailPreview ? "Masquer aperçu" : "Aperçu"}
+            </Button>
           </div>
+          {mailPreview && (
+            <div style={{ marginTop: 10, padding: 16, borderRadius: 10, border: `1px solid ${C.border}`, background: C.bg }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", marginBottom: 8 }}>Aperçu du mail</div>
+              <div style={{ padding: "12px 16px", borderRadius: 8, background: "#fff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 13, lineHeight: 1.6 }}>
+                <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: 8, marginBottom: 10, fontSize: 12, color: "#64748b" }}>
+                  <div><strong>De :</strong> {entrepriseData?.chargee || "Tenakoe"}</div>
+                  <div><strong>À :</strong> {mailTo || "—"}</div>
+                  {mailCc && <div><strong>CC :</strong> {mailCc}</div>}
+                  <div><strong>Objet :</strong> {mailSubject || "(sans objet)"}</div>
+                </div>
+                <div dangerouslySetInnerHTML={{ __html: mailBody ? `<p>${mailBody.replace(/\n/g, "<br>")}</p>` : "<p style='color:#94a3b8'>(corps du message vide)</p>" }} />
+                {mailAttachments.length > 0 && (
+                  <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
+                    <strong>Pièces jointes :</strong> {mailAttachments.map((f) => f.name).join(", ")}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {mailAttachments.length > 0 && (
             <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 3 }}>
               {mailAttachments.map((file, idx) => (
