@@ -205,27 +205,63 @@ export async function sendGmailMessage(opts: {
   cc?: string;
   bcc?: string;
   userId: string;
+  attachments?: Array<{ filename: string; mimeType: string; content: string }>;
 }): Promise<{ messageId: string }> {
   const { gmail, email } = await getAuthenticatedGmail(opts.userId);
   const fromAddress = opts.fromName
     ? `"${opts.fromName}" <${email}>`
     : email;
 
-  const headers = [
-    `From: ${fromAddress}`,
-    `To: ${opts.to}`,
-    opts.cc ? `Cc: ${opts.cc}` : null,
-    opts.bcc ? `Bcc: ${opts.bcc}` : null,
-    `Subject: =?utf-8?B?${Buffer.from(opts.subject).toString("base64")}?=`,
-    "MIME-Version: 1.0",
-    "Content-Type: text/html; charset=utf-8",
-    "Content-Transfer-Encoding: base64",
-  ].filter(Boolean).join("\r\n");
+  const hasAttachments = opts.attachments && opts.attachments.length > 0;
+  let raw: string;
 
-  const body = Buffer.from(opts.html).toString("base64");
-  const raw = Buffer.from(`${headers}\r\n\r\n${body}`)
-    .toString("base64")
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  if (hasAttachments) {
+    const boundary = "tenakoe_" + Date.now();
+    const mimeParts = [
+      `From: ${fromAddress}`,
+      `To: ${opts.to}`,
+      opts.cc ? `Cc: ${opts.cc}` : null,
+      opts.bcc ? `Bcc: ${opts.bcc}` : null,
+      `Subject: =?utf-8?B?${Buffer.from(opts.subject).toString("base64")}?=`,
+      "MIME-Version: 1.0",
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      "",
+      `--${boundary}`,
+      "Content-Type: text/html; charset=utf-8",
+      "Content-Transfer-Encoding: base64",
+      "",
+      Buffer.from(opts.html).toString("base64"),
+      ...opts.attachments!.flatMap((att) => [
+        `--${boundary}`,
+        `Content-Type: ${att.mimeType}; name="${att.filename}"`,
+        `Content-Disposition: attachment; filename="${att.filename}"`,
+        "Content-Transfer-Encoding: base64",
+        "",
+        att.content,
+      ]),
+      `--${boundary}--`,
+    ].filter((l): l is string => l !== null).join("\r\n");
+
+    raw = Buffer.from(mimeParts)
+      .toString("base64")
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  } else {
+    const headers = [
+      `From: ${fromAddress}`,
+      `To: ${opts.to}`,
+      opts.cc ? `Cc: ${opts.cc}` : null,
+      opts.bcc ? `Bcc: ${opts.bcc}` : null,
+      `Subject: =?utf-8?B?${Buffer.from(opts.subject).toString("base64")}?=`,
+      "MIME-Version: 1.0",
+      "Content-Type: text/html; charset=utf-8",
+      "Content-Transfer-Encoding: base64",
+    ].filter(Boolean).join("\r\n");
+
+    const body = Buffer.from(opts.html).toString("base64");
+    raw = Buffer.from(`${headers}\r\n\r\n${body}`)
+      .toString("base64")
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
 
   const res = await gmail.users.messages.send({
     userId: "me",

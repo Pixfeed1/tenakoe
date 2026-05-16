@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { to, cc, bcc, subject, html, entrepriseId, templateId } = body;
+  const { to, cc, bcc, subject, html, entrepriseId, templateId, attachments } = body;
 
   if (!to || !subject) {
     return NextResponse.json({ error: "Destinataire et objet requis" }, { status: 400 });
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     const gmailAvailable = await isGmailOAuthAvailable(session.user.id);
 
     if (gmailAvailable) {
-      result = await sendGmailMessage({ to, subject, html: htmlWithSignature, fromName, cc, bcc, userId: session.user.id });
+      result = await sendGmailMessage({ to, subject, html: htmlWithSignature, fromName, cc, bcc, userId: session.user.id, attachments });
     } else if (userSmtp) {
       result = await sendMail({
         to, subject, html: htmlWithSignature, cc, bcc,

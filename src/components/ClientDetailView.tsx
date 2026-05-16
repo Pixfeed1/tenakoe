@@ -41,9 +41,11 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [entrepriseData, setEntrepriseData] = useState<Record<string, string> | null>(null);
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
+  const [mailTo, setMailTo] = useState("");
   const [mailCc, setMailCc] = useState("");
   const [mailBcc, setMailBcc] = useState("");
   const [sending, setSending] = useState(false);
+  const [mailAttachments, setMailAttachments] = useState<File[]>([]);
   const [sendStatus, setSendStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [smsOpen, setSmsOpen] = useState(false);
   const [smsBody, setSmsBody] = useState("");
@@ -574,7 +576,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <GuideTooltip id="btn-mail" C={C}>
         <div className="fiche-actions" style={{ display: "flex", gap: 8 }}>
           {[
-            { Icon: Mail, label: "Envoyer mail", guide: "btn-mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
+            { Icon: Mail, label: "Envoyer mail", guide: "btn-mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); setMailTo(entrepriseData?.email || ""); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
             { Icon: MessageSquare, label: "SMS", guide: "btn-sms", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
             { Icon: Phone, label: "Appeler", guide: "btn-appeler", onClick: () => { setShowCallLog(true); setMailOpen(false); setSmsOpen(false); } },
           ].map((btn, i) => (
@@ -623,8 +625,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <X size={16} color={C.textDim} style={{ cursor: "pointer" }} onClick={() => setMailOpen(false)} />
           </div>
           <div style={{ marginBottom: 8 }}>
-            <span style={{ fontSize: 12, color: C.textDim }}>À : </span>
-            <span style={{ fontSize: 12, color: C.text }}>{entrepriseData?.email || "—"}</span>
+            <label style={{ fontSize: 11, color: C.textDim, marginBottom: 2, display: "block" }}>À</label>
+            <input type="email" placeholder="destinataire@exemple.com" value={mailTo} onChange={(e) => setMailTo(e.target.value)}
+              style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
           </div>
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <div style={{ flex: 1 }}>
@@ -712,11 +715,21 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 ));
               })()}
             </select>
+            <label style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", fontSize: 12, color: C.textMuted, display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Paperclip size={12} /> {mailAttachments.length > 0 ? `${mailAttachments.length} fichier(s)` : "Pièce jointe"}
+              <input type="file" multiple style={{ display: "none" }} onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                const totalSize = [...mailAttachments, ...files].reduce((s, f) => s + f.size, 0);
+                if (totalSize > 25 * 1024 * 1024) { alert("Taille totale max dépassée (25 Mo)"); return; }
+                setMailAttachments((prev) => [...prev, ...files]);
+                e.target.value = "";
+              }} />
+            </label>
             <Button
               C={C}
               variant="primary"
               data-guide="btn-send-mail"
-              disabled={sending || !mailSubject}
+              disabled={sending || !mailSubject || !mailTo}
               loading={sending}
               icon={<Send size={13} />}
               onClick={async () => {
@@ -734,16 +747,26 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 try {
                   const cc = mailCc;
                   const bcc = mailBcc;
+                  const attachmentsB64: Array<{ filename: string; mimeType: string; content: string }> = [];
+                  for (const file of mailAttachments) {
+                    const b64 = await new Promise<string>((resolve) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve((reader.result as string).split(",")[1] || "");
+                      reader.readAsDataURL(file);
+                    });
+                    attachmentsB64.push({ filename: file.name, mimeType: file.type || "application/octet-stream", content: b64 });
+                  }
                   const res = await fetch("/api/send-mail", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      to: entrepriseData?.email || "",
+                      to: mailTo || entrepriseData?.email || "",
                       cc: cc || undefined,
                       bcc: bcc || undefined,
                       subject: mailSubject,
                       html: `<p>${mailBody.replace(/\n/g, "<br>")}</p>`,
                       entrepriseId: client?.id,
+                      attachments: attachmentsB64.length > 0 ? attachmentsB64 : undefined,
                     }),
                   });
                   if (res.ok) {
@@ -755,6 +778,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     setMailBody("");
                     setMailCc("");
                     setMailBcc("");
+                    setMailAttachments([]);
                   } else {
                     const err = await res.json();
                     setSendStatus({ type: "error", msg: err.error || "Erreur d'envoi" });
@@ -771,6 +795,19 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               {sending ? "Envoi..." : "Envoyer"}
             </Button>
           </div>
+          {mailAttachments.length > 0 && (
+            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 3 }}>
+              {mailAttachments.map((file, idx) => (
+                <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", borderRadius: 6, background: C.bg, border: `1px solid ${C.border}`, fontSize: 11, color: C.textMuted }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <Paperclip size={10} /> {file.name} <span style={{ color: C.textDim }}>({(file.size / 1024 / 1024).toFixed(1)} Mo)</span>
+                  </span>
+                  <button type="button" onClick={() => setMailAttachments((prev) => prev.filter((_, i) => i !== idx))} style={{ border: "none", background: "transparent", color: C.textDim, cursor: "pointer", padding: "2px 4px" }}><X size={11} /></button>
+                </div>
+              ))}
+              <div style={{ fontSize: 10, color: C.textDim, textAlign: "right" }}>Total : {(mailAttachments.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1)} / 25 Mo</div>
+            </div>
+          )}
         </div>
       )}
 
