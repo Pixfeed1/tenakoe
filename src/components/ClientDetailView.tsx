@@ -1023,12 +1023,12 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             ].map((f, i) => {
               const saveField = async (val: string) => {
                 const original = f.value === "\u2014" ? "" : f.value;
-                if (val !== original && val.trim()) {
+                if (val !== original) {
                   setEntrepriseData((prev) => prev ? { ...prev, [f.key]: val } : prev);
                   if (client?.id && !isDemoMode) {
                     await fetch(`/api/entreprises/${client.id}`, {
                       method: "PATCH", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ [f.key]: val }),
+                      body: JSON.stringify({ [f.key]: val || null }),
                     });
                   }
                   if (f.key === "departement" && val.trim() && !isDemoMode) {
