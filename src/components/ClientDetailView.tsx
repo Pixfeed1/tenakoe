@@ -2045,14 +2045,31 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   )}
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, alignItems: "center" }}>
-                  {newProjetForm.nom && newProjetForm.qualifications.length === 0 && (
+                  {newProjetForm.nom && newProjetForm.qualifications.length === 0 && !qualifSearch.trim() && (
                     <span style={{ fontSize: 11, color: C.danger }}>Ajoutez au moins une qualification</span>
                   )}
-                  <Button C={C} variant="ghost" onClick={() => setShowAddProjet(false)}>Annuler</Button>
-                  <Button C={C} variant="primary" disabled={!newProjetForm.nom || newProjetForm.qualifications.length === 0} onClick={async () => {
+                  <Button C={C} variant="ghost" onClick={() => {
+                    if (newProjetForm.nom || newProjetForm.qualifications.length > 0 || qualifSearch.trim()) {
+                      if (!window.confirm("Quitter sans enregistrer ? Vos saisies seront perdues.")) return;
+                    }
+                    setShowAddProjet(false);
+                    setQualifSearch("");
+                  }}>Annuler</Button>
+                  <Button C={C} variant="primary" disabled={!newProjetForm.nom || (newProjetForm.qualifications.length === 0 && !qualifSearch.trim())} onClick={async () => {
+                    // Auto-add pending qualif from search field before creating
+                    let finalQualifs = [...newProjetForm.qualifications];
+                    if (qualifSearch.trim() && !isNewQualibat) {
+                      const code = qualifSearch.trim().toUpperCase().slice(0, 20);
+                      if (!finalQualifs.some((q) => q.code === code)) {
+                        finalQualifs.push({ code, nom: qualifSearch.trim() });
+                      }
+                      setQualifSearch("");
+                    }
+                    if (finalQualifs.length === 0) return;
+                    setNewProjetForm({ ...newProjetForm, qualifications: finalQualifs });
                     if (isDemoMode) {
                       handleDemoAction("Projet créé");
-                      setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: newProjetForm.qualifications.map((q) => ({ type: q.code, certificateurType: newProjetForm.certificateurType })), etapes: [] }]);
+                      setProjets((prev) => [...prev, { id: `demo-projet-${Date.now()}`, nom: newProjetForm.nom, qualifications: finalQualifs.map((q) => ({ type: q.code, certificateurType: newProjetForm.certificateurType })), etapes: [] }]);
                       setShowAddProjet(false);
                       setNewProjetForm({ nom: "", qualifications: [], chargeeId: "", certificateurType: "Qualibat" });
                       guide.showSuggestion("nouveau-projet"); toast("Projet créé");
@@ -2060,7 +2077,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                     }
                     if (!client?.id) return;
                     const payload: Record<string, unknown> = { nom: newProjetForm.nom, entrepriseId: client.id, certificateurType: newProjetForm.certificateurType };
-                    if (newProjetForm.qualifications.length > 0) payload.qualifications = newProjetForm.qualifications.map((q) => ({ type: q.code }));
+                    if (finalQualifs.length > 0) payload.qualifications = finalQualifs.map((q) => ({ type: q.code }));
                     if (newProjetForm.chargeeId) payload.chargeeId = newProjetForm.chargeeId;
                     const res = await fetch("/api/projets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                     if (res.ok) {
