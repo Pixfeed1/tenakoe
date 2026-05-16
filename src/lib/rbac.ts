@@ -94,3 +94,35 @@ export function getTransmissionFilter(user: CurrentUser) {
     ],
   };
 }
+
+export function isAdminOnly(user: CurrentUser | null): boolean {
+  return !user || user.role !== "ADMIN";
+}
+
+export const CHARGEE_ENTREPRISE_WHITELIST = new Set([
+  "nom", "siret", "email", "telephone", "adresse", "departement", "codePostal", "ville",
+  "depotId", "numeroCarte", "commentaire", "dejaReferentRGE",
+  "statutFacturation", "dateStatutFacturation",
+  "alerte1Envoyee", "dateAlerte1", "alerte2Envoyee", "dateAlerte2",
+  "mailAbandonEnvoye", "dateMailAbandon", "alerteAbandonCommentaire",
+  "relancesCommentaire",
+  "relanceJoindre1", "dateRelanceJoindre1", "relanceJoindre2", "dateRelanceJoindre2",
+  "relanceJoindre3", "dateRelanceJoindre3", "relanceJoindre4", "dateRelanceJoindre4",
+  "relanceJoindreInjoignable", "dateRelanceJoindreInjoignable",
+  "relanceDevis1", "dateRelanceDevis1", "relanceDevis2", "dateRelanceDevis2",
+  "relanceDevis3", "dateRelanceDevis3", "relanceDevis4", "dateRelanceDevis4",
+  "relanceDevisFerme", "dateRelanceDevisFerme",
+  "dateNouveauOverride",
+  "interesseTNK", "dateInteresseTNK", "miseEnRelation", "miseEnRelationAutre",
+  "dateStatutPrise", "dateEnCours", "dateDepose", "dateQualifie",
+  "eligible", "eligibleCommentaire", "dateEligible",
+  "restore",
+]);
+
+export function stripFieldsForChargee(body: Record<string, unknown>): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(body)) {
+    if (CHARGEE_ENTREPRISE_WHITELIST.has(key)) cleaned[key] = value;
+  }
+  return cleaned;
+}

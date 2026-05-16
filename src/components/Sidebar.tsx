@@ -9,17 +9,17 @@ import { SearchBar } from "@/components/SearchBar";
 import { useGuide } from "@/components/GuideSystem";
 
 const NAV_ITEMS = [
-  { Icon: LayoutDashboard, label: "Dashboard", navKey: "Dashboard", guide: "nav-dashboard" },
-  { Icon: Zap, label: "Inbox formulaire", navKey: "Leads", guide: "nav-leads" },
-  { Icon: Target, label: "Prospects", navKey: "Prospects", guide: "nav-prospects" },
-  { Icon: Users, label: "Clients", navKey: "Clients", guide: "nav-clients" },
-  { Icon: FolderOpen, label: "Dossiers", navKey: "Dossiers", guide: "nav-dossiers" },
-  { Icon: Send, label: "Transmissions", navKey: "Transmissions", guide: "nav-transmissions" },
-  { Icon: File, label: "Documents", navKey: "Documents", guide: "nav-documents" },
-  { Icon: BookOpen, label: "Ressources", navKey: "Ressources", guide: "nav-ressources" },
-  { Icon: CreditCard, label: "Facturation", navKey: "Facturation", guide: "nav-facturation" },
-  { Icon: Clock, label: "Historique", navKey: "Historique", guide: "nav-historique" },
-  { Icon: Handshake, label: "Apporteurs", navKey: "Apporteurs", guide: "nav-apporteurs" },
+  { Icon: LayoutDashboard, label: "Dashboard", navKey: "Dashboard", guide: "nav-dashboard", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: Zap, label: "Inbox formulaire", navKey: "Leads", guide: "nav-leads", roles: ["ADMIN"] },
+  { Icon: Target, label: "Prospects", navKey: "Prospects", guide: "nav-prospects", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: Users, label: "Clients", navKey: "Clients", guide: "nav-clients", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: FolderOpen, label: "Dossiers", navKey: "Dossiers", guide: "nav-dossiers", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: Send, label: "Transmissions", navKey: "Transmissions", guide: "nav-transmissions", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: File, label: "Documents", navKey: "Documents", guide: "nav-documents", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: BookOpen, label: "Ressources", navKey: "Ressources", guide: "nav-ressources", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: CreditCard, label: "Facturation", navKey: "Facturation", guide: "nav-facturation", roles: ["ADMIN"] },
+  { Icon: Clock, label: "Historique", navKey: "Historique", guide: "nav-historique", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: Handshake, label: "Apporteurs", navKey: "Apporteurs", guide: "nav-apporteurs", roles: ["ADMIN"] },
 ];
 
 const NAV_BOTTOM: Array<{ Icon: typeof Plug; label: string; navKey?: string }> = [
@@ -89,7 +89,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
         >
           Menu principal
         </div>
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user?.role || "")).map((item) => {
           const isActive = activeNav === (item.navKey || item.label);
           return (
             <button
@@ -127,7 +127,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
         >
           Système
         </div>
-        {[...NAV_BOTTOM, ...(user?.role !== "PRESCRIPTEUR" ? NAV_BOTTOM_ADMIN : [])].map((item) => {
+        {[...(user?.role === "ADMIN" ? NAV_BOTTOM : []), ...(user?.role === "ADMIN" ? NAV_BOTTOM_ADMIN : [])].map((item) => {
           const isActive = activeNav === (item.navKey || item.label);
           return (
           <button

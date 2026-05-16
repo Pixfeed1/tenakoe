@@ -7,7 +7,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (user.role !== "ADMIN") return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
 
   const { id } = await params;
   const body = await request.json();

@@ -31,9 +31,13 @@ interface ClientDetailViewProps {
   C: Theme;
   client: { id?: string; nom: string; siret?: string; prescripteur?: string; isDemo?: boolean } | null;
   onBack: () => void;
+  role?: string;
 }
 
-export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
+export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewProps) {
+  const isAdmin = role === "ADMIN";
+  const isChargee = role === "CHARGEE";
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const guide = useGuide();
   const { toast } = useToast();
   const isDemoMode = client?.isDemo || checkIsDemo(client || {});
@@ -405,6 +409,10 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => setMentionUsers(data))
       .catch(() => {});
+    fetch("/api/users/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.id) setCurrentUserId(data.id); })
+      .catch(() => {});
 
     // Load nomenclature map for qualification name display
     fetch("/api/nomenclature-qualibat?limit=500")
@@ -590,7 +598,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
           ))}
         </div>
         </GuideTooltip>
-        {!isDemoMode && client?.id && (
+        {!isDemoMode && client?.id && isAdmin && (
           <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
             <Button C={C} variant="secondary" size="sm" icon={<FolderOpen size={13} />}
               onClick={async () => {
@@ -1185,6 +1193,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 }}
                 onClick={() => {
                   if (editingField === f.key || f.key === "contact") return;
+                  if (isChargee && (f.key === "prescripteur" || f.key === "apporteurId")) return;
                   setEditingField(f.key);
                   setEditFieldValue(f.value === "—" ? "" : f.value);
                 }}
@@ -1423,8 +1432,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", flex: 1 }}>
                 <select
                   value={entrepriseData?.eligible || "A_VERIFIER"}
+                  disabled={isChargee}
                   onChange={async (e) => {
-                    if (!client?.id || isDemoMode) return;
+                    if (!client?.id || isDemoMode || isChargee) return;
                     const val = e.target.value;
                     setEntrepriseData((prev) => prev ? { ...prev, eligible: val, dateEligible: new Date().toISOString() } : prev);
                     await fetch(`/api/entreprises/${client.id}`, {
@@ -1475,8 +1485,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               <div>
                 <select
                   value={entrepriseData?.statutPrise || "NOUVEAU"}
+                  disabled={isChargee}
                   onChange={async (e) => {
-                    if (!client?.id || isDemoMode) return;
+                    if (!client?.id || isDemoMode || isChargee) return;
                     const val = e.target.value;
                     setEntrepriseData((prev) => prev ? { ...prev, statutPrise: val, dateStatutPrise: new Date().toISOString() } : prev);
                     await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statutPrise: val }) }).catch(() => {});
@@ -1512,8 +1523,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <select
                     value={f.raw || ""}
+                    disabled={isChargee}
                     onChange={async (e) => {
-                      if (!client?.id) return;
+                      if (!client?.id || isChargee) return;
                       const val = e.target.value;
                       await fetch(`/api/entreprises/${client.id}`, {
                         method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -1582,8 +1594,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               <span className="label-statut" style={{ fontSize: 12, color: C.textDim, width: 140 }}>Chargée de projet</span>
               <select
                 value={entrepriseData?.chargeeEntrepriseId || projets[0]?.chargee?.id || ""}
+                disabled={isChargee}
                 onChange={async (e) => {
-                  if (!client?.id || isDemoMode) return;
+                  if (!client?.id || isDemoMode || isChargee) return;
                   const newChargeeId = e.target.value || null;
                   const newChargee = newChargeeId ? mentionUsers.find((u) => u.id === newChargeeId) || null : null;
                   const prevId = entrepriseData?.chargeeEntrepriseId || "";
@@ -1791,6 +1804,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             {(() => {
               const qualifId = entrepriseData?.qualificationId || projets.flatMap((p) => p.qualifications).find((q) => q.id)?.id || "";
               const toggleFormation = async (key: string) => {
+                if (isChargee) return;
                 if (!qualifId) { toast("Aucune qualification trouvée pour ce dossier"); return; }
                 const checked = entrepriseData?.[key] === "true";
                 const newVal = !checked;
@@ -3240,13 +3254,13 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   )}
                   <div style={{ fontSize: 11, color: C.textDim, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
                     {a.chargee} · {a.time}
-                    {isNote && noteData && editingNote !== noteData.id && (
+                    {isNote && noteData && editingNote !== noteData.id && (isAdmin || noteData.auteur.id === currentUserId) && (
                       <button onClick={(e) => { e.stopPropagation(); setEditingNote(noteData.id); setEditContent(noteData.contenu); }}
                         style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }} title="Modifier la note">
                         <Edit3 size={11} color={C.textDim} />
                       </button>
                     )}
-                    {isNote && noteData && (
+                    {isNote && noteData && (isAdmin || noteData.auteur.id === currentUserId) && (
                       <button onClick={async (e) => {
                         e.stopPropagation();
                         if (!window.confirm("Supprimer cette note ?")) return;

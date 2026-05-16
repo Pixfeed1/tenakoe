@@ -19,10 +19,11 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// GET: protected — only authenticated users can list leads
+// GET: protected — only authenticated users can list leads (admin-only, not CHARGEE)
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (user.role === "CHARGEE") return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
 
   const leads = await prisma.leadFormulaire.findMany({
     where: { converti: false },

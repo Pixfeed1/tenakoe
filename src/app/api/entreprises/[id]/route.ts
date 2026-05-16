@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getEntrepriseDetail } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/rbac";
 import { userCanAccessEntreprise } from "@/lib/dossierScope";
+import { stripFieldsForChargee } from "@/lib/rbac";
 
 export async function GET(
   request: NextRequest,
@@ -42,7 +43,9 @@ export async function PATCH(
   if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
 
   const { id } = await params;
-  const body = await request.json();
+  let body = await request.json();
+
+  if (user.role === "CHARGEE") body = stripFieldsForChargee(body);
 
   if (body.restore === true) {
     const existing = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, deletedAt: true } });
@@ -154,7 +157,7 @@ export async function DELETE(
 ) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "ADMIN") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { id } = await params;
   const entreprise = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, deletedAt: true } });

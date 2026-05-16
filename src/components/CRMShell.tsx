@@ -313,6 +313,7 @@ export function CRMShell({
             C={C}
             client={selectedClient}
             onBack={() => navigateTo(activeNav as View)}
+            role={user.role}
           />
         )}
         {view === "Leads" && <LeadsView key={navKey} C={C} />}
