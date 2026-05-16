@@ -42,6 +42,8 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
   const [mailTo, setMailTo] = useState("");
+  const [mailToMode, setMailToMode] = useState<"contact" | "autre">("contact");
+  const [mailToContactIdx, setMailToContactIdx] = useState(0);
   const [mailCc, setMailCc] = useState("");
   const [mailBcc, setMailBcc] = useState("");
   const [sending, setSending] = useState(false);
@@ -576,7 +578,7 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
         <GuideTooltip id="btn-mail" C={C}>
         <div className="fiche-actions" style={{ display: "flex", gap: 8 }}>
           {[
-            { Icon: Mail, label: "Envoyer mail", guide: "btn-mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); setMailTo(entrepriseData?.email || ""); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
+            { Icon: Mail, label: "Envoyer mail", guide: "btn-mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); setMailTo(entrepriseData?.email || ""); setMailToMode("contact"); setMailToContactIdx(0); setMailAttachments([]); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
             { Icon: MessageSquare, label: "SMS", guide: "btn-sms", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
             { Icon: Phone, label: "Appeler", guide: "btn-appeler", onClick: () => { setShowCallLog(true); setMailOpen(false); setSmsOpen(false); } },
           ].map((btn, i) => (
@@ -624,10 +626,43 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>Nouveau mail</span>
             <X size={16} color={C.textDim} style={{ cursor: "pointer" }} onClick={() => setMailOpen(false)} />
           </div>
+          {/* Destinataire : contact ou autre */}
           <div style={{ marginBottom: 8 }}>
-            <label style={{ fontSize: 11, color: C.textDim, marginBottom: 2, display: "block" }}>À</label>
-            <input type="email" placeholder="destinataire@exemple.com" value={mailTo} onChange={(e) => setMailTo(e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+            <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+              <button type="button" onClick={() => {
+                setMailToMode("contact");
+                const c = contacts[mailToContactIdx];
+                setMailTo(c?.email || entrepriseData?.email || "");
+              }} style={{ padding: "4px 10px", borderRadius: 6, border: `1px solid ${mailToMode === "contact" ? C.accent : C.border}`, background: mailToMode === "contact" ? C.accentDim : "transparent", color: mailToMode === "contact" ? C.accentText : C.textMuted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                {contacts.length > 1 ? "Contact" : "Email du client"}
+              </button>
+              <button type="button" onClick={() => { setMailToMode("autre"); setMailTo(""); }} style={{ padding: "4px 10px", borderRadius: 6, border: `1px solid ${mailToMode === "autre" ? C.accent : C.border}`, background: mailToMode === "autre" ? C.accentDim : "transparent", color: mailToMode === "autre" ? C.accentText : C.textMuted, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                Autre adresse
+              </button>
+            </div>
+            {mailToMode === "contact" ? (
+              contacts.length > 1 ? (
+                <select value={mailToContactIdx} onChange={(e) => {
+                  const idx = Number(e.target.value);
+                  setMailToContactIdx(idx);
+                  setMailTo(contacts[idx]?.email || "");
+                }} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }}>
+                  {contacts.filter((c) => c.email).map((c, idx) => (
+                    <option key={c.id} value={idx}>{c.prenom} {c.nom}{c.fonction ? ` — ${c.fonction}` : ""} ({c.email})</option>
+                  ))}
+                  {entrepriseData?.email && !contacts.some((c) => c.email === entrepriseData?.email) && (
+                    <option value={-1}>{entrepriseData.email} (entreprise)</option>
+                  )}
+                </select>
+              ) : (
+                <div style={{ padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13 }}>
+                  {mailTo || "—"}
+                </div>
+              )
+            ) : (
+              <input type="email" placeholder="destinataire@exemple.com, autre@test.fr" value={mailTo} onChange={(e) => setMailTo(e.target.value)} autoFocus
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+            )}
           </div>
           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <div style={{ flex: 1 }}>
