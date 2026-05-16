@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { formatPhone, formatContactName, hydrateTemplate, fixFileUrl } from "@/lib/format";
 import { TransmissionDetailModal } from "@/components/TransmissionDetailModal";
+import { getSignature } from "@/lib/mail-signature";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -710,13 +711,9 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
               fontSize: 13, marginBottom: 8, outline: "none", resize: "vertical", boxSizing: "border-box",
             }}
           />
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <select
-              data-guide="template-select"
-              style={{
-                padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`,
-                background: C.bg, color: C.textMuted, fontSize: 12,
-              }}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <select data-guide="template-select" style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.textMuted, fontSize: 12 }}
               onChange={(e) => {
                 const tpl = mailTemplates.find((t) => t.id === e.target.value);
                 if (tpl) {
@@ -750,17 +747,22 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
                   </optgroup>
                 ));
               })()}
-            </select>
-            <label style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", fontSize: 12, color: C.textMuted, display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <Paperclip size={12} /> {mailAttachments.length > 0 ? `${mailAttachments.length} fichier(s)` : "Pièce jointe"}
-              <input type="file" multiple style={{ display: "none" }} onChange={(e) => {
-                const files = Array.from(e.target.files || []);
-                const totalSize = [...mailAttachments, ...files].reduce((s, f) => s + f.size, 0);
-                if (totalSize > 25 * 1024 * 1024) { alert("Taille totale max dépassée (25 Mo)"); return; }
-                setMailAttachments((prev) => [...prev, ...files]);
-                e.target.value = "";
-              }} />
-            </label>
+              </select>
+              <label style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer", fontSize: 12, color: C.textMuted, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <Paperclip size={12} /> {mailAttachments.length > 0 ? `${mailAttachments.length} fichier(s)` : "PJ"}
+                <input type="file" multiple style={{ display: "none" }} onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  const totalSize = [...mailAttachments, ...files].reduce((s, f) => s + f.size, 0);
+                  if (totalSize > 25 * 1024 * 1024) { alert("Taille totale max dépassée (25 Mo)"); return; }
+                  setMailAttachments((prev) => [...prev, ...files]);
+                  e.target.value = "";
+                }} />
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <button type="button" onClick={() => setMailPreview(!mailPreview)} style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${mailPreview ? C.accent : C.border}`, background: mailPreview ? C.accentDim : "transparent", color: mailPreview ? C.accentText : C.textMuted, fontSize: 12, fontWeight: 500, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <FileText size={12} /> Aperçu
+              </button>
             <Button
               C={C}
               variant="primary"
@@ -830,24 +832,22 @@ export function ClientDetailView({ C, client, onBack }: ClientDetailViewProps) {
             >
               {sending ? "Envoi..." : "Envoyer"}
             </Button>
-            <Button C={C} variant="secondary" size="sm" onClick={() => setMailPreview(!mailPreview)} icon={<FileText size={12} />}>
-              {mailPreview ? "Masquer aperçu" : "Aperçu"}
-            </Button>
+            </div>
           </div>
           {mailPreview && (
-            <div style={{ marginTop: 10, padding: 16, borderRadius: 10, border: `1px solid ${C.border}`, background: C.bg }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", marginBottom: 8 }}>Aperçu du mail</div>
+            <div style={{ marginTop: 10, padding: 14, borderRadius: 10, border: `1px solid ${C.border}`, background: "#f8fafc" }}>
               <div style={{ padding: "12px 16px", borderRadius: 8, background: "#fff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 13, lineHeight: 1.6 }}>
                 <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: 8, marginBottom: 10, fontSize: 12, color: "#64748b" }}>
-                  <div><strong>De :</strong> {entrepriseData?.chargee || "Tenakoe"}</div>
+                  <div><strong>De :</strong> {entrepriseData?.chargeeEntreprisePrenom || "Tenakoe"} {entrepriseData?.chargeeEntrepriseNom || ""}</div>
                   <div><strong>À :</strong> {mailTo || "—"}</div>
                   {mailCc && <div><strong>CC :</strong> {mailCc}</div>}
                   <div><strong>Objet :</strong> {mailSubject || "(sans objet)"}</div>
                 </div>
                 <div dangerouslySetInnerHTML={{ __html: mailBody ? `<p>${mailBody.replace(/\n/g, "<br>")}</p>` : "<p style='color:#94a3b8'>(corps du message vide)</p>" }} />
+                <div style={{ marginTop: 16 }} dangerouslySetInnerHTML={{ __html: getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Tenakoe", nom: entrepriseData?.chargeeEntrepriseNom || "", email: entrepriseData?.email || "contact@tenakoe.fr" }) }} />
                 {mailAttachments.length > 0 && (
-                  <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
-                    <strong>Pièces jointes :</strong> {mailAttachments.map((f) => f.name).join(", ")}
+                  <div style={{ marginTop: 12, paddingTop: 8, borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
+                    <Paperclip size={10} style={{ verticalAlign: -1, marginRight: 4 }} /><strong>Pièces jointes :</strong> {mailAttachments.map((f) => `${f.name} (${(f.size / 1024 / 1024).toFixed(1)} Mo)`).join(", ")}
                   </div>
                 )}
               </div>
