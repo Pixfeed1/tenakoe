@@ -127,8 +127,18 @@ export async function DELETE(
   if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { id } = await params;
+  const hard = request.nextUrl.searchParams.get("hard") === "true";
   const projet = await prisma.projet.findUnique({ where: { id }, select: { chargeeId: true, deletedAt: true, nom: true, entrepriseId: true } });
   if (!projet) return NextResponse.json({ error: "Projet non trouvé" }, { status: 404 });
+
+  if (hard) {
+    if (user.role !== "ADMIN") return NextResponse.json({ error: "Suppression définitive réservée aux administrateurs" }, { status: 403 });
+    if (!projet.deletedAt) return NextResponse.json({ error: "Le projet doit d'abord être en corbeille" }, { status: 409 });
+    await prisma.projet.delete({ where: { id } });
+    await prisma.logActivite.create({ data: { type: "SUPPRESSION", description: `Projet "${projet.nom}" supprimé définitivement`, entite: "Projet", entiteId: id, userId: user.id } });
+    return NextResponse.json({ success: true, permanent: true });
+  }
+
   if (projet.deletedAt) return NextResponse.json({ error: "Projet déjà supprimé" }, { status: 409 });
   if (user.role === "CHARGEE" && projet.chargeeId !== user.id) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 

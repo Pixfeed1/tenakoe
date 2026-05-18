@@ -1618,38 +1618,86 @@ function TestEmailTab({ C }: { C: Theme }) {
 function CorbeilleTab({ C }: { C: Theme }) {
   const { toast } = useToast();
   const [projets, setProjets] = useState<Array<{ id: string; nom: string; deletedAt: string; joursRestants: number; entreprise: { id: string; nom: string }; chargee: { prenom: string; nom: string } | null; deletedBy: { prenom: string; nom: string } | null }>>([]);
+  const [entreprises, setEntreprises] = useState<Array<{ id: string; nom: string; siret: string | null; deletedAt: string; joursRestants: number; chargee: { prenom: string; nom: string } | null }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/projets/corbeille").then((r) => r.ok ? r.json() : []).then((data) => { setProjets(data); setLoading(false); }).catch(() => setLoading(false));
+    Promise.all([
+      fetch("/api/projets/corbeille").then((r) => r.ok ? r.json() : []),
+      fetch("/api/entreprises/corbeille").then((r) => r.ok ? r.json() : []),
+    ]).then(([p, e]) => { setProjets(p); setEntreprises(e); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  const restore = async (id: string) => {
+  const restoreProjet = async (id: string) => {
     const res = await fetch(`/api/projets/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restore: true }) });
     if (res.ok) { setProjets((prev) => prev.filter((p) => p.id !== id)); toast("Projet restauré"); }
   };
+  const hardDeleteProjet = async (id: string, nom: string) => {
+    if (!window.confirm(`Supprimer définitivement "${nom}" ?\n\nCette action est irréversible.`)) return;
+    const res = await fetch(`/api/projets/${id}?hard=true`, { method: "DELETE" });
+    if (res.ok) { setProjets((prev) => prev.filter((p) => p.id !== id)); toast("Projet supprimé définitivement"); }
+    else { const d = await res.json().catch(() => ({})); toast((d as { error?: string }).error || "Erreur"); }
+  };
+  const restoreEntreprise = async (id: string) => {
+    const res = await fetch(`/api/entreprises/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restore: true }) });
+    if (res.ok) { setEntreprises((prev) => prev.filter((e) => e.id !== id)); toast("Entreprise restaurée"); }
+  };
+  const hardDeleteEntreprise = async (id: string, nom: string) => {
+    if (!window.confirm(`Supprimer définitivement "${nom}" ?\n\nToutes les données associées (projets, documents, transmissions, notes) seront perdues. Cette action est irréversible.`)) return;
+    const res = await fetch(`/api/entreprises/${id}?hard=true`, { method: "DELETE" });
+    if (res.ok) { setEntreprises((prev) => prev.filter((e) => e.id !== id)); toast("Entreprise supprimée définitivement"); }
+    else { const d = await res.json().catch(() => ({})); toast((d as { error?: string }).error || "Erreur"); }
+  };
+
+  const isEmpty = projets.length === 0 && entreprises.length === 0;
 
   return (
     <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 24, boxShadow: C.shadow }}>
       <h3 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 6px", color: C.text }}>Corbeille</h3>
-      <p style={{ fontSize: 13, color: C.textDim, margin: "0 0 20px" }}>Les projets supprimés sont conservés 30 jours avant suppression définitive.</p>
+      <p style={{ fontSize: 13, color: C.textDim, margin: "0 0 20px" }}>Les éléments supprimés sont conservés 30 jours avant suppression automatique. Vous pouvez les restaurer ou les supprimer définitivement.</p>
       {loading ? (
         <div style={{ padding: 20, textAlign: "center", color: C.textDim }}>Chargement...</div>
-      ) : projets.length === 0 ? (
-        <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun projet en corbeille</div>
+      ) : isEmpty ? (
+        <div style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>La corbeille est vide</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {projets.map((p) => (
-            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
-                <div style={{ fontSize: 11, color: C.textDim }}>{p.entreprise.nom} · Supprimé par {p.deletedBy?.prenom || "?"} le {new Date(p.deletedAt).toLocaleDateString("fr-FR")}</div>
+        <>
+          {entreprises.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, textTransform: "uppercase", marginBottom: 8 }}>Entreprises ({entreprises.length})</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {entreprises.map((e) => (
+                  <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{e.nom}</div>
+                      <div style={{ fontSize: 11, color: C.textDim }}>{e.siret || "—"} · Supprimé le {new Date(e.deletedAt).toLocaleDateString("fr-FR")}</div>
+                    </div>
+                    <span style={{ padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600, background: e.joursRestants < 3 ? C.dangerDim : e.joursRestants < 7 ? C.warningDim : C.bg, color: e.joursRestants < 3 ? C.danger : e.joursRestants < 7 ? C.warning : C.textDim }}>{e.joursRestants}j</span>
+                    <Button C={C} variant="primary" size="sm" onClick={() => restoreEntreprise(e.id)}>Restaurer</Button>
+                    <button onClick={() => hardDeleteEntreprise(e.id, e.nom)} style={{ padding: "4px 10px", borderRadius: 6, border: "none", background: C.dangerDim, color: C.danger, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Supprimer</button>
+                  </div>
+                ))}
               </div>
-              <span style={{ padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600, background: p.joursRestants < 3 ? C.dangerDim : p.joursRestants < 7 ? C.warningDim : C.bg, color: p.joursRestants < 3 ? C.danger : p.joursRestants < 7 ? C.warning : C.textDim }}>{p.joursRestants}j restants</span>
-              <Button C={C} variant="primary" size="sm" onClick={() => restore(p.id)}>Restaurer</Button>
             </div>
-          ))}
-        </div>
+          )}
+          {projets.length > 0 && (
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.textDim, textTransform: "uppercase", marginBottom: 8 }}>Projets ({projets.length})</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {projets.map((p) => (
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.nom}</div>
+                      <div style={{ fontSize: 11, color: C.textDim }}>{p.entreprise.nom} · Supprimé par {p.deletedBy?.prenom || "?"} le {new Date(p.deletedAt).toLocaleDateString("fr-FR")}</div>
+                    </div>
+                    <span style={{ padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600, background: p.joursRestants < 3 ? C.dangerDim : p.joursRestants < 7 ? C.warningDim : C.bg, color: p.joursRestants < 3 ? C.danger : p.joursRestants < 7 ? C.warning : C.textDim }}>{p.joursRestants}j</span>
+                    <Button C={C} variant="primary" size="sm" onClick={() => restoreProjet(p.id)}>Restaurer</Button>
+                    <button onClick={() => hardDeleteProjet(p.id, p.nom)} style={{ padding: "4px 10px", borderRadius: 6, border: "none", background: C.dangerDim, color: C.danger, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Supprimer</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
