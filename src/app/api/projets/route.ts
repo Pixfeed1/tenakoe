@@ -103,9 +103,11 @@ export async function POST(request: NextRequest) {
 
   // ===== AUTO-GENERATION DE LA FEUILLE DE ROUTE =====
   if (body.qualifications?.length > 0) {
-    // Tous les codes Qualibat utilisent le meme template
+    // Cherche un template spécifique au certificateur, sinon fallback sur Qualibat RGE (universel)
     const trackTemplate = await prisma.trackTemplate.findFirst({
-      where: { nom: { contains: "Qualibat RGE", mode: "insensitive" } },
+      where: { nom: { contains: body.certificateurType || "", mode: "insensitive" } },
+      include: { etapes: { orderBy: { ordre: "asc" } } },
+    }) || await prisma.trackTemplate.findFirst({
       include: { etapes: { orderBy: { ordre: "asc" } } },
     });
 
