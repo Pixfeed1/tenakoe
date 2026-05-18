@@ -57,11 +57,12 @@ export function getEntrepriseFilter(user: CurrentUser) {
 }
 
 export function getProjetFilter(user: CurrentUser) {
-  if (user.role === "ADMIN") return {};
+  const base = { deletedAt: null };
+  if (user.role === "ADMIN") return base;
   if (user.role === "PRESCRIPTEUR" && user.prescripteurType) {
-    return { entreprise: { prescripteur: user.prescripteurType as never } };
+    return { ...base, entreprise: { prescripteur: user.prescripteurType as never } };
   }
-  return { chargeeId: user.id };
+  return { ...base, chargeeId: user.id };
 }
 
 export function getTacheFilter(user: CurrentUser) {

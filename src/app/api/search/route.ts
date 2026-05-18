@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
           { prenom: { contains: q, mode: "insensitive" } },
           { email: { contains: q, mode: "insensitive" } },
         ],
-        ...(user.role === "PRESCRIPTEUR" ? { entreprise: entFilter } : {}),
+        entreprise: { deletedAt: null, ...(user.role === "PRESCRIPTEUR" ? entFilter : {}) },
       },
       select: {
         id: true, nom: true, prenom: true, email: true,

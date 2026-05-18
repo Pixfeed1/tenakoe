@@ -7,9 +7,10 @@ interface ScopedUser {
 }
 
 export function entrepriseScopeFilter(user: ScopedUser): Record<string, unknown> {
-  if (user.role === "ADMIN" || user.voitTousLesDossiers) return {};
-  if (user.role === "PRESCRIPTEUR") return {};
-  return { chargeeId: user.id };
+  const base = { deletedAt: null };
+  if (user.role === "ADMIN" || user.voitTousLesDossiers) return base;
+  if (user.role === "PRESCRIPTEUR") return base;
+  return { ...base, chargeeId: user.id };
 }
 
 export async function userCanAccessEntreprise(
