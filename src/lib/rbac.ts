@@ -47,12 +47,13 @@ export function getEntrepriseFilter(user: CurrentUser) {
     return { ...base, prescripteur: user.prescripteurType as never };
   }
 
-  // CHARGEE
+  // CHARGEE — via entreprise directe OU via un projet assigné
   return {
     ...base,
-    projets: {
-      some: { chargeeId: user.id },
-    },
+    OR: [
+      { chargeeId: user.id },
+      { projets: { some: { chargeeId: user.id } } },
+    ],
   };
 }
 

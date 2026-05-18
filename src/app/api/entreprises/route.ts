@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, getEntrepriseFilter } from "@/lib/rbac";
-import { entrepriseScopeFilter } from "@/lib/dossierScope";
+
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search") || "";
   const statut = searchParams.get("statut") || undefined;
 
-  const rbacFilter = { ...getEntrepriseFilter(user), ...entrepriseScopeFilter(user) };
+  const rbacFilter = getEntrepriseFilter(user);
 
   const showArchived = searchParams.get("archived") === "true";
   const facturationOnly = searchParams.get("facturation") === "true";

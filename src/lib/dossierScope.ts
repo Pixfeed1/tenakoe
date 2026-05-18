@@ -10,7 +10,13 @@ export function entrepriseScopeFilter(user: ScopedUser): Record<string, unknown>
   const base = { deletedAt: { equals: null } };
   if (user.role === "ADMIN" || user.voitTousLesDossiers) return base;
   if (user.role === "PRESCRIPTEUR") return base;
-  return { ...base, chargeeId: user.id };
+  return {
+    ...base,
+    OR: [
+      { chargeeId: user.id },
+      { projets: { some: { chargeeId: user.id } } },
+    ],
+  };
 }
 
 export async function userCanAccessEntreprise(
@@ -20,9 +26,8 @@ export async function userCanAccessEntreprise(
   if (user.role === "ADMIN" || user.voitTousLesDossiers) return true;
   const e = await prisma.entreprise.findUnique({
     where: { id: entrepriseId },
-    select: { chargeeId: true },
+    select: { chargeeId: true, projets: { select: { chargeeId: true } } },
   });
   if (!e) return false;
-  if (!e.chargeeId) return user.role === "ADMIN" || !!user.voitTousLesDossiers;
-  return e.chargeeId === user.id;
+  return e.chargeeId === user.id || e.projets.some((p) => p.chargeeId === user.id);
 }
