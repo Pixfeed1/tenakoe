@@ -456,6 +456,7 @@ model TrackTemplate {
   id          String               @id @default(cuid())
   nom         String
   description String?
+  isDefault   Boolean              @default(false)
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   etapes      TrackTemplateEtape[]

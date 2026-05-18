@@ -186,11 +186,12 @@ async function main() {
 
   const trackRGE = await prisma.trackTemplate.upsert({
     where: { id: "track-qualibat-rge" },
-    update: { nom: "Feuille de route Qualibat RGE", description: "Parcours complet qualification RGE — 22 etapes" },
+    update: { nom: "Feuille de route Qualibat RGE", description: "Parcours complet qualification RGE — 22 etapes", isDefault: true },
     create: {
       id: "track-qualibat-rge",
       nom: "Feuille de route Qualibat RGE",
       description: "Parcours complet qualification RGE — 22 etapes",
+      isDefault: true,
     },
   });
 

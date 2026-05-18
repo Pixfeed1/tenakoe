@@ -78,12 +78,16 @@ export async function POST(
   if (projet.etapes.length === 0 && projet.qualifications.length > 0) {
     // Cherche un template spécifique au certificateur, sinon fallback sur le premier disponible
     const certType = projet.qualifications[0]?.certificateurType || "";
-    const trackTemplate = (certType ? await prisma.trackTemplate.findFirst({
+    let trackTemplate = certType ? await prisma.trackTemplate.findFirst({
       where: { nom: { contains: certType, mode: "insensitive" } },
       include: { etapes: { orderBy: { ordre: "asc" } } },
-    }) : null) || await prisma.trackTemplate.findFirst({
-      include: { etapes: { orderBy: { ordre: "asc" } } },
-    });
+    }) : null;
+    if (!trackTemplate) {
+      trackTemplate = await prisma.trackTemplate.findFirst({
+        where: { isDefault: true },
+        include: { etapes: { orderBy: { ordre: "asc" } } },
+      });
+    }
 
     if (trackTemplate && trackTemplate.etapes.length > 0) {
       const now = new Date();

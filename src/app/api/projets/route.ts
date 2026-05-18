@@ -103,13 +103,19 @@ export async function POST(request: NextRequest) {
 
   // ===== AUTO-GENERATION DE LA FEUILLE DE ROUTE =====
   if (body.qualifications?.length > 0) {
-    // Cherche un template spécifique au certificateur, sinon fallback sur Qualibat RGE (universel)
-    const trackTemplate = await prisma.trackTemplate.findFirst({
-      where: { nom: { contains: body.certificateurType || "", mode: "insensitive" } },
-      include: { etapes: { orderBy: { ordre: "asc" } } },
-    }) || await prisma.trackTemplate.findFirst({
-      include: { etapes: { orderBy: { ordre: "asc" } } },
-    });
+    let trackTemplate = null;
+    if (body.certificateurType && body.certificateurType.trim() !== "") {
+      trackTemplate = await prisma.trackTemplate.findFirst({
+        where: { nom: { contains: body.certificateurType, mode: "insensitive" } },
+        include: { etapes: { orderBy: { ordre: "asc" } } },
+      });
+    }
+    if (!trackTemplate) {
+      trackTemplate = await prisma.trackTemplate.findFirst({
+        where: { isDefault: true },
+        include: { etapes: { orderBy: { ordre: "asc" } } },
+      });
+    }
 
     if (trackTemplate && trackTemplate.etapes.length > 0) {
       const now = new Date();
