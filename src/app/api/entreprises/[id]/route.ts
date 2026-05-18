@@ -51,7 +51,10 @@ export async function PATCH(
     const existing = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, deletedAt: true } });
     if (!existing) return NextResponse.json({ error: "Entreprise non trouvée" }, { status: 404 });
     if (!existing.deletedAt) return NextResponse.json({ error: "Entreprise pas en corbeille" }, { status: 409 });
-    await prisma.entreprise.update({ where: { id }, data: { deletedAt: null, deletedById: null } });
+    await prisma.$transaction(async (tx) => {
+      await tx.entreprise.update({ where: { id }, data: { deletedAt: null, deletedById: null } });
+      await tx.projet.updateMany({ where: { entrepriseId: id, deletedAt: { not: null } }, data: { deletedAt: null, deletedById: null } });
+    });
     await prisma.logActivite.create({ data: { type: "MODIFICATION", description: `Entreprise "${existing.nom}" restaurée depuis la corbeille`, entite: "Entreprise", entiteId: id, userId: user.id } });
     return NextResponse.json({ success: true, restored: true });
   }
@@ -173,7 +176,11 @@ export async function DELETE(
 
   if (entreprise.deletedAt) return NextResponse.json({ error: "Entreprise déjà supprimée" }, { status: 409 });
 
-  await prisma.entreprise.update({ where: { id }, data: { deletedAt: new Date(), deletedById: user.id } });
+  await prisma.$transaction(async (tx) => {
+    const now = new Date();
+    await tx.entreprise.update({ where: { id }, data: { deletedAt: now, deletedById: user.id } });
+    await tx.projet.updateMany({ where: { entrepriseId: id, deletedAt: null }, data: { deletedAt: now, deletedById: user.id } });
+  });
   await prisma.logActivite.create({ data: { type: "SUPPRESSION", description: `Entreprise "${entreprise.nom}" mise en corbeille`, entite: "Entreprise", entiteId: id, userId: user.id } });
 
   return NextResponse.json({ success: true });

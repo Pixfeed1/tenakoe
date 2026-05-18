@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
       where: {
         AND: [
           projFilter,
+          { entreprise: { deletedAt: { equals: null } } },
           { OR: [
             { nom: { contains: q, mode: "insensitive" } },
             { entreprise: { nom: { contains: q, mode: "insensitive" } } },
