@@ -7,7 +7,7 @@ interface ScopedUser {
 }
 
 export function entrepriseScopeFilter(user: ScopedUser): Record<string, unknown> {
-  const base = { deletedAt: null };
+  const base = { deletedAt: { equals: null } };
   if (user.role === "ADMIN" || user.voitTousLesDossiers) return base;
   if (user.role === "PRESCRIPTEUR") return base;
   return { ...base, chargeeId: user.id };

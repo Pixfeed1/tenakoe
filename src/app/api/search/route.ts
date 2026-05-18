@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     prisma.contact.findMany({
       where: {
         AND: [
-          { entreprise: { deletedAt: null } },
+          { entreprise: { deletedAt: { equals: null } } },
           { OR: [
             { nom: { contains: q, mode: "insensitive" } },
             { prenom: { contains: q, mode: "insensitive" } },
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     }),
     prisma.transmission.findMany({
       where: {
-        entreprise: { deletedAt: null },
+        entreprise: { deletedAt: { equals: null } },
         OR: [
           { objet: { contains: q, mode: "insensitive" } },
           { destinataire: { contains: q, mode: "insensitive" } },
