@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   if (!headers || !rows) return NextResponse.json({ error: "headers et rows requis" }, { status: 400 });
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Tenakoe CRM";
+  wb.creator = "Kiwi CRM";
   wb.created = new Date();
 
   const ws = wb.addWorksheet(title || "Export");

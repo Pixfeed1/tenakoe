@@ -58,7 +58,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     color: "#00B4D8",
     fields: [
       { key: "api_key", label: "Cl\u00E9 API", type: "password", placeholder: "Votre cl\u00E9 API SMS Partner" },
-      { key: "sender", label: "Exp\u00E9diteur", type: "text", placeholder: "Tenakoe" },
+      { key: "sender", label: "Exp\u00E9diteur", type: "text", placeholder: "Kiwi" },
     ],
   },
   {
@@ -70,7 +70,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     color: "#E91E63",
     fields: [
       { key: "api_key", label: "Clé API", type: "password", placeholder: "Votre clé API Spot-Hit" },
-      { key: "expediteur", label: "Expéditeur (max 11 chars)", type: "text", placeholder: "Tenakoe" },
+      { key: "expediteur", label: "Expéditeur (max 11 chars)", type: "text", placeholder: "Kiwi" },
     ],
   },
   {
@@ -83,7 +83,7 @@ const INTEGRATIONS: IntegrationConfig[] = [
     fields: [
       { key: "api_key", label: "Cl\u00E9 API Brevo", type: "password", placeholder: "xkeysib-xxxxxxxxxxxx" },
       { key: "sender_email", label: "Email exp\u00E9diteur", type: "email", placeholder: "contact@tenakoe.fr" },
-      { key: "sender_name", label: "Nom exp\u00E9diteur", type: "text", placeholder: "Tenakoe" },
+      { key: "sender_name", label: "Nom exp\u00E9diteur", type: "text", placeholder: "Kiwi" },
     ],
   },
   {
@@ -495,8 +495,8 @@ function EmailTestSection({ C }: { C: Theme }) {
       ?.replace(/\{\{chargee\}\}/g, "Kelly Coquillas")
       ?.replace(/\{\{date_commission\}\}/g, new Date().toLocaleDateString("fr-FR"))
       ?.replace(/\{\{date_limite\}\}/g, new Date(Date.now() + 15 * 86400000).toLocaleDateString("fr-FR"))
-      || "<p>Ceci est un email de test depuis Tenakoe CRM.</p>";
-    const objet = tpl ? `[TEST] ${tpl.objet}` : "[TEST] Email de test Tenakoe";
+      || "<p>Ceci est un email de test depuis Kiwi CRM.</p>";
+    const objet = tpl ? `[TEST] ${tpl.objet}` : "[TEST] Email de test Kiwi";
 
     const res = await fetch("/api/send-mail", {
       method: "POST",

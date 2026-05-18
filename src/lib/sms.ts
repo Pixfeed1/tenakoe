@@ -31,7 +31,7 @@ async function getActiveSMSIntegration(): Promise<{ nom: string; config: Record<
 
 async function sendViaSpotHit(opts: SendSMSOptions, config: Record<string, string>): Promise<SendSMSResult> {
   const apiKey = config.api_key;
-  const expediteur = (config.expediteur || "Tenakoe").slice(0, 11);
+  const expediteur = (config.expediteur || "Kiwi").slice(0, 11);
   if (!apiKey) throw new Error("Clé API Spot-Hit manquante");
 
   const params = new URLSearchParams({

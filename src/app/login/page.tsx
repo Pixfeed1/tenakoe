@@ -64,12 +64,12 @@ export default function LoginPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
           <img
             src="/logo.png"
-            alt="Tenakoe"
+            alt="Kiwi"
             style={{ width: 44, height: 44, objectFit: "contain" }}
           />
           <div>
             <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>
-              Tenakoe
+              Kiwi
             </div>
             <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>
               CRM · Qualification RGE

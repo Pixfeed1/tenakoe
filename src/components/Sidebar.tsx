@@ -66,11 +66,11 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <img
             src="/logo.png"
-            alt="Tenakoe"
+            alt="Kiwi"
             style={{ width: 38, height: 38, objectFit: "contain" }}
           />
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi</div>
             <div style={{ fontSize: 11, color: C.textDim, fontWeight: 500 }}>CRM · Qualification RGE</div>
           </div>
         </div>

@@ -32,7 +32,7 @@ export function hydrateTemplate(corps: string, data: {
     .replace(/\{\{chargee\}\}/g, data.chargee || "")
     .replace(/\{\{date_commission\}\}/g, data.date_commission || "______")
     .replace(/\{\{date_limite\}\}/g, data.date_limite || "______")
-    .replace(/\{\{expediteur\}\}/g, data.expediteur || "Tenakoe")
+    .replace(/\{\{expediteur\}\}/g, data.expediteur || "Kiwi")
     .replace(/\{\{expediteur_tel\}\}/g, data.expediteur_tel || "")
     .replace(/\{\{expediteur_email\}\}/g, data.expediteur_email || "contact@tenakoe.fr");
 }

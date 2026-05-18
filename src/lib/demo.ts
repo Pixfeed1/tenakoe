@@ -82,9 +82,9 @@ export const DEMO_TACHES = [
 ];
 
 export const DEMO_TRANSMISSIONS = [
-  { id: "demo-trans-1", canal: "EMAIL", direction: "SORTANT", destinataire: "pierre.martin@demo.fr", objet: "Bienvenue chez Tenakoe — Votre qualification RGE", contenu: "Bonjour Pierre, nous avons bien reçu votre dossier...", dateEnvoi: daysAgo(2), expediteur: { prenom: "Kelly" }, expediteurEmail: "kelly@tenakoe.fr" },
+  { id: "demo-trans-1", canal: "EMAIL", direction: "SORTANT", destinataire: "pierre.martin@demo.fr", objet: "Bienvenue chez Kiwi — Votre qualification RGE", contenu: "Bonjour Pierre, nous avons bien reçu votre dossier...", dateEnvoi: daysAgo(2), expediteur: { prenom: "Kelly" }, expediteurEmail: "kelly@tenakoe.fr" },
   { id: "demo-trans-2", canal: "EMAIL", direction: "ENTRANT", destinataire: "kelly@tenakoe.fr", objet: "RE: Documents manquants", contenu: "Bonjour, voici le KBIS en PJ...", dateEnvoi: daysAgo(1), expediteur: null, expediteurEmail: "pierre.martin@demo.fr" },
-  { id: "demo-trans-3", canal: "SMS", direction: "SORTANT", destinataire: "06 00 00 00 00", objet: null, contenu: "Bonjour M. Martin, pensez à nous envoyer votre attestation URSSAF. Cordialement, Tenakoe", dateEnvoi: daysAgo(3), expediteur: { prenom: "Kelly" }, expediteurEmail: null },
+  { id: "demo-trans-3", canal: "SMS", direction: "SORTANT", destinataire: "06 00 00 00 00", objet: null, contenu: "Bonjour M. Martin, pensez à nous envoyer votre attestation URSSAF. Cordialement, Kiwi", dateEnvoi: daysAgo(3), expediteur: { prenom: "Kelly" }, expediteurEmail: null },
   { id: "demo-trans-4", canal: "TELEPHONE", direction: "SORTANT", destinataire: "06 00 00 00 00", objet: null, contenu: "Appel de suivi — Pierre confirme envoi des docs sous 48h", dateEnvoi: daysAgo(4), expediteur: { prenom: "Kelly" }, expediteurEmail: null },
 ];
 
@@ -95,7 +95,7 @@ export const DEMO_ALERTES = [
 ];
 
 export const DEMO_MAIL_TEMPLATES = [
-  { id: "demo-tpl-1", nom: "Bienvenue", objet: "Bienvenue chez Tenakoe — {{entreprise}}", contenu: "Bonjour {{prenom}},\n\nNous avons bien reçu votre demande de qualification RGE pour {{entreprise}}.\n\nVotre chargée de dossier {{chargee}} va vous accompagner tout au long du processus.\n\nCordialement,\nL'équipe Tenakoe", categorie: "Accueil" },
+  { id: "demo-tpl-1", nom: "Bienvenue", objet: "Bienvenue chez Kiwi — {{entreprise}}", contenu: "Bonjour {{prenom}},\n\nNous avons bien reçu votre demande de qualification RGE pour {{entreprise}}.\n\nVotre chargée de dossier {{chargee}} va vous accompagner tout au long du processus.\n\nCordialement,\nL'équipe Kiwi", categorie: "Accueil" },
   { id: "demo-tpl-2", nom: "Relance documents", objet: "Documents manquants — {{entreprise}}", contenu: "Bonjour {{prenom}},\n\nNous sommes toujours en attente des documents suivants pour votre dossier de qualification RGE :\n\n- EXTRAIT KBIS\n- ATTESTATION URSSAF\n- ATTESTATION RC PROFESSIONNELLE\n\nMerci de nous les transmettre dès que possible.\n\nCordialement,\n{{chargee}}", categorie: "Relance" },
 ];
 
@@ -128,7 +128,7 @@ export const DEMO_ETAPES = [
 ];
 
 export const DEMO_HISTORIQUE = [
-  { type: "EMAIL", message: "Mail envoyé — Bienvenue chez Tenakoe", chargee: "Kelly", time: "Il y a 2 jours", isDemo: true },
+  { type: "EMAIL", message: "Mail envoyé — Bienvenue chez Kiwi", chargee: "Kelly", time: "Il y a 2 jours", isDemo: true },
   { type: "NOTE", message: "Note ajoutée sur MARTIN RENOVATION", chargee: "Kelly", time: "Il y a 2 jours", isDemo: true },
   { type: "SMS", message: "SMS envoyé à MARTIN RENOVATION — Rappel documents", chargee: "Kelly", time: "Il y a 3 jours", isDemo: true },
   { type: "STATUT", message: "MARTIN RENOVATION — Prise en charge", chargee: "Kelly", time: "Il y a 3 jours", isDemo: true },

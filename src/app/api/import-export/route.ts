@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
   // Generate XLSX
   if (format === "xlsx") {
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "Tenakoe CRM";
+    workbook.creator = "Kiwi CRM";
     workbook.created = new Date();
 
     const sheet = workbook.addWorksheet(type.charAt(0).toUpperCase() + type.slice(1));

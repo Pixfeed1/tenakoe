@@ -579,9 +579,9 @@ export function PrescripteurView({ user, demoMode, prescripteurType, embedded }:
       }}>
         <div style={{ padding: "0 20px 24px", borderBottom: `1px solid ${C.border}`, marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img src="/logo.png" alt="Tenakoe" style={{ width: 38, height: 38, objectFit: "contain" }} />
+            <img src="/logo.png" alt="Kiwi" style={{ width: 38, height: 38, objectFit: "contain" }} />
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi</div>
               <div style={{ fontSize: 11, color: C.textDim, fontWeight: 500 }}>Suivi leads</div>
             </div>
           </div>

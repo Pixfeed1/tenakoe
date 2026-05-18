@@ -193,9 +193,9 @@ function WelcomeModal({ C, onFinish }: { C: Theme; onFinish: (enable: boolean) =
       }}>
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <img src="/logo.png" alt="Tenakoe" style={{ width: 56, height: 56, objectFit: "contain", marginBottom: 16 }} />
+          <img src="/logo.png" alt="Kiwi" style={{ width: 56, height: 56, objectFit: "contain", marginBottom: 16 }} />
           <h1 style={{ fontSize: 24, fontWeight: 700, color: C.text, margin: "0 0 6px", letterSpacing: "-0.03em" }}>
-            Bienvenue sur votre CRM Tenakoe
+            Bienvenue sur votre CRM Kiwi
           </h1>
           <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>
             Votre outil de suivi des dossiers de qualification RGE

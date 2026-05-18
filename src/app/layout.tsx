@@ -3,8 +3,8 @@ import { SessionProvider } from "@/components/SessionProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tenakoe CRM",
-  description: "CRM de qualification RGE — Tenakoe",
+  title: "Kiwi CRM",
+  description: "CRM de qualification RGE — Kiwi",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",

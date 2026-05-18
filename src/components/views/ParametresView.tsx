@@ -1381,7 +1381,7 @@ function MonCompteTab({ C }: { C: Theme }) {
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 6px", color: C.text }}>Configuration SMTP (envoi de mails)</h3>
         <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 14px" }}>
-          Configurez votre propre serveur SMTP pour envoyer les mails depuis votre adresse. Si vide, le SMTP global Tenakoe est utilisé.
+          Configurez votre propre serveur SMTP pour envoyer les mails depuis votre adresse. Si vide, le SMTP global Kiwi est utilisé.
         </p>
         {gmailOauthConnected && (
           <div style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 14, background: C.accentDim, color: C.accentText, fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
@@ -1544,8 +1544,8 @@ function TestEmailTab({ C }: { C: Theme }) {
       ?.replace(/\{\{chargee\}\}/g, "Kelly Coquillas")
       ?.replace(/\{\{date_commission\}\}/g, new Date().toLocaleDateString("fr-FR"))
       ?.replace(/\{\{date_limite\}\}/g, new Date(Date.now() + 15 * 86400000).toLocaleDateString("fr-FR"))
-      || "<p>Ceci est un email de test depuis Tenakoe CRM.</p>";
-    const objet = tpl ? `[TEST] ${tpl.objet}` : "[TEST] Email de test Tenakoe";
+      || "<p>Ceci est un email de test depuis Kiwi CRM.</p>";
+    const objet = tpl ? `[TEST] ${tpl.objet}` : "[TEST] Email de test Kiwi";
     const res = await fetch("/api/send-mail", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ to: destinataire.trim(), subject: objet, html: contenu }),

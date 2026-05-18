@@ -146,9 +146,9 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
       }}>
         <div style={{ width: 480, maxWidth: "100%", textAlign: "center" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-            <img src="/logo.png" alt="Tenakoe" style={{ width: 44, height: 44, objectFit: "contain" }} />
+            <img src="/logo.png" alt="Kiwi" style={{ width: 44, height: 44, objectFit: "contain" }} />
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi</div>
               <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>Qualification RGE</div>
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           </h1>
           <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6, margin: 0 }}>
             Les coordonnées de <strong>{form.prenomArtisan} {form.nomArtisan}</strong> ont bien été transmises
-            à l&apos;équipe Tenakoe. Une chargée de projet prendra contact sous 48h.
+            à l&apos;équipe Kiwi. Une chargée de projet prendra contact sous 48h.
           </p>
           <button
             onClick={() => { setSubmitted(false); setForm({
@@ -282,9 +282,9 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
         <div style={{ width: 600, maxWidth: "100%" }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-              {currentConfig?.logoUrl ? <img src={currentConfig.logoUrl.startsWith("http") || currentConfig.logoUrl.startsWith("/") ? currentConfig.logoUrl : `/${currentConfig.logoUrl}`} alt={currentConfig.nom} style={{ width: 48, height: 48, objectFit: "contain" }} /> : <img src="/logo.png" alt="Tenakoe" style={{ width: 44, height: 44, objectFit: "contain" }} />}
+              {currentConfig?.logoUrl ? <img src={currentConfig.logoUrl.startsWith("http") || currentConfig.logoUrl.startsWith("/") ? currentConfig.logoUrl : `/${currentConfig.logoUrl}`} alt={currentConfig.nom} style={{ width: 48, height: 48, objectFit: "contain" }} /> : <img src="/logo.png" alt="Kiwi" style={{ width: 44, height: 44, objectFit: "contain" }} />}
               <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{currentConfig?.nom || "Tenakoe"}</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{currentConfig?.nom || "Kiwi"}</div>
                 {currentConfig?.description && <div style={{ fontSize: 12, color: C.textDim }}>{currentConfig.description}</div>}
               </div>
             </div>
@@ -319,9 +319,9 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
       <div style={{ width: 560, maxWidth: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <img src="/logo.png" alt="Tenakoe" style={{ width: 44, height: 44, objectFit: "contain" }} />
+            <img src="/logo.png" alt="Kiwi" style={{ width: 44, height: 44, objectFit: "contain" }} />
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Tenakoe</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi</div>
               <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>Qualification RGE</div>
             </div>
           </div>
@@ -329,7 +329,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             Transmission d&apos;un artisan
           </h1>
           <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>
-            Remplissez ce formulaire pour transmettre les coordonnées d&apos;un artisan à l&apos;équipe Tenakoe
+            Remplissez ce formulaire pour transmettre les coordonnées d&apos;un artisan à l&apos;équipe Kiwi
           </p>
         </div>
 
@@ -451,9 +451,9 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               </div>
             </div>
 
-            {/* Intéressé accompagnement Tenakoe */}
+            {/* Intéressé accompagnement Kiwi */}
             <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Artisan intéressé par un accompagnement au montage de dossier par Tenakoe <span style={{ fontSize: 11, color: C.textDim }}>(prestation payante)</span></label>
+              <label style={labelStyle}>Artisan intéressé par un accompagnement au montage de dossier par Kiwi <span style={{ fontSize: 11, color: C.textDim }}>(prestation payante)</span></label>
               <div style={{ display: "flex", gap: 10 }}>
                 {[{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "Ne sait pas" }].map((o) => (
                   <label key={o.v} onClick={() => set("interesseAccompagnement", o.v)} style={{
@@ -521,7 +521,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           </button>
 
           <p style={{ fontSize: 11, color: C.textDim, textAlign: "center", marginTop: 12, lineHeight: 1.5 }}>
-            Les informations transmises sont traitées par Tenakoe dans le cadre de l&apos;accompagnement
+            Les informations transmises sont traitées par Kiwi dans le cadre de l&apos;accompagnement
             à la qualification RGE. Elles ne sont pas partagées avec des tiers.
           </p>
         </form>

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Email, nom et prénom requis" }, { status: 400 });
   }
 
-  const password = await bcrypt.hash(body.password || "Tenakoe2026!", 12);
+  const password = await bcrypt.hash(body.password || "Kiwi2026!", 12);
   const newUser = await prisma.user.create({
     data: { email: body.email, nom: body.nom, prenom: body.prenom, telephone: body.telephone, role: body.role || "CHARGEE", password, prescripteurType: body.prescripteurType || null },
     select: { id: true, email: true, nom: true, prenom: true, telephone: true, role: true, actif: true, createdAt: true },

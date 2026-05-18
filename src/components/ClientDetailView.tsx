@@ -851,7 +851,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                 </div>
                 <div style={{ padding: "16px 20px", borderRadius: 8, background: "#fff", border: "1px solid #e2e8f0", color: "#0f172a", fontSize: 13, lineHeight: 1.6 }}>
                   <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: 8, marginBottom: 12, fontSize: 12, color: "#64748b" }}>
-                    <div><strong>De :</strong> {entrepriseData?.chargeeEntreprisePrenom || "Tenakoe"} {entrepriseData?.chargeeEntrepriseNom || ""}</div>
+                    <div><strong>De :</strong> {entrepriseData?.chargeeEntreprisePrenom || "Kiwi"} {entrepriseData?.chargeeEntrepriseNom || ""}</div>
                     <div><strong>À :</strong> {mailTo || "—"}</div>
                     {mailCc && <div><strong>CC :</strong> {mailCc}</div>}
                     <div><strong>Objet :</strong> {mailSubject || "(sans objet)"}</div>
@@ -860,7 +860,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                   <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px dashed #e2e8f0", clear: "both", overflow: "hidden" }}>
                     <div style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic", marginBottom: 8 }}>— Signature ajoutée automatiquement à l&apos;envoi —</div>
                     <div dangerouslySetInnerHTML={{ __html: (() => {
-                      const sig = getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Tenakoe", nom: entrepriseData?.chargeeEntrepriseNom || "", email: "contact@tenakoe.fr" });
+                      const sig = getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Kiwi", nom: entrepriseData?.chargeeEntrepriseNom || "", email: "contact@tenakoe.fr" });
                       return mailBody.toLowerCase().includes("cordialement") ? sig.replace(/<tr>\s*<td[^>]*>\s*<span[^>]*>Cordialement[^<]*<\/span>\s*<\/td>\s*<\/tr>/, "") : sig;
                     })() }} />
                   </div>

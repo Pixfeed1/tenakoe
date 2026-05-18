@@ -54,7 +54,7 @@ export async function sendMail({ to, subject, html, from, cc, bcc, smtp }: SendM
   // Use per-user SMTP if provided, otherwise global
   const transport = smtp ? getUserTransporter(smtp) : getGlobalTransporter();
   const fromAddress = from || (smtp ? smtp.user : null) || process.env.SMTP_FROM || process.env.SMTP_USER;
-  const fromHeader = fromAddress && fromAddress.includes("<") ? fromAddress : `"Tenakoe" <${fromAddress}>`;
+  const fromHeader = fromAddress && fromAddress.includes("<") ? fromAddress : `"Kiwi" <${fromAddress}>`;
 
   const info = await transport.sendMail({
     from: fromHeader,

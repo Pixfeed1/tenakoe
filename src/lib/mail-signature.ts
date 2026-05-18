@@ -9,18 +9,18 @@ export function getSignature(user: { prenom: string; nom: string; email: string;
 </td>
 </tr>
 <tr>
-<td style="padding-bottom: 12px;"><img style="display: inline-block; height: 50px; width: auto;" src="https://tenakoe.pixfeed.net/logo.png" alt="Tenakoe" height="50" /></td>
+<td style="padding-bottom: 12px;"><img style="display: inline-block; height: 50px; width: auto;" src="https://tenakoe.pixfeed.net/logo.png" alt="Kiwi" height="50" /></td>
 </tr>
 <tr>
 <td style="padding-bottom: 10px; border-bottom: 2px solid #16a34a;">
 <p style="margin: 0 0 2px 0; font-size: 17px; font-weight: 600; color: #111827;">${user.prenom} ${user.nom.toUpperCase()}</p>
-<p style="margin: 0; font-size: 13px; color: #16a34a;">Chargée de projet · Tenakoe</p>
+<p style="margin: 0; font-size: 13px; color: #16a34a;">Chargée de projet · Kiwi</p>
 </td>
 </tr>
 <tr>
 <td style="padding-top: 10px;">
 <p style="margin: 0; font-size: 13px; color: #6b7280;">${tel ? `<a style="color: #6b7280; text-decoration: none;" href="tel:${tel}">${tel}</a> · ` : ""}<a style="color: #6b7280; text-decoration: none;" href="mailto:${user.email}">${user.email}</a></p>
-<p style="margin: 10px 0 0 0; font-size: 11px; color: #16a34a; font-style: italic;">Envie de sécuriser les contrôles et audits de votre qualification RGE? Faites équipe avec Tenakoe!</p>
+<p style="margin: 10px 0 0 0; font-size: 11px; color: #16a34a; font-style: italic;">Envie de sécuriser les contrôles et audits de votre qualification RGE? Faites équipe avec Kiwi!</p>
 </td>
 </tr>
 </tbody>

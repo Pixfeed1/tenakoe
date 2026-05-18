@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const fromEmail = session.user.email;
-    const fromName = session.user.name || "Tenakoe";
+    const fromName = session.user.name || "Kiwi";
 
     // Load per-user SMTP config + telephone if exists
     let userSmtp: SmtpConfig | null = null;
