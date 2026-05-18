@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
+import { userCanAccessEntreprise } from "@/lib/dossierScope";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -13,6 +14,9 @@ export async function GET(request: NextRequest) {
   if (!entrepriseId) {
     return NextResponse.json({ error: "entrepriseId requis" }, { status: 400 });
   }
+
+  const canAccess = await userCanAccessEntreprise(user, entrepriseId);
+  if (!canAccess) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const notes = await prisma.note.findMany({
     where: { entrepriseId },
@@ -36,6 +40,9 @@ export async function POST(request: NextRequest) {
   if (!body.contenu || !body.entrepriseId) {
     return NextResponse.json({ error: "contenu et entrepriseId requis" }, { status: 400 });
   }
+
+  const canAccess = await userCanAccessEntreprise(user, body.entrepriseId);
+  if (!canAccess) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const note = await prisma.note.create({
     data: {
@@ -111,9 +118,10 @@ export async function PATCH(request: NextRequest) {
   const note = await prisma.note.findUnique({ where: { id: body.id } });
   if (!note) return NextResponse.json({ error: "Note non trouvée" }, { status: 404 });
 
-  // Seul l'auteur ou un admin peut modifier
-  if (note.auteurId !== user.id && user.role === "PRESCRIPTEUR") {
-    return NextResponse.json({ error: "Pas autorisé" }, { status: 403 });
+  const isAdmin = user.role === "ADMIN";
+  const isAuteur = note.auteurId === user.id;
+  if (!isAdmin && !isAuteur) {
+    return NextResponse.json({ error: "Seul l'auteur de la note peut la modifier" }, { status: 403 });
   }
 
   const updated = await prisma.note.update({
@@ -142,8 +150,10 @@ export async function DELETE(request: NextRequest) {
   const note = await prisma.note.findUnique({ where: { id } });
   if (!note) return NextResponse.json({ error: "Note non trouvée" }, { status: 404 });
 
-  if (note.auteurId !== user.id && user.role === "PRESCRIPTEUR") {
-    return NextResponse.json({ error: "Pas autorisé" }, { status: 403 });
+  const isAdmin = user.role === "ADMIN";
+  const isAuteur = note.auteurId === user.id;
+  if (!isAdmin && !isAuteur) {
+    return NextResponse.json({ error: "Seul l'auteur de la note peut la supprimer" }, { status: 403 });
   }
 
   await prisma.note.delete({ where: { id } });
