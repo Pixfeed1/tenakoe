@@ -17,12 +17,14 @@ export async function GET(request: NextRequest) {
   const [entreprises, contacts, projets, leads, transmissions] = await Promise.all([
     prisma.entreprise.findMany({
       where: {
-        ...entFilter,
-        OR: [
-          { nom: { contains: q, mode: "insensitive" } },
-          { siret: { contains: q } },
-          { email: { contains: q, mode: "insensitive" } },
-          { telephone: { contains: q } },
+        AND: [
+          entFilter,
+          { OR: [
+            { nom: { contains: q, mode: "insensitive" } },
+            { siret: { contains: q } },
+            { email: { contains: q, mode: "insensitive" } },
+            { telephone: { contains: q } },
+          ] },
         ],
       },
       select: {
@@ -32,12 +34,14 @@ export async function GET(request: NextRequest) {
     }),
     prisma.contact.findMany({
       where: {
-        OR: [
-          { nom: { contains: q, mode: "insensitive" } },
-          { prenom: { contains: q, mode: "insensitive" } },
-          { email: { contains: q, mode: "insensitive" } },
+        AND: [
+          { entreprise: { deletedAt: null } },
+          { OR: [
+            { nom: { contains: q, mode: "insensitive" } },
+            { prenom: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ] },
         ],
-        entreprise: { deletedAt: null, ...(user.role === "PRESCRIPTEUR" ? entFilter : {}) },
       },
       select: {
         id: true, nom: true, prenom: true, email: true,
@@ -47,10 +51,12 @@ export async function GET(request: NextRequest) {
     }),
     prisma.projet.findMany({
       where: {
-        ...projFilter,
-        OR: [
-          { nom: { contains: q, mode: "insensitive" } },
-          { entreprise: { nom: { contains: q, mode: "insensitive" } } },
+        AND: [
+          projFilter,
+          { OR: [
+            { nom: { contains: q, mode: "insensitive" } },
+            { entreprise: { nom: { contains: q, mode: "insensitive" } } },
+          ] },
         ],
       },
       select: {
@@ -75,6 +81,7 @@ export async function GET(request: NextRequest) {
     }),
     prisma.transmission.findMany({
       where: {
+        entreprise: { deletedAt: null },
         OR: [
           { objet: { contains: q, mode: "insensitive" } },
           { destinataire: { contains: q, mode: "insensitive" } },
