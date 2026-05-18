@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     where: {
       ...rbacFilter,
       ...(entrepriseId && { entrepriseId }),
-      deletedAt: null,
+      deletedAt: { equals: null },
     },
     include: {
       entreprise: true,

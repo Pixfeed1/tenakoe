@@ -8,9 +8,9 @@ export async function GET() {
   if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const [entreprises, contacts, projets, leads] = await Promise.all([
-    prisma.entreprise.count({ where: { deletedAt: null } }),
+    prisma.entreprise.count({ where: { deletedAt: { equals: null } } }),
     prisma.contact.count(),
-    prisma.projet.count({ where: { deletedAt: null } }),
+    prisma.projet.count({ where: { deletedAt: { equals: null } } }),
     prisma.leadFormulaire.count(),
   ]);
   return NextResponse.json({ entreprises, contacts, projets, leads });
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   if (type === "entreprises") {
     const data = await prisma.entreprise.findMany({
       include: { contacts: { take: 1 }, projets: { include: { chargee: { select: { prenom: true } } }, take: 1 } },
-      where: { archive: false, deletedAt: null },
+      where: { archive: false, deletedAt: { equals: null } },
       orderBy: { nom: "asc" },
     });
     columns = [
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         etapes: { where: { active: true }, take: 1 },
         _count: { select: { documents: true } },
       },
-      where: { archive: false, deletedAt: null },
+      where: { archive: false, deletedAt: { equals: null } },
       orderBy: { updatedAt: "desc" },
     });
     columns = [

@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const entreprises = await prisma.entreprise.findMany({
     where: {
       ...rbacFilter,
-      deletedAt: null,
+      deletedAt: { equals: null },
       archive: showArchived ? true : false,
       ...(search && {
         OR: [

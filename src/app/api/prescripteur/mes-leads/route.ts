@@ -30,13 +30,13 @@ export async function GET(request: NextRequest) {
     where: {
       prescripteur: prescripteurType,
       archive: false,
-      deletedAt: null,
+      deletedAt: { equals: null },
     },
     include: {
       contacts: { take: 1 },
       depotConfig: { select: { nom: true } },
       projets: {
-        where: { deletedAt: null },
+        where: { deletedAt: { equals: null } },
         include: {
           chargee: { select: { prenom: true } },
           qualifications: { select: { type: true, certificateurType: true } },
