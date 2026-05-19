@@ -127,7 +127,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
         >
           Système
         </div>
-        {[...(user?.role === "ADMIN" ? NAV_BOTTOM : []), ...(user?.role === "ADMIN" ? NAV_BOTTOM_ADMIN : [])].map((item) => {
+        {[...NAV_BOTTOM, ...(user?.role === "ADMIN" ? NAV_BOTTOM_ADMIN : [])].map((item) => {
           const isActive = activeNav === (item.navKey || item.label);
           return (
           <button
