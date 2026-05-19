@@ -59,7 +59,7 @@ export function ParametresView({ C, role }: { C: Theme; role?: string }) {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, overflowX: "auto", paddingBottom: 1, borderBottom: `1px solid ${C.border}` }}>
-        {TABS.filter((t) => isAdminLike || t.id === "compte" || t.id === "securite").map((t) => (
+        {TABS.filter((t) => isAdminLike || t.id === "compte").map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "9px 14px", borderRadius: "8px 8px 0 0", border: "none", cursor: "pointer",
             background: tab === t.id ? C.surface : "transparent",

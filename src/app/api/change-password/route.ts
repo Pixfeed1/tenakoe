@@ -6,6 +6,9 @@ import bcrypt from "bcryptjs";
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (user.role !== "ADMIN" && !user.voitTousLesDossiers) {
+    return NextResponse.json({ error: "Contactez votre administrateur pour changer votre mot de passe" }, { status: 403 });
+  }
 
   const body = await request.json();
   const { currentPassword, newPassword } = body;
