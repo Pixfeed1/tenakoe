@@ -98,6 +98,8 @@ function UsersTab({ C }: { C: Theme }) {
   const [reassignTo, setReassignTo] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ nom: "", prenom: "", email: "", telephone: "", voitTousLesDossiers: false });
+  const [resetPwdUser, setResetPwdUser] = useState<{ id: string; email: string; prenom: string; nom: string } | null>(null);
+  const [resetPwd, setResetPwd] = useState({ password: "", confirm: "", sendByEmail: true, showPwd: false, saving: false });
   const [form, setForm] = useState({ email: "", nom: "", prenom: "", telephone: "", role: "CHARGEE", password: "", prescripteurType: "" });
 
   const [prescripteurOptions, setPrescripteurOptions] = useState<Array<{ type: string; nom: string }>>([]);
@@ -204,6 +206,10 @@ function UsersTab({ C }: { C: Theme }) {
             setEditingUser(u.id);
             setEditForm({ nom: u.nom, prenom: u.prenom, email: u.email, telephone: u.telephone || "", voitTousLesDossiers: (u as Record<string, unknown>).voitTousLesDossiers === true });
           }} title="Modifier" icon={<Edit2 size={13} />}>{""}</Button>
+          <Button C={C} variant="ghost" size="sm" onClick={() => {
+            setResetPwdUser({ id: u.id, email: u.email, prenom: u.prenom, nom: u.nom });
+            setResetPwd({ password: "", confirm: "", sendByEmail: true, showPwd: false, saving: false });
+          }} title="Modifier le mot de passe" icon={<Shield size={13} />}>{""}</Button>
           <Button C={C} variant={u.actif ? "danger" : "primary"} size="sm" onClick={() => {
             if (u.actif) { setDeactivatingUser(u.id); setReassignTo(""); }
             else { toggleActif(u.id, u.actif); }
@@ -281,6 +287,57 @@ function UsersTab({ C }: { C: Theme }) {
         )}
         </div>
       ))}
+
+      {resetPwdUser && (
+        <div onClick={(e) => { if (e.target === e.currentTarget) setResetPwdUser(null); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
+          <div style={{ background: C.surface, borderRadius: 12, padding: 24, width: "100%", maxWidth: 440, boxShadow: C.shadow }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 600, color: C.text }}>Modifier le mot de passe — {resetPwdUser.prenom} {resetPwdUser.nom}</h3>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Nouveau mot de passe</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                <input type={resetPwd.showPwd ? "text" : "password"} value={resetPwd.password} onChange={(e) => setResetPwd({ ...resetPwd, password: e.target.value, confirm: e.target.value === resetPwd.confirm ? resetPwd.confirm : resetPwd.confirm })} style={inputStyle(C)} />
+                <button type="button" onClick={() => setResetPwd({ ...resetPwd, showPwd: !resetPwd.showPwd })} style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", cursor: "pointer" }}>
+                  {resetPwd.showPwd ? <EyeOff size={14} color={C.textDim} /> : <Eye size={14} color={C.textDim} />}
+                </button>
+              </div>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: C.textDim, display: "block", marginBottom: 4 }}>Confirmer</label>
+              <input type={resetPwd.showPwd ? "text" : "password"} value={resetPwd.confirm} onChange={(e) => setResetPwd({ ...resetPwd, confirm: e.target.value })} style={inputStyle(C)} />
+            </div>
+            <button type="button" onClick={() => {
+              const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*";
+              let pwd = ""; for (let i = 0; i < 14; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+              setResetPwd({ ...resetPwd, password: pwd, confirm: pwd, showPwd: true });
+            }} style={{ marginBottom: 14, padding: "6px 12px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.textMuted, fontSize: 12, cursor: "pointer" }}>
+              Générer un mot de passe aléatoire
+            </button>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer" }}>
+              <input type="checkbox" checked={resetPwd.sendByEmail} onChange={(e) => setResetPwd({ ...resetPwd, sendByEmail: e.target.checked })} />
+              <span style={{ fontSize: 13, color: C.text }}>Envoyer le nouveau mot de passe par email</span>
+            </label>
+            {resetPwd.sendByEmail && <div style={{ fontSize: 11, color: C.textDim, marginBottom: 14, paddingLeft: 26 }}>L&apos;email sera envoyé à : {resetPwdUser.email}</div>}
+            {resetPwd.password && resetPwd.confirm && resetPwd.password !== resetPwd.confirm && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8 }}>Les mots de passe ne correspondent pas</div>}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button onClick={() => setResetPwdUser(null)} style={{ padding: "8px 16px", borderRadius: 6, border: `1px solid ${C.border}`, background: "transparent", color: C.text, cursor: "pointer", fontSize: 13 }}>Annuler</button>
+              <button disabled={resetPwd.saving || !resetPwd.password || resetPwd.password.length < 8 || resetPwd.password !== resetPwd.confirm} onClick={async () => {
+                setResetPwd({ ...resetPwd, saving: true });
+                try {
+                  const res = await fetch(`/api/users/${resetPwdUser.id}/reset-password`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newPassword: resetPwd.password, sendByEmail: resetPwd.sendByEmail }) });
+                  if (res.ok) {
+                    const data = await res.json();
+                    toast(`Mot de passe modifié${data.emailSent ? ` — email envoyé à ${resetPwdUser.email}` : ""}`);
+                    setResetPwdUser(null);
+                  } else { const d = await res.json(); toast(d.error || "Erreur"); }
+                } catch { toast("Erreur réseau"); }
+                setResetPwd({ ...resetPwd, saving: false });
+              }} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600, opacity: resetPwd.saving || !resetPwd.password || resetPwd.password.length < 8 || resetPwd.password !== resetPwd.confirm ? 0.5 : 1 }}>
+                {resetPwd.saving ? "Enregistrement..." : "Valider"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
