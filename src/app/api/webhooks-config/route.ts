@@ -6,7 +6,7 @@ import { WEBHOOK_EVENTS, triggerWebhook } from "@/lib/webhooks";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (user.role !== "ADMIN") return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
+  if (user.role !== "ADMIN" && !user.voitTousLesDossiers) return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
 
   const webhooks = await prisma.webhook.findMany({
     include: { evenements: true },
@@ -18,7 +18,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (user.role !== "ADMIN") return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
+  if (user.role !== "ADMIN" && !user.voitTousLesDossiers) return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
 
   const body = await request.json();
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (user.role !== "ADMIN") return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
+  if (user.role !== "ADMIN" && !user.voitTousLesDossiers) return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
 
   const body = await request.json();
   const data: Record<string, unknown> = {};
@@ -71,7 +71,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (user.role !== "ADMIN") return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
+  if (user.role !== "ADMIN" && !user.voitTousLesDossiers) return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
 
   const id = request.nextUrl.searchParams.get("id");
   if (id) await prisma.webhook.delete({ where: { id } });

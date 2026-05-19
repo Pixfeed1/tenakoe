@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/rbac";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (user.role !== "ADMIN") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "ADMIN" && !user.voitTousLesDossiers) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const entreprises = await prisma.entreprise.findMany({
     where: { deletedAt: { not: null } },

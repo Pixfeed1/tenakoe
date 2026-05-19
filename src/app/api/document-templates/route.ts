@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/rbac";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || (user.role !== "ADMIN" && !user.voitTousLesDossiers)) return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
 
   const templates = await prisma.documentTemplate.findMany({ orderBy: [{ type: "asc" }, { ordre: "asc" }] });
   return NextResponse.json(templates);
@@ -12,7 +12,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || (user.role !== "ADMIN" && !user.voitTousLesDossiers)) return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
 
   const body = await request.json();
   const template = await prisma.documentTemplate.create({
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || (user.role !== "ADMIN" && !user.voitTousLesDossiers)) return NextResponse.json({ error: "Accès réservé aux administrateurs" }, { status: 403 });
 
   const id = request.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id requis" }, { status: 400 });

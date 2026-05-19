@@ -38,8 +38,17 @@ const inputStyle = (C: Theme): React.CSSProperties => ({
 });
 
 export function ParametresView({ C, role }: { C: Theme; role?: string }) {
-  const isAdmin = role !== "PRESCRIPTEUR";
-  const [tab, setTab] = useState<Tab>(isAdmin ? "utilisateurs" : "compte");
+  const [isAdminLike, setIsAdminLike] = useState(role === "ADMIN");
+  const defaultTab = role === "ADMIN" ? "utilisateurs" : "compte";
+  const [tab, setTab] = useState<Tab>(defaultTab);
+
+  useEffect(() => {
+    if (role !== "ADMIN") {
+      fetch("/api/users/me").then((r) => r.ok ? r.json() : null).then((u) => {
+        if (u?.voitTousLesDossiers) setIsAdminLike(true);
+      }).catch(() => {});
+    }
+  }, [role]);
 
   return (
     <>
@@ -50,7 +59,7 @@ export function ParametresView({ C, role }: { C: Theme; role?: string }) {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, overflowX: "auto", paddingBottom: 1, borderBottom: `1px solid ${C.border}` }}>
-        {TABS.filter((t) => isAdmin || t.id === "compte" || t.id === "securite").map((t) => (
+        {TABS.filter((t) => isAdminLike || t.id === "compte" || t.id === "securite").map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: "9px 14px", borderRadius: "8px 8px 0 0", border: "none", cursor: "pointer",
             background: tab === t.id ? C.surface : "transparent",

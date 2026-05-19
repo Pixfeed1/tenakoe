@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/rbac";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "ADMIN" && !user.voitTousLesDossiers) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const where: Record<string, unknown> = { deletedAt: { not: null } };
   if (user.role === "CHARGEE" && !user.voitTousLesDossiers) where.chargeeId = user.id;
