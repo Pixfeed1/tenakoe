@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   const baseRequired = ["nomArtisan", "prenomArtisan", "prescripteur", "nomEntreprise", "siret", "numeroCarte", "email", "telephone", "departement"];
   const publicRequired = [...baseRequired, "nomConseiller", "prenomConseiller", "emailConseiller", "telephoneConseiller"];
-  const requiredFields = user ? baseRequired : publicRequired;
+  const isDynamicForm = body.customFields !== undefined;
+  const requiredFields = isDynamicForm ? ["prescripteur"] : (user ? baseRequired : publicRequired);
   const missingFields = requiredFields.filter((f) => !body[f]);
   if (missingFields.length > 0) {
     return NextResponse.json(
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  if (!user && !body.acceptePartage) {
+  if (!user && !isDynamicForm && !body.acceptePartage) {
     return NextResponse.json(
       { error: "L'artisan doit accepter le partage de ses coordonnées" },
       { status: 400 }
