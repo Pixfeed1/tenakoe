@@ -105,8 +105,8 @@ export async function PATCH(
         if (etape.ordre === 2 && entreprise.email) {
           sendMail({
             to: entreprise.email,
-            subject: "Votre dossier est pris en charge — Kiwi",
-            html: `<p>Bonjour ${nomContact},</p><p>Votre dossier a été pris en charge par ${chargee?.prenom || "votre chargée de projet"}. Elle sera votre interlocutrice pour votre qualification RGE.</p><p>Cordialement,<br/>L'équipe Kiwi</p><br/>${signature}`,
+            subject: "Votre dossier est pris en charge — Kiwi by TENAKOE",
+            html: `<p>Bonjour ${nomContact},</p><p>Votre dossier a été pris en charge par ${chargee?.prenom || "votre chargée de projet"}. Elle sera votre interlocutrice pour votre qualification RGE.</p><p>Cordialement,<br/>L'équipe TENAKOE</p><br/>${signature}`,
             from: chargee?.smtpUser ? `"${chargee.prenom} ${chargee.nom}" <${chargee.smtpUser}>` : undefined,
             smtp,
           }).catch(() => {});
@@ -114,8 +114,8 @@ export async function PATCH(
         if (etape.ordre === 17 && entreprise.email) {
           sendMail({
             to: entreprise.email,
-            subject: "Votre dossier a été déposé — Kiwi",
-            html: `<p>Bonjour ${nomContact},</p><p>Votre dossier a été déposé auprès du certificateur. Nous vous tiendrons informé de la suite.</p><p>Cordialement,<br/>L'équipe Kiwi</p><br/>${signature}`,
+            subject: "Votre dossier a été déposé — Kiwi by TENAKOE",
+            html: `<p>Bonjour ${nomContact},</p><p>Votre dossier a été déposé auprès du certificateur. Nous vous tiendrons informé de la suite.</p><p>Cordialement,<br/>L'équipe TENAKOE</p><br/>${signature}`,
             from: chargee?.smtpUser ? `"${chargee.prenom} ${chargee.nom}" <${chargee.smtpUser}>` : undefined,
             smtp,
           }).catch(() => {});

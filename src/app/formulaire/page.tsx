@@ -148,7 +148,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
             <img src="/logo.png" alt="Kiwi" style={{ width: 44, height: 44, objectFit: "contain" }} />
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi <span style={{ fontWeight: 400, fontSize: 14 }}>by TENAKOE</span></div>
               <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>Qualification RGE</div>
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           </h1>
           <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.6, margin: 0 }}>
             Les coordonnées de <strong>{form.prenomArtisan} {form.nomArtisan}</strong> ont bien été transmises
-            à l&apos;équipe Kiwi. Une chargée de projet prendra contact sous 48h.
+            à l&apos;équipe TENAKOE. Une chargée de projet prendra contact sous 48h.
           </p>
           <button
             onClick={() => { setSubmitted(false); setForm({
@@ -284,11 +284,13 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
               {currentConfig?.logoUrl ? <img src={currentConfig.logoUrl.startsWith("http") || currentConfig.logoUrl.startsWith("/") ? currentConfig.logoUrl : `/${currentConfig.logoUrl}`} alt={currentConfig.nom} style={{ width: 48, height: 48, objectFit: "contain" }} /> : <img src="/logo.png" alt="Kiwi" style={{ width: 44, height: 44, objectFit: "contain" }} />}
               <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>{currentConfig?.nom || "Kiwi"}</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>Kiwi <span style={{ fontWeight: 400, fontSize: 14 }}>by TENAKOE</span></div>
                 {currentConfig?.description && <div style={{ fontSize: 12, color: C.textDim }}>{currentConfig.description}</div>}
               </div>
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 6px" }}>Transmission d&apos;un artisan</h1>
+            <p style={{ fontSize: 14, color: C.textMuted, margin: "6px 0 0" }}>Merci de remplir ce formulaire pour transmettre les coordonnées de votre client artisan à l&apos;équipe TENAKOE</p>
+            <p style={{ fontSize: 15, fontStyle: "italic", color: accent, fontWeight: 600, margin: "10px 0 0" }}>Vous inscrivez, on s&apos;occupe du reste !</p>
           </div>
           <form onSubmit={handleDynamicSubmit}>
             <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: "22px 24px", boxShadow: C.shadow, marginBottom: 16 }}>
@@ -303,6 +305,9 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
             <button type="submit" disabled={submitting} style={{ width: "100%", padding: "14px 0", borderRadius: 12, border: "none", background: submitting ? "#94a3b8" : `linear-gradient(135deg, ${accent}, ${accent}dd)`, color: "#fff", fontSize: 15, fontWeight: 600, cursor: submitting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 2px 8px ${accent}40` }}>
               <Send size={16} /> {submitting ? "Envoi en cours..." : "Transmettre"}
             </button>
+            <p style={{ fontSize: 11, color: C.textDim, textAlign: "center", marginTop: 12, lineHeight: 1.5 }}>
+              Tenakoe est partenaire de {currentConfig?.nom || "notre partenaire"} pour les démarches de qualification RGE. Kiwi by Tenakoe est votre plate-forme unique de mise en relation.
+            </p>
           </form>
         </div>
       </div>
@@ -321,16 +326,15 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <img src="/logo.png" alt="Kiwi" style={{ width: 44, height: 44, objectFit: "contain" }} />
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi <span style={{ fontWeight: 400, fontSize: 14 }}>by TENAKOE</span></div>
               <div style={{ fontSize: 12, color: C.textDim, fontWeight: 500 }}>Qualification RGE</div>
             </div>
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: "0 0 6px" }}>
             Transmission d&apos;un artisan
           </h1>
-          <p style={{ fontSize: 14, color: C.textMuted, margin: 0 }}>
-            Remplissez ce formulaire pour transmettre les coordonnées d&apos;un artisan à l&apos;équipe Kiwi
-          </p>
+          <p style={{ fontSize: 14, color: C.textMuted, margin: "6px 0 0" }}>Merci de remplir ce formulaire pour transmettre les coordonnées de votre client artisan à l&apos;équipe TENAKOE</p>
+          <p style={{ fontSize: 15, fontStyle: "italic", color: "#16a34a", fontWeight: 600, margin: "10px 0 0" }}>Vous inscrivez, on s&apos;occupe du reste !</p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -451,9 +455,9 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
               </div>
             </div>
 
-            {/* Intéressé accompagnement Kiwi */}
+            {/* Intéressé accompagnement TENAKOE */}
             <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Artisan intéressé par un accompagnement au montage de dossier par Kiwi <span style={{ fontSize: 11, color: C.textDim }}>(prestation payante)</span></label>
+              <label style={labelStyle}>Artisan intéressé par un accompagnement au montage de dossier par TENAKOE <span style={{ fontSize: 11, color: C.textDim }}>(prestation payante)</span></label>
               <div style={{ display: "flex", gap: 10 }}>
                 {[{ v: "OUI", l: "Oui" }, { v: "NON", l: "Non" }, { v: "NSP", l: "Ne sait pas" }].map((o) => (
                   <label key={o.v} onClick={() => set("interesseAccompagnement", o.v)} style={{
@@ -521,8 +525,7 @@ export default function FormulairePrescripteur({ paramsPromise }: { paramsPromis
           </button>
 
           <p style={{ fontSize: 11, color: C.textDim, textAlign: "center", marginTop: 12, lineHeight: 1.5 }}>
-            Les informations transmises sont traitées par Kiwi dans le cadre de l&apos;accompagnement
-            à la qualification RGE. Elles ne sont pas partagées avec des tiers.
+            Tenakoe est partenaire de {getPrescripteurName(resolvedPrescripteur || "")} pour les démarches de qualification RGE. Kiwi by Tenakoe est votre plate-forme unique de mise en relation.
           </p>
         </form>
       </div>
