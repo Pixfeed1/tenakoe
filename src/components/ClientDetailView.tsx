@@ -314,6 +314,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
           dateMailAbandon: data.dateMailAbandon || "",
           depotId: data.depotId || "",
           depotNom: data.depotConfig?.nom || "",
+          depotAutreLibelle: data.depotAutreLibelle || "",
           apporteurId: data.apporteurId || "",
           apporteurNom: data.apporteur ? `${data.apporteur.prenom ? data.apporteur.prenom + " " : ""}${data.apporteur.nom}${data.apporteur.structure ? " (" + data.apporteur.structure + ")" : ""}` : "",
           conseillerNom: data.conseiller ? `${data.conseiller.prenom ? data.conseiller.prenom + " " : ""}${data.conseiller.nom}` : "",
@@ -1132,7 +1133,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "N° département", key: "departement", value: entrepriseData?.departement || "—", Icon: Building2, required: true },
               { label: "Prescripteur", key: "prescripteur", value: (() => { const code = entrepriseData?.prescripteur || client?.prescripteur; if (!code) return "—"; if (code === "AUTRE") return "Autre (aucun prescripteur)"; const found = prescripteurConfigs.find((p) => p.type === code); return found?.nom || code; })(), Icon: Building2 },
-              { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom || "—", Icon: Building2 },
+              { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom === "Autre" && entrepriseData?.depotAutreLibelle ? `Autre — ${entrepriseData.depotAutreLibelle}` : entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
               { label: "N° carte", key: "numeroCarte", value: entrepriseData?.numeroCarte || "—", Icon: FileText },
             ].map((f, i) => {
@@ -1229,24 +1230,25 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     <option value="AUTRE">Autre (aucun prescripteur)</option>
                   </select>
                 ) : editingField === f.key && f.key === "depotId" ? (
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
                   <select
                     autoFocus
                     value={entrepriseData?.depotId || ""}
                     onChange={async (e) => {
                       const depotId = e.target.value || null;
                       const depotNom = depotConfigs.find((d) => d.id === depotId)?.nom || "";
-                      setEntrepriseData((prev) => prev ? { ...prev, depotId: depotId || "", depotNom } : prev);
+                      const isAutre = depotNom === "Autre";
+                      setEntrepriseData((prev) => prev ? { ...prev, depotId: depotId || "", depotNom, ...(isAutre ? {} : { depotAutreLibelle: "" }) } : prev);
                       if (client?.id && !isDemoMode) {
                         await fetch(`/api/entreprises/${client.id}`, {
                           method: "PATCH", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ depotId }),
+                          body: JSON.stringify({ depotId, ...(isAutre ? {} : { depotAutreLibelle: null }) }),
                         });
                       }
-                      setEditingField(null);
+                      if (!isAutre) setEditingField(null);
                     }}
-                    onBlur={() => setEditingField(null)}
                     style={{
-                      flex: 1, padding: "4px 8px", borderRadius: 6,
+                      width: "100%", padding: "4px 8px", borderRadius: 6,
                       border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
                       fontSize: 13, fontWeight: 500, outline: "none",
                     }}
@@ -1254,6 +1256,23 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     <option value="">-- Aucun --</option>
                     {depotConfigs.map((d) => <option key={d.id} value={d.id}>{d.nom}</option>)}
                   </select>
+                  {entrepriseData?.depotNom === "Autre" && (
+                    <input
+                      autoFocus
+                      placeholder="Précisez le nom du dépôt..."
+                      value={entrepriseData?.depotAutreLibelle || ""}
+                      onChange={(e) => setEntrepriseData((prev) => prev ? { ...prev, depotAutreLibelle: e.target.value } : prev)}
+                      onBlur={async () => {
+                        if (client?.id && !isDemoMode) {
+                          await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ depotAutreLibelle: entrepriseData?.depotAutreLibelle || null }) }).catch(() => {});
+                        }
+                        setEditingField(null);
+                      }}
+                      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                      style={{ width: "100%", padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.accent}`, background: C.bg, color: C.text, fontSize: 13, outline: "none" }}
+                    />
+                  )}
+                  </div>
                 ) : editingField === f.key && f.key === "apporteurId" ? (
                   <select
                     autoFocus

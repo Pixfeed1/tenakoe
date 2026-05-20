@@ -103,7 +103,7 @@ export function isAdminOnly(user: CurrentUser | null): boolean {
 
 export const CHARGEE_ENTREPRISE_WHITELIST = new Set([
   "nom", "siret", "email", "telephone", "adresse", "departement", "codePostal", "ville",
-  "depotId", "numeroCarte", "commentaire", "dejaReferentRGE",
+  "depotId", "depotAutreLibelle", "numeroCarte", "commentaire", "dejaReferentRGE",
   "statutFacturation", "dateStatutFacturation",
   "alerte1Envoyee", "dateAlerte1", "alerte2Envoyee", "dateAlerte2",
   "mailAbandonEnvoye", "dateMailAbandon", "alerteAbandonCommentaire",

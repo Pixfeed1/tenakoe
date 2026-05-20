@@ -96,6 +96,7 @@ model Entreprise {
   numeroCarte        String?
   depotId            String?
   depotConfig        DepotConfig?       @relation(fields: [depotId], references: [id])
+  depotAutreLibelle  String?
   interesseTNK       InteretTNK?        @default(NSP)
   miseEnRelation     MiseEnRelation?    @default(SANS_OBJET)
   miseEnRelationAutre String?

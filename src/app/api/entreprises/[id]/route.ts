@@ -105,6 +105,7 @@ export async function PATCH(
   }
   if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
   if (body.depotId !== undefined) data.depotId = body.depotId || null;
+  if (body.depotAutreLibelle !== undefined) data.depotAutreLibelle = body.depotAutreLibelle || null;
   if (body.chargeeId !== undefined) {
     data.chargeeId = body.chargeeId || null;
   }
