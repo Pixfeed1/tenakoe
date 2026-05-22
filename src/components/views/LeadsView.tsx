@@ -156,6 +156,7 @@ export function LeadsView({ C }: { C: Theme }) {
         prenomConseiller: lead.prenomConseiller,
         emailConseiller: lead.emailConseiller,
         telephoneConseiller: lead.telephoneConseiller,
+        commentaire: lead.commentaires || null,
       }),
     });
     if (res.ok) {
