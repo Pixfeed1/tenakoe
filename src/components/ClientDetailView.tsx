@@ -348,7 +348,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
           formationBT: firstQualif?.formationBT ? "true" : "false",
           formationHorsRenoperfITI: firstQualif?.formationHorsRenoperfITI ? "true" : "false",
           formationHorsRenoperfITE: firstQualif?.formationHorsRenoperfITE ? "true" : "false",
-          chargee: firstProjet?.chargee?.prenom || "",
+          chargee: data.chargee?.prenom || firstProjet?.chargee?.prenom || "",
           dateStatutPrise: data.dateStatutPrise || "",
           dateStatutFacturation: data.dateStatutFacturation || "",
           dateInteresseTNK: data.dateInteresseTNK || "",
