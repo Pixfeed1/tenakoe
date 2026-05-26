@@ -1740,6 +1740,38 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               }
               return null;
             })()}
+            {projets.length === 0 && (
+              <div style={{ paddingTop: 10, borderTop: `1px solid ${C.border}`, marginTop: 4 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>Synthèse des dates</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px", fontSize: 12 }}>
+                  {[
+                    { label: "Nouveau", date: entrepriseData?.dateNouveauOverride || entrepriseData?.createdAt, apiKey: "dateNouveauOverride" },
+                    { label: "Transmission", date: entrepriseData?.dateTransmission || entrepriseData?.createdAt, apiKey: "dateTransmission" },
+                  ].map((r) => (
+                    <div key={r.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 0" }}>
+                      <span style={{ color: C.textMuted }}>{r.label}</span>
+                      {r.apiKey && client?.id && !isDemoMode ? (
+                        <input type="date" value={r.date ? new Date(r.date).toISOString().slice(0, 10) : ""}
+                          onChange={async (e) => {
+                            const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                            const prev = entrepriseData?.[r.apiKey] || "";
+                            setEntrepriseData((p) => p ? { ...p, [r.apiKey]: val || "" } : p);
+                            try {
+                              const res = await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [r.apiKey]: val }) });
+                              if (!res.ok) { setEntrepriseData((p) => p ? { ...p, [r.apiKey]: prev } : p); toast("Erreur"); }
+                            } catch { setEntrepriseData((p) => p ? { ...p, [r.apiKey]: prev } : p); toast("Erreur réseau"); }
+                          }}
+                          style={{ padding: "1px 4px", borderRadius: 4, border: `1px solid ${r.date ? "transparent" : C.border}`, background: "transparent", color: r.date ? C.text : C.textDim, fontSize: 12, fontWeight: r.date ? 500 : 400, outline: "none", cursor: "pointer", width: 130, minWidth: 130, textAlign: "right" }}
+                        />
+                      ) : (
+                        <span style={{ color: r.date ? C.text : C.textDim, fontWeight: r.date ? 500 : 400 }}>{r.date ? new Date(r.date).toLocaleDateString("fr-FR") : "—"}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 8, fontSize: 11, color: C.textDim, fontStyle: "italic" }}>Créez un projet pour accéder aux dates avancées (Payé, En cours, Déposé, Qualifié...)</div>
+              </div>
+            )}
             {projets.map((proj) => {
               const pData = proj as unknown as Record<string, string | null | undefined>;
               const projetEtapes = proj.etapes || [];
