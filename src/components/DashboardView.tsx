@@ -628,7 +628,7 @@ export function DashboardView({
 
 // ===================== DASHBOARD EXTRAS =====================
 function DashboardExtras({ C }: { C: Theme }) {
-  const [data, setData] = useState<{ qualifiesCeMois: number; qualifiesMoisDernier: number; topPrescripteurs: Array<{ nom: string; count: number }> } | null>(null);
+  const [data, setData] = useState<{ qualifiesCeMois: number; qualifiesMoisDernier: number; totalQualifies: number; qualifiesParChargee: Array<{ chargeeId: string | null; prenom: string; count: number }>; topPrescripteurs: Array<{ nom: string; count: number }> } | null>(null);
 
   useEffect(() => {
     fetch("/api/dashboard-stats").then((r) => r.ok ? r.json() : null).then(setData).catch(() => {});
@@ -637,6 +637,7 @@ function DashboardExtras({ C }: { C: Theme }) {
   if (!data) return null;
 
   const maxBar = Math.max(data.qualifiesCeMois, data.qualifiesMoisDernier, 1);
+  const maxParChargee = Math.max(...(data.qualifiesParChargee || []).map((x) => x.count), 1);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
@@ -662,6 +663,27 @@ function DashboardExtras({ C }: { C: Theme }) {
         {data.qualifiesCeMois > data.qualifiesMoisDernier && (
           <div style={{ marginTop: 10, fontSize: 11, color: C.accent, fontWeight: 600 }}>
             +{data.qualifiesCeMois - data.qualifiesMoisDernier} vs mois dernier
+          </div>
+        )}
+        <div style={{ height: 1, background: C.border, margin: "12px 0 10px" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <span style={{ fontSize: 11, color: C.textDim, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Total toutes périodes</span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>{data.totalQualifies}</span>
+        </div>
+        {data.qualifiesParChargee && data.qualifiesParChargee.length > 0 && (
+          <div style={{ marginTop: 6 }}>
+            <div style={{ fontSize: 10, color: C.textDim, marginBottom: 6, textTransform: "uppercase", fontWeight: 600 }}>Par chargée</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {data.qualifiesParChargee.map((q) => (
+                <div key={q.chargeeId || "none"} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, color: C.textMuted, width: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{q.prenom}</span>
+                  <div style={{ flex: 1, height: 12, background: C.bg, borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${(q.count / maxParChargee) * 100}%`, background: C.accent, borderRadius: 4 }} />
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: C.text, minWidth: 20, textAlign: "right" }}>{q.count}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
