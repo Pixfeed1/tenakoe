@@ -34,7 +34,7 @@ export async function PATCH(
       "statutPrise", "statutFacturation", "eligible",
       "dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK",
       "dateMiseEnRelation", "dateQualification", "dateEligible",
-      "dateEnCours", "dateDepose", "dateQualifie", "dateRecours", "dateRefuse",
+      "dateEnCours", "datePayeAbandonneNonReactif", "dateDepose", "dateQualifie", "dateRecours", "dateRefuse",
     ]);
     const restrictedFields = Object.keys(body).filter((k) => !collaborativeFields.has(k));
     if (restrictedFields.length > 0) {
@@ -62,7 +62,7 @@ export async function PATCH(
   if (body.statutPrise !== undefined) { data.statutPrise = body.statutPrise; data.dateStatutPrise = new Date(); }
   if (body.statutFacturation !== undefined) { data.statutFacturation = body.statutFacturation; data.dateStatutFacturation = new Date(); }
   if (body.eligible !== undefined) { data.eligible = body.eligible; data.dateEligible = new Date(); }
-  const projetDateOverrides = ["dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK", "dateMiseEnRelation", "dateQualification", "dateEligible", "dateEnCours", "dateDepose", "dateQualifie", "dateRecours", "dateRefuse"];
+  const projetDateOverrides = ["dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK", "dateMiseEnRelation", "dateQualification", "dateEligible", "dateEnCours", "datePayeAbandonneNonReactif", "dateDepose", "dateQualifie", "dateRecours", "dateRefuse"];
   for (const dk of projetDateOverrides) {
     if (body[dk] !== undefined && body.statutPrise === undefined && body.statutFacturation === undefined) {
       data[dk] = body[dk] ? new Date(body[dk] as string) : null;

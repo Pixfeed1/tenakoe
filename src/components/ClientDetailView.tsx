@@ -1784,6 +1784,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                 { label: "Prise en charge", date: pData.dateStatutPrise, apiKey: "dateStatutPrise" },
                 { label: "Payé", date: pData.dateStatutFacturation, apiKey: "dateStatutFacturation" },
                 { label: "En cours", date: pData.dateEnCours || (firstActive as unknown as { dateRealisee?: string })?.dateRealisee || null, apiKey: "dateEnCours" },
+                { label: "Payé-abandonné", date: pData.datePayeAbandonneNonReactif, apiKey: "datePayeAbandonneNonReactif" },
                 { label: "Déposé", date: pData.dateDepose || ((etape17 as unknown as { done?: boolean; dateRealisee?: string })?.done ? (etape17 as unknown as { dateRealisee?: string }).dateRealisee : null), apiKey: "dateDepose" },
                 { label: "Qualifié", date: pData.dateQualifie || ((etape19 as unknown as { done?: boolean; dateRealisee?: string })?.done ? (etape19 as unknown as { dateRealisee?: string }).dateRealisee : null), apiKey: "dateQualifie" },
                 { label: "Recours", date: pData.dateRecours, apiKey: "dateRecours" },

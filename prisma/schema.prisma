@@ -286,6 +286,7 @@ model Projet {
   dateQualifie           DateTime?
   dateRecours            DateTime?
   dateRefuse             DateTime?
+  datePayeAbandonneNonReactif DateTime?
   eligible               String?   @default("A_VERIFIER")
 
   sourceImport   SourceImport? @default(MANUEL)
