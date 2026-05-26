@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       nom: dbUser?.nom || nameParts.slice(1).join(" ") || "",
       email: fromEmail || "",
       telephone: dbUser?.telephone,
+      role: session.user.role,
     });
     const contentHasPolite = (content || "").toLowerCase().includes("cordialement");
     const cleanSignature = contentHasPolite

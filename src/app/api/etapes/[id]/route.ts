@@ -91,13 +91,13 @@ export async function PATCH(
         const { sendMail } = await import("@/lib/mail");
         const entreprise = await prisma.entreprise.findUnique({
           where: { id: etape.projet.entrepriseId! },
-          include: { contacts: { take: 1 }, projets: { include: { chargee: { select: { id: true, prenom: true, nom: true, email: true, telephone: true, smtpHost: true, smtpPort: true, smtpUser: true, smtpPass: true } } }, take: 1 } },
+          include: { contacts: { take: 1 }, projets: { include: { chargee: { select: { id: true, prenom: true, nom: true, email: true, telephone: true, role: true, smtpHost: true, smtpPort: true, smtpUser: true, smtpPass: true } } }, take: 1 } },
         });
         if (!entreprise) return;
         const chargee = entreprise.projets[0]?.chargee;
         const contact = entreprise.contacts[0];
         const nomContact = contact ? `${contact.prenom} ${contact.nom}` : entreprise.nom;
-        const signature = getSignature({ prenom: chargee?.prenom || user.name.split(" ")[0] || "", nom: chargee?.nom || user.name.split(" ").slice(1).join(" ") || "", email: chargee?.email || user.email, telephone: chargee?.telephone });
+        const signature = getSignature({ prenom: chargee?.prenom || user.name.split(" ")[0] || "", nom: chargee?.nom || user.name.split(" ").slice(1).join(" ") || "", email: chargee?.email || user.email, telephone: chargee?.telephone, role: (chargee as unknown as { role?: string })?.role || user.role });
         const smtp = chargee?.smtpHost && chargee?.smtpUser && chargee?.smtpPass ? { host: chargee.smtpHost, port: chargee.smtpPort || 587, user: chargee.smtpUser, pass: chargee.smtpPass } : undefined;
         const lienFiche = `https://tenakoe.pixfeed.net/dashboard?view=ClientDetail&clientId=${entreprise.id}`;
 

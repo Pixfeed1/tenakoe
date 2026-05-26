@@ -862,7 +862,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                   <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px dashed #e2e8f0", clear: "both", overflow: "hidden" }}>
                     <div style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic", marginBottom: 8 }}>— Signature ajoutée automatiquement à l&apos;envoi —</div>
                     <div dangerouslySetInnerHTML={{ __html: (() => {
-                      const sig = getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Kiwi", nom: entrepriseData?.chargeeEntrepriseNom || "", email: "contact@tenakoe.fr" });
+                      const sig = getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Kiwi", nom: entrepriseData?.chargeeEntrepriseNom || "", email: "contact@tenakoe.fr", role });
                       return mailBody.toLowerCase().includes("cordialement") ? sig.replace(/<tr>\s*<td[^>]*>\s*<span[^>]*>Cordialement[^<]*<\/span>\s*<\/td>\s*<\/tr>/, "") : sig;
                     })() }} />
                   </div>
