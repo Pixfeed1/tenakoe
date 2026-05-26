@@ -383,6 +383,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
           alerteAbandonCommentaire: data.alerteAbandonCommentaire || "",
           createdAt: data.createdAt || "",
           dateNouveauOverride: data.dateNouveauOverride || "",
+          dateTransmission: data.dateTransmission || "",
           leadSourceCustomFields: data.leadSource?.customFields || null,
           leadSourceChampsConfig: JSON.stringify(data.leadSource?.champsConfig || []),
           leadSourceCommentaires: data.leadSource?.commentaires || null,
@@ -1747,6 +1748,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               const firstActive = projetEtapes.find((t: { active: boolean }) => t.active);
               const dateRows: Array<{ label: string; date: string | undefined | null; apiKey?: string; isEntrepriseField?: boolean }> = [
                 { label: "Nouveau", date: entrepriseData?.dateNouveauOverride || entrepriseData?.createdAt, apiKey: "dateNouveauOverride", isEntrepriseField: true },
+                { label: "Transmission", date: entrepriseData?.dateTransmission || entrepriseData?.createdAt, apiKey: "dateTransmission", isEntrepriseField: true },
                 { label: "Prise en charge", date: pData.dateStatutPrise, apiKey: "dateStatutPrise" },
                 { label: "Payé", date: pData.dateStatutFacturation, apiKey: "dateStatutFacturation" },
                 { label: "En cours", date: pData.dateEnCours || (firstActive as unknown as { dateRealisee?: string })?.dateRealisee || null, apiKey: "dateEnCours" },

@@ -114,7 +114,7 @@ export const CHARGEE_ENTREPRISE_WHITELIST = new Set([
   "relanceDevis1", "dateRelanceDevis1", "relanceDevis2", "dateRelanceDevis2",
   "relanceDevis3", "dateRelanceDevis3", "relanceDevis4", "dateRelanceDevis4",
   "relanceDevisFerme", "dateRelanceDevisFerme",
-  "dateNouveauOverride",
+  "dateNouveauOverride", "dateTransmission",
   "interesseTNK", "dateInteresseTNK", "miseEnRelation", "miseEnRelationAutre",
   "dateStatutPrise", "dateEnCours", "dateDepose", "dateQualifie",
   "eligible", "eligibleCommentaire", "dateEligible",

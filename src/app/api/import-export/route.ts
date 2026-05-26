@@ -28,8 +28,12 @@ export async function POST(request: NextRequest) {
   let columns: { key: string; header: string; width: number }[] = [];
 
   if (type === "entreprises") {
+    const statutsPrise = await prisma.statutPriseConfig.findMany({ select: { code: true, nom: true } });
+    const statutPriseLabels: Record<string, string> = {};
+    for (const s of statutsPrise) statutPriseLabels[s.code] = s.nom;
+
     const data = await prisma.entreprise.findMany({
-      include: { contacts: { take: 1 }, projets: { include: { chargee: { select: { prenom: true } } }, take: 1 } },
+      include: { contacts: { take: 1 }, projets: { include: { chargee: { select: { prenom: true } }, etapes: { orderBy: { ordre: "asc" } } }, take: 1 } },
       where: { archive: false, deletedAt: { equals: null } },
       orderBy: { nom: "asc" },
     });
@@ -42,22 +46,34 @@ export async function POST(request: NextRequest) {
       { key: "ville", header: "Ville", width: 15 },
       { key: "codePostal", header: "Code postal", width: 10 },
       { key: "prescripteur", header: "Prescripteur", width: 12 },
+      { key: "statutLead", header: "Statut du lead", width: 25 },
       { key: "statutPrise", header: "Statut prise", width: 20 },
       { key: "statutFacturation", header: "Statut facturation", width: 20 },
+      { key: "etapeEnCours", header: "Étape en cours", width: 30 },
       { key: "contact", header: "Contact principal", width: 25 },
       { key: "chargee", header: "Chargée", width: 15 },
       { key: "estClient", header: "Client", width: 8 },
+      { key: "dateTransmission", header: "Date transmission", width: 14 },
       { key: "createdAt", header: "Date création", width: 14 },
     ];
-    rows = data.map((e) => ({
-      nom: e.nom, siret: e.siret || "", email: e.email || "", telephone: e.telephone || "",
-      adresse: e.adresse || "", ville: e.ville || "", codePostal: e.codePostal || "",
-      prescripteur: e.prescripteur || "", statutPrise: e.statutPrise, statutFacturation: e.statutFacturation || "",
-      contact: e.contacts[0] ? `${e.contacts[0].prenom} ${e.contacts[0].nom}` : "",
-      chargee: e.projets[0]?.chargee?.prenom || "",
-      estClient: e.estClient ? "Oui" : "Non",
-      createdAt: e.createdAt.toLocaleDateString("fr-FR"),
-    }));
+    rows = data.map((e) => {
+      const firstProjet = e.projets[0];
+      const etapeActive = firstProjet?.etapes?.find((et) => et.active);
+      const etapeEnCours = etapeActive ? `${etapeActive.ordre}/${firstProjet.etapes.length} — ${etapeActive.nom}` : "";
+      return {
+        nom: e.nom, siret: e.siret || "", email: e.email || "", telephone: e.telephone || "",
+        adresse: e.adresse || "", ville: e.ville || "", codePostal: e.codePostal || "",
+        prescripteur: e.prescripteur || "",
+        statutLead: statutPriseLabels[e.statutPrise] || e.statutPrise || "",
+        statutPrise: e.statutPrise, statutFacturation: e.statutFacturation || "",
+        etapeEnCours,
+        contact: e.contacts[0] ? `${e.contacts[0].prenom} ${e.contacts[0].nom}` : "",
+        chargee: firstProjet?.chargee?.prenom || "",
+        estClient: e.estClient ? "Oui" : "Non",
+        dateTransmission: ((e as unknown as { dateTransmission?: Date }).dateTransmission || e.createdAt).toLocaleDateString("fr-FR"),
+        createdAt: e.createdAt.toLocaleDateString("fr-FR"),
+      };
+    });
   } else if (type === "contacts") {
     const data = await prisma.contact.findMany({
       include: { entreprise: { select: { nom: true } } },
