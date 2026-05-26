@@ -124,7 +124,7 @@ export async function PATCH(
     data.dateStatutFacturation = new Date();
     if (body.statutFacturation === "FACTURE_PAYEE_COLLECTE") data.estClient = true;
   }
-  const dateOverrides = ["dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK", "dateEligible", "dateEnCours", "dateDepose", "dateQualifie"];
+  const dateOverrides = ["dateStatutPrise", "dateStatutFacturation", "dateInteresseTNK", "dateEligible", "dateEnCours", "dateDepose", "dateQualifie", "dateMiseEnRelation"];
   for (const dk of dateOverrides) {
     if (body[dk] !== undefined && body.statutPrise === undefined && body.statutFacturation === undefined && body.interesseTNK === undefined && body.eligible === undefined) {
       data[dk] = body[dk] ? new Date(body[dk] as string) : null;

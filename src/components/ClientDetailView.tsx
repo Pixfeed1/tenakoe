@@ -1923,9 +1923,19 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                           onBlur={async (e) => { if (!client?.id) return; const val = e.target.value; await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ miseEnRelationAutre: val }) }); setEntrepriseData((prev) => prev ? { ...prev, miseEnRelationAutre: val } : prev); }}
                           style={{ padding: "3px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, width: 140 }} />
                       )}
-                      {entrepriseData?.dateMiseEnRelation && (
-                        <span style={{ fontSize: 10, color: C.textDim }}>Modifié le {new Date(entrepriseData.dateMiseEnRelation).toLocaleDateString("fr-FR")}</span>
-                      )}
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, color: C.textDim }}>
+                        Mise en relation le
+                        <input type="date"
+                          value={entrepriseData?.dateMiseEnRelation ? new Date(entrepriseData.dateMiseEnRelation).toISOString().slice(0, 10) : ""}
+                          onChange={async (e) => {
+                            if (!client?.id || isDemoMode) return;
+                            const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                            setEntrepriseData((prev) => prev ? { ...prev, dateMiseEnRelation: val || "" } : prev);
+                            await fetch(`/api/entreprises/${client.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dateMiseEnRelation: val }) }).catch(() => {});
+                          }}
+                          style={{ fontSize: 10, color: C.textDim, background: "transparent", border: "none", borderBottom: `1px dashed ${C.border}`, padding: "1px 2px", cursor: "pointer", fontFamily: "inherit" }}
+                        />
+                      </div>
                     </div>
                   </div>
 
