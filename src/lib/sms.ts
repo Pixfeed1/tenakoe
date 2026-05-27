@@ -93,7 +93,7 @@ function sanitizeForGsm7(text: string): string {
 
 async function sendViaSpotHit(opts: SendSMSOptions, config: Record<string, string>): Promise<SendSMSResult> {
   const apiKey = config.api_key;
-  const expediteur = (config.expediteur || "Kiwi").slice(0, 11);
+  const expediteur = (config.expediteur || "Tenakoe").slice(0, 11);
   if (!apiKey) throw new Error("Clé API Spot-Hit manquante");
 
   const campagne = (opts.campaignName || `Tenakoe ${new Date().toISOString().slice(0, 10)}`).slice(0, 50);
