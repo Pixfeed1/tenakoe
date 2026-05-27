@@ -89,7 +89,13 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
     if (search && !c.nom.toLowerCase().includes(search.toLowerCase()) && !(c.siret || "").includes(search)) return false;
     if (filtreChargee && c.chargeeId !== filtreChargee) return false;
     if (filtreStatut && c.statutPrise !== filtreStatut && c.statutFacturation !== filtreStatut) return false;
-    if (filtrePrescripteur && c.prescripteur !== filtrePrescripteur) return false;
+    if (filtrePrescripteur) {
+      if (filtrePrescripteur === "AUTRE") {
+        if (c.prescripteur && c.prescripteur !== "AUTRE") return false;
+      } else {
+        if (c.prescripteur !== filtrePrescripteur) return false;
+      }
+    }
     return true;
   }).sort((a, b) => {
     switch (sortBy) {
