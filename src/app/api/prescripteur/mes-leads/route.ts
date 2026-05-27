@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
       dateStatutPriseISO: ent.dateStatutPrise?.toISOString() || null,
       statut: statutInfo.label,
       statutCouleur: statutInfo.couleur,
-      etape: projetsInfo[0]?.etape || null,
+      etape: projetsInfo.find((p) => p.etape)?.etape || null,
       projets: projetsInfo,
       interesseTNK: ent.interesseTNK || "NSP",
       dateInteresseTNK: ent.dateInteresseTNK?.toISOString() || null,
