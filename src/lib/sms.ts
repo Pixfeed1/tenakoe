@@ -71,6 +71,26 @@ async function getActiveSMSIntegration(): Promise<{ nom: string; config: Record<
   }
 }
 
+const GSM7_MAP: Record<string, string> = {
+  "—": "-", "–": "-", "‒": "-", "―": "-",
+  "‘": "'", "’": "'", "‚": "'", "‛": "'",
+  "“": '"', "”": '"', "„": '"', "‟": '"',
+  "«": '"', "»": '"',
+  "…": "...",
+  "œ": "oe", "Œ": "OE", "æ": "ae", "Æ": "AE",
+  "→": "->", "←": "<-", "↔": "<->",
+  "•": "*", "·": "*",
+  " ": " ", " ": " ",
+};
+
+function sanitizeForGsm7(text: string): string {
+  let result = text;
+  for (const [from, to] of Object.entries(GSM7_MAP)) {
+    result = result.replaceAll(from, to);
+  }
+  return result;
+}
+
 async function sendViaSpotHit(opts: SendSMSOptions, config: Record<string, string>): Promise<SendSMSResult> {
   const apiKey = config.api_key;
   const expediteur = (config.expediteur || "Kiwi").slice(0, 11);
@@ -81,7 +101,7 @@ async function sendViaSpotHit(opts: SendSMSOptions, config: Record<string, strin
   const params = new URLSearchParams({
     key: apiKey,
     destinataires: formatTo(opts.to),
-    message: opts.body,
+    message: sanitizeForGsm7(opts.body),
     expediteur,
     smslong: "1",
     encodage: "auto",
