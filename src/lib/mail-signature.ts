@@ -21,7 +21,7 @@ export function getSignature(user: { prenom: string; nom: string; email: string;
 <tr>
 <td style="padding-top: 10px;">
 <p style="margin: 0; font-size: 13px; color: #6b7280;">${tel ? `<a style="color: #6b7280; text-decoration: none;" href="tel:${tel}">${tel}</a> · ` : ""}<a style="color: #6b7280; text-decoration: none;" href="mailto:${user.email}">${user.email}</a></p>
-<p style="margin: 10px 0 0 0; font-size: 11px; color: #16a34a; font-style: italic;">Envie de sécuriser les contrôles et audits de votre qualification RGE? Faites équipe avec Kiwi by TENAKOE!</p>
+<p style="margin: 10px 0 0 0; font-size: 11px; color: #16a34a; font-style: italic;">Envie de sécuriser les contrôles et audits de votre qualification RGE? Faites équipe avec TENAKOE!</p>
 </td>
 </tr>
 </tbody>
