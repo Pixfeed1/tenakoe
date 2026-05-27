@@ -174,6 +174,7 @@ function UsersTab({ C }: { C: Theme }) {
                 {prescripteurOptions.map((p) => (
                   <option key={p.type} value={p.type}>{p.nom}</option>
                 ))}
+                <option value="AUTRE">Autre (aucun prescripteur)</option>
               </select>
             )}
           </div>

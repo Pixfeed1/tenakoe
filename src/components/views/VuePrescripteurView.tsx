@@ -35,10 +35,13 @@ export function VuePrescripteurView({ C, onExit }: VuePrescripteurViewProps) {
 
   const selectedConfig = configs.find((c) => c.type === selected);
   const isDemo = selected === DEMO_VALUE;
+  const isAutre = selected === "AUTRE";
 
   const headerNom = isDemo
     ? "La Plateforme du Bâtiment"
-    : selectedConfig?.nom || "Prescripteur";
+    : isAutre
+      ? "Autre (aucun prescripteur)"
+      : selectedConfig?.nom || "Prescripteur";
   const headerLogo = isDemo
     ? (configs.find((c) => c.type === "PDB")?.logoUrl || null)
     : selectedConfig?.logoUrl || null;
@@ -99,6 +102,7 @@ export function VuePrescripteurView({ C, onExit }: VuePrescripteurViewProps) {
             {configs.map((c) => (
               <option key={c.id} value={c.type}>{c.nom}</option>
             ))}
+            <option value="AUTRE">Autre (aucun prescripteur)</option>
           </select>
         </label>
 

@@ -172,6 +172,7 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
           <select value={filtrePrescripteur} onChange={(e) => setFiltrePrescripteur(e.target.value)} style={ss}>
             <option value="">Prescripteur</option>
             {prescripteurs.map((p) => <option key={p.type} value={p.type}>{p.nom}</option>)}
+            <option value="AUTRE">Autre (aucun prescripteur)</option>
           </select>
         )}
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} style={ss}>

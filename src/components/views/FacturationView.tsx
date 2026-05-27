@@ -320,6 +320,7 @@ export function FacturationView({ C, onSelectClient, role }: { C: Theme; onSelec
             style={{ padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }}>
             <option value="">Prescripteur</option>
             {prescripteurs.map((p) => <option key={p.type} value={p.type}>{p.nom}</option>)}
+            <option value="AUTRE">Autre (aucun prescripteur)</option>
           </select>
         )}
         <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}

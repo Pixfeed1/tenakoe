@@ -148,6 +148,7 @@ export function ProspectsView({ C, onSelectClient, role }: { C: Theme; onSelectC
           <select value={filtrePrescripteur} onChange={(e) => setFiltrePrescripteur(e.target.value)} style={ss}>
             <option value="">Prescripteur</option>
             {prescripteurs.map((p) => <option key={p.type} value={p.type}>{p.nom}</option>)}
+            <option value="AUTRE">Autre (aucun prescripteur)</option>
           </select>
         )}
         <select value={filtreEligible} onChange={(e) => setFiltreEligible(e.target.value)} style={ss}>
