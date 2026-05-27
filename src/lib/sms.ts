@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 interface SendSMSOptions {
   to: string;
   body: string;
+  campaignName?: string;
 }
 
 interface SendSMSResult {
@@ -14,6 +15,47 @@ interface SendSMSResult {
 
 function formatTo(to: string): string {
   return to.startsWith("+") ? to : `+33${to.replace(/^0/, "").replace(/\s/g, "")}`;
+}
+
+const SPOTHIT_ERRORS: Record<number, string> = {
+  1: "Clé API invalide ou manquante",
+  2: "Numéro de destinataire invalide",
+  3: "Message trop long (smslong non activé)",
+  4: "Expéditeur invalide",
+  5: "Message vide",
+  6: "Crédit insuffisant",
+  7: "Envoi bloqué par le filtre anti-doublon",
+  8: "Envoi désactivé (compte suspendu)",
+  9: "Numéro en liste noire (STOP)",
+  10: "Format de date planifiée invalide",
+  11: "Paramètre manquant",
+  12: "Erreur interne Spot-Hit",
+  13: "Message contient des caractères interdits",
+  14: "Numéro non mobile",
+  15: "Envoi vers cette destination non autorisé",
+  17: "Trop de destinataires",
+  24: "Mention « STOP au 36200 » manquante",
+  30: "Clé API expirée",
+  31: "Compte bloqué",
+  36: "Expéditeur non autorisé",
+  38: "Mention Stop requise",
+  55: "Campagne en cours d'envoi",
+  61: "Numéro fixe détecté",
+  62: "Numéro international non autorisé",
+  63: "Pays du destinataire non autorisé",
+  66: "Envoi programmé dans le passé",
+  68: "Quota journalier atteint",
+  71: "Erreur de routage",
+  100: "Erreur technique interne",
+};
+
+function describeSpotHitErrors(codes: unknown): string {
+  if (!Array.isArray(codes) || codes.length === 0) return "Erreur inconnue";
+  return codes.map((c) => {
+    const n = Number(c);
+    const label = SPOTHIT_ERRORS[n];
+    return label ? `${n} (${label})` : String(c);
+  }).join(", ");
 }
 
 async function getActiveSMSIntegration(): Promise<{ nom: string; config: Record<string, string> } | null> {
@@ -34,12 +76,16 @@ async function sendViaSpotHit(opts: SendSMSOptions, config: Record<string, strin
   const expediteur = (config.expediteur || "Kiwi").slice(0, 11);
   if (!apiKey) throw new Error("Clé API Spot-Hit manquante");
 
+  const campagne = (opts.campaignName || `Tenakoe ${new Date().toISOString().slice(0, 10)}`).slice(0, 50);
+
   const params = new URLSearchParams({
     key: apiKey,
     destinataires: formatTo(opts.to),
-    type: "premium",
     message: opts.body,
     expediteur,
+    smslong: "1",
+    encodage: "auto",
+    nom: campagne,
   });
 
   const res = await fetch("https://www.spot-hit.fr/api/envoyer/sms", {
@@ -48,9 +94,13 @@ async function sendViaSpotHit(opts: SendSMSOptions, config: Record<string, strin
     body: params.toString(),
   });
 
+  if (!res.ok) {
+    throw new Error(`Spot-Hit HTTP ${res.status} ${res.statusText}`);
+  }
+
   const data = await res.json();
   if (!data.resultat) {
-    throw new Error(`Spot-Hit: ${data.erreurs?.join(", ") || "Erreur inconnue"}`);
+    throw new Error(`Spot-Hit: ${describeSpotHitErrors(data.erreurs)}`);
   }
   return { sid: String(data.id || ""), status: "sent", provider: "spothit" };
 }
@@ -81,3 +131,5 @@ export async function sendSMS(opts: SendSMSOptions): Promise<SendSMSResult> {
 
   return sendViaTwilio(opts);
 }
+
+export { formatTo };
