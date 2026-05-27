@@ -60,7 +60,7 @@ export function LeadsView({ C }: { C: Theme }) {
   // Form state
   const [form, setForm] = useState({
     nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "", departement: "",
-    email: "", telephone: "", telephone2: "", prescripteur: "PDB",
+    email: "", telephone: "", telephone2: "", prescripteur: "",
     depot: "", depotConfigId: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false, interesseAccompagnement: "",
     nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
@@ -95,7 +95,7 @@ export function LeadsView({ C }: { C: Theme }) {
 
   const emptyForm = {
     nomArtisan: "", prenomArtisan: "", nomEntreprise: "", siret: "", departement: "",
-    email: "", telephone: "", telephone2: "", prescripteur: "PDB",
+    email: "", telephone: "", telephone2: "", prescripteur: "",
     depot: "", depotConfigId: "", numeroCarte: "", dejaReferentRGE: false,
     commentaires: "", acceptePartage: false, interesseAccompagnement: "",
     nomConseiller: "", prenomConseiller: "", emailConseiller: "", telephoneConseiller: "",
@@ -104,7 +104,7 @@ export function LeadsView({ C }: { C: Theme }) {
 
   const submitLead = async () => {
     setFormError(null);
-    if (!form.nomArtisan || !form.prenomArtisan || !form.nomEntreprise || !form.siret || !form.departement || !form.email || !form.telephone || !form.numeroCarte) {
+    if (!form.prescripteur || !form.nomArtisan || !form.prenomArtisan || !form.nomEntreprise || !form.siret || !form.departement || !form.email || !form.telephone || !form.numeroCarte) {
       setFormError("Veuillez remplir tous les champs obligatoires (*)");
       return;
     }
@@ -302,6 +302,7 @@ export function LeadsView({ C }: { C: Theme }) {
             <div>
               <label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Prescripteur *</label>
               <select style={inputStyle} value={form.prescripteur} onChange={(e) => setForm({ ...form, prescripteur: e.target.value, depot: "", depotConfigId: "" })}>
+                <option value="" disabled>-- Sélectionner un prescripteur --</option>
                 {prescripteurConfigs.map((c) => <option key={c.type} value={c.type}>{c.nom}</option>)}
                 <option value="AUTRE">Autre (aucun prescripteur)</option>
               </select>
