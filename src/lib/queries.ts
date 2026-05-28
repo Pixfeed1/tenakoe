@@ -52,11 +52,12 @@ export async function getPipelineData(user?: CurrentUser | null) {
     orderBy: { updatedAt: "desc" },
   });
 
-  const prescripteurLabel: Record<string, string> = {
-    PDB: "PDB",
-    POINT_P: "Point P",
-    BIGMAT: "Big Mat",
-  };
+  const prescripteurConfigs = await prisma.prescripteurConfig.findMany();
+  const prescripteurLabel: Record<string, string> = {};
+  for (const pc of prescripteurConfigs) {
+    prescripteurLabel[pc.type] = pc.nom;
+  }
+  prescripteurLabel["AUTRE"] = "Autre";
 
   // Load pipeline columns from BOTH config tables
   const [statutsPriseConfig, statutsFactConfig] = await Promise.all([
@@ -77,7 +78,7 @@ export async function getPipelineData(user?: CurrentUser | null) {
         nom: e.nom,
         chargeeId: e.chargee?.id || e.projets[0]?.chargee?.id || null,
         chargee: e.chargee?.prenom || e.projets[0]?.chargee?.prenom || "—",
-        prescripteur: prescripteurLabel[e.prescripteur || "PDB"] || "PDB",
+        prescripteur: e.prescripteur ? (prescripteurLabel[e.prescripteur] || e.prescripteur) : "—",
         date: e.updatedAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
         siret: e.siret || "",
         etatAvancement: fact?.label || null,
@@ -164,7 +165,7 @@ export async function getClientsWithProgress(user?: CurrentUser | null) {
       docs: docsRecu,
       docsTotal,
       progress: docsTotal > 0 ? Math.round((docsRecu / docsTotal) * 100) : 0,
-      prescripteur: e.prescripteur || "PDB",
+      prescripteur: e.prescripteur || null,
     };
   });
 }
