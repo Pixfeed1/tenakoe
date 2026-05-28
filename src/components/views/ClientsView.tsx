@@ -26,7 +26,14 @@ interface ClientRow {
 interface StatutConfig { code: string; nom: string; couleur: string; ordre: number; actif: boolean }
 
 const FACTURATION_LABELS: Record<string, string> = {
+  SANS_OBJET: "Sans objet",
+  A_RELANCER: "À relancer",
+  DEVIS_ENVOYE: "Devis envoyé",
+  DEVIS_SIGNE: "Devis signé",
+  FACTURE_ENVOYEE: "Facture envoyée",
+  FERME_AVANT_PAIEMENT: "Fermé avant paiement",
   FACTURE_PAYEE_COLLECTE: "Collecte en cours",
+  PAYE_ABANDONNE_NON_REACTIF: "Payé abandonné non réactif",
   DOSSIER_DEPOSE: "Dossier déposé",
   DEMANDE_COMPLEMENT: "Demande de compléments",
   QUALIFIE: "Qualifié",
