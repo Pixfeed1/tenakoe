@@ -41,6 +41,7 @@ interface StatutConfig {
   code: string;
   nom: string;
   couleur: string;
+  ordre: number;
   actif: boolean;
 }
 
@@ -49,12 +50,14 @@ export function ProspectsView({ C, onSelectClient, role }: { C: Theme; onSelectC
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
+  const [filterStatutFact, setFilterStatutFact] = useState("");
   const [filtreChargee, setFiltreChargee] = useState("");
   const [filtrePrescripteur, setFiltrePrescripteur] = useState("");
   const [filtreEligible, setFiltreEligible] = useState("");
   const [filtreInteresseTNK, setFiltreInteresseTNK] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [statutsPrise, setStatutsPrise] = useState<StatutConfig[]>([]);
+  const [statutsFacturation, setStatutsFacturation] = useState<StatutConfig[]>([]);
   const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
   const [prescripteurs, setPrescripteurs] = useState<Array<{ type: string; nom: string }>>([]);
 
@@ -62,8 +65,9 @@ export function ProspectsView({ C, onSelectClient, role }: { C: Theme; onSelectC
 
   useEffect(() => {
     fetch("/api/pipeline-config").then((r) => r.ok ? r.json() : null)
-      .then((data: { statutsPrise?: StatutConfig[] } | null) => {
+      .then((data: { statutsPrise?: StatutConfig[]; statutsFacturation?: StatutConfig[] } | null) => {
         if (data?.statutsPrise) setStatutsPrise(data.statutsPrise.filter((s) => s.actif));
+        if (data?.statutsFacturation) setStatutsFacturation(data.statutsFacturation.filter((s) => s.actif));
       }).catch(() => {});
     if (peutVoirToutesChargees) {
       fetch("/api/users").then((r) => r.ok ? r.json() : [])
@@ -104,12 +108,13 @@ export function ProspectsView({ C, onSelectClient, role }: { C: Theme; onSelectC
     priseCodeSet.has(e.statutPrise)
   );
 
-  const anyFilter = !!(search || filterStatut || filtreChargee || filtrePrescripteur || filtreEligible || filtreInteresseTNK);
-  const resetAll = () => { setSearch(""); setFilterStatut(""); setFiltreChargee(""); setFiltrePrescripteur(""); setFiltreEligible(""); setFiltreInteresseTNK(""); };
+  const anyFilter = !!(search || filterStatut || filterStatutFact || filtreChargee || filtrePrescripteur || filtreEligible || filtreInteresseTNK);
+  const resetAll = () => { setSearch(""); setFilterStatut(""); setFilterStatutFact(""); setFiltreChargee(""); setFiltrePrescripteur(""); setFiltreEligible(""); setFiltreInteresseTNK(""); };
 
   const prospects = allProspects.filter((e) => {
     if (search && !e.nom.toLowerCase().includes(search.toLowerCase()) && !(e.siret || "").includes(search)) return false;
     if (filterStatut && e.statutPrise !== filterStatut) return false;
+    if (filterStatutFact && e.statutFacturation !== filterStatutFact) return false;
     if (filtreChargee && e.chargeeId !== filtreChargee) return false;
     if (filtrePrescripteur && e.prescripteur !== filtrePrescripteur) return false;
     if (filtreEligible && e.eligible !== filtreEligible) return false;
@@ -144,6 +149,12 @@ export function ProspectsView({ C, onSelectClient, role }: { C: Theme; onSelectC
             <option key={s.code} value={s.code}>{s.nom}</option>
           ))}
         </select>
+        {statutsFacturation.length > 0 && (
+          <select value={filterStatutFact} onChange={(e) => setFilterStatutFact(e.target.value)} style={ss}>
+            <option value="">Statut d&apos;avancement</option>
+            {statutsFacturation.sort((a, b) => a.ordre - b.ordre).map((s) => <option key={s.code} value={s.code}>{s.nom}</option>)}
+          </select>
+        )}
         {prescripteurs.length > 0 && (
           <select value={filtrePrescripteur} onChange={(e) => setFiltrePrescripteur(e.target.value)} style={ss}>
             <option value="">Prescripteur</option>

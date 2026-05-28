@@ -54,11 +54,13 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
   const [showArchived, setShowArchived] = useState(false);
   const [filtreChargee, setFiltreChargee] = useState("");
   const [filtreStatut, setFiltreStatut] = useState("");
+  const [filtreStatutFact, setFiltreStatutFact] = useState("");
   const [filtrePrescripteur, setFiltrePrescripteur] = useState("");
   const [sortBy, setSortBy] = useState<"nom_asc" | "nom_desc" | "recent" | "ancien">("nom_asc");
 
   const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
   const [statutsPrise, setStatutsPrise] = useState<StatutConfig[]>([]);
+  const [statutsFacturation, setStatutsFacturation] = useState<StatutConfig[]>([]);
   const [prescripteurs, setPrescripteurs] = useState<Array<{ type: string; nom: string }>>([]);
 
   const peutVoirToutesChargees = role === "ADMIN";
@@ -84,18 +86,20 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
     fetch("/api/pipeline-config").then((r) => r.ok ? r.json() : null)
       .then((data: { statutsPrise?: StatutConfig[]; statutsFacturation?: StatutConfig[] } | null) => {
         if (data?.statutsPrise) setStatutsPrise(data.statutsPrise.filter((s) => s.actif));
+        if (data?.statutsFacturation) setStatutsFacturation(data.statutsFacturation.filter((s) => s.actif));
       }).catch(() => {});
     fetch("/api/prescripteur-config").then((r) => r.ok ? r.json() : [])
       .then((data) => setPrescripteurs(Array.isArray(data) ? data.filter((c: { actif?: boolean }) => c.actif) : []))
       .catch(() => {});
   }, [peutVoirToutesChargees]);
 
-  const anyFilter = !!(filtreChargee || filtreStatut || filtrePrescripteur || search);
+  const anyFilter = !!(filtreChargee || filtreStatut || filtreStatutFact || filtrePrescripteur || search);
 
   const clients = allClients.filter((c) => {
     if (search && !c.nom.toLowerCase().includes(search.toLowerCase()) && !(c.siret || "").includes(search)) return false;
     if (filtreChargee && c.chargeeId !== filtreChargee) return false;
     if (filtreStatut && c.statutPrise !== filtreStatut && c.statutFacturation !== filtreStatut) return false;
+    if (filtreStatutFact && c.statutFacturation !== filtreStatutFact) return false;
     if (filtrePrescripteur) {
       if (filtrePrescripteur === "AUTRE") {
         if (c.prescripteur && c.prescripteur !== "AUTRE") return false;
@@ -114,7 +118,7 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
     }
   });
 
-  const resetAll = () => { setSearch(""); setFiltreChargee(""); setFiltreStatut(""); setFiltrePrescripteur(""); };
+  const resetAll = () => { setSearch(""); setFiltreChargee(""); setFiltreStatut(""); setFiltreStatutFact(""); setFiltrePrescripteur(""); };
 
   const getExportData = () => {
     const headers = ["Entreprise", "SIRET", "Chargée", "Qualification", "Documents", "Statut"];
@@ -179,6 +183,12 @@ export function ClientsView({ C, onSelectClient, role }: { C: Theme; onSelectCli
           <select value={filtreStatut} onChange={(e) => setFiltreStatut(e.target.value)} style={ss}>
             <option value="">Tous les statuts</option>
             {statutsPrise.sort((a, b) => a.ordre - b.ordre).map((s) => <option key={s.code} value={s.code}>{s.nom}</option>)}
+          </select>
+        )}
+        {statutsFacturation.length > 0 && (
+          <select value={filtreStatutFact} onChange={(e) => setFiltreStatutFact(e.target.value)} style={ss}>
+            <option value="">Statut d&apos;avancement</option>
+            {statutsFacturation.sort((a, b) => a.ordre - b.ordre).map((s) => <option key={s.code} value={s.code}>{s.nom}</option>)}
           </select>
         )}
         {prescripteurs.length > 0 && (
