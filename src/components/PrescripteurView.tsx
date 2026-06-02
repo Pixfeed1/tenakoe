@@ -22,6 +22,8 @@ interface ProjetInfo {
   qualifications: string[];
   statut: string;
   statutCouleur: string;
+  statutPriseLabel?: string;
+  statutFacturationLabel?: string;
   etape: EtapeInfo | null;
   docsRecu: number;
   docsTotal: number;
@@ -43,6 +45,8 @@ interface Lead {
   dateStatutPriseISO: string | null;
   statut: string;
   statutCouleur: string;
+  statutPriseLabel?: string;
+  statutFacturationLabel?: string;
   etape?: EtapeInfo | null;
   projets?: ProjetInfo[];
   interesseTNK: string;
@@ -82,6 +86,8 @@ const DEMO_LEADS: Lead[] = [
     dateStatutPriseISO: null,
     statut: "Nouveau",
     statutCouleur: "#ef4444",
+    statutPriseLabel: "Nouveau",
+    statutFacturationLabel: "Sans objet",
     etape: null,
     interesseTNK: "NSP",
     dateInteresseTNK: null,
@@ -111,6 +117,8 @@ const DEMO_LEADS: Lead[] = [
     dateStatutPriseISO: "2026-04-11T10:15:00.000Z",
     statut: "Prise en charge",
     statutCouleur: "#0d9488",
+    statutPriseLabel: "Prise en charge",
+    statutFacturationLabel: "Devis envoyé",
     etape: { ordre: 3, total: 22, nom: "Collecte documents", date: "2026-04-14T00:00:00.000Z" },
     interesseTNK: "OUI",
     dateInteresseTNK: "2026-04-12T10:00:00.000Z",
@@ -140,6 +148,8 @@ const DEMO_LEADS: Lead[] = [
     dateStatutPriseISO: "2026-04-07T09:30:00.000Z",
     statut: "Devis envoyé",
     statutCouleur: "#ea580c",
+    statutPriseLabel: "Prise en charge",
+    statutFacturationLabel: "Devis envoyé",
     etape: { ordre: 5, total: 22, nom: "Envoi devis", date: "2026-04-15T00:00:00.000Z" },
     interesseTNK: "NON",
     dateInteresseTNK: "2026-04-10T14:00:00.000Z",
@@ -169,6 +179,8 @@ const DEMO_LEADS: Lead[] = [
     dateStatutPriseISO: "2026-04-03T14:00:00.000Z",
     statut: "Qualifié",
     statutCouleur: "#16a34a",
+    statutPriseLabel: "Prise en charge",
+    statutFacturationLabel: "Qualifié",
     etape: { ordre: 22, total: 22, nom: "Qualification obtenue", date: "2026-04-16T00:00:00.000Z" },
     interesseTNK: "OUI",
     dateInteresseTNK: "2026-04-05T09:00:00.000Z",
@@ -263,7 +275,7 @@ function exportToCSV(leads: Lead[]): void {
   const headers = [
     "Nom entreprise", "Artisan", "Email", "Téléphone", "SIRET", "N° carte",
     "Dépôt", "Conseiller", "Date transmission", "Date prise en charge",
-    "Intéressé TNK", "Éligible", "Statut", "Étape", "Alerte abandon prestation payée", "Date alerte",
+    "Intéressé TNK", "Éligible", "Statut", "Avancement", "Alerte abandon prestation payée", "Date alerte",
   ];
   const rows = leads.map((l) => {
     const a = getLatestAlerte(l);
@@ -273,8 +285,8 @@ function exportToCSV(leads: Lead[]): void {
       l.dateTransmission, l.dateStatutPrise || "",
       l.interesseTNK || "NSP",
       l.eligible === "OUI" ? "Oui" : l.eligible === "NON" ? "Non" : "À vérifier",
-      l.statut,
-      l.etape ? `Étape ${l.etape.ordre}/${l.etape.total} — ${l.etape.nom}` : "",
+      l.statutPriseLabel || l.statut,
+      l.statutFacturationLabel || "",
       a ? a.label : "",
       a && a.date ? new Date(a.date).toLocaleDateString("fr-FR") : "",
     ];
@@ -360,8 +372,8 @@ export function PrescripteurView({ user, demoMode, prescripteurType, embedded }:
           {loading ? "Chargement..." : `${filteredSorted.length} lead${filteredSorted.length > 1 ? "s" : ""}${filteredSorted.length !== leads.length ? ` sur ${leads.length}` : ""}`}
         </div>
         <ExportDropdown C={C} disabled={filteredSorted.length === 0} filename="leads-prescripteur" title="Leads prescripteur"
-          headers={["Nom entreprise", "Artisan", "Email", "Téléphone", "SIRET", "N° carte", "Dépôt", "Conseiller", "Date transmission", "Date prise en charge", "Intéressé TNK", "Éligible", "Statut", "Étape", "Alerte abandon", "Date alerte"]}
-          rows={filteredSorted.map((l) => { const a = getLatestAlerte(l); return [l.nom, l.artisan, l.email || "", l.telephone || "", l.siret || "", stripCardPrefix(l.numeroCarte) || "", l.depot || "", l.conseiller || "", l.dateTransmission, l.dateStatutPrise || "", l.interesseTNK || "NSP", l.eligible === "OUI" ? "Oui" : l.eligible === "NON" ? "Non" : "À vérifier", l.statut, l.etape ? `Étape ${l.etape.ordre}/${l.etape.total} — ${l.etape.nom}` : "", a ? a.label : "", a?.date ? new Date(a.date).toLocaleDateString("fr-FR") : ""]; })}
+          headers={["Nom entreprise", "Artisan", "Email", "Téléphone", "SIRET", "N° carte", "Dépôt", "Conseiller", "Date transmission", "Date prise en charge", "Intéressé TNK", "Éligible", "Statut", "Avancement", "Alerte abandon", "Date alerte"]}
+          rows={filteredSorted.map((l) => { const a = getLatestAlerte(l); return [l.nom, l.artisan, l.email || "", l.telephone || "", l.siret || "", stripCardPrefix(l.numeroCarte) || "", l.depot || "", l.conseiller || "", l.dateTransmission, l.dateStatutPrise || "", l.interesseTNK || "NSP", l.eligible === "OUI" ? "Oui" : l.eligible === "NON" ? "Non" : "À vérifier", l.statutPriseLabel || l.statut, l.statutFacturationLabel || "", a ? a.label : "", a?.date ? new Date(a.date).toLocaleDateString("fr-FR") : ""]; })}
         />
       </div>
 

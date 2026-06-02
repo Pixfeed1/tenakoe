@@ -101,6 +101,8 @@ export async function GET(request: NextRequest) {
     const form = formByEntrepriseId.get(ent.id);
 
     const statutInfo = facturationMap[ent.statutFacturation || ""] || statutMap[ent.statutPrise] || { label: ent.statutPrise, couleur: "#94a3b8" };
+    const statutPriseLabel = statutMap[ent.statutPrise]?.label || ent.statutPrise || "—";
+    const statutFacturationLabel = ent.statutFacturation ? (facturationMap[ent.statutFacturation]?.label || ent.statutFacturation) : "";
 
     const derniereMaj = lastLog
       ? `${lastLog.createdAt.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })} — ${lastLog.description.split(" — ").pop()}`
@@ -129,6 +131,8 @@ export async function GET(request: NextRequest) {
         qualifications: qualifs,
         statut: docsTotal > 0 && pStatut.label.includes("Collecte") ? `${pStatut.label} (${docsRecu}/${docsTotal})` : pStatut.label,
         statutCouleur: pStatut.couleur,
+        statutPriseLabel: pPrise?.label || (p as unknown as { statutPrise?: string }).statutPrise || "—",
+        statutFacturationLabel: (p as unknown as { statutFacturation?: string }).statutFacturation ? (pFact?.label || (p as unknown as { statutFacturation?: string }).statutFacturation!) : "",
         etape: etapeActive ? { ordre: etapeActive.ordre, total: etapes.length, nom: etapeActive.nom } : null,
         docsRecu,
         docsTotal,
@@ -151,6 +155,8 @@ export async function GET(request: NextRequest) {
       dateStatutPriseISO: ent.dateStatutPrise?.toISOString() || null,
       statut: statutInfo.label,
       statutCouleur: statutInfo.couleur,
+      statutPriseLabel,
+      statutFacturationLabel,
       etape: projetsInfo.find((p) => p.etape)?.etape || null,
       projets: projetsInfo,
       interesseTNK: ent.interesseTNK || "NSP",
