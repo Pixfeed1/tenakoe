@@ -1136,6 +1136,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               { label: "Téléphone 2", key: "telephone2", value: formatPhone(entrepriseData?.telephone2), Icon: Phone },
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "N° département", key: "departement", value: entrepriseData?.departement || "—", Icon: Building2, required: true },
+              { label: "Antenne Qualibat suggérée", key: "antenneQualibatSuggereeNom", value: entrepriseData?.antenneQualibatSuggereeNom || "—", Icon: Building2 },
               { label: "Prescripteur", key: "prescripteur", value: (() => { const code = entrepriseData?.prescripteur || client?.prescripteur; if (!code) return "—"; if (code === "AUTRE") return "Autre (aucun prescripteur)"; const found = prescripteurConfigs.find((p) => p.type === code); return found?.nom || code; })(), Icon: Building2 },
               { label: "Dépôt", key: "depotId", value: entrepriseData?.depotNom === "Autre" && entrepriseData?.depotAutreLibelle ? `Autre — ${entrepriseData.depotAutreLibelle}` : entrepriseData?.depotNom || "—", Icon: Building2 },
               { label: "Apporteur", key: "apporteurId", value: entrepriseData?.apporteurNom || "—", Icon: Handshake },
@@ -1161,6 +1162,22 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                           a.nom.toLowerCase().includes(emailCity) ||
                           (a.delegation || "").toLowerCase().includes(mapping.delegation.toLowerCase())
                         );
+                        if (matchedAntenne && client?.id) {
+                          fetch(`/api/entreprises/${client.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              antenneQualibatSuggereeId: matchedAntenne.id,
+                              emailQualibatSuggere: mapping.email,
+                            }),
+                          }).catch(() => {});
+                          setEntrepriseData((prev) => prev ? {
+                            ...prev,
+                            antenneQualibatSuggereeId: matchedAntenne.id,
+                            antenneQualibatSuggereeNom: matchedAntenne.nom,
+                            emailQualibatSuggere: mapping.email,
+                          } : prev);
+                        }
                         setProjets((prev) => prev.map((pr) => ({
                           ...pr,
                           qualifications: pr.qualifications.map((q) => {
@@ -1179,7 +1196,12 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                             return { ...q, ...patch };
                           }),
                         })));
-                        toast(`Certificateur Qualibat pr\u00e9-rempli (${mapping.delegation} \u00b7 ${mapping.email})`);
+                        const totalQualifs = projets.reduce((sum, pr) => sum + (pr.qualifications?.length || 0), 0);
+                        if (totalQualifs === 0) {
+                          toast(`Antenne Qualibat identifi\u00e9e : ${matchedAntenne?.nom || mapping.delegation} (${mapping.email}). Elle sera pr\u00e9-remplie \u00e0 la cr\u00e9ation d'une qualification.`);
+                        } else {
+                          toast(`Certificateur Qualibat pr\u00e9-rempli sur ${totalQualifs} qualification(s) (${mapping.delegation} \u00b7 ${mapping.email})`);
+                        }
                       })
                       .catch(() => {});
                   }
@@ -2267,6 +2289,10 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     const payload: Record<string, unknown> = { nom: newProjetForm.nom, entrepriseId: client.id, certificateurType: newProjetForm.certificateurType };
                     if (finalQualifs.length > 0) payload.qualifications = finalQualifs.map((q) => ({ type: q.code }));
                     if (newProjetForm.chargeeId) payload.chargeeId = newProjetForm.chargeeId;
+                    if (newProjetForm.certificateurType === "Qualibat" && entrepriseData?.antenneQualibatSuggereeId) {
+                      payload.antenneQualibatId = entrepriseData.antenneQualibatSuggereeId;
+                      if (entrepriseData.emailQualibatSuggere) payload.emailCertificateur = entrepriseData.emailQualibatSuggere;
+                    }
                     const res = await fetch("/api/projets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                     if (res.ok) {
                       setShowAddProjet(false);

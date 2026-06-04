@@ -266,7 +266,11 @@ export async function getEntrepriseDetail(id: string) {
     if (pc?.champs) champsConfig = pc.champs.map((c) => ({ key: c.key, label: c.label, type: c.type, options: c.options }));
   }
 
-  return { ...entreprise, leadSource: leadSource ? { ...leadSource, champsConfig } : null };
+  const antenneQualibatSuggereeNom = entreprise.antenneQualibatSuggereeId
+    ? (await prisma.antenneQualibat.findUnique({ where: { id: entreprise.antenneQualibatSuggereeId }, select: { nom: true } }))?.nom || null
+    : null;
+
+  return { ...entreprise, antenneQualibatSuggereeNom, leadSource: leadSource ? { ...leadSource, champsConfig } : null };
 }
 
 export async function getAlertes(userId: string) {
