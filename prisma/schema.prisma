@@ -151,6 +151,9 @@ model Entreprise {
   relanceDevisFerme            Boolean  @default(false)
   dateRelanceDevisFerme        DateTime?
 
+  antenneQualibatSuggereeId  String?
+  emailQualibatSuggere       String?
+
   contacts      Contact[]
   projets       Projet[]
   documents     Document[]
