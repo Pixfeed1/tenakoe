@@ -1131,6 +1131,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               { label: "Contact", key: "contact", value: entrepriseData?.contact || "—", Icon: UserCircle },
               { label: "Email", key: "email", value: entrepriseData?.email || "—", Icon: Mail },
               { label: "Téléphone", key: "telephone", value: formatPhone(entrepriseData?.telephone), Icon: Phone },
+              { label: "Téléphone 2", key: "telephone2", value: formatPhone(entrepriseData?.telephone2), Icon: Phone },
               { label: "Adresse", key: "adresse", value: entrepriseData?.adresse || "—", Icon: Building2 },
               { label: "N° département", key: "departement", value: entrepriseData?.departement || "—", Icon: Building2, required: true },
               { label: "Prescripteur", key: "prescripteur", value: (() => { const code = entrepriseData?.prescripteur || client?.prescripteur; if (!code) return "—"; if (code === "AUTRE") return "Autre (aucun prescripteur)"; const found = prescripteurConfigs.find((p) => p.type === code); return found?.nom || code; })(), Icon: Building2 },

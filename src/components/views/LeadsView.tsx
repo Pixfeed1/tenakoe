@@ -144,6 +144,7 @@ export function LeadsView({ C }: { C: Theme }) {
         siret: lead.siret,
         email: lead.email,
         telephone: lead.telephone,
+        telephone2: (lead as unknown as Record<string, unknown>).telephone2 || null,
         adresse: lead.adresse,
         prescripteur: lead.prescripteur,
         depot: lead.depot,

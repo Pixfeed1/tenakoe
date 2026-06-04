@@ -75,6 +75,7 @@ export async function PATCH(
   if (body.siret !== undefined) data.siret = body.siret;
   if (body.email !== undefined) data.email = body.email;
   if (body.telephone !== undefined) data.telephone = body.telephone;
+  if (body.telephone2 !== undefined) data.telephone2 = body.telephone2;
   if (body.adresse !== undefined) data.adresse = body.adresse;
   if (body.ville !== undefined) data.ville = body.ville;
   if (body.codePostal !== undefined) data.codePostal = body.codePostal;

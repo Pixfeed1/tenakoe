@@ -85,6 +85,7 @@ model Entreprise {
   departement        String?
   email              String?
   telephone          String?
+  telephone2         String?
   nomConseiller       String?
   prenomConseiller    String?
   emailConseiller     String?
@@ -112,7 +113,7 @@ model Entreprise {
   mailAbandonEnvoye  Boolean            @default(false)
   dateMailAbandon    DateTime?
   statutPrise        String             @default("NOUVEAU")
-  statutFacturation  String?            @default("DEVIS_A_FAIRE")
+  statutFacturation  String?            @default("SANS_OBJET")
   dejaReferentRGE    Boolean            @default(false)
   estClient          Boolean            @default(false)
   archive            Boolean            @default(false)
