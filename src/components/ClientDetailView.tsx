@@ -293,6 +293,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
           siret: data.siret || "",
           email: data.email || "",
           telephone: data.telephone || "",
+          telephone2: data.telephone2 || "",
           adresse: data.adresse || "",
           departement: data.departement || "",
           codePostal: data.codePostal || "",
