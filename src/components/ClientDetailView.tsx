@@ -64,6 +64,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
     fichiers?: Array<{ id: string; url: string; nom: string; taille: number }>;
   }>>([]);
   const [newNote, setNewNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -3175,7 +3176,8 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                   </label>
                   <div style={{ display: "flex", gap: 6 }}>
                     <Button C={C} variant="ghost" size="sm" onClick={() => { setShowNoteForm(false); setNewNote(""); setNoteFiles([]); }}>Annuler</Button>
-                    <Button C={C} variant="primary" size="sm" disabled={!newNote.trim() && noteFiles.length === 0} onClick={async () => {
+                    <Button C={C} variant="primary" size="sm" disabled={savingNote || (!newNote.trim() && noteFiles.length === 0)} onClick={async () => {
+                      if (savingNote) return;
                       if (!newNote.trim() && noteFiles.length === 0) return;
                       if (isDemoMode) {
                         setNotes((prev) => [{ id: `demo-note-${Date.now()}`, contenu: newNote || `[${noteFiles.length} pièce(s) jointe(s)]`, epinglee: false, createdAt: new Date().toISOString(), auteur: { id: "demo", prenom: "Vous", nom: "" }, fichiers: [] }, ...prev]);
@@ -3184,24 +3186,29 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                         return;
                       }
                       if (!client?.id) return;
-                      const uploadedFiles: Array<{ url: string; nom: string; taille: number }> = [];
-                      for (const file of noteFiles) {
-                        const fd = new FormData(); fd.append("file", file); fd.append("entrepriseId", client.id);
-                        try {
-                          const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
-                          if (uploadRes.ok) { const d = await uploadRes.json(); uploadedFiles.push({ url: d.url, nom: file.name, taille: file.size }); }
-                          else { toast(`Erreur upload "${file.name}"`); }
-                        } catch { toast(`Erreur réseau sur "${file.name}"`); }
+                      setSavingNote(true);
+                      try {
+                        const uploadedFiles: Array<{ url: string; nom: string; taille: number }> = [];
+                        for (const file of noteFiles) {
+                          const fd = new FormData(); fd.append("file", file); fd.append("entrepriseId", client.id);
+                          try {
+                            const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
+                            if (uploadRes.ok) { const d = await uploadRes.json(); uploadedFiles.push({ url: d.url, nom: file.name, taille: file.size }); }
+                            else { toast(`Erreur upload "${file.name}"`); }
+                          } catch { toast(`Erreur réseau sur "${file.name}"`); }
+                        }
+                        const res = await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contenu: newNote || `[${uploadedFiles.length} pièce(s) jointe(s)]`, entrepriseId: client.id, fichiers: uploadedFiles }) });
+                        if (res.ok) {
+                          const note = await res.json();
+                          setNotes((prev) => [note, ...prev]);
+                          setHistorique((prev) => [{ type: "NOTE", message: note.contenu, chargee: `${note.auteur.prenom} ${note.auteur.nom}`, time: "À l'instant", sortDate: Date.now() }, ...prev]);
+                          setNewNote(""); setNoteFiles([]); setShowNoteForm(false);
+                          toast(uploadedFiles.length > 0 ? `Note ajoutée (${uploadedFiles.length} pièce(s) jointe(s))` : "Note ajoutée");
+                        } else { toast("Erreur création note"); }
+                      } finally {
+                        setSavingNote(false);
                       }
-                      const res = await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contenu: newNote || `[${uploadedFiles.length} pièce(s) jointe(s)]`, entrepriseId: client.id, fichiers: uploadedFiles }) });
-                      if (res.ok) {
-                        const note = await res.json();
-                        setNotes((prev) => [note, ...prev]);
-                        setHistorique((prev) => [{ type: "NOTE", message: note.contenu, chargee: `${note.auteur.prenom} ${note.auteur.nom}`, time: "À l'instant", sortDate: Date.now() }, ...prev]);
-                        setNewNote(""); setNoteFiles([]); setShowNoteForm(false);
-                        toast(uploadedFiles.length > 0 ? `Note ajoutée (${uploadedFiles.length} pièce(s) jointe(s))` : "Note ajoutée");
-                      } else { toast("Erreur création note"); }
-                    }}>Ajouter</Button>
+                    }}>{savingNote ? "Enregistrement…" : "Ajouter"}</Button>
                   </div>
                 </div>
                 {noteFiles.length > 0 && (
