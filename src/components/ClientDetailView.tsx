@@ -124,28 +124,64 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
     if (!client?.id) return;
     setUploading(true);
     setUploadMsg(null);
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("entrepriseId", client.id);
-
     try {
+      const nomSansExt = file.name.replace(/\.[^/.]+$/, "");
+      const createRes = await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nom: nomSansExt,
+          type: "TRONC_COMMUN",
+          entrepriseId: client.id,
+        }),
+      });
+      if (!createRes.ok) {
+        const err = await createRes.json();
+        if (createRes.status === 409 && err.document) {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("documentId", err.document.id);
+          formData.append("entrepriseId", client.id);
+          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+          if (uploadRes.ok) {
+            const data = await uploadRes.json();
+            setUploadMsg({ type: "success", msg: `${data.nom} uploadé` });
+            toast("Fichier uploadé");
+            setDocs((prev) => prev.map((d) =>
+              d.id === err.document.id
+                ? { ...d, fichierUrl: data.url, fichierNom: data.nom, recu: true, date: new Date().toLocaleDateString("fr-FR") }
+                : d
+            ));
+          }
+        } else {
+          setUploadMsg({ type: "error", msg: err.error || "Erreur création doc" });
+        }
+        setUploading(false);
+        return;
+      }
+      const newDoc = await createRes.json();
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("documentId", newDoc.id);
+      formData.append("entrepriseId", client.id);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       if (res.ok) {
         const data = await res.json();
         setUploadMsg({ type: "success", msg: `${data.nom} uploadé` });
         toast("Fichier uploadé");
-        // Refresh docs list
-        if (client?.id) {
-          fetch(`/api/documents?entrepriseId=${client.id}`)
-            .then((r) => r.ok ? r.json() : [])
-            .then((freshDocs) => setDocs(freshDocs.map((d: { id: string; nom: string; recu: boolean; dateReception: string | null; type?: string; qualificationAssociee?: string | null; conformite?: string | null; notes?: string | null; fichierUrl?: string | null; fichierNom?: string | null }) => ({
-              id: d.id, nom: d.nom, recu: d.recu, type: d.type || "TRONC_COMMUN", qualificationAssociee: d.qualificationAssociee || null,
-              conformite: d.conformite || null, notes: d.notes || null,
-              date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null, fichierUrl: d.fichierUrl || null, fichierNom: d.fichierNom || null,
-            }))))
-            .catch(() => {});
-        }
+        setDocs((prev) => [...prev, {
+          id: newDoc.id,
+          nom: newDoc.nom,
+          recu: true,
+          type: "TRONC_COMMUN",
+          qualificationAssociee: null,
+          conformite: null,
+          notes: null,
+          date: new Date().toLocaleDateString("fr-FR"),
+          fichierUrl: data.url,
+          fichierNom: data.nom,
+        }]);
       } else {
         const err = await res.json();
         setUploadMsg({ type: "error", msg: err.error || "Erreur d'upload" });
