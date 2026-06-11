@@ -7,8 +7,9 @@ export const metadata: Metadata = {
   description: "CRM de qualification RGE — Kiwi",
   icons: {
     icon: [
-      { url: "/logo.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo.png", sizes: "48x48", type: "image/png" },
       { url: "/logo.png", sizes: "192x192", type: "image/png" },
+      { url: "/logo.png", sizes: "512x512", type: "image/png" },
     ],
     apple: { url: "/logo.png", sizes: "180x180" },
   },
