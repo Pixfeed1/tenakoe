@@ -51,17 +51,15 @@ export default function CreditsPage() {
           </h2>
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-                  <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
-                </svg>
+              <div className="w-12 h-12 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <img src="https://pixfeed.net/wp-content/uploads/2025/04/cropped-logo.png" alt="PixFeed" width={36} height={36} className="object-contain" />
               </div>
               <div>
                 <div className="text-[16px] font-medium text-gray-900">
                   PixFeed
                 </div>
                 <div className="text-[13px] text-gray-500">
-                  Studio de développement web indépendant
+                  Studio de développement basé à Franconville
                 </div>
               </div>
             </div>
@@ -74,7 +72,7 @@ export default function CreditsPage() {
               >
                 PixFeed
               </a>
-              , studio de développement web basé en Île-de-France. PixFeed
+              , studio de développement basé à Franconville (95). PixFeed
               conçoit des CRM, plateformes SaaS et outils métier sur mesure
               pour entreprises et freelances, en s&apos;appuyant sur des stacks
               modernes (Next.js, FastAPI, PostgreSQL, automatisations LLM).
