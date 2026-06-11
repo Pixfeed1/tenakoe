@@ -67,7 +67,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
           <img
             src="/logo.png"
             alt="Kiwi"
-            style={{ width: 38, height: 38, objectFit: "contain" }}
+            style={{ width: 48, height: 48, objectFit: "contain" }}
           />
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi</div>
