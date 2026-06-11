@@ -1,0 +1,349 @@
+{
+  "parties": [
+    {
+      "id": 256134137,
+      "owner": {
+        "id": 648286,
+        "deleted": false,
+        "username": "elise.leal",
+        "name": "ELISE LEAL",
+        "pictureURL": "https://facehub.appspot.com/default/person?text=EL&size=100&colour=1954827192"
+      },
+      "team": null,
+      "about": null,
+      "firstName": "ELISE",
+      "lastName": "LEAL",
+      "jobTitle": null,
+      "createdAt": "2024-04-27T13:42:11Z",
+      "updatedAt": "2025-05-13T18:47:10Z",
+      "organisation": null,
+      "lastContactedAt": "2025-05-13T18:47:00Z",
+      "title": null,
+      "type": "person",
+      "pictureURL": "https://facehub.appspot.com/default/person?text=EL&size=100&colour=1954827192",
+      "addresses": [
+        {
+          "id": 585786244,
+          "type": "Postal",
+          "city": "Alboussi\u00e8re",
+          "country": "France",
+          "street": null,
+          "state": null,
+          "zip": "07440"
+        }
+      ],
+      "phoneNumbers": [
+        {
+          "id": 582761014,
+          "type": null,
+          "number": "0665245082"
+        }
+      ],
+      "emailAddresses": [
+        {
+          "id": 572088925,
+          "type": null,
+          "address": "elise.leal@tenakoe.fr"
+        }
+      ],
+      "websites": [],
+      "enrichment": null
+    },
+    {
+      "id": 256134138,
+      "owner": null,
+      "team": null,
+      "about": null,
+      "name": "Capsule",
+      "createdAt": "2024-04-27T13:42:11Z",
+      "updatedAt": "2024-09-06T14:42:58Z",
+      "lastContactedAt": null,
+      "type": "organisation",
+      "pictureURL": "https://capsule-pictures-prod.s3.amazonaws.com/6a991dea-8623-4cef-9f3f-b5ff25509d81?size=100&v=0",
+      "addresses": [],
+      "phoneNumbers": [],
+      "emailAddresses": [
+        {
+          "id": 572088926,
+          "type": null,
+          "address": "support@capsulecrm.com"
+        }
+      ],
+      "websites": [
+        {
+          "id": 572088927,
+          "type": null,
+          "address": "capsulecrm",
+          "service": "TWITTER",
+          "url": "https://twitter.com/capsulecrm"
+        },
+        {
+          "id": 572088928,
+          "type": null,
+          "address": "capsulecrm.com",
+          "service": "URL",
+          "url": "http://capsulecrm.com"
+        },
+        {
+          "id": 572088929,
+          "type": null,
+          "address": "https://www.facebook.com/capsulecrm/",
+          "service": "FACEBOOK",
+          "url": "https://www.facebook.com/capsulecrm/"
+        },
+        {
+          "id": 572088930,
+          "type": null,
+          "address": "https://www.youtube.com/user/CapsuleCRM",
+          "service": "YOUTUBE",
+          "url": "https://www.youtube.com/user/CapsuleCRM"
+        },
+        {
+          "id": 572088931,
+          "type": null,
+          "address": "https://www.linkedin.com/company/capsulecrm/",
+          "service": "LINKED_IN",
+          "url": "https://www.linkedin.com/company/capsulecrm/"
+        }
+      ],
+      "enrichment": null
+    }
+  ],
+  "kases": [
+    {
+      "id": 4870970,
+      "owner": {
+        "id": 648286,
+        "deleted": false,
+        "username": "elise.leal",
+        "name": "ELISE LEAL",
+        "pictureURL": "https://facehub.appspot.com/default/person?text=EL&size=100&colour=1954827192"
+      },
+      "team": null,
+      "party": {
+        "id": 256134360,
+        "name": "CR SERVICES",
+        "type": "organisation",
+        "pictureURL": "https://cdn.capsulecrm.com/a/1777272223/public-assets/images/organisation.svg"
+      },
+      "status": "OPEN",
+      "opportunity": null,
+      "stage": {
+        "name": "QUALIFIE",
+        "id": 170736
+      },
+      "createdAt": "2024-04-27T14:38:50Z",
+      "updatedAt": "2025-06-16T12:56:47Z",
+      "description": null,
+      "name": "QUALIBAT-RGE 2024",
+      "closedOn": null,
+      "lastContactedAt": "2025-02-07T08:33:53Z",
+      "expectedCloseOn": "2024-05-24",
+      "startOn": null
+    },
+    {
+      "id": 4871748,
+      "owner": {
+        "id": 648286,
+        "deleted": false,
+        "username": "elise.leal",
+        "name": "ELISE LEAL",
+        "pictureURL": "https://facehub.appspot.com/default/person?text=EL&size=100&colour=1954827192"
+      },
+      "team": null,
+      "party": {
+        "id": 256188058,
+        "name": "MILAN ISOLATION",
+        "type": "organisation",
+        "pictureURL": "https://cdn.capsulecrm.com/a/1777272223/public-assets/images/organisation.svg"
+      },
+      "status": "OPEN",
+      "opportunity": null,
+      "stage": {
+        "name": "QUALIFIE",
+        "id": 170736
+      },
+      "createdAt": "2024-04-29T08:03:10Z",
+      "updatedAt": "2025-06-16T12:56:47Z",
+      "description": "QUALIBAT-PROBATOIRE\n4131-111-114-115",
+      "name": "QUALIBAT-RGE 2024",
+      "closedOn": null,
+      "lastContactedAt": "2025-01-17T08:59:42Z",
+      "expectedCloseOn": "2024-05-31",
+      "startOn": null
+    }
+  ],
+  "entries": [
+    {
+      "id": 476714395,
+      "attachments": [],
+      "creator": {
+        "id": 659451,
+        "deleted": false,
+        "username": "Vanessa",
+        "pictureURL": "https://facehub.appspot.com/default/person?text=VG&size=100&colour=1010996659",
+        "name": "Vanessa GRAILLE"
+      },
+      "activityType": {
+        "id": -1,
+        "name": "Note"
+      },
+      "createdAt": "2026-04-30T09:52:01Z",
+      "updatedAt": "2026-04-30T09:52:01Z",
+      "content": "Demande de compl\u00e9ments de la part de Qualibat - mail envoy\u00e9 \u00e0 TCDE pour l'en informer en lui donnant la liste et en lui demandant si c'est possible de me fournir ces documents la semaine prochaine.",
+      "entryAt": "2026-04-30T09:51:23Z",
+      "type": "note",
+      "kase": {
+        "id": 5402674,
+        "name": "QUALIBAT RGE"
+      },
+      "opportunity": null,
+      "party": {
+        "id": 272105928,
+        "name": "TCDE GASPAR",
+        "pictureURL": "https://cdn.capsulecrm.com/a/1777272223/public-assets/images/organisation.svg",
+        "type": "organisation"
+      }
+    },
+    {
+      "id": 476714193,
+      "attachments": [
+        {
+          "id": 344459745,
+          "filename": "2 eme lettre de motivation.docx",
+          "contentType": "application/octet-stream",
+          "avStatus": "PASSED",
+          "avScannedAt": "2026-04-30T09:50:42Z",
+          "pdfStatus": "NOT_PDF",
+          "pdfScannedAt": "2026-04-30T09:50:42Z",
+          "size": 15747
+        }
+      ],
+      "parties": [
+        {
+          "id": 275799097,
+          "name": "GENOVATION",
+          "pictureURL": "https://cdn.capsulecrm.com/a/1777272223/public-assets/images/organisation.svg",
+          "type": "organisation"
+        }
+      ],
+      "creator": {
+        "id": 648288,
+        "deleted": false,
+        "username": "Kelly",
+        "pictureURL": "https://facehub.appspot.com/default/person?text=KC&size=100&colour=-96321652",
+        "name": "Kelly COQUILLAS"
+      },
+      "activityType": {
+        "id": -5,
+        "name": "E-mail envoy\u00e9"
+      },
+      "subject": "Votre charg\u00e9e de projet vous contacte ! ",
+      "createdAt": "2026-04-30T09:50:42Z",
+      "updatedAt": "2026-04-30T09:50:42Z",
+      "content": "Rebonjour Madame,\r\nVeuillez trouver ci-joint la deuxi\u00e8me lettre de motivation que je viens de r\u00e9diger.\r\nPourriez-vous me confirmer si elle vous convient ?\r\n\r\nCordialement\r\n\r\nKelly COQUILLAS\r\nAssistante de Direction\r\nCharg\u00e9e de projet\r\nR\u00e9f\u00e9rente formaliste Qualibat et Certibat\r\nR\u00e9f\u00e9rente MaPrimeR\u00e9nov'\r\n\r\n07 87 95 06 37\r\n\r\n",
+      "entryAt": "2026-04-30T09:50:13Z",
+      "participants": [
+        {
+          "id": 420750396,
+          "address": "kelly@tenakoe.fr",
+          "name": "kelly@tenakoe.fr",
+          "role": "FROM"
+        },
+        {
+          "id": 420750397,
+          "address": "mosneagatatiana@gmail.com",
+          "name": "GENOVATION",
+          "role": "TO"
+        }
+      ],
+      "type": "email",
+      "kase": null,
+      "opportunity": null
+    }
+  ],
+  "tasks": [
+    {
+      "id": 135158358,
+      "category": {
+        "id": 2317007,
+        "name": "Envoyer",
+        "colour": "#2092BA"
+      },
+      "description": "Envoi devis, CGV, mandat",
+      "detail": null,
+      "dueTime": null,
+      "status": "OPEN",
+      "party": null,
+      "opportunity": null,
+      "owner": {
+        "id": 648286,
+        "deleted": false,
+        "username": "elise.leal",
+        "name": "ELISE LEAL",
+        "pictureURL": "https://facehub.appspot.com/default/person?text=EL&size=100&colour=1954827192"
+      },
+      "daysAfter": 1,
+      "taskDelayRule": "LAST_TASK",
+      "nextTask": {
+        "id": 135158359,
+        "description": "V\u00e9rification paiement client"
+      },
+      "active": true,
+      "createdAt": "2024-05-16T19:51:50Z",
+      "updatedAt": "2024-05-24T12:37:14Z",
+      "dueOn": "2024-06-14",
+      "completedBy": null,
+      "completedAt": null,
+      "kase": {
+        "id": 4896214,
+        "name": "CERTIBAT"
+      },
+      "taskDayDelayRule": "TRACK_DAYS",
+      "overrideToCurrentUser": true,
+      "repeat": null,
+      "hasTrack": true
+    },
+    {
+      "id": 136516082,
+      "category": {
+        "id": 2317007,
+        "name": "Envoyer",
+        "colour": "#2092BA"
+      },
+      "description": "Envoi devis, CGV, mandat",
+      "detail": null,
+      "dueTime": null,
+      "status": "OPEN",
+      "party": null,
+      "opportunity": null,
+      "owner": {
+        "id": 648286,
+        "deleted": false,
+        "username": "elise.leal",
+        "name": "ELISE LEAL",
+        "pictureURL": "https://facehub.appspot.com/default/person?text=EL&size=100&colour=1954827192"
+      },
+      "daysAfter": 1,
+      "taskDelayRule": "LAST_TASK",
+      "nextTask": {
+        "id": 136516083,
+        "description": "V\u00e9rification paiement client"
+      },
+      "active": true,
+      "createdAt": "2024-06-25T16:01:13Z",
+      "updatedAt": "2024-06-25T16:01:16Z",
+      "dueOn": "2024-06-26",
+      "completedBy": null,
+      "completedAt": null,
+      "kase": {
+        "id": 4951052,
+        "name": "CERTIF GLOBALE"
+      },
+      "taskDayDelayRule": "TRACK_DAYS",
+      "overrideToCurrentUser": true,
+      "repeat": null,
+      "hasTrack": true
+    }
+  ]
+}
