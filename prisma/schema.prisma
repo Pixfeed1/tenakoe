@@ -55,6 +55,7 @@ model User {
   projetsSupprimes Projet[] @relation("ProjetDeletedBy")
   gmailAccount     GmailAccount?
   gmailSyncState   GmailSyncState? @relation("GmailSyncState")
+  annoncesVues     AnnonceVue[]
 }
 
 // ============================================================
@@ -760,6 +761,7 @@ model GmailAccount {
   syncEntrant   Boolean   @default(true)
   syncSortant   Boolean   @default(true)
   dernierSync   DateTime?
+  gmailTokenInvalide Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -961,4 +963,33 @@ model EmailReponse {
 
   @@index([gmailThreadId])
   @@index([transmissionId])
+}
+
+// ============================================================
+// ANNONCES
+// ============================================================
+
+model Annonce {
+  id          String       @id @default(cuid())
+  titre       String
+  message     String       @db.Text
+  type        String       @default("INFO")
+  lienAction  String?
+  texteAction String?
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  createdById String?
+  vues        AnnonceVue[]
+}
+
+model AnnonceVue {
+  id        String    @id @default(cuid())
+  annonceId String
+  annonce   Annonce   @relation(fields: [annonceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vueAt     DateTime  @default(now())
+  fermeeAt  DateTime?
+
+  @@unique([annonceId, userId])
 }

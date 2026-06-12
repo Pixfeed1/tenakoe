@@ -14,7 +14,7 @@ import { GuideTooltip } from "@/components/GuideSystem";
 import { getStatusIcon, AVAILABLE_ICONS } from "@/lib/icons";
 import { FormBuilder as FormBuilderComponent, FormPreview as FormPreviewComponent } from "@/components/FormBuilder";
 
-type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "antennes" | "notifications" | "import" | "securite" | "compte" | "corbeille";
+type Tab = "utilisateurs" | "pipeline" | "prescripteurs" | "templates" | "tracks" | "documents" | "antennes" | "notifications" | "import" | "securite" | "annonces" | "compte" | "corbeille";
 
 const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: number; color?: string }> }> = [
   { id: "utilisateurs", label: "Utilisateurs", Icon: Users },
@@ -27,6 +27,7 @@ const TABS: Array<{ id: Tab; label: string; Icon: React.ComponentType<{ size?: n
   { id: "notifications", label: "Notifications", Icon: Bell },
   { id: "import", label: "Import / Export", Icon: Download },
   { id: "securite", label: "Sécurité", Icon: Shield },
+  { id: "annonces", label: "Annonces", Icon: Bell },
   { id: "compte", label: "Mon compte", Icon: Users },
   { id: "corbeille", label: "Corbeille", Icon: Trash2 },
 ];
@@ -82,6 +83,7 @@ export function ParametresView({ C, role }: { C: Theme; role?: string }) {
       {tab === "import" && <ImportExportTab C={C} />}
       {tab === "antennes" && <AntennesQualibatTab C={C} />}
       {tab === "securite" && <SecuriteTab C={C} />}
+      {tab === "annonces" && <AnnoncesTab C={C} />}
       {tab === "compte" && <MonCompteTab C={C} />}
       {tab === "corbeille" && <CorbeilleTab C={C} />}
     </>
@@ -1366,6 +1368,82 @@ function SecuriteTab({ C }: { C: Theme }) {
         <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 12px" }}>Ajoutez une couche de sécurité supplémentaire à votre compte.</p>
         <Badge color={C.warning} bg={C.warningDim}>Bientôt disponible</Badge>
       </div>
+    </div>
+  );
+}
+
+// ===================== ANNONCES =====================
+function AnnoncesTab({ C }: { C: Theme }) {
+  const { toast } = useToast();
+  const [annonces, setAnnonces] = useState<Array<{ id: string; titre: string; message: string; type: string; lienAction: string | null; texteAction: string | null; active: boolean; createdAt: string; nbVues: number; nbFermees: number }>>([]);
+  const [form, setForm] = useState({ titre: "", message: "", type: "INFO", lienAction: "", texteAction: "" });
+
+  useEffect(() => {
+    fetch("/api/annonces?admin=true")
+      .then((r) => r.ok ? r.json() : [])
+      .then(setAnnonces).catch(() => {});
+  }, []);
+
+  const reloadAnnonces = () => {
+    fetch("/api/annonces?admin=true").then((r) => r.ok ? r.json() : []).then(setAnnonces).catch(() => {});
+  };
+
+  const creer = async () => {
+    if (!form.titre.trim() || !form.message.trim()) { toast("Titre et message requis"); return; }
+    const res = await fetch("/api/annonces", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    if (res.ok) {
+      setForm({ titre: "", message: "", type: "INFO", lienAction: "", texteAction: "" });
+      toast("Annonce créée");
+      reloadAnnonces();
+    }
+  };
+
+  const toggleActif = async (id: string, active: boolean) => {
+    await fetch("/api/annonces", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, active: !active }) });
+    reloadAnnonces();
+  };
+
+  const ss: React.CSSProperties = { width: "100%", padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 13, outline: "none", boxSizing: "border-box" as const };
+
+  return (
+    <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20 }}>
+      <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 16px", color: C.text }}>Créer une annonce</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+        <input placeholder="Titre" value={form.titre} onChange={(e) => setForm({ ...form, titre: e.target.value })} style={ss} />
+        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} style={ss}>
+          <option value="INFO">Info</option>
+          <option value="ACTION_REQUISE">Action requise</option>
+        </select>
+      </div>
+      <textarea placeholder="Message" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={3} style={{ ...ss, resize: "vertical", marginBottom: 10 }} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+        <input placeholder="Lien du bouton (optionnel, ex: Paramètres)" value={form.lienAction} onChange={(e) => setForm({ ...form, lienAction: e.target.value })} style={ss} />
+        <input placeholder="Texte du bouton (optionnel)" value={form.texteAction} onChange={(e) => setForm({ ...form, texteAction: e.target.value })} style={ss} />
+      </div>
+      <Button C={C} variant="primary" onClick={creer}>Publier l&apos;annonce</Button>
+
+      {annonces.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 12px", color: C.text }}>Annonces existantes</h3>
+          {annonces.map((a) => (
+            <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{a.titre}</div>
+                <div style={{ fontSize: 11, color: C.textDim, marginTop: 2 }}>
+                  {a.type === "ACTION_REQUISE" ? "⚠ Action requise" : "ℹ Info"} · {new Date(a.createdAt).toLocaleDateString("fr-FR")} · {a.nbVues || 0} vue(s)
+                </div>
+              </div>
+              <button onClick={() => toggleActif(a.id, a.active)} style={{
+                padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border}`, cursor: "pointer",
+                background: a.active ? "rgba(22,163,74,0.08)" : C.bg,
+                color: a.active ? "#16a34a" : C.textDim, fontSize: 11, fontWeight: 600,
+              }}>
+                {a.active ? "Active" : "Inactive"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { ClientsView } from "@/components/views/ClientsView";
 import { DossiersView } from "@/components/views/DossiersView";
 import { TransmissionsView } from "@/components/views/TransmissionsView";
 import { MailsView } from "@/components/views/MailsView";
+import { BandeauAnnonces } from "@/components/BandeauAnnonces";
 import { DocumentsView } from "@/components/views/DocumentsView";
 import { FacturationView } from "@/components/views/FacturationView";
 import { ApporteursView } from "@/components/views/ApporteursView";
@@ -296,6 +297,8 @@ export function CRMShell({
             })()}
           </div>
         </div>
+
+        <BandeauAnnonces C={C} role={user.role} onNavigate={(v) => navigateTo(v as View)} />
 
         {view === "Dashboard" && (
           <DashboardView
