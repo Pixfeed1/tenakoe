@@ -21,7 +21,9 @@ export async function GET(
     },
   });
 
-  if (!transmission) return NextResponse.json({ error: "Non trouvé" }, { status: 404 });
+  if (!transmission || transmission.direction !== "SORTANT" || !transmission.gmailThreadId) {
+    return NextResponse.json({ error: "Non trouvé" }, { status: 404 });
+  }
 
   if (user.role === "CHARGEE" && transmission.expediteurId !== user.id) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });

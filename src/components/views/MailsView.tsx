@@ -41,6 +41,8 @@ interface MailDetail {
   gmailThreadId: string | null;
   gmailMessageId: string | null;
   expediteur: { id: string; prenom: string; nom: string } | null;
+  expediteurEmail: string | null;
+  automatique: boolean;
   entreprise: { id: string; nom: string } | null;
   reponses: EmailReponse[];
   isMine: boolean;
@@ -50,6 +52,12 @@ interface MailsViewProps {
   C: Theme;
   role: string;
   onSelectClient: (c: { id: string; nom: string }) => void;
+}
+
+function cleanMailContent(html: string): string {
+  return html
+    .replace(/\[https?:\/\/[^\]]+\.(png|jpg|jpeg|gif|webp)[^\]]*\]/gi, "")
+    .replace(/_{10,}/g, '<hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0" />');
 }
 
 export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
@@ -194,12 +202,16 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
             </button>
           )}
 
-          <div style={{ fontSize: 12, color: C.textDim, marginTop: 8 }}>
-            Envoyé par {detail.expediteur ? `${detail.expediteur.prenom} ${detail.expediteur.nom}` : "—"}
-          </div>
+          {detail.expediteur ? (
+            <div style={{ fontSize: 12, color: C.textDim, marginTop: 8 }}>
+              Envoyé par {detail.expediteur.prenom} {detail.expediteur.nom}{detail.expediteurEmail ? ` (${detail.expediteurEmail})` : ""}
+            </div>
+          ) : detail.automatique ? (
+            <div style={{ fontSize: 12, color: C.textDim, marginTop: 8 }}>Envoyé automatiquement par Kiwi</div>
+          ) : null}
 
           {detail.contenu && (
-            <div style={{ marginTop: 16, padding: 16, background: C.bg, borderRadius: 10, fontSize: 13, color: C.text, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: detail.contenu }} />
+            <div style={{ marginTop: 16, padding: 16, background: C.bg, borderRadius: 10, fontSize: 13, color: C.text, lineHeight: 1.6, whiteSpace: "pre-line" }} dangerouslySetInnerHTML={{ __html: cleanMailContent(detail.contenu) }} />
           )}
         </div>
 

@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
   const where = {
     ...baseFilter,
     canal: "EMAIL" as const,
+    direction: "SORTANT" as const,
     gmailThreadId: { not: null },
     ...(statut === "REPONDU" ? { statutEnvoi: "REPONDU" } : {}),
     ...(statut === "EN_ATTENTE" ? { statutEnvoi: { not: "REPONDU" } } : {}),
