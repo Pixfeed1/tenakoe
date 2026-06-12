@@ -2,7 +2,7 @@
 
 import {
   LayoutDashboard, Zap, Target, Users, FolderOpen,
-  Send, File, BookOpen, CreditCard, Clock, Handshake, Plug, Settings, Sun, Moon, LogOut, Lightbulb, Eye,
+  Send, Mail, File, BookOpen, CreditCard, Clock, Handshake, Plug, Settings, Sun, Moon, LogOut, Lightbulb, Eye,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { SearchBar } from "@/components/SearchBar";
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { Icon: Users, label: "Clients", navKey: "Clients", guide: "nav-clients", roles: ["ADMIN", "CHARGEE"] },
   { Icon: FolderOpen, label: "Dossiers", navKey: "Dossiers", guide: "nav-dossiers", roles: ["ADMIN", "CHARGEE"] },
   { Icon: Send, label: "Transmissions", navKey: "Transmissions", guide: "nav-transmissions", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: Mail, label: "Mails", navKey: "Mails", guide: "nav-mails", roles: ["ADMIN", "CHARGEE"] },
   { Icon: File, label: "Documents", navKey: "Documents", guide: "nav-documents", roles: ["ADMIN", "CHARGEE"] },
   { Icon: BookOpen, label: "Ressources", navKey: "Ressources", guide: "nav-ressources", roles: ["ADMIN", "CHARGEE"] },
   { Icon: CreditCard, label: "Facturation", navKey: "Facturation", guide: "nav-facturation", roles: ["ADMIN"] },

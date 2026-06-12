@@ -14,6 +14,7 @@ import { ProspectsView } from "@/components/views/ProspectsView";
 import { ClientsView } from "@/components/views/ClientsView";
 import { DossiersView } from "@/components/views/DossiersView";
 import { TransmissionsView } from "@/components/views/TransmissionsView";
+import { MailsView } from "@/components/views/MailsView";
 import { DocumentsView } from "@/components/views/DocumentsView";
 import { FacturationView } from "@/components/views/FacturationView";
 import { ApporteursView } from "@/components/views/ApporteursView";
@@ -34,6 +35,7 @@ type View =
   | "Clients"
   | "Dossiers"
   | "Transmissions"
+  | "Mails"
   | "Documents"
   | "Ressources"
   | "Facturation"
@@ -51,6 +53,7 @@ const VIEW_TITLES: Record<View, string> = {
   Clients: "Clients",
   Dossiers: "Dossiers",
   Transmissions: "Transmissions",
+  Mails: "Mails",
   Documents: "Documents",
   Ressources: "Centre de ressources",
   Facturation: "Facturation",
@@ -119,7 +122,7 @@ export function CRMShell({
     });
   };
 
-  const VALID_VIEWS = ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Documents", "Ressources", "Facturation", "Historique", "Apporteurs", "Intégrations", "Paramètres", "VuePrescripteur", "ClientDetail"];
+  const VALID_VIEWS = ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Transmissions", "Mails", "Documents", "Ressources", "Facturation", "Historique", "Apporteurs", "Intégrations", "Paramètres", "VuePrescripteur", "ClientDetail"];
   const startView = (initialView && VALID_VIEWS.includes(initialView) ? initialView : "Dashboard") as View;
 
   const viewToNavLabel = (v: View): string => {
@@ -321,6 +324,7 @@ export function CRMShell({
         {view === "Clients" && <ClientsView key={navKey} C={C} onSelectClient={openClient} role={user.role} />}
         {view === "Dossiers" && <DossiersView key={navKey} C={C} onSelectClient={openClient} role={user.role} />}
         {view === "Transmissions" && <TransmissionsView key={navKey} C={C} role={user.role} />}
+        {view === "Mails" && <MailsView key={navKey} C={C} role={user.role} onSelectClient={(c) => { setSelectedClient(c); setView("ClientDetail"); }} />}
         {view === "Documents" && <DocumentsView key={navKey} C={C} />}
         {view === "Ressources" && <RessourcesView key={navKey} C={C} role={user.role} />}
         {view === "Facturation" && <FacturationView key={navKey} C={C} onSelectClient={openClient} role={user.role} />}

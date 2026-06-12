@@ -3370,6 +3370,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     {a.automatique && <Badge color="#ea580c" bg="rgba(234,88,12,0.1)">Auto</Badge>}
                     {a.statutEnvoi === "ECHEC" && <Badge color="#ef4444" bg="rgba(239,68,68,0.1)">Échec</Badge>}
                     {a.statutEnvoi === "ENVOYE" && a.automatique && <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Envoyé</Badge>}
+                    {a.statutEnvoi === "REPONDU" && <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Répondu</Badge>}
                   </div>
                   {noteData?.fichierUrl && (!noteData.fichiers || noteData.fichiers.length === 0) && (
                     <a href={fixFileUrl(noteData.fichierUrl)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 8px", borderRadius: 4, background: C.bg, border: `1px solid ${C.border}`, fontSize: 11, color: C.blue, textDecoration: "none" }}>

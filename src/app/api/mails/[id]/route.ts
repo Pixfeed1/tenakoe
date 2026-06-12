@@ -1,0 +1,31 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/rbac";
+
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+
+  const { id } = await params;
+
+  const transmission = await prisma.transmission.findUnique({
+    where: { id },
+    include: {
+      expediteur: { select: { id: true, prenom: true, nom: true } },
+      entreprise: { select: { id: true, nom: true } },
+      reponses: { orderBy: { dateReception: "asc" } },
+    },
+  });
+
+  if (!transmission) return NextResponse.json({ error: "Non trouvé" }, { status: 404 });
+
+  if (user.role === "CHARGEE" && transmission.expediteurId !== user.id) {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
+
+  return NextResponse.json(transmission);
+}

@@ -206,7 +206,7 @@ export async function sendGmailMessage(opts: {
   bcc?: string;
   userId: string;
   attachments?: Array<{ filename: string; mimeType: string; content: string }>;
-}): Promise<{ messageId: string }> {
+}): Promise<{ messageId: string; threadId: string }> {
   const { gmail, email } = await getAuthenticatedGmail(opts.userId);
   const fromAddress = opts.fromName
     ? `"${opts.fromName}" <${email}>`
@@ -268,5 +268,5 @@ export async function sendGmailMessage(opts: {
     requestBody: { raw },
   });
 
-  return { messageId: res.data.id || "" };
+  return { messageId: res.data.id || "", threadId: res.data.threadId || "" };
 }

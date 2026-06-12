@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     const htmlWithSignature = `${content || ""}<br/><br/>${cleanSignature}`;
 
     // Logique exclusive : OAuth s'il est connecté, sinon SMTP s'il est configuré
-    let result: { messageId: string };
+    let result: { messageId: string; threadId?: string };
     const gmailAvailable = await isGmailOAuthAvailable(session.user.id);
 
     if (gmailAvailable) {
@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
         expediteurEmail: fromEmail,
         entrepriseId: entrepriseId || null,
         gmailMessageId: result.messageId,
+        gmailThreadId: result.threadId || null,
       },
     });
 

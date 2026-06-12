@@ -54,6 +54,7 @@ model User {
   entreprisesAttribuees Entreprise[] @relation("ChargeeEntreprise")
   projetsSupprimes Projet[] @relation("ProjetDeletedBy")
   gmailAccount     GmailAccount?
+  gmailSyncState   GmailSyncState? @relation("GmailSyncState")
 }
 
 // ============================================================
@@ -572,6 +573,7 @@ model Transmission {
   automatique     Boolean               @default(false)
   statutEnvoi     String?               @default("ENVOYE")
   erreur          String?
+  reponses        EmailReponse[]
 }
 
 model MailTemplate {
@@ -676,6 +678,7 @@ enum TypeAlerte {
   RELANCE_48H
   RAPPEL_ECHEANCE
   MENTION
+  REPONSE_EMAIL
 }
 
 model Alerte {
@@ -930,4 +933,32 @@ model Ressource {
   uploadParId   String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ============================================================
+// GMAIL SYNC
+// ============================================================
+
+model GmailSyncState {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation("GmailSyncState", fields: [userId], references: [id], onDelete: Cascade)
+  lastHistoryId String
+  lastSyncAt    DateTime @updatedAt
+}
+
+model EmailReponse {
+  id             String       @id @default(cuid())
+  gmailMessageId String       @unique
+  gmailThreadId  String
+  transmissionId String
+  transmission   Transmission @relation(fields: [transmissionId], references: [id], onDelete: Cascade)
+  expediteur     String
+  sujet          String?
+  extraitTexte   String?      @db.Text
+  dateReception  DateTime
+  createdAt      DateTime     @default(now())
+
+  @@index([gmailThreadId])
+  @@index([transmissionId])
 }
