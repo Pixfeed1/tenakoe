@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
             userId: "me",
             id: msgId,
             format: "metadata",
-            metadataHeaders: ["From", "Subject", "Date"],
+            metadataHeaders: ["From", "Subject", "Date", "Message-ID"],
           });
 
           const threadId = msg.data.threadId;
@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
           const from = headers.find((h) => h.name === "From")?.value || "";
           const subject = headers.find((h) => h.name === "Subject")?.value || "";
           const dateStr = headers.find((h) => h.name === "Date")?.value;
+          const rfc822MessageId = headers.find((h) => h.name === "Message-ID")?.value || null;
           const snippet = (msg.data.snippet || "").slice(0, 2000);
 
           if (from.toLowerCase().includes(account.email.toLowerCase())) continue;
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
               expediteur: from,
               sujet: subject || null,
               extraitTexte: snippet || null,
+              rfc822MessageId: rfc822MessageId,
               dateReception: dateStr ? new Date(dateStr) : new Date(),
             },
           });

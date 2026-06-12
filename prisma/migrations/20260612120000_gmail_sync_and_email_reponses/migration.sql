@@ -20,6 +20,7 @@ CREATE TABLE "EmailReponse" (
     "expediteur" TEXT NOT NULL,
     "sujet" TEXT,
     "extraitTexte" TEXT,
+    "rfc822MessageId" TEXT,
     "dateReception" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

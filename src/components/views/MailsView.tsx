@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mail, Search, ArrowLeft, ExternalLink, CheckCircle2, Clock } from "lucide-react";
+import { Mail, Search, ArrowLeft, ExternalLink, CheckCircle2, Clock, Reply, Send, X } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -18,6 +18,17 @@ interface MailConversation {
   chargeeId: string | null;
   entreprise: { id: string; nom: string } | null;
   nbReponses: number;
+  isMine: boolean;
+  hasUnread: boolean;
+}
+
+interface EmailReponse {
+  id: string;
+  expediteur: string;
+  sujet: string | null;
+  extraitTexte: string | null;
+  dateReception: string;
+  rfc822MessageId: string | null;
 }
 
 interface MailDetail {
@@ -27,15 +38,12 @@ interface MailDetail {
   contenu: string | null;
   dateEnvoi: string;
   statutEnvoi: string | null;
+  gmailThreadId: string | null;
+  gmailMessageId: string | null;
   expediteur: { id: string; prenom: string; nom: string } | null;
   entreprise: { id: string; nom: string } | null;
-  reponses: Array<{
-    id: string;
-    expediteur: string;
-    sujet: string | null;
-    extraitTexte: string | null;
-    dateReception: string;
-  }>;
+  reponses: EmailReponse[];
+  isMine: boolean;
 }
 
 interface MailsViewProps {
@@ -59,6 +67,12 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
   const [detail, setDetail] = useState<MailDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
+  const [showReply, setShowReply] = useState(false);
+  const [replyTo, setReplyTo] = useState("");
+  const [replySubject, setReplySubject] = useState("");
+  const [replyBody, setReplyBody] = useState("");
+  const [sending, setSending] = useState(false);
+
   const { toast } = useToast();
 
   const fetchConversations = () => {
@@ -78,9 +92,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
       .catch(() => { setLoading(false); toast("Erreur chargement mails"); });
   };
 
-  useEffect(() => {
-    fetchConversations();
-  }, [filtreStatut, filtreChargee, search, page]);
+  useEffect(() => { fetchConversations(); }, [filtreStatut, filtreChargee, search, page]);
 
   useEffect(() => {
     if (role === "ADMIN") {
@@ -91,7 +103,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
   }, [role]);
 
   useEffect(() => {
-    if (!selectedId) { setDetail(null); return; }
+    if (!selectedId) { setDetail(null); setShowReply(false); return; }
     setLoadingDetail(true);
     fetch(`/api/mails/${selectedId}`)
       .then((r) => r.ok ? r.json() : null)
@@ -99,8 +111,59 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
       .catch(() => { setLoadingDetail(false); toast("Erreur chargement conversation"); });
   }, [selectedId]);
 
+  const openReply = (conv?: MailDetail | null) => {
+    const d = conv || detail;
+    if (!d) return;
+    const lastReponse = d.reponses[d.reponses.length - 1];
+    setReplyTo(lastReponse ? lastReponse.expediteur.replace(/<([^>]+)>/, "$1").replace(/.*</, "").replace(/>.*/, "").trim() || d.destinataire : d.destinataire);
+    const subj = d.objet || "";
+    setReplySubject(subj.startsWith("Re:") ? subj : `Re: ${subj}`);
+    setReplyBody("");
+    setShowReply(true);
+  };
+
+  const sendReply = async () => {
+    if (!detail || !replyBody.trim()) return;
+    setSending(true);
+    try {
+      const lastReponse = detail.reponses[detail.reponses.length - 1];
+      const res = await fetch("/api/send-mail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: replyTo,
+          subject: replySubject,
+          html: `<p>${replyBody.replace(/\n/g, "<br>")}</p>`,
+          entrepriseId: detail.entreprise?.id || null,
+          replyToThreadId: detail.gmailThreadId || undefined,
+          replyToMessageId: lastReponse?.rfc822MessageId || undefined,
+          replyToReferences: lastReponse?.rfc822MessageId || undefined,
+        }),
+      });
+      if (res.ok) {
+        toast("Réponse envoyée");
+        setShowReply(false);
+        setReplyBody("");
+        setSelectedId(null);
+        setTimeout(fetchConversations, 500);
+      } else {
+        const err = await res.json();
+        toast(err.error || "Erreur envoi");
+      }
+    } catch {
+      toast("Erreur réseau");
+    }
+    setSending(false);
+  };
+
+  const openReplyFromList = (conv: MailConversation) => {
+    setSelectedId(conv.id);
+    setTimeout(() => openReply(), 500);
+  };
+
   const ss: React.CSSProperties = { padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" };
 
+  // === DETAIL VIEW ===
   if (selectedId && detail) {
     return (
       <div>
@@ -126,7 +189,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
           </div>
 
           {detail.entreprise && (
-            <button onClick={() => { onSelectClient(detail.entreprise!); }} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: C.accent, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <button onClick={() => onSelectClient(detail.entreprise!)} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: C.accent, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <ExternalLink size={12} /> {detail.entreprise.nom}
             </button>
           )}
@@ -162,10 +225,51 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
             Aucune réponse reçue
           </div>
         )}
+
+        {/* Reply button — only for own conversations */}
+        {detail.isMine && !showReply && (
+          <div style={{ marginTop: 16 }}>
+            <Button C={C} variant="primary" onClick={() => openReply()}>
+              <Reply size={14} /> Répondre
+            </Button>
+          </div>
+        )}
+
+        {/* Reply compose */}
+        {showReply && (
+          <div style={{ marginTop: 16, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: C.text, margin: 0 }}>Répondre</h3>
+              <button onClick={() => setShowReply(false)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim }}><X size={16} /></button>
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <label style={{ fontSize: 11, color: C.textDim }}>À :</label>
+              <input value={replyTo} onChange={(e) => setReplyTo(e.target.value)} style={{ ...ss, marginTop: 4, width: "100%" }} />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <label style={{ fontSize: 11, color: C.textDim }}>Objet :</label>
+              <input value={replySubject} onChange={(e) => setReplySubject(e.target.value)} style={{ ...ss, marginTop: 4, width: "100%" }} />
+            </div>
+            <textarea
+              value={replyBody}
+              onChange={(e) => setReplyBody(e.target.value)}
+              placeholder="Votre réponse..."
+              rows={6}
+              style={{ ...ss, marginTop: 4, width: "100%", resize: "vertical", boxSizing: "border-box" }}
+            />
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <Button C={C} variant="primary" disabled={sending || !replyBody.trim()} onClick={sendReply}>
+                <Send size={13} /> {sending ? "Envoi..." : "Envoyer"}
+              </Button>
+              <Button C={C} variant="ghost" onClick={() => setShowReply(false)}>Annuler</Button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
+  // === LIST VIEW ===
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
@@ -205,19 +309,22 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                  {["Destinataire", "Entreprise", "Objet", "Statut", "Dernier événement", "Chargée"].map((h) => (
-                    <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
+                  {["Destinataire", "Entreprise", "Objet", "Statut", "Dernier événement", "Chargée", ""].map((h) => (
+                    <th key={h || "actions"} style={{ padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {conversations.map((conv) => (
-                  <tr key={conv.id} onClick={() => setSelectedId(conv.id)}
-                    style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
+                  <tr key={conv.id}
+                    style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer", fontWeight: conv.hasUnread ? 700 : 400 }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                   >
-                    <td style={{ padding: "10px 12px", color: C.text }}>{conv.destinataire}</td>
+                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px", color: C.text }}>
+                      {conv.hasUnread && <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: 3, background: C.accent, marginRight: 6 }} />}
+                      {conv.destinataire}
+                    </td>
                     <td style={{ padding: "10px 12px" }}>
                       {conv.entreprise ? (
                         <button onClick={(e) => { e.stopPropagation(); onSelectClient(conv.entreprise!); }} style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontSize: 13, padding: 0 }}>
@@ -225,8 +332,8 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
                         </button>
                       ) : "—"}
                     </td>
-                    <td style={{ padding: "10px 12px", color: C.text, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.objet || "—"}</td>
-                    <td style={{ padding: "10px 12px" }}>
+                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px", color: C.text, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.objet || "—"}</td>
+                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px" }}>
                       {conv.statutEnvoi === "REPONDU" ? (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: "#16a34a", background: "rgba(22,163,74,0.08)", padding: "3px 8px", borderRadius: 6 }}>
                           <CheckCircle2 size={12} /> Répondu
@@ -237,10 +344,20 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "10px 12px", color: C.textDim, fontSize: 12 }}>
+                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px", color: C.textDim, fontSize: 12 }}>
                       {new Date(conv.dernierEvenement).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                     </td>
-                    <td style={{ padding: "10px 12px", color: C.textDim }}>{conv.chargee}</td>
+                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px", color: C.textDim }}>{conv.chargee}</td>
+                    <td style={{ padding: "10px 8px", textAlign: "right" }}>
+                      {conv.isMine && (
+                        <button onClick={(e) => { e.stopPropagation(); openReplyFromList(conv); }}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, cursor: "pointer" }}
+                          title="Répondre"
+                        >
+                          <Reply size={12} /> Répondre
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

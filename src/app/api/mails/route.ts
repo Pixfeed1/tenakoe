@@ -45,6 +45,25 @@ export async function GET(request: NextRequest) {
     prisma.transmission.count({ where }),
   ]);
 
+  const transmissionIds = transmissions.map((t) => t.id);
+  const unreadAlertes = await prisma.alerte.findMany({
+    where: {
+      userId: user.id,
+      type: "REPONSE_EMAIL",
+      lue: false,
+      entrepriseId: { in: transmissions.map((t) => t.entrepriseId).filter((id): id is string => !!id) },
+    },
+    select: { entrepriseId: true },
+  });
+
+  const unreadTransmissionIds = new Set<string>();
+  for (const t of transmissions) {
+    if (t.expediteurId === user.id && t.statutEnvoi === "REPONDU") {
+      const hasUnread = unreadAlertes.some((a) => a.entrepriseId === t.entrepriseId);
+      if (hasUnread) unreadTransmissionIds.add(t.id);
+    }
+  }
+
   const data = transmissions.map((t) => {
     const lastReponse = t.reponses[0];
     const dernierEvenement = lastReponse?.dateReception || t.dateEnvoi;
@@ -59,6 +78,8 @@ export async function GET(request: NextRequest) {
       chargeeId: t.expediteur?.id,
       entreprise: t.entreprise ? { id: t.entreprise.id, nom: t.entreprise.nom } : null,
       nbReponses: t.reponses.length,
+      isMine: t.expediteurId === user.id,
+      hasUnread: unreadTransmissionIds.has(t.id),
     };
   });
 

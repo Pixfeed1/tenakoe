@@ -27,5 +27,24 @@ export async function GET(
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
-  return NextResponse.json(transmission);
+  const isMine = transmission.expediteurId === user.id;
+
+  if (isMine && transmission.entrepriseId) {
+    await prisma.alerte.updateMany({
+      where: {
+        userId: user.id,
+        type: "REPONSE_EMAIL",
+        entrepriseId: transmission.entrepriseId,
+        lue: false,
+      },
+      data: { lue: true },
+    });
+  }
+
+  return NextResponse.json({
+    ...transmission,
+    isMine,
+    gmailThreadId: transmission.gmailThreadId,
+    gmailMessageId: transmission.gmailMessageId,
+  });
 }

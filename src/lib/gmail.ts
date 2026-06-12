@@ -206,6 +206,9 @@ export async function sendGmailMessage(opts: {
   bcc?: string;
   userId: string;
   attachments?: Array<{ filename: string; mimeType: string; content: string }>;
+  threadId?: string;
+  inReplyTo?: string;
+  references?: string;
 }): Promise<{ messageId: string; threadId: string }> {
   const { gmail, email } = await getAuthenticatedGmail(opts.userId);
   const fromAddress = opts.fromName
@@ -223,6 +226,8 @@ export async function sendGmailMessage(opts: {
       opts.cc ? `Cc: ${opts.cc}` : null,
       opts.bcc ? `Bcc: ${opts.bcc}` : null,
       `Subject: =?utf-8?B?${Buffer.from(opts.subject).toString("base64")}?=`,
+      opts.inReplyTo ? `In-Reply-To: ${opts.inReplyTo}` : null,
+      opts.references ? `References: ${opts.references}` : null,
       "MIME-Version: 1.0",
       `Content-Type: multipart/mixed; boundary="${boundary}"`,
       "",
@@ -252,6 +257,8 @@ export async function sendGmailMessage(opts: {
       opts.cc ? `Cc: ${opts.cc}` : null,
       opts.bcc ? `Bcc: ${opts.bcc}` : null,
       `Subject: =?utf-8?B?${Buffer.from(opts.subject).toString("base64")}?=`,
+      opts.inReplyTo ? `In-Reply-To: ${opts.inReplyTo}` : null,
+      opts.references ? `References: ${opts.references}` : null,
       "MIME-Version: 1.0",
       "Content-Type: text/html; charset=utf-8",
       "Content-Transfer-Encoding: base64",
@@ -263,9 +270,12 @@ export async function sendGmailMessage(opts: {
       .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
 
+  const requestBody: { raw: string; threadId?: string } = { raw };
+  if (opts.threadId) requestBody.threadId = opts.threadId;
+
   const res = await gmail.users.messages.send({
     userId: "me",
-    requestBody: { raw },
+    requestBody,
   });
 
   return { messageId: res.data.id || "", threadId: res.data.threadId || "" };

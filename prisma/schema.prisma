@@ -953,11 +953,12 @@ model EmailReponse {
   id             String       @id @default(cuid())
   gmailMessageId String       @unique
   gmailThreadId  String
-  transmissionId String
-  transmission   Transmission @relation(fields: [transmissionId], references: [id], onDelete: Cascade)
-  expediteur     String
-  sujet          String?
-  extraitTexte   String?      @db.Text
+  transmissionId   String
+  transmission     Transmission @relation(fields: [transmissionId], references: [id], onDelete: Cascade)
+  expediteur       String
+  sujet            String?
+  extraitTexte     String?      @db.Text
+  rfc822MessageId  String?
   dateReception  DateTime
   createdAt      DateTime     @default(now())
 
