@@ -137,7 +137,14 @@ export async function PATCH(
   const updated = await prisma.$transaction(async (tx) => {
     const ent = await tx.entreprise.update({ where: { id }, data });
     if (body.chargeeId !== undefined) {
+      const previousEnt = await tx.entreprise.findUnique({ where: { id }, select: { chargeeId: true } });
       await tx.projet.updateMany({ where: { entrepriseId: id, deletedAt: null }, data: { chargeeId: body.chargeeId || null } });
+      if (previousEnt?.chargeeId && body.chargeeId && previousEnt.chargeeId !== body.chargeeId) {
+        await tx.tache.updateMany({
+          where: { entrepriseId: id, assigneeId: previousEnt.chargeeId, statut: { not: "TERMINEE" } },
+          data: { assigneeId: body.chargeeId },
+        });
+      }
     }
     if (body.statutPrise !== undefined || body.statutFacturation !== undefined) {
       const projetPatch: Record<string, unknown> = {};

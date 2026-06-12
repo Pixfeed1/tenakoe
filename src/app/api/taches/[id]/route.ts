@@ -25,6 +25,7 @@ export async function PATCH(
   if (body.type !== undefined) data.type = body.type;
   if (body.priorite !== undefined) data.priorite = body.priorite;
   if (body.dateEcheance !== undefined) data.dateEcheance = body.dateEcheance ? new Date(body.dateEcheance) : null;
+  if (body.assigneeId !== undefined) data.assigneeId = body.assigneeId || null;
   if (body.statut === "TERMINEE") data.dateRealisee = new Date();
   if (body.statut === "A_FAIRE") data.dateRealisee = null;
 

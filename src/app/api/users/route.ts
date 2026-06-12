@@ -58,6 +58,10 @@ export async function PATCH(request: NextRequest) {
       where: { chargeeId: body.id },
       data: { chargeeId: body.reassignTo },
     });
+    await prisma.tache.updateMany({
+      where: { assigneeId: body.id, statut: { not: "TERMINEE" } },
+      data: { assigneeId: body.reassignTo },
+    });
   }
   if (body.password) data.password = await bcrypt.hash(body.password, 12);
 
