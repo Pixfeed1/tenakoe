@@ -118,6 +118,7 @@ export const CHARGEE_ENTREPRISE_WHITELIST = new Set([
   "interesseTNK", "dateInteresseTNK", "miseEnRelation", "miseEnRelationAutre",
   "dateStatutPrise", "dateEnCours", "dateDepose", "dateQualifie",
   "eligible", "eligibleCommentaire", "dateEligible",
+  "antenneQualibatSuggereeId", "emailQualibatSuggere",
   "restore",
 ]);
 
