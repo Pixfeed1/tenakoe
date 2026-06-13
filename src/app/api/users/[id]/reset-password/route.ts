@@ -40,7 +40,7 @@ export async function POST(
         html: `<p>Bonjour ${targetUser.prenom},</p>
 <p>Votre administrateur <strong>${user.name}</strong> vient de réinitialiser votre mot de passe.</p>
 <p style="padding: 12px 16px; background: #f1f5f9; border-radius: 8px; font-family: monospace; font-size: 16px; letter-spacing: 1px;"><strong>${newPassword}</strong></p>
-<p>Connectez-vous : <a href="https://tenakoe.pixfeed.net/login">https://tenakoe.pixfeed.net/login</a><br/>Email : ${targetUser.email}</p>
+<p>Connectez-vous : <a href="${process.env.NEXTAUTH_URL || ""}/login">${process.env.NEXTAUTH_URL || ""}/login</a><br/>Email : ${targetUser.email}</p>
 <p style="color: #94a3b8; font-size: 12px;">Si vous n'avez pas demandé cette réinitialisation, contactez votre administrateur.</p>`,
       });
       emailSent = true;

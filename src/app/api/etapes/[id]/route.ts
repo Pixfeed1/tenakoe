@@ -99,7 +99,7 @@ export async function PATCH(
         const nomContact = contact ? `${contact.prenom} ${contact.nom}` : entreprise.nom;
         const signature = getSignature({ prenom: chargee?.prenom || user.name.split(" ")[0] || "", nom: chargee?.nom || user.name.split(" ").slice(1).join(" ") || "", email: chargee?.email || user.email, telephone: chargee?.telephone, role: (chargee as unknown as { role?: string })?.role || user.role });
         const smtp = chargee?.smtpHost && chargee?.smtpUser && chargee?.smtpPass ? { host: chargee.smtpHost, port: chargee.smtpPort || 587, user: chargee.smtpUser, pass: chargee.smtpPass } : undefined;
-        const lienFiche = `https://tenakoe.pixfeed.net/dashboard?view=ClientDetail&clientId=${entreprise.id}`;
+        const lienFiche = `${process.env.NEXTAUTH_URL || ""}/dashboard?view=ClientDetail&clientId=${entreprise.id}`;
 
         // Mail client sur étapes spécifiques
         if (etape.ordre === 2 && entreprise.email) {

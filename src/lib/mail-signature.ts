@@ -10,7 +10,7 @@ export function getSignature(user: { prenom: string; nom: string; email: string;
 </td>
 </tr>
 <tr>
-<td style="padding-bottom: 12px;"><img style="display: inline-block; height: 50px; width: auto;" src="https://tenakoe.pixfeed.net/logo.png" alt="Kiwi" height="50" /></td>
+<td style="padding-bottom: 12px;"><img style="display: inline-block; height: 50px; width: auto;" src="${process.env.NEXTAUTH_URL || ""}/logo.png" alt="Kiwi" height="50" /></td>
 </tr>
 <tr>
 <td style="padding-bottom: 10px; border-bottom: 2px solid #16a34a;">
