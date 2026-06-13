@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mail, Search, ArrowLeft, ExternalLink, CheckCircle2, Clock, Reply, Send, X } from "lucide-react";
+import { Mail, Search, ArrowLeft, ExternalLink, CheckCircle2, Clock, Reply, Send, X, Paperclip } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -29,6 +29,7 @@ interface EmailReponse {
   extraitTexte: string | null;
   dateReception: string;
   rfc822MessageId: string | null;
+  piecesJointes?: Array<{ id: string; nom: string; mimeType: string | null; taille: number | null }>;
 }
 
 interface MailDetail {
@@ -52,6 +53,13 @@ interface MailsViewProps {
   C: Theme;
   role: string;
   onSelectClient: (c: { id: string; nom: string }) => void;
+}
+
+function formatFileSize(bytes: number | null): string {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1048576) return `${Math.round(bytes / 1024)} Ko`;
+  return `${(bytes / 1048576).toFixed(1)} Mo`;
 }
 
 function cleanMailContent(html: string): string {
@@ -226,6 +234,19 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
                 </div>
                 {r.sujet && <div style={{ fontSize: 11, color: C.textDim, marginBottom: 6 }}>{r.sujet}</div>}
                 <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{r.extraitTexte || "(contenu indisponible)"}</div>
+                {r.piecesJointes && r.piecesJointes.length > 0 && (
+                  <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {r.piecesJointes.map((pj) => (
+                      <a key={pj.id} href={`/api/mails/piece-jointe/${pj.id}`} target="_blank" rel="noopener noreferrer"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, textDecoration: "none" }}
+                      >
+                        <Paperclip size={12} color={C.accent} />
+                        <span style={{ fontWeight: 500 }}>{pj.nom}</span>
+                        {pj.taille ? <span style={{ color: C.textDim }}>({formatFileSize(pj.taille)})</span> : null}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

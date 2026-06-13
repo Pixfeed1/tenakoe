@@ -17,7 +17,10 @@ export async function GET(
     include: {
       expediteur: { select: { id: true, prenom: true, nom: true } },
       entreprise: { select: { id: true, nom: true } },
-      reponses: { orderBy: { dateReception: "asc" } },
+      reponses: {
+        orderBy: { dateReception: "asc" },
+        include: { piecesJointes: { select: { id: true, nom: true, mimeType: true, taille: true } } },
+      },
     },
   });
 

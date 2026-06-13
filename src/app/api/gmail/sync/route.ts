@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
           const msg = await gmail.users.messages.get({
             userId: "me",
             id: msgId,
-            format: "metadata",
+            format: "full",
             metadataHeaders: ["From", "Subject", "Date", "Message-ID"],
           });
 
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
           const existing = await prisma.emailReponse.findUnique({ where: { gmailMessageId: msgId } });
           if (existing) continue;
 
-          await prisma.emailReponse.create({
+          const reponse = await prisma.emailReponse.create({
             data: {
               gmailMessageId: msgId,
               gmailThreadId: threadId,
@@ -138,6 +138,27 @@ export async function POST(request: NextRequest) {
               dateReception: dateStr ? new Date(dateStr) : new Date(),
             },
           });
+
+          type GmailPart = { filename?: string | null; mimeType?: string | null; body?: { attachmentId?: string | null; size?: number | null } | null; parts?: GmailPart[] | null };
+          const collectAttachments = (parts: GmailPart[] | null | undefined): void => {
+            if (!parts) return;
+            for (const part of parts) {
+              if (part.filename && part.body?.attachmentId) {
+                prisma.emailReponsePieceJointe.create({
+                  data: {
+                    emailReponseId: reponse.id,
+                    gmailMessageId: msgId,
+                    gmailAttachmentId: part.body.attachmentId,
+                    nom: part.filename,
+                    mimeType: part.mimeType || null,
+                    taille: part.body.size || null,
+                  },
+                }).catch(() => {});
+              }
+              if (part.parts) collectAttachments(part.parts);
+            }
+          };
+          collectAttachments(msg.data.payload?.parts as GmailPart[] | undefined);
 
           await prisma.transmission.update({
             where: { id: transmission.id },

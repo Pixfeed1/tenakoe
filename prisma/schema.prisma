@@ -961,9 +961,23 @@ model EmailReponse {
   rfc822MessageId  String?
   dateReception  DateTime
   createdAt      DateTime     @default(now())
+  piecesJointes  EmailReponsePieceJointe[]
 
   @@index([gmailThreadId])
   @@index([transmissionId])
+}
+
+model EmailReponsePieceJointe {
+  id                String        @id @default(cuid())
+  emailReponseId    String
+  emailReponse      EmailReponse  @relation(fields: [emailReponseId], references: [id], onDelete: Cascade)
+  gmailMessageId    String
+  gmailAttachmentId String
+  nom               String
+  mimeType          String?
+  taille            Int?
+
+  @@index([emailReponseId])
 }
 
 // ============================================================
