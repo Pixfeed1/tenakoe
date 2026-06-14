@@ -337,6 +337,12 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
     <div style={{ display: "flex", gap: 16 }}>
       {/* Sidebar */}
       <div style={{ width: sidebarCollapsed ? 48 : 200, flexShrink: 0, transition: "width 0.2s ease" }}>
+        {/* Toggle */}
+        <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title={sidebarCollapsed ? "Déplier le menu" : "Replier le menu"}
+          style={{ display: "flex", alignItems: "center", justifyContent: sidebarCollapsed ? "center" : "flex-end", gap: 6, width: "100%", padding: "6px 8px", marginBottom: 8, borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", color: C.textDim, fontSize: 11 }}>
+          {!sidebarCollapsed && <span style={{ flex: 1, textAlign: "left" }}>Replier</span>}
+          {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
         <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 12 }}>
           {FOLDERS.map((f) => {
             const isActive = folder === f.id && !searchActive;
@@ -353,14 +359,6 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
             style={{ display: "flex", alignItems: "center", gap: 8, padding: sidebarCollapsed ? "8px 0" : "8px 12px", justifyContent: sidebarCollapsed ? "center" : "flex-start", borderRadius: 8, border: "none", cursor: "pointer", background: "transparent", color: C.text, fontSize: 13, textAlign: "left", marginTop: 4 }}>
             <BarChart3 size={16} />
             {!sidebarCollapsed && <span>Statistiques</span>}
-          </button>
-        </div>
-
-        {/* Toggle collapse */}
-        <div style={{ display: "flex", justifyContent: sidebarCollapsed ? "center" : "flex-end", marginBottom: 8 }}>
-          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title={sidebarCollapsed ? "Déplier le menu" : "Replier le menu"}
-            style={{ width: 24, height: 24, borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, padding: 0 }}>
-            {sidebarCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
           </button>
         </div>
 
