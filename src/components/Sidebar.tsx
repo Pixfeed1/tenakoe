@@ -65,8 +65,8 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
         overflow: "hidden",
       }}
     >
-      {/* Logo + Toggle */}
-      <div style={{ padding: collapsed ? "0 8px 16px" : "0 20px 24px", borderBottom: `1px solid ${C.border}`, marginBottom: 8, display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between" }}>
+      {/* Logo */}
+      <div style={{ padding: collapsed ? "0 8px 16px" : "0 20px 24px", borderBottom: `1px solid ${C.border}`, marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
         {collapsed ? (
           <img src="/logo.png" alt="Kiwi" style={{ width: 36, height: 36, objectFit: "contain" }} />
         ) : (
@@ -77,12 +77,6 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
               <div style={{ fontSize: 11, color: C.textDim, fontWeight: 500 }}>CRM · Qualification RGE</div>
             </div>
           </div>
-        )}
-        {!collapsed && (
-          <button onClick={() => setCollapsed(true)} title="Replier le menu"
-            style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, padding: 0, flexShrink: 0 }}>
-            <PanelLeftClose size={14} />
-          </button>
         )}
       </div>
 
@@ -175,6 +169,20 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
           </button>
           );
         })}
+        {!collapsed && (
+          <button onClick={() => setCollapsed(true)} title="Replier le menu"
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 10,
+              padding: "9px 12px", borderRadius: 10, border: "none", cursor: "pointer",
+              background: "transparent", color: C.textDim, fontSize: 13,
+              fontWeight: 500, marginTop: 4, textAlign: "left",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+          >
+            <PanelLeftClose size={17} strokeWidth={1.8} /> Replier le menu
+          </button>
+        )}
       </div>
 
       {/* User */}
