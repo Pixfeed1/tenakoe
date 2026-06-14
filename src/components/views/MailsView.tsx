@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Inbox, Send, FileText, Clock, Archive, Search, ArrowLeft, Paperclip,
-  Tag, Plus, X, Mail, Reply, Star, Trash2, Link2, BarChart3, AlertTriangle,
+  Tag, Plus, X, Mail, Reply, Star, Trash2, Link2, BarChart3, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
@@ -61,6 +61,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [scheduled, setScheduled] = useState<ScheduledMail[]>([]);
   const [showNewLabel, setShowNewLabel] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [newLabelName, setNewLabelName] = useState("");
 
   const [showReply, setShowReply] = useState(false);
@@ -335,38 +336,55 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
   return (
     <div style={{ display: "flex", gap: 16 }}>
       {/* Sidebar */}
-      <div style={{ width: 200, flexShrink: 0 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 16 }}>
-          {FOLDERS.map((f) => (
-            <button key={f.id} onClick={() => { setFolder(f.id); setSelectedThread(null); clearSearch(); setFilter(""); setEntrepriseFilter(""); }}
-              style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", background: folder === f.id && !searchActive ? C.accentDim : "transparent", color: folder === f.id && !searchActive ? C.accentText : C.text, fontSize: 13, fontWeight: folder === f.id ? 600 : 400, textAlign: "left" }}>
-              <f.Icon size={15} /> {f.label}
-            </button>
-          ))}
-          <button onClick={loadStats} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", background: "transparent", color: C.text, fontSize: 13, textAlign: "left", marginTop: 4 }}>
-            <BarChart3 size={15} /> Statistiques
+      <div style={{ width: sidebarCollapsed ? 48 : 200, flexShrink: 0, transition: "width 0.2s ease" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 12 }}>
+          {FOLDERS.map((f) => {
+            const isActive = folder === f.id && !searchActive;
+            return (
+              <button key={f.id} onClick={() => { setFolder(f.id); setSelectedThread(null); clearSearch(); setFilter(""); setEntrepriseFilter(""); }}
+                title={sidebarCollapsed ? f.label : undefined}
+                style={{ display: "flex", alignItems: "center", gap: 8, padding: sidebarCollapsed ? "8px 0" : "8px 12px", justifyContent: sidebarCollapsed ? "center" : "flex-start", borderRadius: 8, border: "none", cursor: "pointer", background: isActive ? C.accentDim : "transparent", color: isActive ? C.accentText : C.text, fontSize: 13, fontWeight: isActive ? 600 : 400, textAlign: "left", transition: "all 0.15s" }}>
+                <f.Icon size={16} />
+                {!sidebarCollapsed && <span>{f.label}</span>}
+              </button>
+            );
+          })}
+          <button onClick={loadStats} title={sidebarCollapsed ? "Statistiques" : undefined}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: sidebarCollapsed ? "8px 0" : "8px 12px", justifyContent: sidebarCollapsed ? "center" : "flex-start", borderRadius: 8, border: "none", cursor: "pointer", background: "transparent", color: C.text, fontSize: 13, textAlign: "left", marginTop: 4 }}>
+            <BarChart3 size={16} />
+            {!sidebarCollapsed && <span>Statistiques</span>}
           </button>
         </div>
 
-        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em" }}>Étiquettes</span>
-            <button onClick={() => setShowNewLabel(!showNewLabel)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim }}><Plus size={14} /></button>
-          </div>
-          {showNewLabel && (
-            <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-              <input value={newLabelName} onChange={(e) => setNewLabelName(e.target.value)} placeholder="Nom..." onKeyDown={(e) => { if (e.key === "Enter") createLabel(); }}
-                style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, outline: "none" }} />
-              <button onClick={createLabel} style={{ padding: "4px 8px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 11, cursor: "pointer" }}>OK</button>
-            </div>
-          )}
-          {labels.map((l) => (
-            <button key={l.id} onClick={() => { setSearch(`label:${l.name}`); setSearchActive(true); setSelectedThread(null); }}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", background: "transparent", color: C.text, fontSize: 12, width: "100%", textAlign: "left" }}>
-              <Tag size={12} color={C.textDim} /> {l.name}
-            </button>
-          ))}
+        {/* Toggle collapse */}
+        <div style={{ display: "flex", justifyContent: sidebarCollapsed ? "center" : "flex-end", marginBottom: 8 }}>
+          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title={sidebarCollapsed ? "Déplier le menu" : "Replier le menu"}
+            style={{ width: 24, height: 24, borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, padding: 0 }}>
+            {sidebarCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+          </button>
         </div>
+
+        {!sidebarCollapsed && (
+          <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em" }}>Étiquettes</span>
+              <button onClick={() => setShowNewLabel(!showNewLabel)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim }}><Plus size={14} /></button>
+            </div>
+            {showNewLabel && (
+              <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                <input value={newLabelName} onChange={(e) => setNewLabelName(e.target.value)} placeholder="Nom..." onKeyDown={(e) => { if (e.key === "Enter") createLabel(); }}
+                  style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, outline: "none" }} />
+                <button onClick={createLabel} style={{ padding: "4px 8px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 11, cursor: "pointer" }}>OK</button>
+              </div>
+            )}
+            {labels.map((l) => (
+              <button key={l.id} onClick={() => { setSearch(`label:${l.name}`); setSearchActive(true); setSelectedThread(null); }}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", background: "transparent", color: C.text, fontSize: 12, width: "100%", textAlign: "left" }}>
+                <Tag size={12} color={C.textDim} /> {l.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Main content */}
