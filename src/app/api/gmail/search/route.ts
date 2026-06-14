@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
         date: lastH.date || h.date,
         snippet: last?.snippet || thread.snippet || "",
         unread: msgs.some((m) => m.labelIds?.includes("UNREAD")),
+        starred: msgs.some((m) => m.labelIds?.includes("STARRED")),
         hasAttachment: msgs.some((m) => hasAttachmentParts(m.payload?.parts)),
         labelIds: first.labelIds || [],
         messageCount: msgs.length,

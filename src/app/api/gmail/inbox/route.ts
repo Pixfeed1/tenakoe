@@ -14,9 +14,29 @@ export async function GET(request: NextRequest) {
   let q = "in:inbox";
   if (filter === "unread") q += " is:unread";
   if (filter === "attachment") q += " has:attachment";
+  if (filter === "starred") q += " is:starred";
+  if (filter === "no_reply_3d") q += " older_than:3d is:unread";
+  if (filter === "no_reply_7d") q += " older_than:7d is:unread";
+  if (filter === "no_reply_14d") q += " older_than:14d is:unread";
 
   const contact = request.nextUrl.searchParams.get("contact");
-  if (contact) q += ` from:${contact}`;
+  if (contact) q += ` {from:${contact} to:${contact}}`;
+
+  const entrepriseId = request.nextUrl.searchParams.get("entrepriseId");
+  let entrepriseEmails: string[] = [];
+  if (entrepriseId) {
+    const ent = await prisma.entreprise.findUnique({
+      where: { id: entrepriseId },
+      select: { email: true, contacts: { select: { email: true } } },
+    });
+    if (ent) {
+      if (ent.email) entrepriseEmails.push(ent.email);
+      for (const c of ent.contacts) if (c.email) entrepriseEmails.push(c.email);
+      if (entrepriseEmails.length > 0) {
+        q += " {" + entrepriseEmails.map((e) => `from:${e} to:${e}`).join(" ") + "}";
+      }
+    }
+  }
 
   try {
     const list = await gmail.users.threads.list({ userId: "me", q, maxResults, pageToken });
@@ -43,6 +63,7 @@ export async function GET(request: NextRequest) {
       const h = extractHeaders(first.payload?.headers);
       const lastH = extractHeaders(last?.payload?.headers);
       const unread = msgs.some((m) => m.labelIds?.includes("UNREAD"));
+      const starred = msgs.some((m) => m.labelIds?.includes("STARRED"));
       const attachment = msgs.some((m) => hasAttachmentParts(m.payload?.parts));
 
       results.push({
@@ -53,6 +74,7 @@ export async function GET(request: NextRequest) {
         date: lastH.date || h.date,
         snippet: last?.snippet || thread.snippet || "",
         unread,
+        starred,
         hasAttachment: attachment,
         labelIds: first.labelIds || [],
         messageCount: msgs.length,

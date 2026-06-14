@@ -42,6 +42,7 @@ export interface GmailThread {
   date: string;
   snippet: string;
   unread: boolean;
+  starred: boolean;
   hasAttachment: boolean;
   labelIds: string[];
   messageCount: number;
