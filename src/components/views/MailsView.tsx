@@ -46,6 +46,8 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
   const [threads, setThreads] = useState<GmailThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [pageTokenHistory, setPageTokenHistory] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(false);
   const [filter, setFilter] = useState("");
@@ -93,7 +95,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
       if (pageToken) params.set("pageToken", pageToken);
       fetch(`/api/gmail/search?${params}`)
         .then((r) => r.ok ? r.json() : { threads: [] })
-        .then((d) => { setThreads(pageToken ? (prev) => [...prev, ...d.threads] : d.threads); setNextPageToken(d.nextPageToken); setLoading(false); })
+        .then((d) => { setThreads(d.threads || []); setNextPageToken(d.nextPageToken); setLoading(false); })
         .catch(() => setLoading(false));
       return;
     }
@@ -347,7 +349,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
           {FOLDERS.map((f) => {
             const isActive = folder === f.id && !searchActive;
             return (
-              <button key={f.id} onClick={() => { setFolder(f.id); setSelectedThread(null); clearSearch(); setFilter(""); setEntrepriseFilter(""); }}
+              <button key={f.id} onClick={() => { setFolder(f.id); setSelectedThread(null); clearSearch(); setFilter(""); setEntrepriseFilter(""); setCurrentPage(0); setPageTokenHistory([]); setNextPageToken(null); }}
                 title={sidebarCollapsed ? f.label : undefined}
                 style={{ display: "flex", alignItems: "center", gap: 8, padding: sidebarCollapsed ? "8px 0" : "8px 12px", justifyContent: sidebarCollapsed ? "center" : "flex-start", borderRadius: 8, border: "none", cursor: "pointer", background: isActive ? C.accentDim : "transparent", color: isActive ? C.accentText : C.text, fontSize: 13, fontWeight: isActive ? 600 : 400, textAlign: "left", transition: "all 0.15s" }}>
                 <f.Icon size={16} />
@@ -488,11 +490,35 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
                 </div>
               ))}
             </div>
-            {nextPageToken && (
-              <div style={{ textAlign: "center", marginTop: 16 }}>
-                <Button C={C} variant="ghost" onClick={() => fetchFolder(nextPageToken)}>Charger plus</Button>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, marginTop: 12, padding: "0 4px" }}>
+              <span style={{ fontSize: 12, color: C.textDim }}>
+                {currentPage * 20 + 1}–{currentPage * 20 + threads.length}
+              </span>
+              <div style={{ display: "flex", gap: 4 }}>
+                <button onClick={() => {
+                  if (currentPage > 0) {
+                    const prevToken = currentPage > 1 ? pageTokenHistory[currentPage - 2] : undefined;
+                    setCurrentPage(currentPage - 1);
+                    fetchFolder(prevToken);
+                  }
+                }} disabled={currentPage === 0}
+                  style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, cursor: currentPage === 0 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: currentPage === 0 ? C.border : C.text, opacity: currentPage === 0 ? 0.5 : 1 }}
+                  title="Page précédente">
+                  <ArrowLeft size={14} />
+                </button>
+                <button onClick={() => {
+                  if (nextPageToken) {
+                    setPageTokenHistory((prev) => { const h = [...prev]; h[currentPage] = nextPageToken; return h; });
+                    setCurrentPage(currentPage + 1);
+                    fetchFolder(nextPageToken);
+                  }
+                }} disabled={!nextPageToken}
+                  style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, cursor: !nextPageToken ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: !nextPageToken ? C.border : C.text, opacity: !nextPageToken ? 0.5 : 1, transform: "rotate(180deg)" }}
+                  title="Page suivante">
+                  <ArrowLeft size={14} />
+                </button>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
