@@ -80,14 +80,6 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
         )}
       </div>
 
-      {/* Expand button when collapsed */}
-      {collapsed && (
-        <button onClick={() => setCollapsed(false)} title="Déplier le menu"
-          style={{ width: 36, height: 28, margin: "0 auto 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, padding: 0 }}>
-          <PanelLeftOpen size={14} />
-        </button>
-      )}
-
       {/* Search */}
       {!collapsed && <SearchBar C={C} onSelectClient={onSelectClient || (() => {})} />}
 
@@ -183,64 +175,81 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
             <PanelLeftClose size={17} strokeWidth={1.8} /> Replier le menu
           </button>
         )}
+        {collapsed && (
+          <button onClick={() => setCollapsed(false)} title="Déplier le menu"
+            style={{
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+              padding: "9px 0", borderRadius: 10, border: "none", cursor: "pointer",
+              background: "transparent", color: C.textDim, marginTop: 4,
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+          >
+            <PanelLeftOpen size={17} strokeWidth={1.8} />
+          </button>
+        )}
       </div>
 
       {/* User */}
       <div
         style={{
-          padding: collapsed ? "14px 8px" : "14px 16px", borderTop: `1px solid ${C.border}`,
-          display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between",
-          flexDirection: collapsed ? "column" : "row", gap: collapsed ? 8 : 0,
+          padding: collapsed ? "10px 6px" : "14px 16px", borderTop: `1px solid ${C.border}`,
+          display: "flex", flexDirection: "column", alignItems: "center", gap: collapsed ? 6 : 0,
         }}
       >
-        <div
-          style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", justifyContent: collapsed ? "center" : "flex-start" }}
-          onClick={() => { onNav("Paramètres"); if (onNavMobile) onNavMobile(); }}
-          title="Mon compte"
-        >
-          <div
-            style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0,
-            }}
-          >
-            {user?.initials || "?"}
-          </div>
-          {!collapsed && (
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{user?.name || "Elise Leal"}</div>
-              <div style={{ fontSize: 11, color: C.textDim }}>{user?.role === "ADMIN" ? "Admin" : user?.role === "CHARGEE" ? "Chargée" : "Prescripteur"}</div>
-            </div>
-          )}
-        </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          <button
-            onClick={onToggleDark}
-            style={{
-              width: 34, height: 34, borderRadius: 8,
-              border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-            title={dark ? "Mode clair" : "Mode sombre"}
-          >
-            {dark ? <Sun size={15} color={C.textMuted} /> : <Moon size={15} color={C.textMuted} />}
-          </button>
-          {onSignOut && (
-            <button
-              onClick={onSignOut}
-              style={{
-                width: 34, height: 34, borderRadius: 8,
-                border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
-              title="Déconnexion"
-            >
-              <LogOut size={15} color={C.textMuted} />
+        {collapsed ? (
+          <>
+            <button onClick={() => { onNav("Paramètres"); if (onNavMobile) onNavMobile(); }} title={user?.name || "Mon compte"}
+              style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, #7c3aed, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", border: "none", cursor: "pointer" }}>
+              {user?.initials || "?"}
             </button>
-          )}
-        </div>
+            <button onClick={onToggleDark} title={dark ? "Mode clair" : "Mode sombre"}
+              style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {dark ? <Sun size={15} color={C.textMuted} /> : <Moon size={15} color={C.textMuted} />}
+            </button>
+            {onSignOut && (
+              <button onClick={onSignOut} title="Déconnexion"
+                style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <LogOut size={15} color={C.textMuted} />
+              </button>
+            )}
+          </>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+              onClick={() => { onNav("Paramètres"); if (onNavMobile) onNavMobile(); }}
+              title="Mon compte"
+            >
+              <div
+                style={{
+                  width: 34, height: 34, borderRadius: 10,
+                  background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0,
+                }}
+              >
+                {user?.initials || "?"}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{user?.name || "Elise Leal"}</div>
+                <div style={{ fontSize: 11, color: C.textDim }}>{user?.role === "ADMIN" ? "Admin" : user?.role === "CHARGEE" ? "Chargée" : "Prescripteur"}</div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 4 }}>
+              <button onClick={onToggleDark} title={dark ? "Mode clair" : "Mode sombre"}
+                style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {dark ? <Sun size={15} color={C.textMuted} /> : <Moon size={15} color={C.textMuted} />}
+              </button>
+              {onSignOut && (
+                <button onClick={onSignOut} title="Déconnexion"
+                  style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <LogOut size={15} color={C.textMuted} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
