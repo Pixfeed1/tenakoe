@@ -2,8 +2,9 @@
 
 import {
   LayoutDashboard, Zap, Target, Users, FolderOpen,
-  Send, Mail, File, BookOpen, CreditCard, Clock, Handshake, Plug, Settings, Sun, Moon, LogOut, Lightbulb, Eye,
+  Send, Mail, File, BookOpen, CreditCard, Clock, Handshake, Plug, Settings, Sun, Moon, LogOut, Lightbulb, Eye, PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
+import { useState } from "react";
 import type { Theme } from "@/lib/theme";
 import { SearchBar } from "@/components/SearchBar";
 import { useGuide } from "@/components/GuideSystem";
@@ -47,49 +48,67 @@ interface SidebarProps {
 
 export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignOut, onSelectClient, className, onNavMobile }: SidebarProps) {
   const guide = useGuide();
+  const [collapsed, setCollapsed] = useState(false);
   return (
     <aside
       data-guide="sidebar"
       className={`crm-sidebar ${className || ""}`}
       style={{
-        width: 250,
+        width: collapsed ? 64 : 250,
         background: C.surface,
         borderRight: `1px solid ${C.border}`,
         display: "flex",
         flexDirection: "column",
         padding: "20px 0",
         flexShrink: 0,
-        transition: "background 0.3s",
+        transition: "width 0.2s ease, background 0.3s",
+        overflow: "hidden",
       }}
     >
-      {/* Logo */}
-      <div style={{ padding: "0 20px 24px", borderBottom: `1px solid ${C.border}`, marginBottom: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <img
-            src="/logo.png"
-            alt="Kiwi"
-            style={{ width: 48, height: 48, objectFit: "contain" }}
-          />
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi</div>
-            <div style={{ fontSize: 11, color: C.textDim, fontWeight: 500 }}>CRM · Qualification RGE</div>
+      {/* Logo + Toggle */}
+      <div style={{ padding: collapsed ? "0 8px 16px" : "0 20px 24px", borderBottom: `1px solid ${C.border}`, marginBottom: 8, display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between" }}>
+        {collapsed ? (
+          <img src="/logo.png" alt="Kiwi" style={{ width: 36, height: 36, objectFit: "contain" }} />
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <img src="/logo.png" alt="Kiwi" style={{ width: 48, height: 48, objectFit: "contain" }} />
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: "-0.03em" }}>Kiwi</div>
+              <div style={{ fontSize: 11, color: C.textDim, fontWeight: 500 }}>CRM · Qualification RGE</div>
+            </div>
           </div>
-        </div>
+        )}
+        {!collapsed && (
+          <button onClick={() => setCollapsed(true)} title="Replier le menu"
+            style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, padding: 0, flexShrink: 0 }}>
+            <PanelLeftClose size={14} />
+          </button>
+        )}
       </div>
 
+      {/* Expand button when collapsed */}
+      {collapsed && (
+        <button onClick={() => setCollapsed(false)} title="Déplier le menu"
+          style={{ width: 36, height: 28, margin: "0 auto 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, padding: 0 }}>
+          <PanelLeftOpen size={14} />
+        </button>
+      )}
+
       {/* Search */}
-      <SearchBar C={C} onSelectClient={onSelectClient || (() => {})} />
+      {!collapsed && <SearchBar C={C} onSelectClient={onSelectClient || (() => {})} />}
 
       {/* Main Nav */}
-      <nav style={{ flex: 1, padding: "12px 12px", overflow: "auto" }}>
-        <div
-          style={{
-            fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase",
-            letterSpacing: "0.08em", padding: "8px 12px 6px",
-          }}
-        >
-          Menu principal
-        </div>
+      <nav style={{ flex: 1, padding: collapsed ? "12px 6px" : "12px 12px", overflow: "auto" }}>
+        {!collapsed && (
+          <div
+            style={{
+              fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase",
+              letterSpacing: "0.08em", padding: "8px 12px 6px",
+            }}
+          >
+            Menu principal
+          </div>
+        )}
         {NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user?.role || "")).map((item) => {
           const isActive = activeNav === (item.navKey || item.label);
           return (
@@ -97,9 +116,12 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
               key={item.label}
               data-guide={item.guide}
               onClick={() => { onNav(item.navKey || item.label); onNavMobile?.(); }}
+              title={collapsed ? item.label : undefined}
               style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 10,
-                padding: "9px 12px", borderRadius: 10, border: "none", cursor: "pointer",
+                padding: collapsed ? "9px 0" : "9px 12px",
+                justifyContent: collapsed ? "center" : "flex-start",
+                borderRadius: 10, border: "none", cursor: "pointer",
                 background: isActive ? C.accentDim : "transparent",
                 color: isActive ? C.accentText : C.textMuted,
                 fontSize: 13, fontWeight: isActive ? 600 : 500, marginBottom: 1,
@@ -112,31 +134,36 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
                 if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
               }}
             >
-              <item.Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} /> {item.label}
+              <item.Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} /> {!collapsed && item.label}
             </button>
           );
         })}
       </nav>
 
       {/* Bottom Nav */}
-      <div style={{ padding: "4px 12px 8px", borderTop: `1px solid ${C.border}` }}>
-        <div
-          style={{
-            fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase",
-            letterSpacing: "0.08em", padding: "10px 12px 6px",
-          }}
-        >
-          Système
-        </div>
+      <div style={{ padding: collapsed ? "4px 6px 8px" : "4px 12px 8px", borderTop: `1px solid ${C.border}` }}>
+        {!collapsed && (
+          <div
+            style={{
+              fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: "uppercase",
+              letterSpacing: "0.08em", padding: "10px 12px 6px",
+            }}
+          >
+            Système
+          </div>
+        )}
         {[...NAV_BOTTOM, ...(user?.role === "ADMIN" ? NAV_BOTTOM_ADMIN : [])].map((item) => {
           const isActive = activeNav === (item.navKey || item.label);
           return (
           <button
             key={item.label}
             onClick={() => { onNav(item.navKey || item.label); onNavMobile?.(); }}
+            title={collapsed ? item.label : undefined}
             style={{
               width: "100%", display: "flex", alignItems: "center", gap: 10,
-              padding: "9px 12px", borderRadius: 10, border: "none", cursor: "pointer",
+              padding: collapsed ? "9px 0" : "9px 12px",
+              justifyContent: collapsed ? "center" : "flex-start",
+              borderRadius: 10, border: "none", cursor: "pointer",
               background: isActive ? C.accentDim : "transparent",
               color: isActive ? C.accentText : C.textDim, fontSize: 13,
               fontWeight: isActive ? 600 : 500, marginBottom: 1, textAlign: "left",
@@ -144,7 +171,7 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
             onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
             onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
           >
-            <item.Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} /> {item.label}
+            <item.Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} /> {!collapsed && item.label}
           </button>
           );
         })}
@@ -153,12 +180,13 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
       {/* User */}
       <div
         style={{
-          padding: "14px 16px", borderTop: `1px solid ${C.border}`,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: collapsed ? "14px 8px" : "14px 16px", borderTop: `1px solid ${C.border}`,
+          display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between",
+          flexDirection: collapsed ? "column" : "row", gap: collapsed ? 8 : 0,
         }}
       >
         <div
-          style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", justifyContent: collapsed ? "center" : "flex-start" }}
           onClick={() => { onNav("Paramètres"); if (onNavMobile) onNavMobile(); }}
           title="Mon compte"
         >
@@ -167,15 +195,17 @@ export function Sidebar({ C, activeNav, onNav, dark, onToggleDark, user, onSignO
               width: 34, height: 34, borderRadius: 10,
               background: "linear-gradient(135deg, #7c3aed, #3b82f6)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 12, fontWeight: 700, color: "#fff",
+              fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0,
             }}
           >
             {user?.initials || "?"}
           </div>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{user?.name || "Elise Leal"}</div>
-            <div style={{ fontSize: 11, color: C.textDim }}>{user?.role === "ADMIN" ? "Admin" : user?.role === "CHARGEE" ? "Chargée" : "Prescripteur"}</div>
-          </div>
+          {!collapsed && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{user?.name || "Elise Leal"}</div>
+              <div style={{ fontSize: 11, color: C.textDim }}>{user?.role === "ADMIN" ? "Admin" : user?.role === "CHARGEE" ? "Chargée" : "Prescripteur"}</div>
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", gap: 4 }}>
           <button
