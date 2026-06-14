@@ -383,22 +383,33 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
           {(folder === "inbox" || folder === "sent" || searchActive) && (
             <>
               <select value={filter} onChange={(e) => setFilter(e.target.value)} style={ss}>
-                <option value="">Tous</option>
+                <option value="">Filtrer par...</option>
                 <option value="unread">Non lus</option>
-                <option value="attachment">Avec PJ</option>
-                <option value="starred">Étoilés</option>
-                <option value="no_reply_3d">Sans réponse &gt; 3j</option>
-                <option value="no_reply_7d">Sans réponse &gt; 7j</option>
-                <option value="no_reply_14d">Sans réponse &gt; 14j</option>
+                <option value="attachment">Avec pièce jointe</option>
+                <option value="starred">Marqués importants</option>
+                <option value="no_reply_3d">Sans réponse &gt; 3 jours</option>
+                <option value="no_reply_7d">Sans réponse &gt; 7 jours</option>
+                <option value="no_reply_14d">Sans réponse &gt; 14 jours</option>
               </select>
-              <select value={entrepriseFilter} onChange={(e) => setEntrepriseFilter(e.target.value)} style={{ ...ss, maxWidth: 200 }}>
+              <select value={entrepriseFilter} onChange={(e) => setEntrepriseFilter(e.target.value)} style={{ ...ss, maxWidth: 220 }}>
                 <option value="">Tous les dossiers</option>
-                {entreprises.map((e) => <option key={e.id} value={e.id}>{e.nom}</option>)}
+                {[...entreprises].sort((a, b) => a.nom.localeCompare(b.nom, "fr")).map((e) => <option key={e.id} value={e.id}>{e.nom}</option>)}
               </select>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.text, cursor: "pointer" }}>
-                <input type="checkbox" checked={kiwiOnly} onChange={(e) => { setKiwiOnly(e.target.checked); if (search) setSearchActive(true); }} />
-                Kiwi
-              </label>
+              <button
+                onClick={() => { setKiwiOnly(!kiwiOnly); if (search) setSearchActive(true); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "7px 14px", borderRadius: 10, cursor: "pointer",
+                  border: `1px solid ${kiwiOnly ? C.accent : C.border}`,
+                  background: kiwiOnly ? C.accentDim : C.surface,
+                  color: kiwiOnly ? C.accentText : C.textDim,
+                  fontSize: 12, fontWeight: 500, transition: "all 0.15s",
+                }}
+                title="Afficher uniquement les conversations initiées depuis Kiwi"
+              >
+                <Mail size={13} />
+                Envoyés depuis Kiwi
+              </button>
             </>
           )}
         </div>
