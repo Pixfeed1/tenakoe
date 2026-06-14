@@ -56,6 +56,7 @@ model User {
   gmailAccount     GmailAccount?
   gmailSyncState   GmailSyncState? @relation("GmailSyncState")
   annoncesVues     AnnonceVue[]
+  mailsProgrammes  MailEnvoiProgramme[] @relation("MailsProgrammes")
 }
 
 // ============================================================
@@ -978,6 +979,23 @@ model EmailReponsePieceJointe {
   taille            Int?
 
   @@index([emailReponseId])
+}
+
+model MailEnvoiProgramme {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation("MailsProgrammes", fields: [userId], references: [id], onDelete: Cascade)
+  destinataire String
+  cc           String?
+  bcc          String?
+  objet        String
+  contenu      String   @db.Text
+  entrepriseId String?
+  dateEnvoi    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([dateEnvoi])
+  @@index([userId])
 }
 
 // ============================================================

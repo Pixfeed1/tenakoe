@@ -1,87 +1,79 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Mail, Search, ArrowLeft, ExternalLink, CheckCircle2, Clock, Reply, Send, X, Paperclip } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Inbox, Send, FileText, Clock, Archive, Search, ArrowLeft, Paperclip,
+  Tag, Plus, X, Mail, Reply, ChevronDown, Trash2,
+} from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
-interface MailConversation {
-  id: string;
-  destinataire: string;
-  objet: string | null;
-  statutEnvoi: string | null;
-  dateEnvoi: string;
-  dernierEvenement: string;
-  chargee: string;
-  chargeeId: string | null;
-  entreprise: { id: string; nom: string } | null;
-  nbReponses: number;
-  isMine: boolean;
-  hasUnread: boolean;
+interface GmailThread {
+  id: string; subject: string; from: string; to: string; date: string;
+  snippet: string; unread: boolean; hasAttachment: boolean;
+  labelIds: string[]; messageCount: number; isKiwi: boolean;
 }
 
-interface EmailReponse {
-  id: string;
-  expediteur: string;
-  sujet: string | null;
-  extraitTexte: string | null;
-  dateReception: string;
-  rfc822MessageId: string | null;
-  piecesJointes?: Array<{ id: string; nom: string; mimeType: string | null; taille: number | null }>;
+interface GmailMessage {
+  id: string; from: string; to: string; subject: string; date: string;
+  body: string; hasAttachment: boolean; labelIds: string[];
+  attachments: Array<{ id: string; messageId: string; filename: string; mimeType: string; size: number }>;
 }
 
-interface MailDetail {
-  id: string;
-  destinataire: string;
-  objet: string | null;
-  contenu: string | null;
-  dateEnvoi: string;
-  statutEnvoi: string | null;
-  gmailThreadId: string | null;
-  gmailMessageId: string | null;
-  expediteur: { id: string; prenom: string; nom: string } | null;
-  expediteurEmail: string | null;
-  automatique: boolean;
-  entreprise: { id: string; nom: string } | null;
-  reponses: EmailReponse[];
-  isMine: boolean;
+interface GmailLabel { id: string; name: string; color?: { textColor?: string; backgroundColor?: string } | null }
+
+interface ScheduledMail {
+  id: string; destinataire: string; objet: string; dateEnvoi: string;
 }
 
-interface MailsViewProps {
-  C: Theme;
-  role: string;
-  onSelectClient: (c: { id: string; nom: string }) => void;
+interface Draft {
+  id: string; messageId: string; to: string; subject: string; date: string; snippet: string;
 }
 
-function formatFileSize(bytes: number | null): string {
-  if (!bytes) return "";
+type Folder = "inbox" | "sent" | "drafts" | "scheduled" | "archive";
+
+interface MailsViewProps { C: Theme; role: string; onSelectClient: (c: { id: string; nom: string }) => void; }
+
+function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
   if (bytes < 1048576) return `${Math.round(bytes / 1024)} Ko`;
   return `${(bytes / 1048576).toFixed(1)} Mo`;
 }
 
-function cleanMailContent(html: string): string {
-  return html
-    .replace(/\[https?:\/\/[^\]]+\.(png|jpg|jpeg|gif|webp)[^\]]*\]/gi, "")
-    .replace(/_{10,}/g, '<hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0" />');
+function formatName(raw: string): string {
+  return raw.replace(/<.*>/, "").replace(/"/g, "").trim() || raw;
+}
+
+function formatDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+  } catch { return iso; }
 }
 
 export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
-  const [conversations, setConversations] = useState<MailConversation[]>([]);
+  const [folder, setFolder] = useState<Folder>("inbox");
+  const [threads, setThreads] = useState<GmailThread[]>([]);
   const [loading, setLoading] = useState(true);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [filtreStatut, setFiltreStatut] = useState("");
-  const [filtreChargee, setFiltreChargee] = useState("");
-  const [chargees, setChargees] = useState<Array<{ id: string; prenom: string; nom: string }>>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [searchActive, setSearchActive] = useState(false);
+  const [filter, setFilter] = useState("");
+  const [kiwiOnly, setKiwiOnly] = useState(false);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<MailDetail | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [selectedThread, setSelectedThread] = useState<string | null>(null);
+  const [messages, setMessages] = useState<GmailMessage[]>([]);
+  const [loadingThread, setLoadingThread] = useState(false);
+
+  const [labels, setLabels] = useState<GmailLabel[]>([]);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [scheduled, setScheduled] = useState<ScheduledMail[]>([]);
+  const [showNewLabel, setShowNewLabel] = useState(false);
+  const [newLabelName, setNewLabelName] = useState("");
 
   const [showReply, setShowReply] = useState(false);
   const [replyTo, setReplyTo] = useState("");
@@ -89,213 +81,191 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
   const [replyBody, setReplyBody] = useState("");
   const [sending, setSending] = useState(false);
 
+  const [gmailConnected, setGmailConnected] = useState<boolean | null>(null);
+
   const { toast } = useToast();
 
-  const fetchConversations = () => {
+  useEffect(() => {
+    fetch("/api/gmail/status").then((r) => r.ok ? r.json() : { ok: false }).then((d) => setGmailConnected(d.ok)).catch(() => setGmailConnected(false));
+    fetch("/api/gmail/labels").then((r) => r.ok ? r.json() : []).then(setLabels).catch(() => {});
+  }, []);
+
+  const fetchFolder = useCallback((pageToken?: string) => {
+    setLoading(true);
+    if (searchActive && search) {
+      const params = new URLSearchParams({ q: search, ...(kiwiOnly ? { kiwi: "true" } : {}) });
+      if (pageToken) params.set("pageToken", pageToken);
+      fetch(`/api/gmail/search?${params}`)
+        .then((r) => r.ok ? r.json() : { threads: [] })
+        .then((d) => { setThreads(pageToken ? (prev) => [...prev, ...d.threads] : d.threads); setNextPageToken(d.nextPageToken); setLoading(false); })
+        .catch(() => setLoading(false));
+      return;
+    }
+
+    if (folder === "drafts") {
+      fetch("/api/gmail/drafts").then((r) => r.ok ? r.json() : []).then((d) => { setDrafts(d); setLoading(false); }).catch(() => setLoading(false));
+      return;
+    }
+    if (folder === "scheduled") {
+      fetch("/api/gmail/scheduled").then((r) => r.ok ? r.json() : []).then((d) => { setScheduled(d); setLoading(false); }).catch(() => setLoading(false));
+      return;
+    }
+
+    const endpoint = folder === "inbox" ? "/api/gmail/inbox" : folder === "sent" ? "/api/gmail/sent" : "/api/gmail/inbox";
     const params = new URLSearchParams();
-    if (filtreStatut) params.set("statut", filtreStatut);
-    if (filtreChargee) params.set("chargee", filtreChargee);
-    if (search) params.set("search", search);
-    params.set("page", String(page));
-    fetch(`/api/mails?${params}`)
-      .then((r) => r.ok ? r.json() : { data: [], total: 0, pages: 1 })
-      .then((res) => {
-        setConversations(res.data || []);
-        setTotal(res.total || 0);
-        setTotalPages(res.pages || 1);
-        setLoading(false);
-      })
-      .catch(() => { setLoading(false); toast("Erreur chargement mails"); });
+    if (pageToken) params.set("pageToken", pageToken);
+    if (filter) params.set("filter", filter);
+    if (folder === "archive") params.set("filter", "archive");
+
+    let url = `${endpoint}?${params}`;
+    if (folder === "archive") url = `/api/gmail/search?q=-in:inbox+-in:spam+-in:trash+in:anywhere&${params}`;
+
+    fetch(url)
+      .then((r) => r.ok ? r.json() : { threads: [] })
+      .then((d) => { setThreads(pageToken ? (prev) => [...prev, ...d.threads] : d.threads); setNextPageToken(d.nextPageToken); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [folder, filter, search, searchActive, kiwiOnly]);
+
+  useEffect(() => { fetchFolder(); }, [fetchFolder]);
+
+  const openThread = (threadId: string) => {
+    setSelectedThread(threadId);
+    setLoadingThread(true);
+    setShowReply(false);
+    fetch(`/api/gmail/thread/${threadId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setMessages(d.messages); setLoadingThread(false); })
+      .catch(() => setLoadingThread(false));
   };
 
-  useEffect(() => { fetchConversations(); }, [filtreStatut, filtreChargee, search, page]);
+  const doSearch = () => { if (search.trim()) { setSearchActive(true); setSelectedThread(null); } };
+  const clearSearch = () => { setSearch(""); setSearchActive(false); };
 
-  useEffect(() => {
-    if (role === "ADMIN") {
-      fetch("/api/users").then((r) => r.ok ? r.json() : [])
-        .then((data) => setChargees(data.filter((u: { actif?: boolean; role?: string }) => u.actif && u.role !== "PRESCRIPTEUR")))
-        .catch(() => {});
-    }
-  }, [role]);
+  const createLabel = async () => {
+    if (!newLabelName.trim()) return;
+    const res = await fetch("/api/gmail/labels", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newLabelName }) });
+    if (res.ok) { const l = await res.json(); setLabels((prev) => [...prev, l]); setNewLabelName(""); setShowNewLabel(false); toast("Étiquette créée"); }
+  };
 
-  useEffect(() => {
-    if (!selectedId) { setDetail(null); setShowReply(false); return; }
-    setLoadingDetail(true);
-    fetch(`/api/mails/${selectedId}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { setDetail(data); setLoadingDetail(false); })
-      .catch(() => { setLoadingDetail(false); toast("Erreur chargement conversation"); });
-  }, [selectedId]);
+  const deleteScheduled = async (id: string) => {
+    const res = await fetch("/api/gmail/scheduled", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+    if (res.ok) { setScheduled((prev) => prev.filter((s) => s.id !== id)); toast("Envoi annulé"); }
+  };
 
-  const openReply = (conv?: MailDetail | null) => {
-    const d = conv || detail;
-    if (!d) return;
-    const lastReponse = d.reponses[d.reponses.length - 1];
-    setReplyTo(lastReponse ? lastReponse.expediteur.replace(/<([^>]+)>/, "$1").replace(/.*</, "").replace(/>.*/, "").trim() || d.destinataire : d.destinataire);
-    const subj = d.objet || "";
+  const openReplyOnThread = () => {
+    if (!messages.length) return;
+    const last = messages[messages.length - 1];
+    setReplyTo(last.from.replace(/.*</, "").replace(/>.*/, "").trim());
+    const subj = messages[0].subject || "";
     setReplySubject(subj.startsWith("Re:") ? subj : `Re: ${subj}`);
     setReplyBody("");
     setShowReply(true);
   };
 
   const sendReply = async () => {
-    if (!detail || !replyBody.trim()) return;
+    if (!selectedThread || !replyBody.trim()) return;
     setSending(true);
-    try {
-      const lastReponse = detail.reponses[detail.reponses.length - 1];
-      const res = await fetch("/api/send-mail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: replyTo,
-          subject: replySubject,
-          html: `<p>${replyBody.replace(/\n/g, "<br>")}</p>`,
-          entrepriseId: detail.entreprise?.id || null,
-          replyToThreadId: detail.gmailThreadId || undefined,
-          replyToMessageId: lastReponse?.rfc822MessageId || undefined,
-          replyToReferences: lastReponse?.rfc822MessageId || undefined,
-        }),
-      });
-      if (res.ok) {
-        toast("Réponse envoyée");
-        setShowReply(false);
-        setReplyBody("");
-        setSelectedId(null);
-        setTimeout(fetchConversations, 500);
-      } else {
-        const err = await res.json();
-        toast(err.error || "Erreur envoi");
-      }
-    } catch {
-      toast("Erreur réseau");
-    }
+    const lastMsg = messages[messages.length - 1];
+    const res = await fetch("/api/send-mail", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to: replyTo, subject: replySubject, html: `<p>${replyBody.replace(/\n/g, "<br>")}</p>`, replyToThreadId: selectedThread, replyToMessageId: lastMsg?.attachments?.[0]?.messageId || undefined }),
+    });
+    if (res.ok) { toast("Réponse envoyée"); setShowReply(false); openThread(selectedThread); }
+    else { const err = await res.json(); toast(err.error || "Erreur envoi"); }
     setSending(false);
   };
 
-  const openReplyFromList = (conv: MailConversation) => {
-    setSelectedId(conv.id);
-    setTimeout(() => openReply(), 500);
-  };
+  const FOLDERS: Array<{ id: Folder; label: string; Icon: typeof Inbox }> = [
+    { id: "inbox", label: "Boîte de réception", Icon: Inbox },
+    { id: "sent", label: "Envoyés", Icon: Send },
+    { id: "drafts", label: "Brouillons", Icon: FileText },
+    { id: "scheduled", label: "Boîte d'envoi", Icon: Clock },
+    { id: "archive", label: "Archives", Icon: Archive },
+  ];
 
   const ss: React.CSSProperties = { padding: "8px 12px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" };
 
-  // === DETAIL VIEW ===
-  if (selectedId && detail) {
+  if (gmailConnected === false) {
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>
+        <Mail size={32} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
+        <div style={{ fontSize: 14, marginBottom: 8 }}>Compte Gmail non connecté</div>
+        <div style={{ fontSize: 12 }}>Connectez votre compte Gmail dans Paramètres → Intégrations pour accéder à vos mails.</div>
+      </div>
+    );
+  }
+
+  // === THREAD DETAIL ===
+  if (selectedThread) {
     return (
       <div>
-        <button onClick={() => setSelectedId(null)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", border: "none", background: "none", color: C.accent, cursor: "pointer", fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
-          <ArrowLeft size={14} /> Retour à la liste
+        <button onClick={() => { setSelectedThread(null); setShowReply(false); }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 0", border: "none", background: "none", color: C.accent, cursor: "pointer", fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
+          <ArrowLeft size={14} /> Retour
         </button>
 
-        <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div>
-              <h2 style={{ fontSize: 16, fontWeight: 600, color: C.text, margin: 0 }}>{detail.objet || "(sans objet)"}</h2>
-              <div style={{ fontSize: 12, color: C.textDim, marginTop: 4 }}>
-                À : {detail.destinataire} · {new Date(detail.dateEnvoi).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {detail.statutEnvoi === "REPONDU" ? (
-                <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Répondu</Badge>
-              ) : (
-                <Badge color={C.textDim} bg={C.bg}>En attente</Badge>
-              )}
-            </div>
-          </div>
-
-          {detail.entreprise && (
-            <button onClick={() => onSelectClient(detail.entreprise!)} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: C.accent, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-              <ExternalLink size={12} /> {detail.entreprise.nom}
-            </button>
-          )}
-
-          {detail.expediteur ? (
-            <div style={{ fontSize: 12, color: C.textDim, marginTop: 8 }}>
-              Envoyé par {detail.expediteur.prenom} {detail.expediteur.nom}{detail.expediteurEmail ? ` (${detail.expediteurEmail})` : ""}
-            </div>
-          ) : detail.automatique ? (
-            <div style={{ fontSize: 12, color: C.textDim, marginTop: 8 }}>Envoyé automatiquement par Kiwi</div>
-          ) : null}
-
-          {detail.contenu && (
-            <div style={{ marginTop: 16, padding: 16, background: C.bg, borderRadius: 10, fontSize: 13, color: C.text, lineHeight: 1.6, whiteSpace: "pre-line" }} dangerouslySetInnerHTML={{ __html: cleanMailContent(detail.contenu) }} />
-          )}
-        </div>
-
-        {detail.reponses.length > 0 && (
+        {loadingThread ? (
+          <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>
+        ) : (
           <div>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 12 }}>Réponses ({detail.reponses.length})</h3>
-            {detail.reponses.map((r) => (
-              <div key={r.id} style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, padding: 16, marginBottom: 10 }}>
+            {messages.length > 0 && (
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: C.text, margin: "0 0 16px" }}>{messages[0].subject || "(sans objet)"}</h2>
+            )}
+
+            {messages.map((msg, i) => (
+              <div key={msg.id} style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, padding: 16, marginBottom: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{r.expediteur.replace(/<.*>/, "").trim()}</span>
-                  <span style={{ fontSize: 11, color: C.textDim }}>{new Date(r.dateReception).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })}</span>
+                  <div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{formatName(msg.from)}</span>
+                    <span style={{ fontSize: 11, color: C.textDim, marginLeft: 8 }}>→ {formatName(msg.to)}</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: C.textDim }}>{formatDate(msg.date)}</span>
                 </div>
-                {r.sujet && <div style={{ fontSize: 11, color: C.textDim, marginBottom: 6 }}>{r.sujet}</div>}
-                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{r.extraitTexte || "(contenu indisponible)"}</div>
-                {r.piecesJointes && r.piecesJointes.length > 0 && (
+                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: msg.body }} />
+                {msg.attachments.length > 0 && (
                   <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {r.piecesJointes.map((pj) => (
-                      <a key={pj.id} href={`/api/mails/piece-jointe/${pj.id}`} target="_blank" rel="noopener noreferrer"
-                        style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, textDecoration: "none" }}
-                      >
+                    {msg.attachments.map((att) => (
+                      <a key={att.id} href={`/api/mails/piece-jointe-gmail/${att.messageId}/${att.id}?name=${encodeURIComponent(att.filename)}&type=${encodeURIComponent(att.mimeType)}`} target="_blank" rel="noopener noreferrer"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, textDecoration: "none" }}>
                         <Paperclip size={12} color={C.accent} />
-                        <span style={{ fontWeight: 500 }}>{pj.nom}</span>
-                        {pj.taille ? <span style={{ color: C.textDim }}>({formatFileSize(pj.taille)})</span> : null}
+                        <span style={{ fontWeight: 500 }}>{att.filename}</span>
+                        <span style={{ color: C.textDim }}>({formatFileSize(att.size)})</span>
                       </a>
                     ))}
                   </div>
                 )}
               </div>
             ))}
-          </div>
-        )}
 
-        {detail.reponses.length === 0 && (
-          <div style={{ padding: 32, textAlign: "center", color: C.textDim, fontSize: 13 }}>
-            <Clock size={24} style={{ margin: "0 auto 8px", opacity: 0.5 }} />
-            Aucune réponse reçue
-          </div>
-        )}
+            {!showReply && (
+              <div style={{ marginTop: 16 }}>
+                <Button C={C} variant="primary" onClick={openReplyOnThread}><Reply size={14} /> Répondre</Button>
+              </div>
+            )}
 
-        {/* Reply button — only for own conversations */}
-        {detail.isMine && !showReply && (
-          <div style={{ marginTop: 16 }}>
-            <Button C={C} variant="primary" onClick={() => openReply()}>
-              <Reply size={14} /> Répondre
-            </Button>
-          </div>
-        )}
-
-        {/* Reply compose */}
-        {showReply && (
-          <div style={{ marginTop: 16, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: C.text, margin: 0 }}>Répondre</h3>
-              <button onClick={() => setShowReply(false)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim }}><X size={16} /></button>
-            </div>
-            <div style={{ marginBottom: 8 }}>
-              <label style={{ fontSize: 11, color: C.textDim }}>À :</label>
-              <input value={replyTo} onChange={(e) => setReplyTo(e.target.value)} style={{ ...ss, marginTop: 4, width: "100%" }} />
-            </div>
-            <div style={{ marginBottom: 8 }}>
-              <label style={{ fontSize: 11, color: C.textDim }}>Objet :</label>
-              <input value={replySubject} onChange={(e) => setReplySubject(e.target.value)} style={{ ...ss, marginTop: 4, width: "100%" }} />
-            </div>
-            <textarea
-              value={replyBody}
-              onChange={(e) => setReplyBody(e.target.value)}
-              placeholder="Votre réponse..."
-              rows={6}
-              style={{ ...ss, marginTop: 4, width: "100%", resize: "vertical", boxSizing: "border-box" }}
-            />
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <Button C={C} variant="primary" disabled={sending || !replyBody.trim()} onClick={sendReply}>
-                <Send size={13} /> {sending ? "Envoi..." : "Envoyer"}
-              </Button>
-              <Button C={C} variant="ghost" onClick={() => setShowReply(false)}>Annuler</Button>
-            </div>
+            {showReply && (
+              <div style={{ marginTop: 16, background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: C.text, margin: 0 }}>Répondre</h3>
+                  <button onClick={() => setShowReply(false)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim }}><X size={16} /></button>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ fontSize: 11, color: C.textDim }}>À :</label>
+                  <input value={replyTo} onChange={(e) => setReplyTo(e.target.value)} style={{ ...ss, marginTop: 4, width: "100%" }} />
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ fontSize: 11, color: C.textDim }}>Objet :</label>
+                  <input value={replySubject} onChange={(e) => setReplySubject(e.target.value)} style={{ ...ss, marginTop: 4, width: "100%" }} />
+                </div>
+                <textarea value={replyBody} onChange={(e) => setReplyBody(e.target.value)} placeholder="Votre réponse..." rows={6}
+                  style={{ ...ss, marginTop: 4, width: "100%", resize: "vertical", boxSizing: "border-box" }} />
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <Button C={C} variant="primary" disabled={sending || !replyBody.trim()} onClick={sendReply}>
+                    <Send size={13} /> {sending ? "Envoi..." : "Envoyer"}
+                  </Button>
+                  <Button C={C} variant="ghost" onClick={() => setShowReply(false)}>Annuler</Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -304,108 +274,141 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
 
   // === LIST VIEW ===
   return (
-    <>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{total} conversation{total > 1 ? "s" : ""}</span>
-      </div>
-
-      <div className="filter-bar" style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 180, display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface }}>
-          <Search size={14} color={C.textDim} />
-          <input placeholder="Rechercher (destinataire, objet)..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
+    <div style={{ display: "flex", gap: 16 }}>
+      {/* Sidebar */}
+      <div style={{ width: 200, flexShrink: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 16 }}>
+          {FOLDERS.map((f) => (
+            <button key={f.id} onClick={() => { setFolder(f.id); setSelectedThread(null); clearSearch(); }}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", background: folder === f.id && !searchActive ? C.accentDim : "transparent", color: folder === f.id && !searchActive ? C.accentText : C.text, fontSize: 13, fontWeight: folder === f.id ? 600 : 400, textAlign: "left" }}>
+              <f.Icon size={15} /> {f.label}
+            </button>
+          ))}
         </div>
-        <select value={filtreStatut} onChange={(e) => { setFiltreStatut(e.target.value); setPage(1); }} style={ss}>
-          <option value="">Tous les statuts</option>
-          <option value="REPONDU">Répondu</option>
-          <option value="EN_ATTENTE">En attente</option>
-        </select>
-        {role === "ADMIN" && chargees.length > 0 && (
-          <select value={filtreChargee} onChange={(e) => { setFiltreChargee(e.target.value); setPage(1); }} style={ss}>
-            <option value="">Toutes les chargées</option>
-            {chargees.map((c) => <option key={c.id} value={c.id}>{c.prenom}</option>)}
-          </select>
-        )}
-      </div>
 
-      {loading ? (
-        <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>
-      ) : conversations.length === 0 ? (
-        <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>
-          <Mail size={32} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
-          <div style={{ fontSize: 14 }}>Aucune conversation email</div>
-          <div style={{ fontSize: 12, marginTop: 4 }}>Les mails envoyés depuis Kiwi avec un suivi de réponse apparaîtront ici.</div>
-        </div>
-      ) : (
-        <>
-          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                  {["Destinataire", "Entreprise", "Objet", "Statut", "Dernier événement", "Chargée", ""].map((h) => (
-                    <th key={h || "actions"} style={{ padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {conversations.map((conv) => (
-                  <tr key={conv.id}
-                    style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer", fontWeight: conv.hasUnread ? 700 : 400 }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                  >
-                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px", color: C.text }}>
-                      {conv.hasUnread && <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: 3, background: C.accent, marginRight: 6 }} />}
-                      {conv.destinataire}
-                    </td>
-                    <td style={{ padding: "10px 12px" }}>
-                      {conv.entreprise ? (
-                        <button onClick={(e) => { e.stopPropagation(); onSelectClient(conv.entreprise!); }} style={{ background: "none", border: "none", color: C.accent, cursor: "pointer", fontSize: 13, padding: 0 }}>
-                          {conv.entreprise.nom}
-                        </button>
-                      ) : "—"}
-                    </td>
-                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px", color: C.text, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.objet || "—"}</td>
-                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px" }}>
-                      {conv.statutEnvoi === "REPONDU" ? (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: "#16a34a", background: "rgba(22,163,74,0.08)", padding: "3px 8px", borderRadius: 6 }}>
-                          <CheckCircle2 size={12} /> Répondu
-                        </span>
-                      ) : (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: C.textDim, background: C.bg, padding: "3px 8px", borderRadius: 6 }}>
-                          <Clock size={12} /> En attente
-                        </span>
-                      )}
-                    </td>
-                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px", color: C.textDim, fontSize: 12 }}>
-                      {new Date(conv.dernierEvenement).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                    </td>
-                    <td onClick={() => setSelectedId(conv.id)} style={{ padding: "10px 12px", color: C.textDim }}>{conv.chargee}</td>
-                    <td style={{ padding: "10px 8px", textAlign: "right" }}>
-                      {conv.isMine && (
-                        <button onClick={(e) => { e.stopPropagation(); openReplyFromList(conv); }}
-                          style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, cursor: "pointer" }}
-                          title="Répondre"
-                        >
-                          <Reply size={12} /> Répondre
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Labels */}
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.04em" }}>Étiquettes</span>
+            <button onClick={() => setShowNewLabel(!showNewLabel)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim }}><Plus size={14} /></button>
           </div>
-
-          {totalPages > 1 && (
-            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}>
-              <Button C={C} variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Précédent</Button>
-              <span style={{ fontSize: 12, color: C.textDim, lineHeight: "32px" }}>Page {page}/{totalPages}</span>
-              <Button C={C} variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Suivant</Button>
+          {showNewLabel && (
+            <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+              <input value={newLabelName} onChange={(e) => setNewLabelName(e.target.value)} placeholder="Nom..." onKeyDown={(e) => { if (e.key === "Enter") createLabel(); }}
+                style={{ flex: 1, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, fontSize: 11, outline: "none" }} />
+              <button onClick={createLabel} style={{ padding: "4px 8px", borderRadius: 6, border: "none", background: C.accent, color: "#fff", fontSize: 11, cursor: "pointer" }}>OK</button>
             </div>
           )}
-        </>
-      )}
-    </>
+          {labels.map((l) => (
+            <button key={l.id} onClick={() => { setSearch(`label:${l.name}`); setSearchActive(true); setSelectedThread(null); }}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer", background: "transparent", color: C.text, fontSize: 12, width: "100%", textAlign: "left" }}>
+              <Tag size={12} color={C.textDim} /> {l.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Search + filters */}
+        <div className="filter-bar" style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 200, display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface }}>
+            <Search size={14} color={C.textDim} />
+            <input placeholder="Rechercher dans les mails..." value={search}
+              onChange={(e) => { setSearch(e.target.value); if (!e.target.value) clearSearch(); }}
+              onKeyDown={(e) => { if (e.key === "Enter") doSearch(); }}
+              style={{ border: "none", background: "transparent", color: C.text, fontSize: 13, outline: "none", flex: 1 }} />
+            {searchActive && <button onClick={clearSearch} style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim }}><X size={14} /></button>}
+          </div>
+          {(folder === "inbox" || searchActive) && (
+            <>
+              <select value={filter} onChange={(e) => setFilter(e.target.value)} style={ss}>
+                <option value="">Tous</option>
+                <option value="unread">Non lus</option>
+                <option value="attachment">Avec PJ</option>
+              </select>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.text, cursor: "pointer" }}>
+                <input type="checkbox" checked={kiwiOnly} onChange={(e) => { setKiwiOnly(e.target.checked); if (search) setSearchActive(true); }} />
+                Kiwi uniquement
+              </label>
+            </>
+          )}
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Chargement...</div>
+        ) : folder === "drafts" ? (
+          drafts.length === 0 ? (
+            <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Aucun brouillon</div>
+          ) : (
+            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+              {drafts.map((d, i) => (
+                <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderBottom: i < drafts.length - 1 ? `1px solid ${C.border}` : "none", cursor: "pointer" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+                  <FileText size={14} color={C.textDim} />
+                  <span style={{ fontSize: 13, color: C.text, flex: 1 }}>{d.subject}</span>
+                  <span style={{ fontSize: 11, color: C.textDim }}>{d.to || "—"}</span>
+                </div>
+              ))}
+            </div>
+          )
+        ) : folder === "scheduled" ? (
+          scheduled.length === 0 ? (
+            <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Aucun envoi programmé</div>
+          ) : (
+            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+              {scheduled.map((s, i) => (
+                <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderBottom: i < scheduled.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                  <Clock size={14} color={C.textDim} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, color: C.text }}>{s.objet}</div>
+                    <div style={{ fontSize: 11, color: C.textDim }}>{s.destinataire} · {new Date(s.dateEnvoi).toLocaleString("fr-FR")}</div>
+                  </div>
+                  <button onClick={() => deleteScheduled(s.id)} title="Annuler" style={{ background: "none", border: "none", cursor: "pointer", color: C.textDim }}><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          )
+        ) : threads.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>
+            <Mail size={32} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
+            {searchActive ? "Aucun résultat" : "Aucun mail"}
+          </div>
+        ) : (
+          <>
+            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+              {threads.map((t, i) => (
+                <div key={t.id} onClick={() => openThread(t.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderBottom: i < threads.length - 1 ? `1px solid ${C.border}` : "none", cursor: "pointer", fontWeight: t.unread ? 700 : 400 }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+                  {t.unread && <span style={{ width: 6, height: 6, borderRadius: 3, background: C.accent, flexShrink: 0 }} />}
+                  {!t.unread && <span style={{ width: 6, flexShrink: 0 }} />}
+                  <span style={{ fontSize: 13, color: C.text, width: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    {folder === "sent" ? formatName(t.to) : formatName(t.from)}
+                  </span>
+                  <span style={{ fontSize: 13, color: C.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {t.subject}
+                    <span style={{ color: C.textDim, fontWeight: 400, marginLeft: 8 }}>{t.snippet}</span>
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                    {t.isKiwi && <Badge color={C.accent} bg={C.accentDim}>Kiwi</Badge>}
+                    {t.hasAttachment && <Paperclip size={12} color={C.textDim} />}
+                    {t.messageCount > 1 && <span style={{ fontSize: 10, color: C.textDim, background: C.bg, padding: "1px 5px", borderRadius: 4 }}>{t.messageCount}</span>}
+                    <span style={{ fontSize: 11, color: C.textDim, minWidth: 45, textAlign: "right" }}>{formatDate(t.date)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {nextPageToken && (
+              <div style={{ textAlign: "center", marginTop: 16 }}>
+                <Button C={C} variant="ghost" onClick={() => fetchFolder(nextPageToken)}>Charger plus</Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
   );
 }
