@@ -2054,37 +2054,52 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     const checked = entrepriseData?.[f.key] === "true" || String(entrepriseData?.[f.key]) === "true";
                     const date = entrepriseData?.[f.dateKey];
                     return (
-                      <label key={f.key} onClick={async () => {
-                        if (!client?.id || isDemoMode) return;
-                        const newVal = !checked;
-                        setEntrepriseData((prev) => prev ? { ...prev, [f.key]: String(newVal), [f.dateKey]: newVal ? new Date().toISOString() : "" } : prev);
-                        await fetch(`/api/entreprises/${client.id}`, {
-                          method: "PATCH", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ [f.key]: newVal }),
-                        }).catch(() => {});
-                      }} style={{
+                      <div key={f.key} style={{
                         display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                        borderRadius: 8, cursor: "pointer",
+                        borderRadius: 8,
                         background: checked ? C.accentDim : C.bg,
                         border: `1px solid ${checked ? C.accent + "40" : C.border}`,
                         transition: "all 0.15s",
                       }}>
-                        <div style={{
-                          width: 16, height: 16, borderRadius: 4,
-                          border: `2px solid ${checked ? C.accent : C.border}`,
-                          background: checked ? C.accent : "transparent",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          flexShrink: 0,
-                        }}>
-                          {checked && <Check size={10} color="#fff" strokeWidth={3} />}
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text, flex: 1 }}>{f.label}</span>
-                        {date && (
-                          <span style={{ fontSize: 11, color: C.textDim }}>
-                            le {new Date(date).toLocaleDateString("fr-FR")}
-                          </span>
+                        <label onClick={async () => {
+                          if (!client?.id || isDemoMode) return;
+                          const newVal = !checked;
+                          setEntrepriseData((prev) => prev ? { ...prev, [f.key]: String(newVal), [f.dateKey]: newVal ? new Date().toISOString() : "" } : prev);
+                          await fetch(`/api/entreprises/${client.id}`, {
+                            method: "PATCH", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ [f.key]: newVal }),
+                          }).catch(() => {});
+                        }} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: 1 }}>
+                          <div style={{
+                            width: 16, height: 16, borderRadius: 4,
+                            border: `2px solid ${checked ? C.accent : C.border}`,
+                            background: checked ? C.accent : "transparent",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0,
+                          }}>
+                            {checked && <Check size={10} color="#fff" strokeWidth={3} />}
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text }}>{f.label}</span>
+                        </label>
+                        {checked && (
+                          <input
+                            type="date"
+                            value={date ? new Date(date).toISOString().slice(0, 10) : ""}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={async (e) => {
+                              const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                              setEntrepriseData((prev) => prev ? { ...prev, [f.dateKey]: val || "" } : prev);
+                              if (client?.id && !isDemoMode) {
+                                await fetch(`/api/entreprises/${client.id}`, {
+                                  method: "PATCH", headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ [f.dateKey]: val }),
+                                }).catch(() => {});
+                              }
+                            }}
+                            style={{ padding: "2px 6px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, outline: "none", cursor: "pointer" }}
+                          />
                         )}
-                      </label>
+                      </div>
                     );
                   })}
                 </div>
@@ -2124,38 +2139,53 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                 const checked = entrepriseData?.[f.key] === "true";
                 const date = entrepriseData?.[f.dateKey];
                 return (
-                  <label key={f.key} onClick={async () => {
-                    if (!client?.id || isDemoMode) return;
-                    const newVal = !checked;
-                    const newDate = newVal ? new Date().toISOString() : "";
-                    setEntrepriseData((prev) => prev ? { ...prev, [f.key]: String(newVal), [f.dateKey]: newDate } : prev);
-                    await fetch(`/api/entreprises/${client.id}`, {
-                      method: "PATCH", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ [f.key]: newVal, [f.dateKey]: newVal ? new Date().toISOString() : null }),
-                    }).catch(() => {});
-                  }} style={{
+                  <div key={f.key} style={{
                     display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                    borderRadius: 8, cursor: "pointer",
+                    borderRadius: 8,
                     background: checked ? C.accentDim : C.bg,
                     border: `1px solid ${checked ? C.accent + "40" : C.border}`,
                     transition: "all 0.15s",
                   }}>
-                    <div style={{
-                      width: 16, height: 16, borderRadius: 4,
-                      border: `2px solid ${checked ? C.accent : C.border}`,
-                      background: checked ? C.accent : "transparent",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      flexShrink: 0,
-                    }}>
-                      {checked && <Check size={10} color="#fff" strokeWidth={3} />}
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text, flex: 1 }}>{f.label}</span>
-                    {date && (
-                      <span style={{ fontSize: 11, color: C.textDim }}>
-                        le {new Date(date).toLocaleDateString("fr-FR")}
-                      </span>
+                    <label onClick={async () => {
+                      if (!client?.id || isDemoMode) return;
+                      const newVal = !checked;
+                      const newDate = newVal ? new Date().toISOString() : "";
+                      setEntrepriseData((prev) => prev ? { ...prev, [f.key]: String(newVal), [f.dateKey]: newDate } : prev);
+                      await fetch(`/api/entreprises/${client.id}`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ [f.key]: newVal, [f.dateKey]: newVal ? new Date().toISOString() : null }),
+                      }).catch(() => {});
+                    }} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flex: 1 }}>
+                      <div style={{
+                        width: 16, height: 16, borderRadius: 4,
+                        border: `2px solid ${checked ? C.accent : C.border}`,
+                        background: checked ? C.accent : "transparent",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        flexShrink: 0,
+                      }}>
+                        {checked && <Check size={10} color="#fff" strokeWidth={3} />}
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: checked ? 600 : 400, color: checked ? C.accentText : C.text }}>{f.label}</span>
+                    </label>
+                    {checked && (
+                      <input
+                        type="date"
+                        value={date ? new Date(date).toISOString().slice(0, 10) : ""}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={async (e) => {
+                          const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                          setEntrepriseData((prev) => prev ? { ...prev, [f.dateKey]: val || "" } : prev);
+                          if (client?.id && !isDemoMode) {
+                            await fetch(`/api/entreprises/${client.id}`, {
+                              method: "PATCH", headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ [f.dateKey]: val }),
+                            }).catch(() => {});
+                          }
+                        }}
+                        style={{ padding: "2px 6px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 11, outline: "none", cursor: "pointer" }}
+                      />
                     )}
-                  </label>
+                  </div>
                 );
               })}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, padding: "8px 0", borderTop: `1px solid ${C.border}` }}>

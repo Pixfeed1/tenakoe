@@ -107,6 +107,12 @@ export async function PATCH(
       data[dateKey] = body[rf] ? new Date() : null;
     }
   }
+  const relanceDateFields = ["dateRelanceJoindre1", "dateRelanceJoindre2", "dateRelanceJoindre3", "dateRelanceJoindre4", "dateRelanceJoindreInjoignable", "dateRelanceDevis1", "dateRelanceDevis2", "dateRelanceDevis3", "dateRelanceDevis4", "dateRelanceDevisFerme", "dateAlerte1", "dateAlerte2", "dateMailAbandon"];
+  for (const df of relanceDateFields) {
+    if (body[df] !== undefined && !Object.prototype.hasOwnProperty.call(data, df)) {
+      data[df] = body[df] ? new Date(body[df] as string) : null;
+    }
+  }
   if (body.prescripteur !== undefined) data.prescripteur = body.prescripteur;
   if (body.depotId !== undefined) data.depotId = body.depotId || null;
   if (body.depotAutreLibelle !== undefined) data.depotAutreLibelle = body.depotAutreLibelle || null;
