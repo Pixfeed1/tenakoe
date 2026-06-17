@@ -1314,7 +1314,8 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                   cursor: "pointer",
                 }}
                 onClick={() => {
-                  if (editingField === f.key || f.key === "contact") return;
+                  if (editingField === f.key) return;
+                  if (f.key === "contact") { setTab("contacts"); return; }
                   if (isChargee && (f.key === "prescripteur" || f.key === "apporteurId")) return;
                   setEditingField(f.key);
                   setEditFieldValue(f.value === "—" ? "" : f.value);
@@ -1452,6 +1453,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     <span style={{ fontSize: 13, color: C.text, fontWeight: 500, whiteSpace: (f as { multiline?: boolean }).multiline ? "pre-wrap" : "nowrap" }}>{f.value}</span>
                   </>
                 )}
+                {f.key === "contact" && <ChevronRight size={13} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
                 {f.key !== "contact" && editingField !== f.key && <Edit3 size={11} color={C.textDim} style={{ marginLeft: "auto", opacity: 0.5 }} />}
               </div>
               );
