@@ -282,6 +282,23 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
       dateInteresseTNK: DEMO_ENTREPRISE.dateInteresseTNK || "",
       dateMiseEnRelation: DEMO_ENTREPRISE.dateMiseEnRelation || "",
       dateQualification: DEMO_ENTREPRISE.dateQualification || "",
+      leadSourceCommentaires: "Artisan rencontré en dépôt, très intéressé par la qualification RGE pour décrocher des chantiers MaPrimeRénov'. À recontacter rapidement.",
+      leadSourceCustomFields: JSON.stringify({
+        typeTravaux: "Isolation thermique par l'intérieur (ITI)",
+        surfaceMoyenne: "120 m²",
+        budgetEstime: "À partir de 8 000 €",
+        zoneIntervention: "Paris et petite couronne",
+        dejaClient: "false",
+        dateRencontre: DEMO_ENTREPRISE.dateTransmission,
+      }),
+      leadSourceChampsConfig: JSON.stringify([
+        { key: "typeTravaux", label: "Type de travaux", type: "text", options: null },
+        { key: "surfaceMoyenne", label: "Surface moyenne chantier", type: "text", options: null },
+        { key: "budgetEstime", label: "Budget estimé", type: "text", options: null },
+        { key: "zoneIntervention", label: "Zone d'intervention", type: "text", options: null },
+        { key: "dejaClient", label: "Déjà client TENAKOE", type: "checkbox", options: null },
+        { key: "dateRencontre", label: "Date de rencontre", type: "date", options: null },
+      ]),
     });
     setDocs(DEMO_DOCUMENTS.map((d) => ({ id: d.id, nom: d.nom, recu: d.recu, type: d.type || "TRONC_COMMUN", conformite: d.conformite || null, notes: (d as { notes?: string }).notes || null, date: d.date, qualificationAssociee: null, fichierUrl: null, fichierNom: null })));
     setTracks(DEMO_ETAPES.map((e) => ({ id: e.id, nom: e.nom, delai: e.delai, done: e.done, active: e.active })));
