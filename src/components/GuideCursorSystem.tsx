@@ -181,8 +181,8 @@ export const WALKTHROUGHS: Record<string, { title: string; steps: WalkthroughSte
       },
       {
         title: "4/6 — Ajouter une note interne",
-        text: "Ajoutez une note pour garder une trace de vos observations. Les notes sont visibles par la direction mais PAS par le prescripteur.",
-        cursorAction: { type: "click", target: "[data-guide='tab-notes']" },
+        text: "Dans l'onglet Historique, ajoutez une note pour garder une trace de vos observations. Les notes sont visibles par la direction mais PAS par le prescripteur.",
+        cursorAction: { type: "click", target: "[data-guide='tab-historique']" },
       },
       {
         title: "5/6 — Créer une tâche de relance",
@@ -581,7 +581,7 @@ export const ACTION_SUGGESTIONS: Record<string, { title: string; message: string
     options: [
       { label: "Envoyer un mail de bienvenue", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
       { label: "Envoyer un SMS", icon: MessageSquare, targetSelector: "[data-guide='btn-sms']" },
-      { label: "Ajouter une note", icon: StickyNote, targetSelector: "[data-guide='tab-notes']" },
+      { label: "Ajouter une note", icon: StickyNote, targetSelector: "[data-guide='tab-historique']" },
     ],
   },
   "mail-envoye": {
@@ -639,7 +639,7 @@ export const ACTION_SUGGESTIONS: Record<string, { title: string; message: string
     message: "Pensez à noter un résumé.",
     options: [
       { label: "Envoyer un mail récapitulatif", icon: Mail, targetSelector: "[data-guide='btn-mail']" },
-      { label: "Ajouter une note interne", icon: StickyNote, targetSelector: "[data-guide='tab-notes']" },
+      { label: "Ajouter une note interne", icon: StickyNote, targetSelector: "[data-guide='tab-historique']" },
     ],
   },
   "etape-terminee": {

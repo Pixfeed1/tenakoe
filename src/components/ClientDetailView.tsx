@@ -203,7 +203,11 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
       siret: DEMO_ENTREPRISE.siret,
       email: DEMO_ENTREPRISE.email,
       telephone: DEMO_ENTREPRISE.telephone,
+      telephone2: DEMO_ENTREPRISE.telephone2 || "",
       adresse: DEMO_ENTREPRISE.adresse,
+      codePostal: DEMO_ENTREPRISE.codePostal || "",
+      ville: DEMO_ENTREPRISE.ville || "",
+      departement: DEMO_ENTREPRISE.departement || "",
       prescripteur: DEMO_ENTREPRISE.prescripteur,
       contact: `${firstContact.prenom} ${firstContact.nom}`,
       statutPrise: DEMO_ENTREPRISE.statutPrise,
@@ -211,20 +215,55 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
       statutFacturation: DEMO_ENTREPRISE.statutFacturation,
       miseEnRelation: DEMO_ENTREPRISE.miseEnRelation,
       miseEnRelationAutre: DEMO_ENTREPRISE.miseEnRelationAutre || "",
+      eligible: DEMO_ENTREPRISE.eligible || "A_VERIFIER",
+      eligibleCommentaire: DEMO_ENTREPRISE.eligibleCommentaire || "",
+      dateEligible: DEMO_ENTREPRISE.dateEligible || "",
+      dejaReferentRGE: DEMO_ENTREPRISE.dejaReferentRGE ? "true" : "false",
       formationsCommentaire: DEMO_ENTREPRISE.formationsCommentaire || "",
+      commentaire: DEMO_ENTREPRISE.commentaire || "",
+      relancesCommentaire: DEMO_ENTREPRISE.relancesCommentaire || "",
+      alerteAbandonCommentaire: DEMO_ENTREPRISE.alerteAbandonCommentaire || "",
+      nomConseiller: DEMO_ENTREPRISE.nomConseiller || "",
+      prenomConseiller: DEMO_ENTREPRISE.prenomConseiller || "",
+      emailConseiller: DEMO_ENTREPRISE.emailConseiller || "",
+      telephoneConseiller: DEMO_ENTREPRISE.telephoneConseiller || "",
+      antenneQualibatSuggereeId: DEMO_ENTREPRISE.antenneQualibatSuggereeId || "",
+      antenneQualibatSuggereeNom: DEMO_ENTREPRISE.antenneQualibatSuggereeNom || "",
+      emailQualibatSuggere: DEMO_ENTREPRISE.emailQualibatSuggere || "",
       alerte1Envoyee: DEMO_ENTREPRISE.alerte1Envoyee ? "true" : "false",
       dateAlerte1: DEMO_ENTREPRISE.dateAlerte1 || "",
       alerte2Envoyee: DEMO_ENTREPRISE.alerte2Envoyee ? "true" : "false",
       dateAlerte2: DEMO_ENTREPRISE.dateAlerte2 || "",
       mailAbandonEnvoye: DEMO_ENTREPRISE.mailAbandonEnvoye ? "true" : "false",
       dateMailAbandon: DEMO_ENTREPRISE.dateMailAbandon || "",
+      relanceJoindre1: DEMO_ENTREPRISE.relanceJoindre1 ? "true" : "false",
+      dateRelanceJoindre1: DEMO_ENTREPRISE.dateRelanceJoindre1 || "",
+      relanceJoindre2: DEMO_ENTREPRISE.relanceJoindre2 ? "true" : "false",
+      dateRelanceJoindre2: DEMO_ENTREPRISE.dateRelanceJoindre2 || "",
+      relanceJoindre3: DEMO_ENTREPRISE.relanceJoindre3 ? "true" : "false",
+      dateRelanceJoindre3: DEMO_ENTREPRISE.dateRelanceJoindre3 || "",
+      relanceJoindre4: DEMO_ENTREPRISE.relanceJoindre4 ? "true" : "false",
+      dateRelanceJoindre4: DEMO_ENTREPRISE.dateRelanceJoindre4 || "",
+      relanceJoindreInjoignable: DEMO_ENTREPRISE.relanceJoindreInjoignable ? "true" : "false",
+      dateRelanceJoindreInjoignable: DEMO_ENTREPRISE.dateRelanceJoindreInjoignable || "",
+      relanceDevis1: DEMO_ENTREPRISE.relanceDevis1 ? "true" : "false",
+      dateRelanceDevis1: DEMO_ENTREPRISE.dateRelanceDevis1 || "",
+      relanceDevis2: DEMO_ENTREPRISE.relanceDevis2 ? "true" : "false",
+      dateRelanceDevis2: DEMO_ENTREPRISE.dateRelanceDevis2 || "",
+      relanceDevis3: DEMO_ENTREPRISE.relanceDevis3 ? "true" : "false",
+      dateRelanceDevis3: DEMO_ENTREPRISE.dateRelanceDevis3 || "",
+      relanceDevis4: DEMO_ENTREPRISE.relanceDevis4 ? "true" : "false",
+      dateRelanceDevis4: DEMO_ENTREPRISE.dateRelanceDevis4 || "",
+      relanceDevisFerme: DEMO_ENTREPRISE.relanceDevisFerme ? "true" : "false",
+      dateRelanceDevisFerme: DEMO_ENTREPRISE.dateRelanceDevisFerme || "",
       depotId: DEMO_ENTREPRISE.depotId || "",
       depotNom: DEMO_ENTREPRISE.depotConfig?.nom || "",
+      depotAutreLibelle: DEMO_ENTREPRISE.depotAutreLibelle || "",
       apporteurId: DEMO_ENTREPRISE.apporteurId || "",
       apporteurNom: DEMO_ENTREPRISE.apporteur ? `${DEMO_ENTREPRISE.apporteur.nom}${DEMO_ENTREPRISE.apporteur.structure ? " (" + DEMO_ENTREPRISE.apporteur.structure + ")" : ""}` : "",
       numeroCarte: DEMO_ENTREPRISE.numeroCarte,
       qualification: firstQualif ? "Qualibat RGE" : "",
-      qualificationId: "",
+      qualificationId: firstQualif?.id || "",
       formation: firstQualif?.formationITI ? "ITI" : "",
       formationITI: firstQualif?.formationITI ? "true" : "false",
       formationITE: firstQualif?.formationITE ? "true" : "false",
@@ -235,16 +274,19 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
       formationEmetteursElec: "false", formationChaudiereCogen: "false", formationBT: "false",
       formationHorsRenoperfITI: "false", formationHorsRenoperfITE: "false",
       chargee: firstProjet?.chargee?.prenom || "Kelly",
+      dateNouveauOverride: DEMO_ENTREPRISE.dateNouveauOverride || "",
+      dateTransmission: DEMO_ENTREPRISE.dateTransmission || "",
+      createdAt: DEMO_ENTREPRISE.dateTransmission || "",
       dateStatutPrise: DEMO_ENTREPRISE.dateStatutPrise || "",
       dateStatutFacturation: DEMO_ENTREPRISE.dateStatutFacturation || "",
       dateInteresseTNK: DEMO_ENTREPRISE.dateInteresseTNK || "",
       dateMiseEnRelation: DEMO_ENTREPRISE.dateMiseEnRelation || "",
       dateQualification: DEMO_ENTREPRISE.dateQualification || "",
     });
-    setDocs(DEMO_DOCUMENTS.map((d) => ({ id: d.id, nom: d.nom, recu: d.recu, date: d.date })));
+    setDocs(DEMO_DOCUMENTS.map((d) => ({ id: d.id, nom: d.nom, recu: d.recu, type: d.type || "TRONC_COMMUN", conformite: d.conformite || null, notes: (d as { notes?: string }).notes || null, date: d.date, qualificationAssociee: null, fichierUrl: null, fichierNom: null })));
     setTracks(DEMO_ETAPES.map((e) => ({ id: e.id, nom: e.nom, delai: e.delai, done: e.done, active: e.active })));
     setContacts(DEMO_CONTACTS.map((c) => ({ id: c.id, nom: c.nom, prenom: c.prenom, email: c.email, telephone: c.telephone, fonction: c.fonction })));
-    setProjets(DEMO_PROJETS.map((p) => ({ id: p.id, nom: p.nom, qualifications: p.qualifications.map((q) => ({ type: q.type })), etapes: p.etapes.map((e) => ({ terminee: e.terminee, active: e.active, nom: e.nom })) })));
+    setProjets(DEMO_PROJETS.map((p) => ({ ...p, qualifications: p.qualifications.map((q) => ({ ...q })), etapes: p.etapes.map((e) => ({ ...e })) })) as unknown as typeof projets);
     setTaches(DEMO_TACHES.map((t) => ({ id: t.id, titre: t.titre, statut: t.statut, type: t.type, dateEcheance: t.dateEcheance, enRetard: t.enRetard, assignee: t.assignee })));
     setHistorique(DEMO_TRANSMISSIONS.map((t) => ({
       type: t.canal === "EMAIL" ? "EMAIL" : t.canal === "SMS" ? "SMS" : "APPEL",
@@ -1920,10 +1962,11 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               const qualifId = entrepriseData?.qualificationId || projets.flatMap((p) => p.qualifications).find((q) => q.id)?.id || "";
               const toggleFormation = async (key: string) => {
                 if (isChargee) return;
-                if (!qualifId) { toast("Aucune qualification trouvée pour ce dossier"); return; }
                 const checked = entrepriseData?.[key] === "true";
                 const newVal = !checked;
                 setEntrepriseData((prev) => prev ? { ...prev, [key]: String(newVal) } : prev);
+                if (isDemoMode) return;
+                if (!qualifId) { toast("Aucune qualification trouvée pour ce dossier"); return; }
                 fetch(`/api/qualifications/${qualifId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [key]: newVal }) }).catch(() => {});
               };
               const renderCheckbox = (key: string, label: string) => {
