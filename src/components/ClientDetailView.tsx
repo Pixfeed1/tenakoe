@@ -2843,9 +2843,6 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
 
         const reloadDocs = async () => {
           if (!client?.id || isDemoMode) return;
-          const projetId = projets[0]?.id;
-          if (!projetId) return;
-          await fetch(`/api/projets/${projetId}/generate-docs`, { method: "POST" });
           const r = await fetch(`/api/documents?entrepriseId=${client.id}`);
           if (r.ok) {
             const freshDocs = await r.json();
@@ -2854,7 +2851,6 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               conformite: d.conformite || null, notes: d.notes || null,
               date: d.dateReception ? new Date(d.dateReception).toLocaleDateString("fr-FR") : null, fichierUrl: d.fichierUrl || null, fichierNom: d.fichierNom || null,
             })));
-            toast("Documents mis à jour");
           }
         };
 
