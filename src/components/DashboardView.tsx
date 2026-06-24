@@ -69,11 +69,11 @@ export function DashboardView({
     }
   }, [peutVoirToutesChargees]);
 
-  const STATS = [
-    { label: "Nouveaux prospects", value: String(serverStats?.nouveaux ?? 0), change: "", up: null as boolean | null, Icon: Zap, colorKey: "blue" },
-    { label: "Prospects actifs", value: String(serverStats?.prospects ?? 0), change: "", up: null as boolean | null, Icon: Target, colorKey: "accent" },
-    { label: "Dossiers en cours", value: String(serverStats?.dossiers ?? 0), change: "", up: null as boolean | null, Icon: ClipboardList, colorKey: "purple" },
-    { label: "En retard", value: String(serverStats?.enRetard ?? 0), change: "", up: null as boolean | null, Icon: Clock, colorKey: "danger", view: "Taches" as string | undefined },
+  const STATS: { label: string; value: string; change: string; up: boolean | null; Icon: typeof Zap; colorKey: string; view: string }[] = [
+    { label: "Nouveaux prospects", value: String(serverStats?.nouveaux ?? 0), change: "", up: null, Icon: Zap,           colorKey: "blue",   view: "Prospects" },
+    { label: "Prospects actifs",   value: String(serverStats?.prospects ?? 0), change: "", up: null, Icon: Target,        colorKey: "accent", view: "Prospects" },
+    { label: "Dossiers en cours",  value: String(serverStats?.dossiers ?? 0),  change: "", up: null, Icon: ClipboardList, colorKey: "purple", view: "Dossiers" },
+    { label: "En retard",          value: String(serverStats?.enRetard ?? 0),  change: "", up: null, Icon: Clock,         colorKey: "danger", view: "Taches" },
   ];
 
   const guide = useGuide();
@@ -100,7 +100,6 @@ export function DashboardView({
   }) : pipelineProspects;
   const PIPELINE_MAX = 5;
 
-  // Poll pipeline every 30s for new leads / status changes
   const refreshPipeline = useCallback(() => {
     fetch("/api/pipeline-data")
       .then((r) => r.ok ? r.json() : null)
@@ -108,7 +107,6 @@ export function DashboardView({
       .catch(() => {});
   }, []);
 
-  // Refresh on mount (when navigating back to dashboard)
   useEffect(() => { refreshPipeline(); }, [refreshPipeline]);
 
   useEffect(() => {
@@ -142,14 +140,12 @@ export function DashboardView({
       return next;
     });
 
-    // Demo items: visual move only, no API call
     if (itemId.startsWith("demo-")) {
       handleDemoAction("Changement de statut");
       setDragOver(null); setDragging(null);
       return;
     }
 
-    // Persist status change via API — use pipelineType from column data
     const targetCol = pipeline.find((c) => c.id === targetColId);
     const isPrise = targetCol?.pipelineType === "prise" || !targetCol?.pipelineType;
     const targetCode = targetCol?.statutCode || targetColId.toUpperCase();
@@ -168,12 +164,10 @@ export function DashboardView({
     setDragOver(null);
     setDragging(null);
 
-    // Find item name for toast
     const movedItem = pipeline.flatMap((c) => c.items).find((i) => i.id === itemId);
     const targetStatus = targetCol?.status || targetColId;
     if (movedItem) toast(`${movedItem.nom} → ${targetStatus}`);
 
-    // Trigger suggestion toast after drag & drop (guide mode)
     if (targetCode === "PRISE_EN_CHARGE") guide.showSuggestion("lead-pris-en-charge");
     else if (targetCode === "A_RELANCER") guide.showSuggestion("lead-a-relancer");
     else if (targetCode === "DEVIS_ENVOYE") guide.showSuggestion("devis-envoye");
@@ -184,13 +178,16 @@ export function DashboardView({
 
   return (
     <>
-      {/* Stats */}
+      {/* Stats — all 4 cards clickable */}
       <GuideTooltip id="kpi" C={C} style={{ marginBottom: 24 }}>
       <div data-guide="kpi" className="stats-row" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         {STATS.map((s, i) => (
           <div
             key={i}
-            onClick={() => { if ((s as { view?: string }).view) onNavigate?.((s as { view?: string }).view!); }}
+            role="button"
+            tabIndex={0}
+            onClick={() => onNavigate?.(s.view)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onNavigate?.(s.view); } }}
             style={{
               background: C.surface, borderRadius: 14, padding: "20px 22px",
               border: `1px solid ${C.border}`, flex: 1, minWidth: 170,
@@ -360,14 +357,7 @@ export function DashboardView({
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "0 4px" }}>
                 {(() => { const Icon = getStatusIcon(col.icone); return <Icon size={14} color={col.colorKey} />; })()}
                 <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{col.status}</span>
-                <span
-                  style={{
-                    fontSize: 11, fontWeight: 700,
-                    color: col.colorKey,
-                    backgroundColor: col.colorKey + "18",
-                    padding: "1px 8px", borderRadius: 6,
-                  }}
-                >
+                <span style={{ fontSize: 11, fontWeight: 700, color: col.colorKey, backgroundColor: col.colorKey + "18", padding: "1px 8px", borderRadius: 6 }}>
                   {colFiltered.items.length}
                 </span>
               </div>
@@ -434,12 +424,7 @@ export function DashboardView({
                   </button>
                 )}
                 {colFiltered.items.length === 0 && (
-                  <div
-                    style={{
-                      padding: 16, textAlign: "center", fontSize: 12, color: C.textDim,
-                      border: `1px dashed ${C.border}`, borderRadius: 8,
-                    }}
-                  >
+                  <div style={{ padding: 16, textAlign: "center", fontSize: 12, color: C.textDim, border: `1px dashed ${C.border}`, borderRadius: 8 }}>
                     Déposer ici
                   </div>
                 )}
@@ -546,12 +531,11 @@ export function DashboardView({
         </div>
       )}
 
-      {/* Mini stats: Qualifiés + Top prescripteurs */}
+      {/* Mini stats */}
       <DashboardExtras C={C} />
 
       {/* Bottom Grid */}
       <div className="bottom-grid" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 20 }}>
-        {/* Clients Table */}
         <div
           data-guide="clients-table"
           style={{
@@ -567,15 +551,7 @@ export function DashboardView({
             <thead>
               <tr style={{ borderBottom: `1px solid ${C.border}` }}>
                 {["Entreprise", "Chargée", "Qualif.", "Docs", "Statut"].map((h) => (
-                  <th
-                    key={h}
-                    style={{
-                      textAlign: "left", padding: "8px 6px 12px", fontSize: 11,
-                      fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em",
-                    }}
-                  >
-                    {h}
-                  </th>
+                  <th key={h} style={{ textAlign: "left", padding: "8px 6px 12px", fontSize: 11, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -584,18 +560,14 @@ export function DashboardView({
                 <tr><td colSpan={5} style={{ padding: 20, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucun client pour le moment</td></tr>
               )}
               {clientsData.map((c, i) => (
-                <tr
-                  key={i}
-                  style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.15s" }}
+                <tr key={i} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.15s" }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                   onClick={() => onSelectClient(c)}
                 >
                   <td style={{ padding: "10px 6px", fontSize: 13, fontWeight: 600, color: C.text }}>{c.nom}</td>
                   <td style={{ padding: "10px 6px", fontSize: 12, color: C.textMuted }}>{c.chargee}</td>
-                  <td style={{ padding: "10px 6px" }}>
-                    <Badge color={C.blue} bg={C.blueDim}>{c.qualif}</Badge>
-                  </td>
+                  <td style={{ padding: "10px 6px" }}><Badge color={C.blue} bg={C.blueDim}>{c.qualif}</Badge></td>
                   <td style={{ padding: "10px 6px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <ProgressBar value={c.progress} C={C} />
@@ -616,7 +588,6 @@ export function DashboardView({
           </table>
         </div>
 
-        {/* Activity */}
         <GuideTooltip id="historique" C={C}>
           <div data-guide="historique">
             <ActivityFeed C={C} compact onNavigate={onNavigate} />
@@ -642,7 +613,6 @@ function DashboardExtras({ C }: { C: Theme }) {
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
-      {/* Mini graphique qualifiés */}
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
         <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 14px", color: C.text }}>Dossiers qualifiés</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -689,7 +659,6 @@ function DashboardExtras({ C }: { C: Theme }) {
         )}
       </div>
 
-      {/* Top prescripteurs */}
       <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
         <h3 style={{ fontSize: 13, fontWeight: 700, margin: "0 0 14px", color: C.text }}>Top prescripteurs ce mois</h3>
         {data.topPrescripteurs.length === 0 ? (
