@@ -2,7 +2,7 @@
 
 import {
   LayoutDashboard, Zap, Target, Users, FolderOpen,
-  Send, Mail, File, BookOpen, CreditCard, Clock, Handshake, Plug, Settings, Sun, Moon, LogOut, Lightbulb, Eye, PanelLeftClose, PanelLeftOpen, ListChecks,
+  Send, Mail, File, BookOpen, CreditCard, Clock, Handshake, Plug, Settings, Sun, Moon, LogOut, Lightbulb, Eye, PanelLeftClose, PanelLeftOpen, ListChecks, Bell,
 } from "lucide-react";
 import { useState } from "react";
 import type { Theme } from "@/lib/theme";
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { Icon: Users, label: "Clients", navKey: "Clients", guide: "nav-clients", roles: ["ADMIN", "CHARGEE"] },
   { Icon: FolderOpen, label: "Dossiers", navKey: "Dossiers", guide: "nav-dossiers", roles: ["ADMIN", "CHARGEE"] },
   { Icon: ListChecks, label: "Tâches", navKey: "Taches", guide: "nav-taches", roles: ["ADMIN", "CHARGEE"] },
+  { Icon: Bell, label: "Alertes", navKey: "Alertes", guide: "nav-alertes", roles: ["ADMIN", "CHARGEE"] },
   { Icon: Send, label: "Transmissions", navKey: "Transmissions", guide: "nav-transmissions", roles: ["ADMIN", "CHARGEE"] },
   { Icon: Mail, label: "Mails", navKey: "Mails", guide: "nav-mails", roles: ["ADMIN", "CHARGEE"] },
   { Icon: File, label: "Documents", navKey: "Documents", guide: "nav-documents", roles: ["ADMIN", "CHARGEE"] },

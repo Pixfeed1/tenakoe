@@ -3,30 +3,30 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
   const isAdmin = session.user.role === "ADMIN";
+  const all = request.nextUrl.searchParams.get("all") === "true";
 
   const alertes = await prisma.alerte.findMany({
     where: {
-      lue: false,
+      ...(all ? {} : { lue: false }),
       ...(isAdmin ? {} : { userId: session.user.id }),
     },
     include: {
       entreprise: { select: { id: true, nom: true } },
     },
     orderBy: { createdAt: "desc" },
-    take: 30,
+    take: all ? 200 : 99,
   });
 
   return NextResponse.json(alertes);
 }
 
-// Marquer une alerte comme lue
 export async function PATCH(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -37,7 +37,6 @@ export async function PATCH(request: NextRequest) {
   const { id, lue } = body;
 
   if (id === "all") {
-    // Marquer toutes les alertes comme lues
     await prisma.alerte.updateMany({
       where: {
         lue: false,

@@ -18,6 +18,7 @@ import { MailsView } from "@/components/views/MailsView";
 import { BandeauAnnonces } from "@/components/BandeauAnnonces";
 import { DocumentsView } from "@/components/views/DocumentsView";
 import { TachesView } from "@/components/views/TachesView";
+import { AlertesView } from "@/components/views/AlertesView";
 import { FacturationView } from "@/components/views/FacturationView";
 import { ApporteursView } from "@/components/views/ApporteursView";
 import { HistoriqueView } from "@/components/views/HistoriqueView";
@@ -37,6 +38,7 @@ type View =
   | "Clients"
   | "Dossiers"
   | "Taches"
+  | "Alertes"
   | "Transmissions"
   | "Mails"
   | "Documents"
@@ -56,6 +58,7 @@ const VIEW_TITLES: Record<View, string> = {
   Clients: "Clients",
   Dossiers: "Dossiers",
   Taches: "Tâches",
+  Alertes: "Alertes",
   Transmissions: "Transmissions",
   Mails: "Mails",
   Documents: "Documents",
@@ -126,7 +129,7 @@ export function CRMShell({
     });
   };
 
-  const VALID_VIEWS = ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Taches", "Transmissions", "Mails", "Documents", "Ressources", "Facturation", "Historique", "Apporteurs", "Intégrations", "Paramètres", "VuePrescripteur", "ClientDetail"];
+  const VALID_VIEWS = ["Dashboard", "Leads", "Prospects", "Clients", "Dossiers", "Taches", "Alertes", "Transmissions", "Mails", "Documents", "Ressources", "Facturation", "Historique", "Apporteurs", "Intégrations", "Paramètres", "VuePrescripteur", "ClientDetail"];
   const startView = (initialView && VALID_VIEWS.includes(initialView) ? initialView : "Dashboard") as View;
 
   const viewToNavLabel = (v: View): string => {
@@ -257,7 +260,7 @@ export function CRMShell({
           <div className="header-actions" style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <GuideToggleButton C={C} />
             <GuideTooltip id="notifications" C={C}>
-              <AlertesDropdown C={C} />
+              <AlertesDropdown C={C} onNavigate={(v) => navigateTo(v as View)} />
             </GuideTooltip>
             {(() => {
               const actions: Partial<Record<View, { label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; action: () => void }>> = {
@@ -330,6 +333,7 @@ export function CRMShell({
         {view === "Clients" && <ClientsView key={navKey} C={C} onSelectClient={openClient} role={user.role} />}
         {view === "Dossiers" && <DossiersView key={navKey} C={C} onSelectClient={openClient} role={user.role} />}
         {view === "Taches" && <TachesView key={navKey} C={C} onSelectClient={(c) => openClient(c as typeof selectedClient & object)} role={user.role} />}
+        {view === "Alertes" && <AlertesView key={navKey} C={C} onSelectClient={(c) => openClient(c as typeof selectedClient & object)} role={user.role} />}
         {view === "Transmissions" && <TransmissionsView key={navKey} C={C} role={user.role} />}
         {view === "Mails" && <MailsView key={navKey} C={C} role={user.role} onSelectClient={(c) => { setSelectedClient(c); setView("ClientDetail"); }} />}
         {view === "Documents" && <DocumentsView key={navKey} C={C} />}

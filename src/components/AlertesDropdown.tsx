@@ -42,14 +42,13 @@ const TYPE_LABELS: Record<string, string> = {
   MENTION: "Mention",
 };
 
-export function AlertesDropdown({ C }: { C: Theme }) {
+export function AlertesDropdown({ C, onNavigate }: { C: Theme; onNavigate?: (view: string) => void }) {
   const [alertes, setAlertes] = useState<Alerte[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchAlertes();
-    // Refresh toutes les 60s
     const interval = setInterval(fetchAlertes, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -105,14 +104,14 @@ export function AlertesDropdown({ C }: { C: Theme }) {
         <Bell size={16} color={C.textMuted} />
         {count > 0 && (
           <div style={{
-            position: "absolute", top: 4, right: 4,
-            minWidth: 16, height: 16, borderRadius: 8,
+            position: "absolute", top: -5, right: -5,
+            minWidth: 17, height: 17, borderRadius: 9,
             background: C.danger, color: "#fff",
             fontSize: 10, fontWeight: 700,
             display: "flex", alignItems: "center", justifyContent: "center",
-            padding: "0 4px",
+            padding: "0 4px", boxShadow: `0 0 0 2px ${C.surface}`,
           }}>
-            {count > 9 ? "9+" : count}
+            {count > 99 ? "99+" : count}
           </div>
         )}
       </button>
@@ -123,7 +122,6 @@ export function AlertesDropdown({ C }: { C: Theme }) {
           background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
           boxShadow: C.shadowHover, zIndex: 100, overflow: "hidden",
         }}>
-          {/* Header */}
           <div style={{
             display: "flex", justifyContent: "space-between", alignItems: "center",
             padding: "14px 18px", borderBottom: `1px solid ${C.border}`,
@@ -132,82 +130,65 @@ export function AlertesDropdown({ C }: { C: Theme }) {
               Alertes {count > 0 && `(${count})`}
             </span>
             {count > 0 && (
-              <button
-                onClick={markAllRead}
-                style={{
-                  padding: "4px 10px", borderRadius: 6, border: "none",
-                  background: C.accentDim, color: C.accentText, fontSize: 11,
-                  fontWeight: 600, cursor: "pointer",
-                }}
-              >
+              <button onClick={markAllRead} style={{
+                padding: "4px 10px", borderRadius: 6, border: "none",
+                background: C.accentDim, color: C.accentText, fontSize: 11,
+                fontWeight: 600, cursor: "pointer",
+              }}>
                 <CheckCircle size={11} /> Tout marquer lu
               </button>
             )}
           </div>
 
-          {/* List */}
           <div style={{ maxHeight: 400, overflowY: "auto" }}>
             {count === 0 ? (
-              <div style={{ padding: 30, textAlign: "center", color: C.textDim, fontSize: 13 }}>
-                Aucune alerte
-              </div>
-            ) : (
-              alertes.map((alerte) => {
-                const Icon = TYPE_ICONS[alerte.type] || Bell;
-                const color = TYPE_COLORS[alerte.type] || "blue";
-                return (
-                  <div key={alerte.id} style={{
-                    display: "flex", alignItems: "flex-start", gap: 12,
-                    padding: "12px 18px", borderBottom: `1px solid ${C.border}`,
-                    transition: "background 0.15s",
-                    cursor: alerte.entreprise ? "pointer" : "default",
+              <div style={{ padding: 30, textAlign: "center", color: C.textDim, fontSize: 13 }}>Aucune alerte</div>
+            ) : alertes.map((alerte) => {
+              const Icon = TYPE_ICONS[alerte.type] || Bell;
+              const color = TYPE_COLORS[alerte.type] || "blue";
+              return (
+                <div key={alerte.id} style={{
+                  display: "flex", alignItems: "flex-start", gap: 12,
+                  padding: "12px 18px", borderBottom: `1px solid ${C.border}`,
+                  transition: "background 0.15s", cursor: alerte.entreprise ? "pointer" : "default",
+                }}
+                  onClick={() => {
+                    if (alerte.entreprise) {
+                      markRead(alerte.id);
+                      const url = new URL(window.location.href);
+                      url.searchParams.set("view", "ClientDetail");
+                      url.searchParams.set("clientId", alerte.entreprise.id);
+                      window.location.href = url.toString();
+                    }
                   }}
-                    onClick={() => {
-                      if (alerte.entreprise) {
-                        markRead(alerte.id);
-                        const url = new URL(window.location.href);
-                        url.searchParams.set("view", "ClientDetail");
-                        url.searchParams.set("clientId", alerte.entreprise.id);
-                        window.location.href = url.toString();
-                      }
-                    }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                  >
-                    <div style={{
-                      width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                      backgroundColor: C[(color + "Dim") as keyof Theme] as string,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <Icon size={14} color={C[color as keyof Theme] as string} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 11, color: C[color as keyof Theme] as string, fontWeight: 600, marginBottom: 2 }}>
-                        {TYPE_LABELS[alerte.type] || alerte.type}
-                      </div>
-                      <div style={{ fontSize: 12, color: C.text, lineHeight: 1.4 }}>
-                        {alerte.message}
-                      </div>
-                      <div style={{ fontSize: 11, color: C.textDim, marginTop: 3 }}>
-                        {formatRelativeTime(new Date(alerte.createdAt))}
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); markRead(alerte.id); }}
-                      style={{
-                        width: 24, height: 24, borderRadius: 6, border: "none",
-                        background: "transparent", cursor: "pointer",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                      }}
-                      title="Marquer comme lu"
-                    >
-                      <X size={13} color={C.textDim} />
-                    </button>
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = C.surfaceHover; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    backgroundColor: C[(color + "Dim") as keyof Theme] as string,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Icon size={14} color={C[color as keyof Theme] as string} />
                   </div>
-                );
-              })
-            )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, color: C[color as keyof Theme] as string, fontWeight: 600, marginBottom: 2 }}>{TYPE_LABELS[alerte.type] || alerte.type}</div>
+                    <div style={{ fontSize: 12, color: C.text, lineHeight: 1.4 }}>{alerte.message}</div>
+                    <div style={{ fontSize: 11, color: C.textDim, marginTop: 3 }}>{formatRelativeTime(new Date(alerte.createdAt))}</div>
+                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); markRead(alerte.id); }} title="Marquer comme lu"
+                    style={{ width: 24, height: 24, borderRadius: 6, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <X size={13} color={C.textDim} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
+
+          <button onClick={() => { setOpen(false); onNavigate?.("Alertes"); }}
+            style={{ width: "100%", padding: "11px 18px", border: "none", borderTop: `1px solid ${C.border}`, background: "transparent", color: C.accentText, fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "center" }}>
+            Voir toutes les alertes
+          </button>
         </div>
       )}
     </div>
@@ -220,7 +201,6 @@ function formatRelativeTime(date: Date): string {
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-
   if (minutes < 1) return "À l'instant";
   if (minutes < 60) return `Il y a ${minutes} min`;
   if (hours < 24) return `Il y a ${hours}h`;
