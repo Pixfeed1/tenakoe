@@ -189,7 +189,7 @@ export function DashboardView({
             onClick={() => onNavigate?.(s.view)}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onNavigate?.(s.view); } }}
             style={{
-              background: C.surface, borderRadius: 14, padding: "20px 22px",
+              background: C.surface, borderRadius: 14, padding: "14px 18px",
               border: `1px solid ${C.border}`, flex: 1, minWidth: 170,
               transition: "all 0.2s", cursor: "pointer", boxShadow: C.shadow,
             }}
@@ -202,25 +202,27 @@ export function DashboardView({
               (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <div
                 style={{
-                  width: 40, height: 40, borderRadius: 10,
+                  width: 36, height: 36, borderRadius: 9,
                   backgroundColor: C[(s.colorKey + "Dim") as keyof Theme] as string,
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
-                <s.Icon size={18} color={C[s.colorKey as keyof Theme] as string} strokeWidth={2} />
+                <s.Icon size={17} color={C[s.colorKey as keyof Theme] as string} strokeWidth={2} />
               </div>
-              <Badge
-                color={s.up === true ? C.accentText : s.up === false ? C.danger : C.textDim}
-                bg={s.up === true ? C.accentDim : s.up === false ? C.dangerDim : C.surfaceHover}
-              >
-                {s.up === true ? <TrendingUp size={11} /> : s.up === false ? <TrendingDown size={11} /> : <Minus size={11} />}
-                {" "}{s.change}
-              </Badge>
+              {s.change && (
+                <Badge
+                  color={s.up === true ? C.accentText : s.up === false ? C.danger : C.textDim}
+                  bg={s.up === true ? C.accentDim : s.up === false ? C.dangerDim : C.surfaceHover}
+                >
+                  {s.up === true ? <TrendingUp size={11} /> : s.up === false ? <TrendingDown size={11} /> : <Minus size={11} />}
+                  {" "}{s.change}
+                </Badge>
+              )}
             </div>
-            <div style={{ fontSize: 30, fontWeight: 700, color: C.text, lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: C.text, lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
             <div style={{ fontSize: 13, color: C.textMuted }}>{s.label}</div>
           </div>
         ))}
