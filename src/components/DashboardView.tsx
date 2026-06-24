@@ -73,7 +73,7 @@ export function DashboardView({
     { label: "Nouveaux prospects", value: String(serverStats?.nouveaux ?? 0), change: "", up: null as boolean | null, Icon: Zap, colorKey: "blue" },
     { label: "Prospects actifs", value: String(serverStats?.prospects ?? 0), change: "", up: null as boolean | null, Icon: Target, colorKey: "accent" },
     { label: "Dossiers en cours", value: String(serverStats?.dossiers ?? 0), change: "", up: null as boolean | null, Icon: ClipboardList, colorKey: "purple" },
-    { label: "En retard", value: String(serverStats?.enRetard ?? 0), change: "", up: null as boolean | null, Icon: Clock, colorKey: "danger" },
+    { label: "En retard", value: String(serverStats?.enRetard ?? 0), change: "", up: null as boolean | null, Icon: Clock, colorKey: "danger", view: "Taches" as string | undefined },
   ];
 
   const guide = useGuide();
@@ -190,6 +190,7 @@ export function DashboardView({
         {STATS.map((s, i) => (
           <div
             key={i}
+            onClick={() => { if ((s as { view?: string }).view) onNavigate?.((s as { view?: string }).view!); }}
             style={{
               background: C.surface, borderRadius: 14, padding: "20px 22px",
               border: `1px solid ${C.border}`, flex: 1, minWidth: 170,
