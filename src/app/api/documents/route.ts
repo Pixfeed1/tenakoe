@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, getEntrepriseFilter } from "@/lib/rbac";
+import { userCanAccessEntreprise } from "@/lib/dossierScope";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -16,7 +17,6 @@ export async function GET(request: NextRequest) {
     where: {
       ...(entrepriseId && { entrepriseId }),
       ...(projetId && { projetId }),
-      // RBAC: only docs from entreprises the user can access
       ...(!entrepriseId && { entreprise: rbacFilter }),
     },
     include: {
@@ -34,6 +34,11 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const body = await request.json();
+
+  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (body.entrepriseId && !(await userCanAccessEntreprise(user, body.entrepriseId))) {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
 
   if (body.entrepriseId && body.nom) {
     const exists = await prisma.document.findFirst({
@@ -62,6 +67,13 @@ export async function PATCH(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const body = await request.json();
+
+  if (user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  const existingDoc = await prisma.document.findUnique({ where: { id: body.id }, select: { entrepriseId: true } });
+  if (!existingDoc) return NextResponse.json({ error: "Document non trouvé" }, { status: 404 });
+  if (existingDoc.entrepriseId && !(await userCanAccessEntreprise(user, existingDoc.entrepriseId))) {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
 
   const data: Record<string, unknown> = {};
   if (body.recu !== undefined) { data.recu = body.recu; data.dateReception = body.recu ? new Date() : null; }

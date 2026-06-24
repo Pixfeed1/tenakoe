@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
+import { userCanAccessEntreprise } from "@/lib/dossierScope";
 
 export async function PATCH(
   request: NextRequest,
@@ -15,6 +16,12 @@ export async function PATCH(
 
   if (user.role === "PRESCRIPTEUR" && tache.assigneeId !== user.id && tache.createurId !== user.id) {
     return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
+  }
+
+  if (user.role === "CHARGEE") {
+    const owns = tache.assigneeId === user.id || tache.createurId === user.id
+      || (tache.entrepriseId ? await userCanAccessEntreprise(user, tache.entrepriseId) : false);
+    if (!owns) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
   const body = await request.json();

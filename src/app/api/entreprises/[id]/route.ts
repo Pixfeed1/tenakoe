@@ -19,13 +19,11 @@ export async function GET(
     return NextResponse.json({ error: "Entreprise non trouvee" }, { status: 404 });
   }
 
-  // RBAC: prescripteur can only see entreprises from their network
   if (user.role === "PRESCRIPTEUR") {
     if (entreprise.prescripteur !== user.prescripteurType) {
       return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
     }
   }
-  // Scope: chargée ne voit que ses dossiers (sauf voitTousLesDossiers)
   if (user.role !== "PRESCRIPTEUR") {
     const canAccess = await userCanAccessEntreprise(user, id);
     if (!canAccess) return NextResponse.json({ error: "Acces refuse" }, { status: 403 });
@@ -46,6 +44,10 @@ export async function PATCH(
   let body = await request.json();
 
   if (user.role === "CHARGEE") body = stripFieldsForChargee(body);
+
+  if (!(await userCanAccessEntreprise(user, id))) {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
 
   if (body.restore === true) {
     const existing = await prisma.entreprise.findUnique({ where: { id }, select: { nom: true, deletedAt: true } });
@@ -161,7 +163,6 @@ export async function PATCH(
     return ent;
   });
 
-  // Log tracked field changes
   const logs: string[] = [];
   if (body.interesseTNK !== undefined && body.interesseTNK !== existing?.interesseTNK) logs.push(`Intéressé TNK : ${body.interesseTNK}`);
   if (body.chargeeId !== undefined && body.chargeeId !== existing?.chargeeId) logs.push(`Chargée de projet : ${body.chargeeId ? "attribuée" : "désattribuée"}`);
