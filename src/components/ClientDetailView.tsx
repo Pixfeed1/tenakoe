@@ -69,6 +69,8 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
   const [editContent, setEditContent] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingDocId, setPendingDocId] = useState("");
   const [nonConformeDocId, setNonConformeDocId] = useState<string | null>(null);
   const [nonConformeMotif, setNonConformeMotif] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -190,6 +192,39 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
       setUploadMsg({ type: "error", msg: "Erreur réseau" });
     }
     setUploading(false);
+  };
+
+  const confirmDrop = async () => {
+    if (!pendingFile) return;
+    if (pendingDocId === "") {
+      await handleFileUpload(pendingFile);
+    } else if (client?.id) {
+      setUploading(true);
+      setUploadMsg(null);
+      try {
+        const fd = new FormData();
+        fd.append("file", pendingFile);
+        fd.append("documentId", pendingDocId);
+        fd.append("entrepriseId", client.id);
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        if (res.ok) {
+          const data = await res.json();
+          setDocs((prev) => prev.map((d) => d.id === pendingDocId
+            ? { ...d, fichierUrl: data.url, fichierNom: data.nom, recu: true, date: new Date().toLocaleDateString("fr-FR") }
+            : d));
+          setUploadMsg({ type: "success", msg: `${data.nom} uploadé` });
+          toast("Fichier uploadé");
+        } else {
+          const err = await res.json().catch(() => ({}));
+          setUploadMsg({ type: "error", msg: (err as { error?: string }).error || "Erreur d'upload" });
+        }
+      } catch {
+        setUploadMsg({ type: "error", msg: "Erreur réseau" });
+      }
+      setUploading(false);
+    }
+    setPendingFile(null);
+    setPendingDocId("");
   };
 
   // Initialize demo data
@@ -3038,6 +3073,43 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
             </div>
           )}
 
+          {/* Sélecteur de rattachement (après dépôt d'un fichier) */}
+          {pendingFile && (
+            <div style={{ marginTop: 16, padding: 16, borderRadius: 12, border: `1px solid ${C.accent}`, background: C.accentDim }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 4 }}>
+                À quel document rattacher &laquo; {pendingFile.name} &raquo; ?
+              </div>
+              <div style={{ fontSize: 11, color: C.textDim, marginBottom: 10 }}>
+                Choisis un emplacement à remplir, ou crée un document libre.
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <select
+                  value={pendingDocId}
+                  onChange={(e) => setPendingDocId(e.target.value)}
+                  style={{ flex: 1, minWidth: 220, padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none" }}
+                >
+                  <option value="">— Document libre (nouveau) —</option>
+                  {docs.filter((d) => !d.recu && d.id).map((d) => (
+                    <option key={d.id} value={d.id as string}>{d.nom}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={confirmDrop}
+                  disabled={uploading}
+                  style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: C.accent, color: "#fff", fontSize: 13, fontWeight: 600, cursor: uploading ? "wait" : "pointer" }}
+                >
+                  {uploading ? "Envoi..." : "Valider"}
+                </button>
+                <button
+                  onClick={() => { setPendingFile(null); setPendingDocId(""); }}
+                  style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.textDim, fontSize: 13, cursor: "pointer" }}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Upload zone */}
           <input
             ref={fileInputRef}
@@ -3046,7 +3118,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
             style={{ display: "none" }}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFileUpload(file);
+              if (file) { setPendingFile(file); setPendingDocId(""); }
               e.target.value = "";
             }}
           />
@@ -3067,7 +3139,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               e.preventDefault();
               setDragFile(false);
               const file = e.dataTransfer.files[0];
-              if (file && !uploading) handleFileUpload(file);
+              if (file && !uploading) { setPendingFile(file); setPendingDocId(""); }
             }}
           >
             <Upload size={20} color={dragFile ? C.accent : C.textDim} style={{ marginBottom: 8 }} />
