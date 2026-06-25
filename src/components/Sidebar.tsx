@@ -27,11 +27,11 @@ const NAV_ITEMS = [
 ];
 
 const NAV_BOTTOM: Array<{ Icon: typeof Plug; label: string; navKey?: string }> = [
-  { Icon: Plug, label: "Intégrations" },
   { Icon: Settings, label: "Paramètres" },
 ];
 
 const NAV_BOTTOM_ADMIN: Array<{ Icon: typeof Eye; label: string; navKey?: string }> = [
+  { Icon: Plug, label: "Intégrations" },
   { Icon: Eye, label: "Vue prescripteur" },
 ];
 

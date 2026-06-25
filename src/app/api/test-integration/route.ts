@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") {
+  if (!user || user.role !== "ADMIN") {
     return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
   }
 

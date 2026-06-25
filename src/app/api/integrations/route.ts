@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/rbac";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const integrations = await prisma.integration.findMany({ orderBy: { nom: "asc" } });
   return NextResponse.json(integrations);
@@ -12,7 +12,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const body = await request.json();
   const integration = await prisma.integration.upsert({
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user || user.role === "PRESCRIPTEUR") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
+  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Admin uniquement" }, { status: 403 });
 
   const body = await request.json();
   const integration = await prisma.integration.update({

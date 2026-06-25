@@ -341,7 +341,8 @@ export function CRMShell({
         {view === "Facturation" && <FacturationView key={navKey} C={C} onSelectClient={openClient} role={user.role} />}
         {view === "Historique" && <HistoriqueView key={navKey} C={C} onSelectClient={openClient} />}
         {view === "Apporteurs" && <ApporteursView key={navKey} C={C} />}
-        {view === "Intégrations" && <IntegrationsView key={navKey} C={C} />}
+        {view === "Intégrations" && user.role === "ADMIN" && <IntegrationsView key={navKey} C={C} />}
+        {view === "Intégrations" && user.role !== "ADMIN" && <div style={{ padding: 40, textAlign: "center", color: C.textDim }}>Accès réservé à l&apos;administrateur</div>}
         {view === "Paramètres" && <ParametresView key={navKey} C={C} role={user.role} />}
         {view === "VuePrescripteur" && user.role !== "PRESCRIPTEUR" && (
           <VuePrescripteurView key={navKey} C={C} onExit={() => navigateTo("Dashboard")} />
