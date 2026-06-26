@@ -1,6 +1,6 @@
 export function getSignature(user: { prenom: string; nom: string; email: string; telephone?: string | null; role?: string }): string {
   const tel = user.telephone?.trim();
-  const poste = user.role === "ADMIN" ? "Responsable · TENAKOE" : "Chargée de projet · Kiwi";
+  const poste = user.role === "ADMIN" ? "Responsable · TENAKOE" : "Chargée de projet · TENAKOE";
   return `
 <table style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #374151;" border="0" cellspacing="0" cellpadding="0" align="left">
 <tbody>
