@@ -1452,6 +1452,7 @@ function AnnoncesTab({ C }: { C: Theme }) {
 function MonCompteTab({ C }: { C: Theme }) {
   const { toast } = useToast();
   const [smtp, setSmtp] = useState({ host: "", port: "587", user: "", pass: "" });
+  const [imap, setImap] = useState({ host: "", port: "993", user: "", pass: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userInfo, setUserInfo] = useState({ email: "", nom: "", prenom: "", telephone: "" });
@@ -1473,6 +1474,12 @@ function MonCompteTab({ C }: { C: Theme }) {
           user: data.smtpUser || "",
           pass: data.smtpPass || "",
         });
+        setImap({
+          host: data.imapHost || "",
+          port: String(data.imapPort || 993),
+          user: data.imapUser || "",
+          pass: data.imapPass || "",
+        });
       }
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -1487,10 +1494,14 @@ function MonCompteTab({ C }: { C: Theme }) {
         smtpPort: smtp.port ? Number(smtp.port) : null,
         smtpUser: smtp.user || null,
         smtpPass: smtp.pass || null,
+        imapHost: imap.host || null,
+        imapPort: imap.port ? Number(imap.port) : null,
+        imapUser: imap.user || null,
+        imapPass: imap.pass || null,
       }),
     });
     setSaving(false);
-    toast("Configuration SMTP sauvegardée");
+    toast("Configuration sauvegardée");
   };
 
   const iStyle = inputStyle(C);
@@ -1547,6 +1558,28 @@ function MonCompteTab({ C }: { C: Theme }) {
             </div>
             <Button C={C} variant="primary" onClick={save} loading={saving} disabled={gmailOauthConnected}>Sauvegarder</Button>
           </div>
+        )}
+      </div>
+
+      <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: 20, boxShadow: C.shadow }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 6px", color: C.text }}>Réception IMAP (lecture de mails)</h3>
+        <p style={{ fontSize: 12, color: C.textDim, margin: "0 0 14px" }}>
+          Pour les boîtes non-Gmail (Orange, SFR, OVH…). Permettra de recevoir les mails dans Kiwi sans OAuth Google.
+        </p>
+        {loading ? (
+          <div style={{ color: C.textDim, fontSize: 13 }}>Chargement...</div>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Serveur IMAP</label><input style={iStyle} placeholder="imap.orange.fr" value={imap.host} onChange={(e) => setImap({ ...imap, host: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Port</label><input style={iStyle} placeholder="993" value={imap.port} onChange={(e) => setImap({ ...imap, port: e.target.value })} /></div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Identifiant (email)</label><input style={iStyle} placeholder="prenom.nom@orange.fr" value={imap.user} onChange={(e) => setImap({ ...imap, user: e.target.value })} /></div>
+              <div><label style={{ fontSize: 11, color: C.textDim, display: "block", marginBottom: 4 }}>Mot de passe</label><input type="password" style={iStyle} placeholder="Mot de passe de la boîte" value={imap.pass} onChange={(e) => setImap({ ...imap, pass: e.target.value })} /></div>
+            </div>
+            <Button C={C} variant="primary" onClick={save} loading={saving}>Sauvegarder</Button>
+          </>
         )}
       </div>
     </div>
@@ -1755,6 +1788,7 @@ function TestEmailTab({ C }: { C: Theme }) {
           </span>
         )}
       </div>
+
     </div>
   );
 }

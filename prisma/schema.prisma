@@ -43,6 +43,11 @@ model User {
   smtpPort         Int?
   smtpUser         String?
   smtpPass         String?
+  imapHost         String?
+  imapPort         Int?
+  imapUser         String?
+  imapPass         String?
+  imapLastUid      String?
   voitTousLesDossiers Boolean @default(false)
 
   projets       Projet[]       @relation("ChargeeProjet")

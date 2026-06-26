@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "imapHost" TEXT;
+ALTER TABLE "User" ADD COLUMN "imapPort" INTEGER;
+ALTER TABLE "User" ADD COLUMN "imapUser" TEXT;
+ALTER TABLE "User" ADD COLUMN "imapPass" TEXT;
+ALTER TABLE "User" ADD COLUMN "imapLastUid" TEXT;

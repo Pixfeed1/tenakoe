@@ -11,6 +11,7 @@ export async function GET() {
     select: {
       id: true, email: true, nom: true, prenom: true, telephone: true, role: true,
       smtpHost: true, smtpPort: true, smtpUser: true, smtpPass: true,
+      imapHost: true, imapPort: true, imapUser: true, imapPass: true,
     },
   });
 
@@ -28,6 +29,10 @@ export async function PATCH(request: NextRequest) {
   if (body.smtpPort !== undefined) data.smtpPort = body.smtpPort;
   if (body.smtpUser !== undefined) data.smtpUser = body.smtpUser;
   if (body.smtpPass !== undefined) data.smtpPass = body.smtpPass;
+  if (body.imapHost !== undefined) data.imapHost = body.imapHost;
+  if (body.imapPort !== undefined) data.imapPort = body.imapPort;
+  if (body.imapUser !== undefined) data.imapUser = body.imapUser;
+  if (body.imapPass !== undefined) data.imapPass = body.imapPass;
 
   const updated = await prisma.user.update({ where: { id: user.id }, data });
   return NextResponse.json({ success: true, smtpHost: updated.smtpHost, smtpPort: updated.smtpPort, smtpUser: updated.smtpUser });
