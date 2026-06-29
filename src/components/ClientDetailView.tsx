@@ -38,6 +38,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
   const isAdmin = role === "ADMIN";
   const isChargee = role === "CHARGEE";
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserPrenom, setCurrentUserPrenom] = useState<string>("");
   const guide = useGuide();
   const { toast } = useToast();
   const isDemoMode = client?.isDemo || checkIsDemo(client || {});
@@ -545,7 +546,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
       .catch(() => {});
     fetch("/api/users/me")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.id) setCurrentUserId(data.id); })
+      .then((data) => { if (data?.id) setCurrentUserId(data.id); if (data?.prenom) setCurrentUserPrenom(data.prenom); })
       .catch(() => {});
 
     // Load nomenclature map for qualification name display
@@ -1048,6 +1049,11 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               {sendStatus.msg}
             </div>
           )}
+          {currentUserPrenom && (
+            <div style={{ fontSize: 11, color: C.textDim, fontStyle: "italic", marginBottom: 6 }}>
+              Votre message sera précédé de : &laquo; Bonjour, c&apos;est {currentUserPrenom} de Tenakoe. &raquo;
+            </div>
+          )}
           <textarea
             placeholder="Votre message SMS..."
             value={smsBody}
@@ -1059,8 +1065,16 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               fontSize: 13, marginBottom: 8, outline: "none", resize: "vertical", boxSizing: "border-box",
             }}
           />
+          {(() => {
+            const prefixe = currentUserPrenom && !smsBody.trim().toLowerCase().startsWith("bonjour")
+              ? `Bonjour, c'est ${currentUserPrenom} de Tenakoe. ` : "";
+            const total = prefixe.length + smsBody.length;
+            const over = total > 160;
+            return (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 11, color: C.textDim }}>{smsBody.length}/160 caractères</span>
+            <span style={{ fontSize: 11, color: over ? C.danger : C.textDim, fontWeight: over ? 600 : 400 }}>
+              {total}/160 caractères{over ? " — 2 SMS" : ""}
+            </span>
             <Button
               C={C}
               variant="primary"
@@ -1110,6 +1124,8 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               {sending ? "Envoi..." : "Envoyer SMS"}
             </Button>
           </div>
+            );
+          })()}
         </div>
       )}
 

@@ -22,15 +22,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Numéro invalide" }, { status: 400 });
   }
 
+  const expediteur = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { prenom: true },
+  });
+  const prenom = expediteur?.prenom ?? "";
+  const prefixe = prenom ? `Bonjour, c'est ${prenom} de Tenakoe. ` : "";
+  const messageFinal =
+    message.trim().toLowerCase().startsWith("bonjour") ? message : `${prefixe}${message}`;
+
   try {
-    const result = await sendSMS({ to, body: message, campaignName });
+    const result = await sendSMS({ to, body: messageFinal, campaignName });
 
     await prisma.transmission.create({
       data: {
         canal: "SMS",
         direction: "SORTANT",
         destinataire: normalized,
-        contenu: message,
+        contenu: messageFinal,
         expediteurId: session.user.id,
         entrepriseId: entrepriseId || null,
       },
