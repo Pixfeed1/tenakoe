@@ -6,6 +6,7 @@ import { isGmailOAuthAvailable, sendGmailMessage } from "@/lib/gmail";
 import { prisma } from "@/lib/prisma";
 import { hydrateTemplate } from "@/lib/format";
 import { getSignature } from "@/lib/mail-signature";
+import { saveMailAttachment } from "@/lib/mail-attachments";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Enregistrer la transmission
-    await prisma.transmission.create({
+    const transmission = await prisma.transmission.create({
       data: {
         canal: "EMAIL",
         direction: "SORTANT",
@@ -107,6 +108,25 @@ export async function POST(request: NextRequest) {
         gmailThreadId: result.threadId || null,
       },
     });
+
+    // Conserver une copie des pièces jointes envoyées
+    if (Array.isArray(attachments) && attachments.length > 0) {
+      for (const att of attachments as Array<{ filename: string; mimeType: string; content: string }>) {
+        try {
+          const buffer = Buffer.from(att.content, "base64");
+          const saved = await saveMailAttachment(buffer, att.filename);
+          if (saved) {
+            await prisma.transmissionPieceJointe.create({
+              data: { transmissionId: transmission.id, url: saved.url, nom: att.filename, mimeType: att.mimeType || null, taille: saved.taille },
+            });
+          } else {
+            console.warn(`[send-mail] PJ trop lourde, non stockée : ${att.filename}`);
+          }
+        } catch (e) {
+          console.warn(`[send-mail] Échec stockage PJ ${att.filename}: ${(e as Error).message}`);
+        }
+      }
+    }
 
     // Log d'activité
     await prisma.logActivite.create({

@@ -581,6 +581,20 @@ model Transmission {
   statutEnvoi     String?               @default("ENVOYE")
   erreur          String?
   reponses        EmailReponse[]
+  piecesJointes   TransmissionPieceJointe[]
+}
+
+model TransmissionPieceJointe {
+  id             String       @id @default(cuid())
+  transmissionId String
+  transmission   Transmission @relation(fields: [transmissionId], references: [id], onDelete: Cascade)
+  url            String
+  nom            String
+  mimeType       String?
+  taille         Int?
+  createdAt      DateTime     @default(now())
+
+  @@index([transmissionId])
 }
 
 model MailTemplate {
@@ -982,6 +996,7 @@ model EmailReponsePieceJointe {
   nom               String
   mimeType          String?
   taille            Int?
+  cheminLocal       String?
 
   @@index([emailReponseId])
 }

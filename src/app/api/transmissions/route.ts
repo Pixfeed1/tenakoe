@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     include: {
       expediteur: { select: { id: true, nom: true, prenom: true } },
       entreprise: { select: { id: true, nom: true } },
+      piecesJointes: { select: { id: true, url: true, nom: true, taille: true } },
     },
     orderBy: { dateEnvoi: "desc" },
     take: 100,

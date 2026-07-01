@@ -96,7 +96,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
   const [newBonForm, setNewBonForm] = useState({ qualificationCode: "", reference: "", montant: "", dateEmission: "" });
   const [antennes, setAntennes] = useState<Array<{ id: string; nom: string; email: string | null; telephone: string | null; delegation: string | null }>>([]);
   const [newTache, setNewTache] = useState<{ titre: string; type: string; dateEcheance: string; assigneeId: string }>({ titre: "", type: "AUTRE", dateEcheance: "", assigneeId: "" });
-  const [historique, setHistorique] = useState<Array<{ id?: string; type: string; message: string; chargee: string; time: string; sortDate?: number; automatique?: boolean; statutEnvoi?: string | null }>>([]);
+  const [historique, setHistorique] = useState<Array<{ id?: string; type: string; message: string; chargee: string; time: string; sortDate?: number; automatique?: boolean; statutEnvoi?: string | null; piecesJointes?: Array<{ id: string; url: string; nom: string; taille: number | null }> }>>([]);
   const [viewingTransmissionId, setViewingTransmissionId] = useState<string | null>(null);
   const [showCallLog, setShowCallLog] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -599,7 +599,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
       fetch(`/api/transmissions?entrepriseId=${client.id}`).then((r) => (r.ok ? r.json() : [])),
       fetch(`/api/notes?entrepriseId=${client.id}`).then((r) => (r.ok ? r.json() : [])),
     ]).then(([transmissions, notes]: [
-      Array<{ id: string; canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null; automatique?: boolean; statutEnvoi?: string | null }>,
+      Array<{ id: string; canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null; automatique?: boolean; statutEnvoi?: string | null; piecesJointes?: Array<{ id: string; url: string; nom: string; taille: number | null }> }>,
       Array<{ id: string; contenu: string; createdAt: string; auteur: { prenom: string; nom: string } }>,
     ]) => {
       const transmissionItems = transmissions.map((t) => ({
@@ -611,6 +611,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
         sortDate: new Date(t.dateEnvoi).getTime(),
         automatique: t.automatique || false,
         statutEnvoi: t.statutEnvoi || null,
+        piecesJointes: t.piecesJointes || [],
       }));
       const noteItems = notes.map((n) => ({
         id: undefined as string | undefined,
@@ -3593,6 +3594,17 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     {a.statutEnvoi === "ENVOYE" && a.automatique && <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Envoyé</Badge>}
                     {a.statutEnvoi === "REPONDU" && <Badge color="#16a34a" bg="rgba(22,163,74,0.1)">Répondu</Badge>}
                   </div>
+                  {a.piecesJointes && a.piecesJointes.length > 0 && (
+                    <div style={{ marginTop: 4, display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {a.piecesJointes.map((f) => (
+                        <a key={f.id} href={fixFileUrl(f.url)} download={f.nom} target="_blank" rel="noreferrer"
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: C.blue, textDecoration: "none", padding: "3px 8px", borderRadius: 4, background: C.bg, border: `1px solid ${C.border}` }}>
+                          <Paperclip size={10} /> {f.nom}
+                          {f.taille ? <span style={{ color: C.textDim, fontSize: 10 }}>({Math.round(f.taille / 1024)} Ko)</span> : null}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                   {noteData?.fichierUrl && (!noteData.fichiers || noteData.fichiers.length === 0) && (
                     <a href={fixFileUrl(noteData.fichierUrl)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, padding: "3px 8px", borderRadius: 4, background: C.bg, border: `1px solid ${C.border}`, fontSize: 11, color: C.blue, textDecoration: "none" }}>
                       <Paperclip size={10} /> {noteData.fichierNom || "Pièce jointe"}

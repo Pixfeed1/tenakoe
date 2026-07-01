@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { prisma } from "@/lib/prisma";
 import { extractPlainText } from "@/lib/gmail-proxy";
+import { saveMailAttachment, MAIL_ATTACHMENT_MAX } from "@/lib/mail-attachments";
 
 function getOAuth2Client() {
   return new google.auth.OAuth2(
@@ -142,25 +143,48 @@ export async function POST(request: NextRequest) {
           });
 
           type GmailPart = { filename?: string | null; mimeType?: string | null; body?: { attachmentId?: string | null; size?: number | null } | null; parts?: GmailPart[] | null };
+          const attParts: Array<{ filename: string; mimeType: string | null; attachmentId: string; size: number | null }> = [];
           const collectAttachments = (parts: GmailPart[] | null | undefined): void => {
             if (!parts) return;
             for (const part of parts) {
               if (part.filename && part.body?.attachmentId) {
-                prisma.emailReponsePieceJointe.create({
-                  data: {
-                    emailReponseId: reponse.id,
-                    gmailMessageId: msgId,
-                    gmailAttachmentId: part.body.attachmentId,
-                    nom: part.filename,
-                    mimeType: part.mimeType || null,
-                    taille: part.body.size || null,
-                  },
-                }).catch(() => {});
+                attParts.push({ filename: part.filename, mimeType: part.mimeType || null, attachmentId: part.body.attachmentId, size: part.body.size || null });
               }
               if (part.parts) collectAttachments(part.parts);
             }
           };
           collectAttachments(msg.data.payload?.parts as GmailPart[] | undefined);
+
+          for (const att of attParts) {
+            let cheminLocal: string | null = null;
+            try {
+              // Télécharge et stocke le contenu si raisonnable (≤10 Mo)
+              if (!att.size || att.size <= MAIL_ATTACHMENT_MAX) {
+                const attData = await gmail.users.messages.attachments.get({ userId: "me", messageId: msgId, id: att.attachmentId });
+                if (attData.data.data) {
+                  const buffer = Buffer.from(attData.data.data.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+                  const saved = await saveMailAttachment(buffer, att.filename);
+                  if (saved) cheminLocal = saved.url;
+                  else console.warn(`[gmail-sync] PJ trop lourde ignorée (stockage) : ${att.filename}`);
+                }
+              } else {
+                console.warn(`[gmail-sync] PJ trop lourde ignorée (${att.size} o) : ${att.filename}`);
+              }
+            } catch (e) {
+              console.warn(`[gmail-sync] Échec téléchargement PJ ${att.filename}: ${(e as Error).message}`);
+            }
+            await prisma.emailReponsePieceJointe.create({
+              data: {
+                emailReponseId: reponse.id,
+                gmailMessageId: msgId,
+                gmailAttachmentId: att.attachmentId,
+                nom: att.filename,
+                mimeType: att.mimeType,
+                taille: att.size,
+                cheminLocal,
+              },
+            }).catch(() => {});
+          }
 
           await prisma.transmission.update({
             where: { id: transmission.id },

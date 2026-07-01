@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
+import { readFile } from "fs/promises";
+import path from "path";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/rbac";
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
 
 function getOAuth2Client() {
   return new google.auth.OAuth2(
@@ -38,6 +42,27 @@ export async function GET(
 
   if (user.role === "CHARGEE" && transmission.expediteurId !== user.id) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
+
+  // Servir la copie locale si elle existe (indépendant de Gmail)
+  if (pj.cheminLocal) {
+    try {
+      const rel = pj.cheminLocal.replace(/^\/api\/files\//, "");
+      const absolutePath = path.resolve(UPLOAD_DIR, rel);
+      if (absolutePath.startsWith(path.resolve(UPLOAD_DIR))) {
+        const buffer = await readFile(absolutePath);
+        const encodedFilename = encodeURIComponent(pj.nom).replace(/%20/g, "+");
+        return new NextResponse(new Uint8Array(buffer), {
+          status: 200,
+          headers: {
+            "Content-Type": pj.mimeType || "application/octet-stream",
+            "Content-Disposition": `attachment; filename*=UTF-8''${encodedFilename}`,
+            "Content-Length": String(buffer.length),
+            "Cache-Control": "private, max-age=3600",
+          },
+        });
+      }
+    } catch { /* fichier local absent → fallback Gmail */ }
   }
 
   if (!transmission.expediteurId) {
