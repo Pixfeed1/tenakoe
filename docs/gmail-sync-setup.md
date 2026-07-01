@@ -23,7 +23,7 @@ crontab -e
 Ajouter la ligne (exécution toutes les 5 minutes) :
 
 ```
-*/5 * * * * curl -s -X POST "https://tenakoe.pixfeed.net/api/gmail/sync?token=<le-token-généré>" > /dev/null 2>&1
+*/5 * * * * curl -s -X POST "https://kiwi.tenakoe.fr/api/gmail/sync?token=<le-token-généré>" > /dev/null 2>&1
 ```
 
 ## 3. Scopes OAuth requis
@@ -52,7 +52,7 @@ Si une utilisatrice rencontre une erreur de permission, elle doit :
 Après installation, vérifier manuellement :
 
 ```bash
-curl -X POST "https://tenakoe.pixfeed.net/api/gmail/sync?token=<le-token>" | jq
+curl -X POST "https://kiwi.tenakoe.fr/api/gmail/sync?token=<le-token>" | jq
 ```
 
 Réponse attendue :
