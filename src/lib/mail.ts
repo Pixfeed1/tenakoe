@@ -48,9 +48,10 @@ interface SendMailOptions {
   cc?: string;
   bcc?: string;
   smtp?: SmtpConfig | null;
+  attachments?: Array<{ filename: string; mimeType: string; content: string }>;
 }
 
-export async function sendMail({ to, subject, html, from, cc, bcc, smtp }: SendMailOptions) {
+export async function sendMail({ to, subject, html, from, cc, bcc, smtp, attachments }: SendMailOptions) {
   // Use per-user SMTP if provided, otherwise global
   const transport = smtp ? getUserTransporter(smtp) : getGlobalTransporter();
   const fromAddress = from || (smtp ? smtp.user : null) || process.env.SMTP_FROM || process.env.SMTP_USER;
@@ -63,6 +64,9 @@ export async function sendMail({ to, subject, html, from, cc, bcc, smtp }: SendM
     bcc: bcc || undefined,
     subject,
     html,
+    attachments: attachments && attachments.length > 0
+      ? attachments.map((a) => ({ filename: a.filename, content: Buffer.from(a.content, "base64"), contentType: a.mimeType }))
+      : undefined,
   });
 
   return {

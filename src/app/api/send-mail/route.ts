@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
         to, subject, html: htmlWithSignature, cc, bcc,
         from: `"${fromName}" <${userSmtp.user || fromEmail}>`,
         smtp: userSmtp,
+        attachments,
       });
     } else {
       return NextResponse.json(
