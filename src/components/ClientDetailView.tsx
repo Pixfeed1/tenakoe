@@ -54,6 +54,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
   const [mailBcc, setMailBcc] = useState("");
   const [sending, setSending] = useState(false);
   const [mailAttachments, setMailAttachments] = useState<File[]>([]);
+  const [mailDocIds, setMailDocIds] = useState<Set<string>>(new Set());
   const [mailPreview, setMailPreview] = useState(false);
   const [sendStatus, setSendStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [smsOpen, setSmsOpen] = useState(false);
@@ -723,7 +724,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
         <GuideTooltip id="btn-mail" C={C}>
         <div className="fiche-actions" style={{ display: "flex", gap: 8 }}>
           {[
-            { Icon: Mail, label: "Envoyer mail", guide: "btn-mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); setMailTo(entrepriseData?.email || ""); setMailToMode("contact"); setMailToContactIdx(0); setMailAttachments([]); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
+            { Icon: Mail, label: "Envoyer mail", guide: "btn-mail", onClick: () => { setMailOpen(!mailOpen); setSmsOpen(false); setMailTo(entrepriseData?.email || ""); setMailToMode("contact"); setMailToContactIdx(0); setMailAttachments([]); setMailDocIds(new Set()); window.dispatchEvent(new CustomEvent("tenakoe:mail-opened")); } },
             { Icon: MessageSquare, label: "SMS", guide: "btn-sms", onClick: () => { setSmsOpen(!smsOpen); setMailOpen(false); } },
             { Icon: Phone, label: "Appeler", guide: "btn-appeler", onClick: () => { setShowCallLog(true); setMailOpen(false); setSmsOpen(false); } },
           ].map((btn, i) => (
@@ -937,6 +938,20 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     });
                     attachmentsB64.push({ filename: file.name, mimeType: file.type || "application/octet-stream", content: b64 });
                   }
+                  // Documents Kiwi cochés
+                  for (const doc of docs.filter((d) => d.id && mailDocIds.has(d.id) && d.fichierUrl)) {
+                    try {
+                      const fileRes = await fetch(fixFileUrl(doc.fichierUrl));
+                      if (!fileRes.ok) continue;
+                      const blob = await fileRes.blob();
+                      const b64 = await new Promise<string>((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve((reader.result as string).split(",")[1] || "");
+                        reader.readAsDataURL(blob);
+                      });
+                      attachmentsB64.push({ filename: doc.fichierNom || doc.nom, mimeType: blob.type || "application/octet-stream", content: b64 });
+                    } catch { /* skip un document illisible */ }
+                  }
                   const res = await fetch("/api/send-mail", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -960,6 +975,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     setMailCc("");
                     setMailBcc("");
                     setMailAttachments([]);
+                    setMailDocIds(new Set());
                   } else {
                     const err = await res.json();
                     setSendStatus({ type: "error", msg: err.error || "Erreur d'envoi" });
@@ -1021,6 +1037,35 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               <div style={{ fontSize: 10, color: C.textDim, textAlign: "right" }}>Total : {(mailAttachments.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1)} / 25 Mo</div>
             </div>
           )}
+          {(() => {
+            const docsJoignables = docs.filter((d) => d.id && d.fichierUrl);
+            if (docsJoignables.length === 0) return null;
+            return (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
+                  <Paperclip size={11} /> Joindre un document du dossier
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3, maxHeight: 160, overflowY: "auto" }}>
+                  {docsJoignables.map((d) => {
+                    const checked = mailDocIds.has(d.id as string);
+                    return (
+                      <label key={d.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px", borderRadius: 6, background: checked ? C.accentDim : C.bg, border: `1px solid ${checked ? C.accent + "40" : C.border}`, fontSize: 11, color: C.text, cursor: "pointer" }}>
+                        <input type="checkbox" checked={checked} onChange={(e) => {
+                          setMailDocIds((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(d.id as string); else next.delete(d.id as string);
+                            return next;
+                          });
+                        }} />
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.nom}</span>
+                        {d.fichierNom && <span style={{ color: C.textDim, marginLeft: "auto", fontSize: 10 }}>{d.fichierNom}</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
