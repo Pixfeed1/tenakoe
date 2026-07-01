@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
 import { decodeHtmlEntities } from "@/lib/format";
+import { sanitizeMailHtml } from "@/lib/sanitize-mail";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -294,7 +295,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
                   </div>
                   <span style={{ fontSize: 11, color: C.textDim }}>{formatDate(msg.date)}</span>
                 </div>
-                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6, overflowX: "auto", wordBreak: "break-word", overflowWrap: "anywhere", maxWidth: "100%" }} dangerouslySetInnerHTML={{ __html: msg.body }} />
+                <div className="kiwi-mail-body" style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: sanitizeMailHtml(msg.body) }} />
                 {msg.attachments.length > 0 && (
                   <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {msg.attachments.map((att) => (

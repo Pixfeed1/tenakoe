@@ -444,3 +444,30 @@ body {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* Confinement visuel du HTML de mail injecté (contenu externe riche) :
+   quoi que contienne le mail, la carte Kiwi ne doit jamais être déformée. */
+.kiwi-mail-body {
+  overflow: auto;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.kiwi-mail-body * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.kiwi-mail-body img {
+  max-width: 100%;
+  height: auto;
+}
+.kiwi-mail-body table {
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+.kiwi-mail-body pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

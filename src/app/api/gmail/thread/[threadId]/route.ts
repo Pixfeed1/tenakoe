@@ -17,11 +17,11 @@ function sanitizeBody(html: string): string {
   return html
     .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<script[\s\S]*?<\/script>/gi, "")
-    // Retire les images (logos de signature, images inline cid: → icônes cassées)
-    .replace(/<img[^>]*>/gi, "")
-    // Neutralise les largeurs fixes qui font déborder la mise en page
-    .replace(/(width|height)\s*=\s*["']?\d+["']?/gi, "")
-    .replace(/(min-width|width)\s*:\s*\d+px/gi, "max-width:100%");
+    // Retire les seules images cassées : inline cid: (parts internes non résolues
+    // par le navigateur) et images sans src. Les images distantes sont conservées
+    // (elles s'affichent) et confinées côté client via .kiwi-mail-body.
+    .replace(/<img[^>]*\bsrc\s*=\s*["']?cid:[^>]*>/gi, "")
+    .replace(/<img(?![^>]*\bsrc\s*=)[^>]*>/gi, "");
 }
 
 function extractBody(payload: { mimeType?: string | null; body?: { data?: string | null } | null; parts?: typeof payload[] | null }): string {

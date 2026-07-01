@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { formatPhone, formatContactName, hydrateTemplate, fixFileUrl } from "@/lib/format";
 import { TransmissionDetailModal } from "@/components/TransmissionDetailModal";
 import { getSignature } from "@/lib/mail-signature";
+import { sanitizeMailHtml } from "@/lib/sanitize-mail";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -1008,13 +1009,13 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                     {mailCc && <div><strong>CC :</strong> {mailCc}</div>}
                     <div><strong>Objet :</strong> {mailSubject || "(sans objet)"}</div>
                   </div>
-                  <div dangerouslySetInnerHTML={{ __html: mailBody ? `<p>${mailBody.replace(/\n/g, "<br>")}</p>` : "<p style='color:#94a3b8'>(corps du message vide)</p>" }} />
+                  <div className="kiwi-mail-body" dangerouslySetInnerHTML={{ __html: sanitizeMailHtml(mailBody ? `<p>${mailBody.replace(/\n/g, "<br>")}</p>` : "<p style='color:#94a3b8'>(corps du message vide)</p>") }} />
                   <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px dashed #e2e8f0", clear: "both", overflow: "hidden" }}>
                     <div style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic", marginBottom: 8 }}>— Signature ajoutée automatiquement à l&apos;envoi —</div>
-                    <div dangerouslySetInnerHTML={{ __html: (() => {
+                    <div className="kiwi-mail-body" dangerouslySetInnerHTML={{ __html: sanitizeMailHtml((() => {
                       const sig = getSignature({ prenom: entrepriseData?.chargeeEntreprisePrenom || "Kiwi", nom: entrepriseData?.chargeeEntrepriseNom || "", email: "contact@tenakoe.fr", role });
                       return mailBody.toLowerCase().includes("cordialement") ? sig.replace(/<tr>\s*<td[^>]*>\s*<span[^>]*>Cordialement[^<]*<\/span>\s*<\/td>\s*<\/tr>/, "") : sig;
-                    })() }} />
+                    })()) }} />
                   </div>
                   {mailAttachments.length > 0 && (
                     <div style={{ marginTop: 12, paddingTop: 8, borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#64748b" }}>
