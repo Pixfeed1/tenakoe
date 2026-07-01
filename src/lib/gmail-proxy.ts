@@ -1,6 +1,7 @@
 import { google, gmail_v1 } from "googleapis";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, type CurrentUser } from "@/lib/rbac";
+import { decodeHtmlEntities } from "@/lib/format";
 
 export async function getGmailForCurrentUser(): Promise<{ gmail: gmail_v1.Gmail; user: CurrentUser; email: string } | null> {
   const user = await getCurrentUser();
@@ -59,14 +60,14 @@ function decodeB64(data: string): string {
 }
 
 function stripHtml(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&#39;/gi, "'").replace(/&quot;/gi, '"')
-    .replace(/\n{3,}/g, "\n\n").replace(/[ \t]+/g, " ").trim();
+  return decodeHtmlEntities(
+    html
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+  ).replace(/\n{3,}/g, "\n\n").replace(/[ \t]+/g, " ").trim();
 }
 
 // Extrait un texte lisible du corps d'un message Gmail (text/plain prioritaire, sinon HTML nettoyé)

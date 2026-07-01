@@ -6,6 +6,7 @@ import {
   Tag, Plus, X, Mail, Reply, Star, Trash2, Link2, BarChart3, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import type { Theme } from "@/lib/theme";
+import { decodeHtmlEntities } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -79,6 +80,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
   const [stats, setStats] = useState<MailStats | null>(null);
 
   const [gmailConnected, setGmailConnected] = useState<boolean | null>(null);
+  const [counts, setCounts] = useState<{ inbox: number; inboxUnread: number; sent: number; drafts: number; scheduled: number } | null>(null);
 
   const { toast } = useToast();
 
@@ -86,6 +88,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
     fetch("/api/gmail/status").then((r) => r.ok ? r.json() : { ok: false }).then((d) => setGmailConnected(d.ok)).catch(() => setGmailConnected(false));
     fetch("/api/gmail/labels").then((r) => r.ok ? r.json() : []).then(setLabels).catch(() => {});
     fetch("/api/entreprises?fields=id,nom").then((r) => r.ok ? r.json() : []).then((d: Array<{ id: string; nom: string }>) => setEntreprises(d.slice(0, 500))).catch(() => {});
+    fetch("/api/gmail/counts").then((r) => r.ok ? r.json() : null).then((d) => { if (d && !d.error) setCounts(d); }).catch(() => {});
   }, []);
 
   const fetchFolder = useCallback((pageToken?: string) => {
@@ -348,12 +351,27 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
         <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 12 }}>
           {FOLDERS.map((f) => {
             const isActive = folder === f.id && !searchActive;
+            let badge = 0;
+            let badgeAccent = false;
+            if (counts) {
+              if (f.id === "inbox") { badge = counts.inboxUnread; badgeAccent = true; }
+              else if (f.id === "sent") badge = counts.sent;
+              else if (f.id === "drafts") badge = counts.drafts;
+              else if (f.id === "scheduled") badge = counts.scheduled;
+            }
             return (
               <button key={f.id} onClick={() => { setFolder(f.id); setSelectedThread(null); clearSearch(); setFilter(""); setEntrepriseFilter(""); setCurrentPage(0); setPageTokenHistory([]); setNextPageToken(null); }}
                 title={sidebarCollapsed ? f.label : undefined}
                 style={{ display: "flex", alignItems: "center", gap: 8, padding: sidebarCollapsed ? "8px 0" : "8px 12px", justifyContent: sidebarCollapsed ? "center" : "flex-start", borderRadius: 8, border: "none", cursor: "pointer", background: isActive ? C.accentDim : "transparent", color: isActive ? C.accentText : C.text, fontSize: 13, fontWeight: isActive ? 600 : 400, textAlign: "left", transition: "all 0.15s" }}>
                 <f.Icon size={16} />
-                {!sidebarCollapsed && <span>{f.label}</span>}
+                {!sidebarCollapsed && <span style={{ flex: 1 }}>{f.label}</span>}
+                {!sidebarCollapsed && badge > 0 && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, padding: "1px 7px", borderRadius: 999,
+                    background: badgeAccent ? C.accent : C.surfaceHover,
+                    color: badgeAccent ? "#fff" : C.textDim,
+                  }}>{badge}</span>
+                )}
               </button>
             );
           })}
@@ -479,7 +497,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
                   </span>
                   <span style={{ fontSize: 13, color: C.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {t.subject}
-                    <span style={{ color: C.textDim, fontWeight: 400, marginLeft: 8 }}>{t.snippet}</span>
+                    <span style={{ color: C.textDim, fontWeight: 400, marginLeft: 8 }}>{decodeHtmlEntities(t.snippet)}</span>
                   </span>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                     {t.isKiwi && <Badge color={C.accent} bg={C.accentDim}>Kiwi</Badge>}

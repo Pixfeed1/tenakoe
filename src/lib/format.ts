@@ -55,3 +55,17 @@ export function fixFileUrl(url: string | null | undefined): string {
   if (url.startsWith("/uploads/")) return url.replace("/uploads/", "/api/files/");
   return url;
 }
+
+// Décode les entités HTML (&#39; &quot; &lt; &gt; &amp; &nbsp; + numériques &#NN; &#xNN;)
+export function decodeHtmlEntities(text: string | null | undefined): string {
+  if (!text) return "";
+  return text
+    .replace(/&#(\d+);/g, (_, n) => { try { return String.fromCodePoint(parseInt(n, 10)); } catch { return _; } })
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => { try { return String.fromCodePoint(parseInt(n, 16)); } catch { return _; } })
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&");
+}
