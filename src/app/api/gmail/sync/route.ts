@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { prisma } from "@/lib/prisma";
+import { extractPlainText } from "@/lib/gmail-proxy";
 
 function getOAuth2Client() {
   return new google.auth.OAuth2(
@@ -113,7 +114,8 @@ export async function POST(request: NextRequest) {
           const subject = headers.find((h) => h.name === "Subject")?.value || "";
           const dateStr = headers.find((h) => h.name === "Date")?.value;
           const rfc822MessageId = headers.find((h) => h.name === "Message-ID")?.value || null;
-          const snippet = (msg.data.snippet || "").slice(0, 2000);
+          const bodyText = extractPlainText(msg.data.payload || undefined);
+          const snippet = (bodyText || msg.data.snippet || "").slice(0, 2000);
 
           if (from.toLowerCase().includes(account.email.toLowerCase())) continue;
 
