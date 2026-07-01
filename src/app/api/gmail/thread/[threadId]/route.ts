@@ -13,9 +13,20 @@ interface MessageData {
   labelIds: string[];
 }
 
+function sanitizeBody(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    // Retire les images (logos de signature, images inline cid: → icônes cassées)
+    .replace(/<img[^>]*>/gi, "")
+    // Neutralise les largeurs fixes qui font déborder la mise en page
+    .replace(/(width|height)\s*=\s*["']?\d+["']?/gi, "")
+    .replace(/(min-width|width)\s*:\s*\d+px/gi, "max-width:100%");
+}
+
 function extractBody(payload: { mimeType?: string | null; body?: { data?: string | null } | null; parts?: typeof payload[] | null }): string {
   if (payload.mimeType === "text/html" && payload.body?.data) {
-    return Buffer.from(payload.body.data.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8");
+    return sanitizeBody(Buffer.from(payload.body.data.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8"));
   }
   if (payload.mimeType === "text/plain" && payload.body?.data) {
     const text = Buffer.from(payload.body.data.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8");

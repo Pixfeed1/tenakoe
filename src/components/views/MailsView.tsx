@@ -294,7 +294,7 @@ export function MailsView({ C, role, onSelectClient }: MailsViewProps) {
                   </div>
                   <span style={{ fontSize: 11, color: C.textDim }}>{formatDate(msg.date)}</span>
                 </div>
-                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: msg.body }} />
+                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.6, overflowX: "auto", wordBreak: "break-word", overflowWrap: "anywhere", maxWidth: "100%" }} dangerouslySetInnerHTML={{ __html: msg.body }} />
                 {msg.attachments.length > 0 && (
                   <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {msg.attachments.map((att) => (
