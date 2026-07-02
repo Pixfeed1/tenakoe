@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { prisma } from "@/lib/prisma";
+import { extractMailBody } from "@/lib/mail-body";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -132,14 +133,7 @@ export async function syncIncomingEmails(userId: string) {
 
     if (!entreprise) continue;
 
-    let body = "";
-    const parts = full.data.payload?.parts || [];
-    const textPart = parts.find((p) => p.mimeType === "text/plain");
-    if (textPart?.body?.data) {
-      body = Buffer.from(textPart.body.data, "base64").toString("utf-8");
-    } else if (full.data.payload?.body?.data) {
-      body = Buffer.from(full.data.payload.body.data, "base64").toString("utf-8");
-    }
+    const body = extractMailBody(full.data.payload || undefined);
 
     await prisma.transmission.create({
       data: {
@@ -148,7 +142,7 @@ export async function syncIncomingEmails(userId: string) {
         destinataire: to,
         expediteurEmail: senderEmail,
         objet: subject,
-        contenu: body.slice(0, 5000),
+        contenu: body.slice(0, 20000),
         dateEnvoi: date ? new Date(date) : new Date(),
         gmailMessageId: msg.id,
         gmailThreadId: msg.threadId,
