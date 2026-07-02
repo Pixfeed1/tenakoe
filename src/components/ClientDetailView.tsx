@@ -18,6 +18,7 @@ import { formatPhone, formatContactName, hydrateTemplate, fixFileUrl } from "@/l
 import { TransmissionDetailModal } from "@/components/TransmissionDetailModal";
 import { getSignature } from "@/lib/mail-signature";
 import { sanitizeMailHtml } from "@/lib/sanitize-mail";
+import { displayNoteAuthor } from "@/lib/note-author";
 
 const ACTIVITY_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   EMAIL: Mail, SMS: MessageSquare, DOC: FileText, STATUT: RefreshCw, LEAD: Zap,
@@ -601,7 +602,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
       fetch(`/api/notes?entrepriseId=${client.id}`).then((r) => (r.ok ? r.json() : [])),
     ]).then(([transmissions, notes]: [
       Array<{ id: string; canal: string; objet: string | null; destinataire: string; dateEnvoi: string; direction: string; expediteur: { prenom: string; nom: string } | null; expediteurEmail: string | null; automatique?: boolean; statutEnvoi?: string | null; piecesJointes?: Array<{ id: string; url: string; nom: string; taille: number | null }> }>,
-      Array<{ id: string; contenu: string; createdAt: string; auteur: { prenom: string; nom: string } }>,
+      Array<{ id: string; contenu: string; createdAt: string; auteur: { id: string; prenom: string; nom: string } }>,
     ]) => {
       const transmissionItems = transmissions.map((t) => ({
         id: t.id,
@@ -618,7 +619,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
         id: undefined as string | undefined,
         type: "NOTE",
         message: `Note : ${n.contenu}`,
-        chargee: `${n.auteur.prenom} ${n.auteur.nom}`,
+        chargee: displayNoteAuthor(n.auteur, n.contenu),
         time: formatRelativeTime(new Date(n.createdAt)),
         sortDate: new Date(n.createdAt).getTime(),
         automatique: false,
@@ -3487,7 +3488,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                         if (res.ok) {
                           const note = await res.json();
                           setNotes((prev) => [note, ...prev]);
-                          setHistorique((prev) => [{ type: "NOTE", message: note.contenu, chargee: `${note.auteur.prenom} ${note.auteur.nom}`, time: "À l'instant", sortDate: Date.now() }, ...prev]);
+                          setHistorique((prev) => [{ type: "NOTE", message: note.contenu, chargee: displayNoteAuthor(note.auteur, note.contenu), time: "À l'instant", sortDate: Date.now() }, ...prev]);
                           setNewNote(""); setNoteFiles([]); setShowNoteForm(false);
                           toast(uploadedFiles.length > 0 ? `Note ajoutée (${uploadedFiles.length} pièce(s) jointe(s))` : "Note ajoutée");
                         } else { toast("Erreur création note"); }
