@@ -1097,11 +1097,6 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
               {sendStatus.msg}
             </div>
           )}
-          {currentUserPrenom && (
-            <div style={{ fontSize: 11, color: C.textDim, fontStyle: "italic", marginBottom: 6 }}>
-              Votre message sera précédé de : &laquo; Bonjour, c&apos;est {currentUserPrenom} de Tenakoe. &raquo;
-            </div>
-          )}
           <textarea
             placeholder="Votre message SMS..."
             value={smsBody}
@@ -1114,9 +1109,7 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
             }}
           />
           {(() => {
-            const prefixe = currentUserPrenom && !smsBody.trim().toLowerCase().startsWith("bonjour")
-              ? `Bonjour, c'est ${currentUserPrenom} de Tenakoe. ` : "";
-            const total = prefixe.length + smsBody.length;
+            const total = smsBody.length;
             const over = total > 160;
             return (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
