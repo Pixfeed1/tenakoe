@@ -1430,7 +1430,8 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                       }
                       setEditingField(null);
                     }}
-                    onBlur={() => setEditingField(null)}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => { if (e.key === "Escape") setEditingField(null); }}
                     style={{
                       flex: 1, padding: "4px 8px", borderRadius: 6,
                       border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
@@ -1461,6 +1462,8 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                       }
                       if (!isAutre) setEditingField(null);
                     }}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => { if (e.key === "Escape") setEditingField(null); }}
                     style={{
                       width: "100%", padding: "4px 8px", borderRadius: 6,
                       border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
@@ -1504,7 +1507,8 @@ export function ClientDetailView({ C, client, onBack, role }: ClientDetailViewPr
                       }
                       setEditingField(null);
                     }}
-                    onBlur={() => setEditingField(null)}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => { if (e.key === "Escape") setEditingField(null); }}
                     style={{
                       flex: 1, padding: "4px 8px", borderRadius: 6,
                       border: `1px solid ${C.accent}`, background: C.bg, color: C.text,
